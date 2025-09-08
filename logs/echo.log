@@ -1,0 +1,450 @@
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:33754 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:58248 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:42378 - "GET /api/status HTTP/1.1" 404 Not Found
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48692 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:55240 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:56290 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:58372 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:47436 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:43090 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:58634 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:50506 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:45346 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:42604 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:45078 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:51118 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:39226 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:47508 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:46932 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:48316 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:57882 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:56940 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:40948 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:42884 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:38462 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:37218 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38064 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:42400 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:0 - "GET /api/health HTTP/1.0" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:38110 - "POST /api/generate HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:38118 - "POST /api/anime/enhance-prompt HTTP/1.1" 404 Not Found
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:43948 - "POST /api/generate HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:43952 - "POST /api/anime/enhance-prompt HTTP/1.1" 404 Not Found
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:44592 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:45672 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:52258 - "POST /api/generate HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:52264 - "POST /api/anime/enhance-prompt HTTP/1.1" 404 Not Found
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:44216 - "POST /api/generate HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:44216 - "POST /api/anime/enhance-prompt HTTP/1.1" 404 Not Found
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:41216 - "HEAD /api/health HTTP/1.1" 405 Method Not Allowed
+INFO:     ***REMOVED***:41222 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:0 - "GET /api/health HTTP/1.0" 200 OK
+INFO:     ***REMOVED***:47900 - "GET / HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:48184 - "GET /api/ HTTP/1.1" 404 Not Found
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:48200 - "GET /docs HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:45418 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:44878 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:44878 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:52004 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:52004 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:59926 - "POST /api/generate HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:59942 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39870 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:50062 - "POST /api/generate HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:50038 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:52010 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:52020 - "GET /api/system/status HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:52034 - "POST /api/system/service HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:52050 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:53826 - "POST /api/system/service HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:37568 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:55578 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:46592 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:49982 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:41212 - "POST /api/generate HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:41220 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44694 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:56654 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:48402 - "POST /api/generate HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:48408 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:59540 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:42990 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:60512 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:60520 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:56846 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:58372 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:55538 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:55544 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:36370 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:43304 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:43318 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:38996 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:42260 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:41110 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:46538 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:36318 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:36320 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:51824 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:51826 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:48960 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:46838 - "POST /api/chat HTTP/1.1" 422 Unprocessable Entity
+INFO:     ***REMOVED***:46844 - "POST /api/chat HTTP/1.1" 422 Unprocessable Entity
+INFO:     ***REMOVED***:37764 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:36728 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/docs HTTP/1.0" 404 Not Found
+INFO:     192.168.50.100:48030 - "GET /docs HTTP/1.1" 200 OK
+INFO:     192.168.50.100:48034 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:60478 - "POST /api/echo/chat HTTP/1.1" 404 Not Found
+INFO:     192.168.50.100:60484 - "GET /docs HTTP/1.1" 200 OK
+INFO:     192.168.50.100:45206 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     192.168.50.100:57450 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     192.168.50.100:57460 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:57152 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:47882 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:52008 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:39030 - "GET /api/echo/health HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:39036 - "GET /health HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:60760 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:35928 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:48000 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:48012 - "GET /api/stats HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:48000 - "POST /api/database/query HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:55018 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49620 - "GET /api/vault/list HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:47480 - "POST /api/echo/chat HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:48286 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54402 - "POST /api/echo/chat HTTP/1.1" 404 Not Found
+INFO:     192.168.50.100:39510 - "GET /api/models HTTP/1.1" 404 Not Found
+INFO:     192.168.50.100:39512 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:39528 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.50.100:43776 - "POST /api/echo/chat HTTP/1.1" 404 Not Found
+INFO:     192.168.50.100:56576 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:56818 - "POST /api/echo/chat HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:45880 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:     192.168.50.100:41098 - "POST /api/analyze HTTP/1.1" 404 Not Found
+INFO:     192.168.50.100:41102 - "POST /api/think HTTP/1.1" 404 Not Found
+INFO:     192.168.50.100:41116 - "GET /docs HTTP/1.1" 200 OK
+INFO:     192.168.50.100:41124 - "OPTIONS /api/ HTTP/1.1" 404 Not Found
+INFO:     192.168.50.100:34434 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     192.168.50.100:34450 - "GET /api/system/info HTTP/1.1" 200 OK
+INFO:     192.168.50.100:34460 - "GET /api/system/status HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:36638 - "POST /api/generate HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:33742 - "POST /api/echo/generate HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:33752 - "GET /api/ HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:45564 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:     192.168.50.100:52202 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36414 - "POST /api/echo/chat HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:59734 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59740 - "POST /chat HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:45204 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     192.168.50.100:42820 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:57894 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:54282 - "GET /health HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:38986 - "GET /health HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:42744 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:59008 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:42076 - "GET /api/echo/models HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:42082 - "GET /health HTTP/1.1" 404 Not Found
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.0" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:36398 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:52652 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     192.168.50.100:0 - "GET /api/conversations HTTP/1.0" 404 Not Found
+INFO:     192.168.50.100:0 - "GET /api/alerts HTTP/1.0" 404 Not Found
+INFO:     192.168.50.100:0 - "GET /api/conversations HTTP/1.0" 404 Not Found
+INFO:     192.168.50.100:0 - "GET /api/alerts HTTP/1.0" 404 Not Found
+INFO:     192.168.50.100:0 - "GET /api/conversations HTTP/1.0" 404 Not Found
+INFO:     192.168.50.100:0 - "GET /api/alerts HTTP/1.0" 404 Not Found
+INFO:     ***REMOVED***:55300 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:58388 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:35628 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48878 - "POST /api/echo/chat HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:50486 - "GET /api/routes HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:44550 - "POST /api/llm/route HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:51608 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49186 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60830 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:57942 - "POST /api/vault/get HTTP/1.1" 404 Not Found
