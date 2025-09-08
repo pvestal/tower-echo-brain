@@ -7,3 +7,17 @@ INFO:     127.0.0.1:35806 - "GET /api/health HTTP/1.1" 200 OK
 INFO:     127.0.0.1:53310 - "GET /api/health HTTP/1.1" 200 OK
 INFO:__main__:Created evolution event 1 for character 17
 INFO:     127.0.0.1:53324 - "POST /api/characters/evolution/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42116 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47820 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52540 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34938 - "GET /api/characters/timeline/1 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:34948 - "GET /api/characters/ HTTP/1.1" 404 Not Found
+ERROR:__main__:Failed to create evolution event: insert or update on table "character_evolution_timeline" violates foreign key constraint "character_evolution_timeline_character_id_fkey"
+DETAIL:  Key (character_id)=(1) is not present in table "anime_characters".
+
+INFO:     127.0.0.1:39408 - "POST /api/characters/evolution/ HTTP/1.1" 500 Internal Server Error
+INFO:__main__:Created evolution event 3 for character 18
+INFO:     127.0.0.1:59730 - "POST /api/characters/evolution/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59744 - "GET /api/characters/timeline/18 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43034 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43042 - "GET /api/characters/timeline/18 HTTP/1.1" 200 OK
