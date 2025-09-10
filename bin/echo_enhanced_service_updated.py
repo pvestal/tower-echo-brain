@@ -71,7 +71,7 @@ class WebSearchService:
         """Search web using RapidAPI services"""
         try:
             # Get RapidAPI key from vault
-            api_key = await self.vault.get_secret("oauth/rapidapi", "api_key")
+            api_key = await self.vault.get_secret("oauth/data/rapidapi", "api_key")
             if not api_key:
                 return {"error": "No RapidAPI key found in vault"}
                 
