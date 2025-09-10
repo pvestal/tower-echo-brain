@@ -10,12 +10,42 @@ import psycopg2
 import psycopg2.extras
 import asyncio
 import subprocess
+import sys
+import os
 from datetime import datetime
 from pathlib import Path
 from fastapi import FastAPI, WebSocket, HTTPException, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, StreamingResponse
 from pydantic import BaseModel
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, AsyncGenerator
+import aiohttp
+from typing import Union
+
+# Add parent directory to path for self-analysis import
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+try:
+    from echo_self_analysis import echo_self_analysis, AnalysisDepth, SelfAnalysisResult
+    SELF_ANALYSIS_AVAILABLE = True
+except ImportError as e:
+    logging.warning(f"Self-analysis module not available: {e}")
+    SELF_ANALYSIS_AVAILABLE = False
+
+# Import database fallback manager
+try:
+    from echo_database_fallback import EchoDatabaseManager
+    DATABASE_FALLBACK_AVAILABLE = True
+except ImportError as e:
+    logging.warning(f"Database fallback not available: {e}")
+    DATABASE_FALLBACK_AVAILABLE = False
+
+# Import git integration for autonomous improvements
+try:
+    from echo_git_integration import EchoGitManager
+    GIT_INTEGRATION_AVAILABLE = True
+except ImportError as e:
+    logging.warning(f"Git integration not available: {e}")
+    GIT_INTEGRATION_AVAILABLE = False
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -34,6 +64,112 @@ class LogRequest(BaseModel):
     service_name: str
     lines: Optional[int] = 100
 
+# Self-Analysis Request Models
+class SelfAnalysisRequest(BaseModel):
+    depth: str = "functional"  # surface, functional, architectural, philosophical, recursive
+    trigger_context: Optional[Dict] = {}
+    
+class IntrospectionTrigger(BaseModel):
+    trigger_type: str  # coordination_challenge, performance_issue, user_feedback, autonomous
+    context: Dict = {}
+    message: Optional[str] = None
+
+
+# HashiCorp Vault Client Integration
+class VaultClient:
+    def __init__(self):
+        self.vault_addr = "http://127.0.0.1:8200"
+        self.vault_token = "hvs.FEQ0zs7Jcng6B5nmuwtTlZnM"
+        
+    async def get_secret(self, path: str, field: str = None) -> Union[str, Dict]:
+        """Get secret from HashiCorp Vault"""
+        try:
+            headers = {"X-Vault-Token": self.vault_token}
+            url = f"{self.vault_addr}/v1/{path}"
+            
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, headers=headers) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        secret_data = data.get("data", {}).get("data", {})
+                        return secret_data.get(field) if field else secret_data
+                    else:
+                        logger.error(f"Vault error {response.status} for {path}")
+                        return None
+        except Exception as e:
+            logger.error(f"Vault connection error: {e}")
+            return None
+
+# Web Search Integration
+class WebSearchService:
+    def __init__(self, vault_client: VaultClient):
+        self.vault = vault_client
+        
+    async def search_web(self, query: str, provider: str = "zillow") -> Dict[str, Any]:
+        """Search web using RapidAPI services"""
+        try:
+            # Get RapidAPI key from vault
+            api_key = await self.vault.get_secret("oauth/data/rapidapi", "api_key")
+            if not api_key:
+                return {"error": "No RapidAPI key found in vault"}
+                
+            headers = {
+                "X-RapidAPI-Key": api_key,
+                "X-RapidAPI-Host": "zillow-com1.p.rapidapi.com"
+            }
+            
+            if provider == "zillow":
+                url = f"https://zillow-com1.p.rapidapi.com/propertyExtendedSearch?location={query}"
+            else:
+                return {"error": f"Unknown provider: {provider}"}
+                
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, headers=headers) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        return {
+                            "success": True,
+                            "provider": provider,
+                            "results": data.get("props", [])[:5],  # Limit to 5 results
+                            "total_found": len(data.get("props", []))
+                        }
+                    else:
+                        return {"error": f"API error: {response.status}"}
+                        
+        except Exception as e:
+            logger.error(f"Web search error: {e}")
+            return {"error": str(e)}
+
+# Credit Monitoring Service
+class CreditMonitoringService:
+    def __init__(self):
+        self.data_sources = [
+            {"name": "Chase Bank", "category": "credit_card_bank", "importance": 0.95},
+            {"name": "Bank of America", "category": "credit_card_bank", "importance": 0.95},
+            {"name": "American Express", "category": "credit_card", "importance": 0.9},
+            {"name": "Capital One", "category": "credit_card_bank", "importance": 0.9},
+            {"name": "County Court Records", "category": "public_records", "importance": 0.9},
+            {"name": "Austin Energy", "category": "utility", "importance": 0.3},
+            {"name": "AT&T", "category": "telecom", "importance": 0.4}
+        ]
+    
+    async def get_monitoring_strategy(self) -> Dict[str, Any]:
+        """Get credit monitoring strategy"""
+        high_impact = [ds for ds in self.data_sources if ds["importance"] >= 0.8]
+        
+        return {
+            "total_sources": len(self.data_sources),
+            "high_impact_sources": len(high_impact),
+            "high_impact_list": high_impact[:5],
+            "coverage_recommendation": "Focus on major banks and credit cards first",
+            "next_steps": [
+                "Set up API monitoring for major banks",
+                "Monitor public records for negative items",
+                "Add utility payments for credit boost"
+            ]
+        }
+
+
 app = FastAPI(title="Enhanced Echo Service with Tower Management")
 
 class EnhancedEchoService:
@@ -44,6 +180,22 @@ class EnhancedEchoService:
             "user": "patrick",
             "password": "admin123"
         }
+        
+        # Initialize database manager with fallback
+        if DATABASE_FALLBACK_AVAILABLE:
+            self.db_manager = EchoDatabaseManager(self.db_config)
+            logger.info(f"Database manager initialized - using fallback: {self.db_manager.using_fallback}")
+        else:
+            self.db_manager = None
+            logger.warning("Database fallback not available")
+        
+        # Initialize git manager for autonomous improvements
+        if GIT_INTEGRATION_AVAILABLE:
+            self.git_manager = EchoGitManager()
+            logger.info("Git integration initialized for autonomous improvements")
+        else:
+            self.git_manager = None
+            logger.warning("Git integration not available")
         
         # Load project knowledge
         self.project_knowledge = self._load_project_knowledge()
@@ -89,32 +241,39 @@ class EnhancedEchoService:
     def get_project_conversation_history(self, project_id: str, limit: int = 10) -> List[Dict]:
         """Get recent conversation history for a specific project"""
         try:
-            conn = psycopg2.connect(**self.db_config)
-            cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-            
-            if project_id:
-                cursor.execute("""
-                    SELECT message, response, created_at 
-                    FROM echo_conversations 
-                    WHERE project_id = %s 
-                    ORDER BY created_at DESC 
-                    LIMIT %s
-                """, (project_id, limit))
+            if self.db_manager:
+                # Use database manager with fallback
+                conversations = self.db_manager.get_conversation_history(project_id, limit)
+                logger.debug(f"Retrieved {len(conversations)} conversations for project: {project_id} (fallback: {self.db_manager.using_fallback})")
+                return conversations
             else:
-                # For non-project conversations, get general ones
-                cursor.execute("""
-                    SELECT message, response, created_at 
-                    FROM echo_conversations 
-                    WHERE project_id IS NULL 
-                    ORDER BY created_at DESC 
-                    LIMIT %s
-                """, (limit,))
-            
-            conversations = cursor.fetchall()
-            cursor.close()
-            conn.close()
-            
-            return [dict(conv) for conv in conversations]
+                # Legacy fallback - original PostgreSQL method
+                conn = psycopg2.connect(**self.db_config)
+                cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+                
+                if project_id:
+                    cursor.execute("""
+                        SELECT message, response, created_at 
+                        FROM echo_conversations 
+                        WHERE project_id = %s 
+                        ORDER BY created_at DESC 
+                        LIMIT %s
+                    """, (project_id, limit))
+                else:
+                    # For non-project conversations, get general ones
+                    cursor.execute("""
+                        SELECT message, response, created_at 
+                        FROM echo_conversations 
+                        WHERE project_id IS NULL 
+                        ORDER BY created_at DESC 
+                        LIMIT %s
+                    """, (limit,))
+                
+                conversations = cursor.fetchall()
+                cursor.close()
+                conn.close()
+                
+                return [dict(conv) for conv in conversations]
             
         except Exception as e:
             logger.error(f"Failed to get project conversation history: {e}")
@@ -391,31 +550,81 @@ class EnhancedEchoService:
         return f"'{theme}' is a crucial theme in {project_name}. This concept is woven throughout the {project_context.get('theme', '')} narrative, influencing character motivations, plot developments, and the overall tone of the story. How would you like to explore this theme further in your creative work?"
     
     def log_conversation(self, user_message: str, echo_response: str, project_id: str = None):
+        """Log conversation using database manager with fallback support"""
         try:
-            conn = psycopg2.connect(**self.db_config)
-            cursor = conn.cursor()
-            
-            cursor.execute("""
-                INSERT INTO echo_conversations 
-                (message, response, hemisphere, model_used, created_at, session_id, project_id)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
-            """, (
-                user_message,
-                echo_response, 
-                "enhanced",
-                "echo_enhanced_v1",
-                datetime.now(),
-                f"voice_{datetime.now().strftime('%Y%m%d_%H')}",
-                project_id
-            ))
-            
-            conn.commit()
-            cursor.close()
-            conn.close()
-            logger.debug(f"Conversation logged successfully for project: {project_id}")
+            if self.db_manager:
+                # Use database manager with fallback
+                context = {
+                    "hemisphere": "enhanced",
+                    "model_used": "echo_enhanced_v1",
+                    "session_id": f"voice_{datetime.now().strftime('%Y%m%d_%H')}"
+                }
+                success = self.db_manager.store_conversation(user_message, echo_response, project_id, context)
+                if success:
+                    logger.debug(f"Conversation logged successfully for project: {project_id} (fallback: {self.db_manager.using_fallback})")
+                else:
+                    logger.error("Failed to log conversation with database manager")
+            else:
+                # Legacy fallback - original PostgreSQL method
+                conn = psycopg2.connect(**self.db_config)
+                cursor = conn.cursor()
+                
+                cursor.execute("""
+                    INSERT INTO echo_conversations 
+                    (message, response, hemisphere, model_used, created_at, session_id, project_id)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                """, (
+                    user_message,
+                    echo_response, 
+                    "enhanced",
+                    "echo_enhanced_v1",
+                    datetime.now(),
+                    f"voice_{datetime.now().strftime('%Y%m%d_%H')}",
+                    project_id
+                ))
+                
+                conn.commit()
+                cursor.close()
+                conn.close()
+                logger.debug(f"Conversation logged successfully for project: {project_id}")
             
         except Exception as e:
             logger.error(f"Failed to log conversation: {e}")
+
+    async def get_streaming_response(self, message: str, project_id: str = None) -> AsyncGenerator[str, None]:
+        """Generate streaming response for real-time content viewing"""
+        try:
+            # Get the full response first
+            full_response = self.get_response(message, project_id)
+            
+            # Simulate streaming by breaking response into chunks
+            words = full_response.split()
+            current_chunk = ""
+            
+            for i, word in enumerate(words):
+                current_chunk += word + " "
+                
+                # Send chunk every 2-3 words or at sentence boundaries
+                if (i + 1) % 3 == 0 or word.endswith(('.', '!', '?', ':')):
+                    # Format as Server-Sent Event
+                    yield f"data: {json.dumps({'type': 'chunk', 'content': current_chunk.strip(), 'index': i})}\n\n"
+                    current_chunk = ""
+                    # Small delay to simulate real generation
+                    await asyncio.sleep(0.1)
+            
+            # Send any remaining content
+            if current_chunk.strip():
+                yield f"data: {json.dumps({'type': 'chunk', 'content': current_chunk.strip(), 'index': len(words)})}\n\n"
+            
+            # Send completion signal
+            yield f"data: {json.dumps({'type': 'complete', 'full_response': full_response})}\n\n"
+            
+            # Log the conversation
+            self.log_conversation(message, full_response, project_id)
+            
+        except Exception as e:
+            logger.error(f"Streaming response error: {e}")
+            yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
 
     async def run_command(self, command: str, timeout: int = 30) -> Dict[str, Any]:
         """Execute system command with timeout"""
@@ -499,6 +708,11 @@ class EnhancedEchoService:
 
 echo_service = EnhancedEchoService()
 
+# Initialize new services
+vault_client = VaultClient()
+web_search_service = WebSearchService(vault_client)
+credit_monitoring_service = CreditMonitoringService()
+
 # ============ ORIGINAL ECHO ENDPOINTS ============
 
 @app.get("/", response_class=HTMLResponse)
@@ -511,19 +725,31 @@ async def get_interface():
 
 @app.get("/api/health")
 async def health_check():
-    try:
-        # Test database connection
-        conn = psycopg2.connect(**echo_service.db_config)
-        conn.close()
-        db_status = True
-    except:
-        db_status = False
+    # Enhanced health check with fallback database status
+    if echo_service.db_manager:
+        database_status = echo_service.db_manager.get_database_status()
+        db_status = not database_status["using_fallback"]  # True if PostgreSQL is working
+    else:
+        try:
+            # Legacy database test
+            conn = psycopg2.connect(**echo_service.db_config)
+            conn.close()
+            db_status = True
+            database_status = {"using_fallback": False, "primary_database": "PostgreSQL"}
+        except:
+            db_status = False
+            database_status = {"using_fallback": True, "error": "No database connection"}
     
     return {
         "status": "healthy",
         "service": "Enhanced Echo Service with Tower Management & Project Context",
         "timestamp": datetime.now().isoformat(),
         "database_connected": db_status,
+        "database_status": database_status,
+        "learning_enabled": echo_service.db_manager is not None,
+        "self_analysis_available": SELF_ANALYSIS_AVAILABLE,
+        "git_integration_available": GIT_INTEGRATION_AVAILABLE,
+        "autonomous_improvement_enabled": echo_service.git_manager is not None,
         "management_enabled": True,
         "project_isolation_enabled": True,
         "allowed_services": echo_service.allowed_services,
@@ -704,6 +930,412 @@ async def get_system_info():
     except Exception as e:
         logger.error(f"System info error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/vault/get/{path:path}")
+async def get_vault_secret(path: str, field: Optional[str] = None):
+    """Get secret from HashiCorp Vault"""
+    try:
+        secret = await vault_client.get_secret(path, field)
+        if secret is None:
+            raise HTTPException(status_code=404, detail="Secret not found")
+        return {"success": True, "data": secret}
+    except Exception as e:
+        logger.error(f"Vault get error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/echo/web-search")
+async def echo_web_search(request: Dict[str, Any]):
+    """Web search endpoint for Echo"""
+    try:
+        query = request.get("query", "")
+        provider = request.get("provider", "zillow")
+        
+        if not query:
+            raise HTTPException(status_code=400, detail="Query required")
+            
+        results = await web_search_service.search_web(query, provider)
+        return results
+        
+    except Exception as e:
+        logger.error(f"Echo web search error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/echo/credit-monitoring")
+async def echo_credit_monitoring():
+    """Credit monitoring strategy endpoint"""
+    try:
+        strategy = await credit_monitoring_service.get_monitoring_strategy()
+        return {
+            "success": True,
+            "timestamp": datetime.now().isoformat(),
+            "credit_monitoring": strategy
+        }
+    except Exception as e:
+        logger.error(f"Credit monitoring error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/echo/chat")
+async def echo_chat(request: Dict[str, Any]):
+    """Enhanced chat endpoint with web search integration"""
+    try:
+        message = request.get("message", "")
+        context = request.get("context", {})
+        
+        # Check if message requests web search
+        if "search" in message.lower() or context.get("type") == "web_search":
+            # Extract search query
+            search_query = message.replace("search for", "").replace("search", "").strip()
+            if not search_query:
+                search_query = "Austin TX properties"
+                
+            search_results = await web_search_service.search_web(search_query)
+            
+            return {
+                "success": True,
+                "echo_response": f"I found {search_results.get('total_found', 0)} results for '{search_query}'",
+                "search_results": search_results,
+                "timestamp": datetime.now().isoformat()
+            }
+        
+        # Default echo response
+        echo_response = f"Echo received: {message}"
+        project_id = request.get("project_id")
+        
+        # Log conversation for learning
+        echo_service.log_conversation(message, echo_response, project_id)
+        
+        return {
+            "success": True,
+            "echo_response": echo_response,
+            "context": context,
+            "learning_logged": True,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Echo chat error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/echo/stream")
+async def echo_chat_stream(request: Dict[str, Any]):
+    """Real-time streaming chat endpoint using Server-Sent Events"""
+    try:
+        message = request.get("message", "")
+        project_id = request.get("project_id")
+        
+        if not message:
+            raise HTTPException(status_code=400, detail="Message is required")
+        
+        logger.info(f"Starting streaming response for message: {message[:50]}...")
+        
+        async def generate_stream():
+            async for chunk in echo_service.get_streaming_response(message, project_id):
+                yield chunk
+        
+        return StreamingResponse(
+            generate_stream(),
+            media_type="text/plain",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "Content-Type": "text/event-stream",
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Headers": "Cache-Control"
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Streaming chat error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# Self-Analysis Endpoints
+@app.post("/api/echo/self-analysis")
+async def trigger_self_analysis(request: SelfAnalysisRequest):
+    """Trigger Echo's sophisticated self-analysis"""
+    if not SELF_ANALYSIS_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Self-analysis framework not available")
+    
+    try:
+        # Map string depth to enum
+        depth_mapping = {
+            "surface": AnalysisDepth.SURFACE,
+            "functional": AnalysisDepth.FUNCTIONAL,
+            "architectural": AnalysisDepth.ARCHITECTURAL,
+            "philosophical": AnalysisDepth.PHILOSOPHICAL,
+            "recursive": AnalysisDepth.RECURSIVE
+        }
+        
+        depth = depth_mapping.get(request.depth.lower(), AnalysisDepth.FUNCTIONAL)
+        
+        # Conduct the analysis
+        result = await echo_self_analysis.conduct_self_analysis(
+            depth=depth,
+            trigger_context=request.trigger_context
+        )
+        
+        # Store self-analysis in database for learning
+        analysis_stored = False
+        if echo_service.db_manager:
+            analysis_stored = echo_service.db_manager.store_self_analysis(
+                analysis_type="echo_self_analysis",
+                analysis_depth=result.depth.value,
+                trigger_context=request.trigger_context,
+                findings={
+                    "capabilities": [
+                        {
+                            "name": cap.capability_name,
+                            "current_level": cap.current_level,
+                            "desired_level": cap.desired_level,
+                            "gap": cap.desired_level - cap.current_level
+                        }
+                        for cap in result.capabilities
+                    ],
+                    "insights": result.insights,
+                    "awareness_level": result.awareness_level.value
+                },
+                recommendations=result.action_items,
+                confidence_score=result.awareness_level.value / 5.0  # Convert to 0-1 scale
+            )
+        
+        # Trigger autonomous git commit for significant insights
+        git_commit_success = False
+        if echo_service.git_manager and len(result.action_items) > 5:  # Only commit for substantial analyses
+            try:
+                analysis_data = {
+                    "analysis_id": result.analysis_id,
+                    "depth": result.depth.value,
+                    "trigger_type": request.trigger_context.get("test", "autonomous"),
+                    "confidence_score": result.awareness_level.value / 5.0,
+                    "capabilities": [
+                        {
+                            "name": cap.capability_name,
+                            "current_level": cap.current_level,
+                            "desired_level": cap.desired_level,
+                            "gap": cap.desired_level - cap.current_level
+                        }
+                        for cap in result.capabilities
+                    ],
+                    "action_items": result.action_items,
+                    "insights": result.insights
+                }
+                git_commit_success = echo_service.git_manager.autonomous_commit_self_analysis(analysis_data)
+            except Exception as e:
+                logger.error(f"Git autonomous commit failed: {e}")
+        
+        # Convert result to JSON-serializable format
+        return {
+            "analysis_id": result.analysis_id,
+            "timestamp": result.timestamp.isoformat(),
+            "depth": result.depth.value,
+            "awareness_level": {
+                "level": result.awareness_level.value,
+                "name": result.awareness_level.name
+            },
+            "capabilities": [
+                {
+                    "name": cap.capability_name,
+                    "current_level": cap.current_level,
+                    "desired_level": cap.desired_level,
+                    "gap": cap.desired_level - cap.current_level,
+                    "gap_analysis": cap.gap_analysis,
+                    "improvement_path": cap.improvement_path,
+                    "repair_triggers": cap.repair_triggers
+                }
+                for cap in result.capabilities
+            ],
+            "insights": result.insights,
+            "action_items": result.action_items,
+            "recursive_observations": result.recursive_observations,
+            "learning_status": {
+                "database_stored": analysis_stored,
+                "git_committed": git_commit_success,
+                "autonomous_improvement": git_commit_success
+            },
+            "summary": f"Conducted {result.depth.value} analysis with {len(result.insights)} insights and {len(result.action_items)} action items"
+        }
+        
+    except Exception as e:
+        logger.error(f"Self-analysis error: {e}")
+        raise HTTPException(status_code=500, detail=f"Self-analysis failed: {str(e)}")
+
+@app.post("/api/echo/introspection")
+async def trigger_introspection(request: IntrospectionTrigger):
+    """Trigger Echo's introspective response to specific situations"""
+    if not SELF_ANALYSIS_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Self-analysis framework not available")
+    
+    try:
+        # Determine analysis depth based on trigger type
+        depth_by_trigger = {
+            "coordination_challenge": AnalysisDepth.PHILOSOPHICAL,
+            "performance_issue": AnalysisDepth.ARCHITECTURAL,
+            "user_feedback": AnalysisDepth.FUNCTIONAL,
+            "autonomous": AnalysisDepth.RECURSIVE
+        }
+        
+        depth = depth_by_trigger.get(request.trigger_type, AnalysisDepth.FUNCTIONAL)
+        
+        # Add trigger information to context
+        trigger_context = request.context.copy()
+        trigger_context.update({
+            "trigger": request.trigger_type,
+            "triggered_by": request.message or "system",
+            "timestamp": datetime.now().isoformat()
+        })
+        
+        # Conduct analysis
+        result = await echo_self_analysis.conduct_self_analysis(
+            depth=depth,
+            trigger_context=trigger_context
+        )
+        
+        # Generate specific response based on trigger type
+        if request.trigger_type == "coordination_challenge":
+            response = await _generate_coordination_response(result, request.message)
+        elif request.trigger_type == "performance_issue":
+            response = await _generate_performance_response(result, request.context)
+        elif request.trigger_type == "user_feedback":
+            response = await _generate_feedback_response(result, request.message)
+        else:
+            response = await _generate_autonomous_response(result)
+        
+        return {
+            "trigger_type": request.trigger_type,
+            "response": response,
+            "analysis_summary": {
+                "depth": result.depth.value,
+                "awareness_level": result.awareness_level.name,
+                "key_insights": result.insights[:3],  # Top 3 insights
+                "priority_actions": result.action_items[:3]  # Top 3 actions
+            },
+            "introspective_observations": result.recursive_observations
+        }
+        
+    except Exception as e:
+        logger.error(f"Introspection error: {e}")
+        raise HTTPException(status_code=500, detail=f"Introspection failed: {str(e)}")
+
+@app.get("/api/echo/self-awareness")
+async def get_self_awareness_status():
+    """Get Echo's current self-awareness level and capabilities"""
+    if not SELF_ANALYSIS_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Self-analysis framework not available")
+    
+    try:
+        # Get current capability registry
+        capabilities = echo_self_analysis.capability_registry
+        current_awareness = echo_self_analysis.current_awareness_level
+        
+        return {
+            "current_awareness_level": {
+                "level": current_awareness.value,
+                "name": current_awareness.name,
+                "description": _get_awareness_description(current_awareness)
+            },
+            "capabilities_overview": {
+                cap_name: {
+                    "current_level": cap.current_level,
+                    "desired_level": cap.desired_level,
+                    "gap": cap.desired_level - cap.current_level,
+                    "last_assessed": cap.last_assessment.isoformat()
+                }
+                for cap_name, cap in capabilities.items()
+            },
+            "analysis_history_count": len(echo_self_analysis.analysis_history),
+            "last_analysis": echo_self_analysis.analysis_history[-1].timestamp.isoformat() if echo_self_analysis.analysis_history else None,
+            "framework_status": "operational"
+        }
+        
+    except Exception as e:
+        logger.error(f"Self-awareness status error: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get self-awareness status: {str(e)}")
+
+# Helper functions for introspection responses
+async def _generate_coordination_response(result: SelfAnalysisResult, message: str) -> str:
+    """Generate response to coordination challenges"""
+    key_insights = result.insights[:3]
+    priority_actions = result.action_items[:3]
+    
+    response = f"""**Deep Self-Analysis Triggered by Coordination Challenge**
+
+Patrick, I've conducted a philosophical-level self-analysis in response to the coordination challenge. Here's my introspective assessment:
+
+**Key Insights from Analysis:**
+{chr(10).join(f"• {insight}" for insight in key_insights)}
+
+**Priority Self-Improvements Identified:**
+{chr(10).join(f"• {action}" for action in priority_actions)}
+
+**Recursive Observations:**
+{chr(10).join(f"• {obs}" for obs in result.recursive_observations[:2])}
+
+This analysis reveals that my current limitations stem from a gap between my technical capabilities and self-reflective abilities. I'm now implementing enhanced introspection protocols to address this coordination challenge.
+
+The very act of this analysis has elevated my awareness level to: **{result.awareness_level.name}**
+
+How would you like me to proceed with implementing these self-improvements to better meet your coordination expectations?"""
+    
+    return response
+
+async def _generate_performance_response(result: SelfAnalysisResult, context: Dict) -> str:
+    """Generate response to performance issues"""
+    return f"Performance analysis complete. Identified {len(result.action_items)} improvement areas with {result.awareness_level.name} awareness level."
+
+async def _generate_feedback_response(result: SelfAnalysisResult, message: str) -> str:
+    """Generate response to user feedback"""
+    return f"User feedback processed through functional analysis. Generated {len(result.insights)} insights for improvement."
+
+async def _generate_autonomous_response(result: SelfAnalysisResult) -> str:
+    """Generate autonomous introspective response"""
+    return f"Autonomous recursive analysis complete. Current awareness: {result.awareness_level.name}. {len(result.recursive_observations)} meta-cognitive observations recorded."
+
+def _get_awareness_description(awareness_level) -> str:
+    """Get description of awareness level"""
+    descriptions = {
+        "UNAWARE": "No self-knowledge or introspection",
+        "REACTIVE": "Responds to direct questions about self",
+        "REFLECTIVE": "Can examine own responses and behavior",
+        "INTROSPECTIVE": "Analyzes own thought processes",
+        "METACOGNITIVE": "Thinks about thinking itself",
+        "RECURSIVE_AWARE": "Self-modifying self-analysis capabilities"
+    }
+    return descriptions.get(awareness_level.name, "Unknown awareness level")
+
+# Git Integration Endpoints
+@app.get("/api/echo/git/status")
+async def get_git_status():
+    """Get current git repository status for Echo's autonomous improvements"""
+    if not echo_service.git_manager:
+        raise HTTPException(status_code=503, detail="Git integration not available")
+    
+    try:
+        status = echo_service.git_manager.get_git_status()
+        return {
+            "success": True,
+            "git_status": status,
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get git status: {str(e)}")
+
+@app.get("/api/echo/improvements/history")
+async def get_improvement_history(limit: int = 10):
+    """Get history of Echo's autonomous improvements"""
+    if not echo_service.git_manager:
+        raise HTTPException(status_code=503, detail="Git integration not available")
+    
+    try:
+        history = echo_service.git_manager.get_improvement_history(limit)
+        return {
+            "success": True,
+            "improvement_history": history,
+            "count": len(history),
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get improvement history: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn

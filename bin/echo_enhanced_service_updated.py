@@ -13,9 +13,9 @@ import subprocess
 from datetime import datetime
 from pathlib import Path
 from fastapi import FastAPI, WebSocket, HTTPException, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, StreamingResponse
 from pydantic import BaseModel
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, AsyncGenerator
 import aiohttp
 from typing import Union
 
@@ -515,6 +515,41 @@ class EnhancedEchoService:
         except Exception as e:
             logger.error(f"Failed to log conversation: {e}")
 
+    async def get_streaming_response(self, message: str, project_id: str = None) -> AsyncGenerator[str, None]:
+        """Generate streaming response for real-time content viewing"""
+        try:
+            # Get the full response first
+            full_response = self.get_response(message, project_id)
+            
+            # Simulate streaming by breaking response into chunks
+            words = full_response.split()
+            current_chunk = ""
+            
+            for i, word in enumerate(words):
+                current_chunk += word + " "
+                
+                # Send chunk every 2-3 words or at sentence boundaries
+                if (i + 1) % 3 == 0 or word.endswith(('.', '!', '?', ':')):
+                    # Format as Server-Sent Event
+                    yield f"data: {json.dumps({'type': 'chunk', 'content': current_chunk.strip(), 'index': i})}\n\n"
+                    current_chunk = ""
+                    # Small delay to simulate real generation
+                    await asyncio.sleep(0.1)
+            
+            # Send any remaining content
+            if current_chunk.strip():
+                yield f"data: {json.dumps({'type': 'chunk', 'content': current_chunk.strip(), 'index': len(words)})}\n\n"
+            
+            # Send completion signal
+            yield f"data: {json.dumps({'type': 'complete', 'full_response': full_response})}\n\n"
+            
+            # Log the conversation
+            self.log_conversation(message, full_response, project_id)
+            
+        except Exception as e:
+            logger.error(f"Streaming response error: {e}")
+            yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+
     async def run_command(self, command: str, timeout: int = 30) -> Dict[str, Any]:
         """Execute system command with timeout"""
         try:
@@ -885,6 +920,38 @@ async def echo_chat(request: Dict[str, Any]):
         
     except Exception as e:
         logger.error(f"Echo chat error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/echo/stream")
+async def echo_chat_stream(request: Dict[str, Any]):
+    """Real-time streaming chat endpoint using Server-Sent Events"""
+    try:
+        message = request.get("message", "")
+        project_id = request.get("project_id")
+        
+        if not message:
+            raise HTTPException(status_code=400, detail="Message is required")
+        
+        logger.info(f"Starting streaming response for message: {message[:50]}...")
+        
+        async def generate_stream():
+            async for chunk in echo_service.get_streaming_response(message, project_id):
+                yield chunk
+        
+        return StreamingResponse(
+            generate_stream(),
+            media_type="text/plain",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "Content-Type": "text/event-stream",
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Headers": "Cache-Control"
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Streaming chat error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
