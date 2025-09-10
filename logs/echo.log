@@ -560,3 +560,173 @@ INFO:     127.0.0.1:38450 - "POST /api/chat HTTP/1.1" 200 OK
 INFO:     127.0.0.1:37938 - "POST /api/think HTTP/1.1" 404 Not Found
 INFO:     127.0.0.1:51842 - "GET /api/ HTTP/1.1" 404 Not Found
 INFO:     ***REMOVED***:49684 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.0" 200 OK
+INFO:     192.168.50.100:0 - "HEAD /api/ws HTTP/1.0" 404 Not Found
+INFO:     192.168.50.100:0 - "GET /api/models HTTP/1.0" 404 Not Found
+INFO:     192.168.50.100:0 - "POST /api/chat HTTP/1.0" 200 OK
+INFO:     127.0.0.1:48244 - "GET /api/echo/health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:60498 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:0 - "POST /api/chat HTTP/1.0" 200 OK
+INFO:     ***REMOVED***:41412 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:59004 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:57596 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.0" 200 OK
+INFO:     ***REMOVED***:47118 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "POST /api/chat HTTP/1.0" 200 OK
+INFO:     127.0.0.1:53430 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43592 - "GET /api/echo/ HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:43596 - "POST /api/echo/query HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:34814 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:0 - "GET /api/health HTTP/1.0" 200 OK
+INFO:     ***REMOVED***:0 - "POST /api/chat HTTP/1.0" 200 OK
+INFO:     ***REMOVED***:43596 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:0 - "POST /api/chat HTTP/1.0" 200 OK
+INFO:     ***REMOVED***:0 - "POST /api/chat HTTP/1.0" 200 OK
+INFO:     ***REMOVED***:41386 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:40962 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:42418 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:36970 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:56374 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:33016 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58186 - "GET /api/vault/get/apple/team_id HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58190 - "GET /api/vault/get/apple/service_id HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58194 - "GET /api/vault/get/spotify/client_id HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58202 - "GET /api/vault/get/spotify/client_secret HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58204 - "GET /api/vault/list HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:45392 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33750 - "GET /vault/list HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:50340 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:38936 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:45120 - "GET /api/vault/get/google_oauth/client_id HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:45132 - "GET /api/vault/get/google_oauth/client_secret HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:45136 - "GET /api/vault/list HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:33160 - "GET /api/ HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:33170 - "GET /health HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:53730 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:47186 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:56224 - "GET /api/vault/get/smtp_gmail/email HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:60984 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:50848 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     192.168.50.100:0 - "POST /api/chat HTTP/1.0" 200 OK
+INFO:     ***REMOVED***:53772 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:42148 - "GET /api/vault/get/rapidapi/api_key HTTP/1.1" 404 Not Found
+INFO:     192.168.50.100:0 - "POST /api/chat HTTP/1.0" 200 OK
+INFO:     ***REMOVED***:54670 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:38152 - "GET /api/echo/health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:38168 - "GET /health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:52348 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45864 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45866 - "GET /api/system/status HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:0 - "GET /api/health HTTP/1.0" 200 OK
+INFO:     ***REMOVED***:0 - "GET /api/system/status HTTP/1.0" 200 OK
+INFO:     ***REMOVED***:0 - "POST /api/chat HTTP/1.0" 200 OK
+INFO:     ***REMOVED***:43822 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:51082 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:45662 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:60708 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:36424 - "GET /api/vault/get/rapidapi/zillow/api_key HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:41544 - "GET /api/vault/get/rapidapi/api_key HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:60498 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:38632 - "GET /api/vault/get/rapidapi/zillow/api_key HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:38638 - "GET /api/vault/get/rapidapi/us_real_estate/api_key HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:38650 - "GET /api/vault/get/rapidapi/realty_mole/api_key HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:38656 - "GET /api/vault/get/rapidapi/redfin/api_key HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:38660 - "GET /api/vault/get/rapidapi/mashvisor/api_key HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:38664 - "GET /api/vault/get/rapidapi/calcx/api_key HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:38674 - "GET /api/vault/get/rapidapi/rentspree/api_key HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:38676 - "GET /api/vault/get/rapidapi/api_key HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:55736 - "GET /api/vault/get/rapidapi_key HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:55746 - "GET /api/vault/get/zillow/api_key HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:0 - "GET /api/health HTTP/1.0" 200 OK
+INFO:     127.0.0.1:41376 - "GET /api/vault/get/rapidapi/key HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:46214 - "GET /api/vault/get/rapidapi/api_key HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:47850 - "POST /api/vault/set/rapidapi/api_key HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:54338 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:47430 - "GET /api/vault/list HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:47436 - "GET /api/vault/get/smtp_gmail/email HTTP/1.1" 404 Not Found
+INFO:     192.168.50.100:0 - "POST /api/chat HTTP/1.0" 200 OK
+INFO:     ***REMOVED***:40810 - "POST /api/vault/store/rapidapi/api_key HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:40040 - "POST /api/vault/store HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:60638 - "POST /api/vault/set HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:60644 - "GET /api/ HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:50106 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "POST /api/vault/set HTTP/1.0" 404 Not Found
+INFO:     127.0.0.1:40434 - "GET /api/vault/get/test HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:47718 - "GET /health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:33350 - "POST /api/echo/chat HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:51698 - "GET /api/echo/health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:60274 - "POST /api/echo/chat HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:40802 - "POST /api/echo/chat HTTP/1.1" 404 Not Found
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.0" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.0" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.0" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.0" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.0" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.0" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.0" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.0" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.0" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.0" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.0" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.0" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.0" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.0" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.0" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.0" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.0" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.0" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.0" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.0" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.0" 200 OK
+INFO:     ***REMOVED***:57278 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.0" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.0" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.0" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.0" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/health HTTP/1.0" 200 OK
+INFO:     127.0.0.1:50970 - "POST /api/echo/web-search HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:50986 - "GET /api/vault/get/oauth/rapidapi HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:40116 - "POST /api/echo/web-search HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:41302 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57004 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57010 - "GET /api/vault/get/oauth/data/rapidapi HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:42362 - "POST /api/echo/web-search HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:50296 - "GET /api/echo/credit-monitoring HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:38836 - "POST /api/echo/stream HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:38850 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:55498 - "GET /api/echo/brain HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:48224 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:35050 - "POST /api/generate HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:35060 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36612 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36626 - "GET / HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:43038 - "POST /api/generate HTTP/1.1" 404 Not Found
+INFO:     ***REMOVED***:43040 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56988 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34248 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49838 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:36894 - "POST /api/vault/get HTTP/1.1" 307 Temporary Redirect
+INFO:     ***REMOVED***:36894 - "POST /api/vault/get/ HTTP/1.1" 405 Method Not Allowed
+INFO:     127.0.0.1:60782 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60792 - "GET /api/system/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51122 - "POST /api/system/service HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51332 - "POST /api/system/service HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51338 - "GET /api/system/info HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44562 - "POST /api/system/service HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:32832 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     ***REMOVED***:60140 - "POST /api/echo/stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40468 - "GET /api/echo/health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:60466 - "GET /health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58838 - "GET /api/echo/self-awareness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58852 - "POST /api/echo/introspection HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38466 - "POST /api/echo/self-analysis HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40176 - "GET /api/echo/health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:60442 - "GET /api/echo/self-awareness HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33882 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33882 - "POST /api/echo/voice/notify HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:40338 - "POST /api/echo/chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38396 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44076 - "POST /api/echo/chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60270 - "POST /api/echo/chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59536 - "POST /api/echo/self-analysis HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37058 - "GET /api/health HTTP/1.1" 200 OK
