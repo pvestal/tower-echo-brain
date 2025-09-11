@@ -19,6 +19,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 import uvicorn
 from echo_brain_thoughts import echo_brain
+from echo_autonomous_evolution import echo_autonomous_evolution
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -500,14 +501,20 @@ app = FastAPI(
 router = EchoIntelligenceRouter()
 database = EchoDatabase()
 conversation_manager = ConversationManager()
+evolution_system = echo_autonomous_evolution
 
 @app.on_event("startup")
 async def startup():
     """Initialize service on startup"""
     await database.create_tables_if_needed()
+    
+    # Start autonomous evolution system
+    asyncio.create_task(evolution_system.start_continuous_evolution())
+    
     logger.info("🧠 Echo Brain Unified Service - Started")
     logger.info("📊 Intelligence Levels: 1B → 70B parameters")
     logger.info("🚀 Dynamic escalation enabled")
+    logger.info("🔄 Autonomous evolution system activated")
 
 @app.get("/api/echo/health")
 async def health_check():
@@ -923,6 +930,166 @@ async def stream_query_processing(request: QueryRequest):
         }
     )
 
+# Autonomous Evolution API Endpoints
+
+@app.get("/api/echo/evolution/status")
+async def get_evolution_status():
+    """Get autonomous evolution system status"""
+    try:
+        return evolution_system.get_evolution_status()
+    except Exception as e:
+        logger.error(f"Failed to get evolution status: {e}")
+        return {"error": str(e)}
+
+@app.post("/api/echo/evolution/trigger")
+async def trigger_manual_evolution(request: dict):
+    """Manually trigger an evolution cycle"""
+    try:
+        reason = request.get("reason", "manual_api_trigger")
+        cycle_id = evolution_system.trigger_manual_evolution(reason)
+        return {
+            "success": True,
+            "cycle_id": str(cycle_id),
+            "message": "Evolution cycle triggered successfully"
+        }
+    except Exception as e:
+        logger.error(f"Failed to trigger evolution: {e}")
+        return {"error": str(e)}
+
+@app.get("/api/echo/evolution/git-status")
+async def get_git_status():
+    """Get git repository status for autonomous improvements"""
+    try:
+        git_status = evolution_system.git_manager.get_git_status()
+        evolution_status = evolution_system.git_manager.get_autonomous_evolution_status()
+        
+        return {
+            "git_status": git_status,
+            "evolution_capabilities": evolution_status["capabilities"],
+            "deployment_config": evolution_status["deployment_config"],
+            "safety_config": evolution_status["safety_config"],
+            "recent_improvements": evolution_status["recent_improvements"]
+        }
+    except Exception as e:
+        logger.error(f"Failed to get git status: {e}")
+        return {"error": str(e)}
+
+@app.post("/api/echo/evolution/self-analysis")
+async def trigger_self_analysis(request: dict):
+    """Trigger Echo's self-analysis system"""
+    try:
+        from echo_self_analysis import AnalysisDepth
+        
+        depth_str = request.get("depth", "functional")
+        depth = AnalysisDepth(depth_str)
+        context = request.get("context", {})
+        
+        analysis_result = await evolution_system.self_analysis.conduct_self_analysis(
+            depth=depth,
+            trigger_context=context
+        )
+        
+        return {
+            "analysis_id": analysis_result.analysis_id,
+            "timestamp": analysis_result.timestamp.isoformat(),
+            "depth": analysis_result.depth.value,
+            "awareness_level": analysis_result.awareness_level.value,
+            "insights": analysis_result.insights,
+            "action_items": analysis_result.action_items,
+            "recursive_observations": analysis_result.recursive_observations,
+            "capabilities": [
+                {
+                    "name": cap.capability_name,
+                    "current_level": cap.current_level,
+                    "desired_level": cap.desired_level,
+                    "gap": cap.desired_level - cap.current_level,
+                    "improvement_path": cap.improvement_path
+                }
+                for cap in analysis_result.capabilities
+            ]
+        }
+    except Exception as e:
+        logger.error(f"Failed to trigger self-analysis: {e}")
+        return {"error": str(e)}
+
+@app.get("/api/echo/evolution/learning-metrics")
+async def get_learning_metrics():
+    """Get Echo's learning progress metrics"""
+    try:
+        import psycopg2
+        import psycopg2.extras
+        
+        conn = psycopg2.connect(**database.db_config)
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        
+        # Get evolution cycles
+        cur.execute("""
+            SELECT COUNT(*) as total_cycles,
+                   SUM(CASE WHEN success THEN 1 ELSE 0 END) as successful_cycles,
+                   AVG(EXTRACT(EPOCH FROM (end_time - start_time))) as avg_duration_seconds
+            FROM echo_evolution_cycles 
+            WHERE end_time IS NOT NULL
+        """)
+        evolution_stats = cur.fetchone()
+        
+        # Get learning metrics
+        cur.execute("""
+            SELECT metric_type, count, last_updated
+            FROM echo_learning_metrics
+            ORDER BY last_updated DESC
+        """)
+        learning_metrics = cur.fetchall()
+        
+        # Get recent self-analysis results
+        cur.execute("""
+            SELECT analysis_id, timestamp, depth, insights, action_items
+            FROM echo_self_analysis
+            ORDER BY timestamp DESC
+            LIMIT 5
+        """)
+        recent_analyses = cur.fetchall()
+        
+        conn.close()
+        
+        return {
+            "evolution_statistics": dict(evolution_stats) if evolution_stats else {},
+            "learning_metrics": [dict(metric) for metric in learning_metrics],
+            "recent_analyses": [dict(analysis) for analysis in recent_analyses],
+            "current_state": evolution_system.learning_state,
+            "system_metrics": evolution_system.metrics
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get learning metrics: {e}")
+        return {"error": str(e)}
+
+# Update conversation tracking to trigger learning milestones
+async def update_conversation_tracking_with_evolution(query: str, response: str, model_used: str, 
+                                                     processing_time: float, conversation_id: str,
+                                                     user_id: str = "default"):
+    """Enhanced conversation tracking that updates evolution system"""
+    try:
+        # Update conversation count for evolution triggers
+        evolution_system.update_conversation_count()
+        
+        # Calculate performance score based on response quality
+        performance_score = min(1.0, len(response) / 100)  # Simple heuristic
+        if processing_time < 2.0:
+            performance_score += 0.1
+        if "error" not in response.lower():
+            performance_score += 0.1
+            
+        evolution_system.update_performance_metric(performance_score)
+        
+        # Log the interaction
+        await database.log_interaction(
+            query, response, model_used, processing_time, 
+            [], conversation_id, user_id
+        )
+        
+    except Exception as e:
+        logger.error(f"Failed to update conversation tracking: {e}")
+
 if __name__ == "__main__":
     logger.info("🚀 Starting Echo Brain Unified Service")
     logger.info("🔗 Consolidating 5 fragmented Echo services")
@@ -931,7 +1098,7 @@ if __name__ == "__main__":
     uvicorn.run(
         "echo_unified_service:app",
         host="0.0.0.0",
-        port=8313,
+        port=8309,
         reload=False,
         workers=1
     )
