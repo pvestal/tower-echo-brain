@@ -27,7 +27,7 @@ class EchoSimpleService:
             "host": "192.168.50.135",
             "database": "tower_consolidated", 
             "user": "patrick",
-            "password": "admin123"
+            "password": "password"
         }
         self.responses = {
             "hello": "Hello! I'm Echo, your voice assistant.",
