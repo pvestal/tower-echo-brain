@@ -1,0 +1,44 @@
+{
+  "tests_run": 10,
+  "tests_passed": 3,
+  "tests_failed": 7,
+  "failures": [
+    {
+      "test": "Service Health Check",
+      "error": "HTTP 404",
+      "timestamp": "2025-09-11T00:15:39.327693"
+    },
+    {
+      "test": "Evolution Status",
+      "error": "HTTP 404",
+      "timestamp": "2025-09-11T00:15:40.330595"
+    },
+    {
+      "test": "Git Status",
+      "error": "HTTP 404",
+      "timestamp": "2025-09-11T00:15:41.333683"
+    },
+    {
+      "test": "Self-Analysis Trigger",
+      "error": "HTTP 404",
+      "timestamp": "2025-09-11T00:15:42.336497"
+    },
+    {
+      "test": "Learning Metrics",
+      "error": "HTTP 404",
+      "timestamp": "2025-09-11T00:15:43.339367"
+    },
+    {
+      "test": "Conversation Processing",
+      "error": "HTTP 404",
+      "timestamp": "2025-09-11T00:15:44.342180"
+    },
+    {
+      "test": "Manual Evolution Trigger",
+      "error": "Cannot get initial status",
+      "timestamp": "2025-09-11T00:15:45.344800"
+    }
+  ],
+  "start_time": "2025-09-11 00:15:39.325799",
+  "end_time": "2025-09-11 00:15:49.383219"
+}
