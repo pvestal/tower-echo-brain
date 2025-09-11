@@ -48121,3 +48121,104 @@ connection to server at "192.168.50.135", port 5432 failed: FATAL:  password aut
 
 INFO:echo_git_integration:Created improvement branch: echo-improvement/self_analysis_analysis_20250910_235144_20250910_2351
 INFO:echo_git_integration:Created self-improvement file: improvements/echo_improvement_20250910_235144.py
+INFO:echo_git_integration:Committed improvement: Self-analysis based improvements (analysis_20250910_235144)
+ERROR:echo_git_integration:Git command failed: ['git', 'checkout', 'main'] - error: Your local changes to the following files would be overwritten by checkout:
+	logs/echo_error.log
+Please commit your changes or stash them before you switch branches.
+Aborting
+
+ERROR:echo_git_integration:Failed to merge improvement branch: Command '['git', 'checkout', 'main']' returned non-zero exit status 1.
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [11031]
+INFO:echo_database_fallback:SQLite fallback database initialized
+WARNING:echo_database_fallback:PostgreSQL connection failed: connection to server at "192.168.50.135", port 5432 failed: FATAL:  password authentication failed for user "patrick"
+connection to server at "192.168.50.135", port 5432 failed: FATAL:  password authentication failed for user "patrick"
+
+INFO:echo_database_fallback:Using SQLite fallback for Echo conversations
+INFO:__main__:Database manager initialized - using fallback: True
+INFO:__main__:Git integration initialized for autonomous improvements
+INFO:__main__:Starting Enhanced Echo Service with Tower Management on port 8309
+INFO:     Started server process [25949]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8309 (Press CTRL+C to quit)
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [25949]
+INFO:echo_database_fallback:SQLite fallback database initialized
+WARNING:echo_database_fallback:PostgreSQL connection failed: connection to server at "192.168.50.135", port 5432 failed: FATAL:  password authentication failed for user "patrick"
+connection to server at "192.168.50.135", port 5432 failed: FATAL:  password authentication failed for user "patrick"
+
+INFO:echo_database_fallback:Using SQLite fallback for Echo conversations
+INFO:__main__:Database manager initialized - using fallback: True
+INFO:__main__:Git integration initialized for autonomous improvements
+INFO:__main__:Starting Enhanced Echo Service with Tower Management on port 8309
+INFO:     Started server process [57216]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8309 (Press CTRL+C to quit)
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [57216]
+INFO:echo_database_fallback:SQLite fallback database initialized
+WARNING:echo_database_fallback:PostgreSQL connection failed: connection to server at "192.168.50.135", port 5432 failed: FATAL:  password authentication failed for user "patrick"
+connection to server at "192.168.50.135", port 5432 failed: FATAL:  password authentication failed for user "patrick"
+
+INFO:echo_database_fallback:Using SQLite fallback for Echo conversations
+INFO:__main__:Database manager initialized - using fallback: True
+INFO:__main__:Git integration initialized for autonomous improvements
+INFO:__main__:Starting Enhanced Echo Service with Tower Management on port 8309
+INFO:     Started server process [59573]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8309 (Press CTRL+C to quit)
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [59573]
+INFO:echo_database_fallback:SQLite fallback database initialized
+INFO:echo_database_fallback:PostgreSQL connection successful
+INFO:__main__:Database manager initialized - using fallback: False
+INFO:__main__:Git integration initialized for autonomous improvements
+INFO:__main__:Starting Enhanced Echo Service with Tower Management on port 8309
+INFO:     Started server process [62024]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8309 (Press CTRL+C to quit)
+ERROR:echo_database_fallback:PostgreSQL conversation storage failed: column "context_data" of relation "echo_conversations" does not exist
+LINE 2: ...cho_conversations (message, response, project_id, context_da...
+                                                             ^
+
+ERROR:echo_database_fallback:Failed to store conversation: column "context_data" of relation "echo_conversations" does not exist
+LINE 2: ...cho_conversations (message, response, project_id, context_da...
+                                                             ^
+
+ERROR:__main__:Failed to log conversation with database manager
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [62024]
+INFO:echo_database_fallback:SQLite fallback database initialized
+INFO:echo_database_fallback:PostgreSQL connection successful
+INFO:__main__:Database manager initialized - using fallback: False
+INFO:__main__:Git integration initialized for autonomous improvements
+INFO:__main__:Starting Enhanced Echo Service with Tower Management on port 8309
+INFO:     Started server process [64393]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8309 (Press CTRL+C to quit)
+INFO:__main__:Starting streaming response for message: Hello Echo, this is a test of your restored databa...
+INFO:echo_self_analysis:Echo initiating self-analysis: functional depth
+ERROR:echo_self_analysis:Error storing self-analysis: connection to server at "192.168.50.135", port 5432 failed: FATAL:  password authentication failed for user "patrick"
+connection to server at "192.168.50.135", port 5432 failed: FATAL:  password authentication failed for user "patrick"
+
+ERROR:echo_database_fallback:PostgreSQL self-analysis storage failed: relation "echo_self_analysis" does not exist
+LINE 2:                 INSERT INTO echo_self_analysis 
+                                    ^
+
+INFO:echo_git_integration:Created improvement branch: echo-improvement/self_analysis_analysis_20250911_000415_20250911_0004
+INFO:echo_git_integration:Created self-improvement file: improvements/echo_improvement_20250911_000415.py

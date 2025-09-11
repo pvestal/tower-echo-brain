@@ -178,7 +178,7 @@ class EnhancedEchoService:
             "host": "***REMOVED***",
             "database": "tower_consolidated", 
             "user": "patrick",
-            "password": "admin123"
+            "password": "password"
         }
         
         # Initialize database manager with fallback
