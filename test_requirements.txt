@@ -1,0 +1,65 @@
+# Test Requirements for Echo Brain Board of Directors
+# Production-grade testing dependencies
+
+# Core testing framework
+pytest>=8.0.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0
+pytest-mock>=3.12.0
+pytest-xdist>=3.5.0
+pytest-html>=4.1.0
+pytest-json-report>=1.5.0
+pytest-timeout>=2.2.0
+pytest-benchmark>=4.0.0
+
+# Testing utilities
+factory-boy>=3.3.0
+faker>=20.0.0
+freezegun>=1.4.0
+responses>=0.24.0
+httpx>=0.26.0
+aioresponses>=0.7.6
+
+# Code quality and security testing
+bandit>=1.7.5
+safety>=2.3.0
+semgrep>=1.45.0
+flake8>=7.0.0
+black>=23.12.0
+isort>=5.13.0
+mypy>=1.8.0
+
+# Coverage and reporting
+coverage>=7.3.0
+coverage-badge>=1.1.0
+
+# Mock and test data
+pydantic-factories>=1.17.0
+mimesis>=11.1.0
+
+# Performance testing
+locust>=2.17.0
+memory-profiler>=0.61.0
+
+# Database testing
+pytest-postgresql>=5.0.0
+alembic>=1.13.0
+
+# API testing
+fastapi[all]>=0.104.1
+httpx>=0.26.0
+websockets>=12.0
+
+# Security testing
+cryptography>=41.0.0
+passlib>=1.7.4
+python-multipart>=0.0.6
+
+# Development utilities
+ipdb>=0.13.13
+pre-commit>=3.6.0
+commitizen>=3.13.0
+
+# CI/CD utilities
+tox>=4.11.0
+nox>=2023.4.22

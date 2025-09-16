@@ -240,30 +240,84 @@ class SafeShellExecutor:
             'git', 'docker', 'python3', 'pip3', 'npm', 'node', 'pnpm'
         }
         
-        # Dangerous patterns to block
+        # SECURITY FIX: Enhanced dangerous patterns to block including directory traversal
         self.dangerous_patterns = [
             r'rm\s+-rf?\s*/', r'sudo\s+rm', r'>\s*/dev/', r'dd\s+if=',
             r'mkfs', r'fdisk', r'parted', r'format', r'del\s+/[qsf]',
             r'shutdown', r'reboot', r'halt', r'init\s+[06]',
-            r':\(\)\{', r'fork\s*\(', r'while\s*true', r'yes\s*\|'
+            r':\(\)\{', r'fork\s*\(', r'while\s*true', r'yes\s*\|',
+            # Directory traversal patterns
+            r'\.\./', r'\.\.\\', r'\.\.%2f', r'\.\.%5c',
+            r'%2e%2e%2f', r'%2e%2e%5c', r'%252e%252e%252f',
+            r'\.\.\/\.\.\/', r'\.\.\\\.\.\\',
+            # Path injection patterns
+            r'/etc/passwd', r'/etc/shadow', r'/proc/', r'/sys/',
+            r'C:\\Windows\\System32', r'C:\\Windows\\system32',
+            # Command injection patterns
+            r';\s*rm', r'&&\s*rm', r'\|\s*rm', r'`rm', r'\$\(rm',
+            r';\s*cat\s+/etc', r'&&\s*cat\s+/etc', r'\|\s*cat\s+/etc'
         ]
     
     def is_command_safe(self, command: str, safe_mode: bool = True) -> tuple[bool, str]:
-        """Check if command is safe to execute"""
+        """SECURITY FIX: Enhanced command safety validation with path normalization"""
         if not safe_mode:
             return True, "Safe mode disabled"
-        
+
         # Check for dangerous patterns
         for pattern in self.dangerous_patterns:
             if re.search(pattern, command, re.IGNORECASE):
                 return False, f"Command blocked by pattern: {pattern}"
-        
+
+        # SECURITY FIX: Validate file paths in command arguments
+        import shlex
+        try:
+            args = shlex.split(command)
+        except ValueError:
+            return False, "Invalid command syntax"
+
+        for arg in args:
+            # Check for path traversal in arguments
+            if self._contains_path_traversal(arg):
+                return False, f"Path traversal detected in argument: {arg}"
+
         # Check if base command is in safe list
-        base_cmd = command.strip().split()[0] if command.strip() else ""
+        base_cmd = args[0] if args else ""
         if base_cmd not in self.safe_commands:
             return False, f"Command '{base_cmd}' not in safe commands list"
-        
+
         return True, "Command passed safety checks"
+
+    def _contains_path_traversal(self, path: str) -> bool:
+        """SECURITY FIX: Check if path contains directory traversal attempts"""
+        import os.path
+
+        # Normalize the path to resolve any relative components
+        try:
+            normalized = os.path.normpath(path)
+
+            # Check for directory traversal indicators
+            traversal_indicators = [
+                '..', '../', '..\\', './', '.\\',
+                '%2e%2e', '%2e%2e%2f', '%2e%2e%5c',
+                '%252e%252e%252f', '%252e%252e%255c'
+            ]
+
+            for indicator in traversal_indicators:
+                if indicator in path.lower():
+                    return True
+
+            # Check if normalized path goes outside intended boundaries
+            if normalized.startswith('/etc/') or normalized.startswith('/proc/') or normalized.startswith('/sys/'):
+                return True
+
+            if normalized.startswith('C:\\Windows\\') or normalized.startswith('c:\\windows\\'):
+                return True
+
+            return False
+
+        except (ValueError, OSError):
+            # If path cannot be normalized, consider it suspicious
+            return True
     
     async def execute_command(self, command: str, safe_mode: bool = True) -> Dict:
         """Execute a shell command safely"""
@@ -916,12 +970,20 @@ class EchoDatabase:
     """Unified database manager for Echo learning"""
     
     def __init__(self):
+        # SECURITY FIX: Use environment variables for sensitive database credentials
+        import os
+
         self.db_config = {
-            "host": "***REMOVED***",
-            "database": "tower_consolidated", 
-            "user": "patrick",
-            "password": "password"
+            "host": os.environ.get("DB_HOST", "***REMOVED***"),
+            "database": os.environ.get("DB_NAME", "tower_consolidated"),
+            "user": os.environ.get("DB_USER", "patrick"),
+            "password": os.environ.get("DB_PASSWORD")
         }
+
+        # SECURITY FIX: Require database password to be set via environment variable
+        if not self.db_config["password"]:
+            logger.critical("DB_PASSWORD environment variable is required for secure database access")
+            raise ValueError("Database password must be configured via DB_PASSWORD environment variable")
     
     async def log_interaction(self, query: str, response: str, model_used: str, 
                             processing_time: float, escalation_path: List[str],

@@ -8,7 +8,7 @@ import logging
 import json
 import uuid
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Union
+from typing import Dict, List, Optional, Any, Union, Tuple
 from dataclasses import dataclass, asdict
 from enum import Enum
 import psycopg2
@@ -835,14 +835,29 @@ class UserPreferences:
     def _update_profile_field(self, user_id: str, field: str, value: Any):
         """Update a specific profile field"""
         try:
+            # SECURITY FIX: Validate field name against allowed columns to prevent SQL injection
+            allowed_fields = {
+                'automation_level', 'notification_preferences', 'ui_preferences',
+                'board_oversight_threshold', 'confidence_threshold', 'preferred_directors',
+                'override_history_enabled', 'advanced_features_enabled'
+            }
+
+            if field not in allowed_fields:
+                logger.error(f"Attempted to update invalid field '{field}' - potential SQL injection attempt")
+                raise ValueError(f"Invalid field name: {field}")
+
             conn = psycopg2.connect(**self.db_config)
             cursor = conn.cursor()
 
-            cursor.execute(f"""
+            # Use psycopg2.sql.Identifier for safe column name interpolation
+            from psycopg2 import sql
+            query = sql.SQL("""
                 UPDATE user_profiles
                 SET {field} = %s, last_updated = NOW()
                 WHERE user_id = %s
-            """, (value, user_id))
+            """).format(field=sql.Identifier(field))
+
+            cursor.execute(query, (value, user_id))
 
             conn.commit()
             conn.close()

@@ -15,6 +15,8 @@ import signal
 import time
 import resource
 import psutil
+import ast
+import sys
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any, Tuple, Union
 from dataclasses import dataclass, asdict
@@ -24,6 +26,92 @@ import threading
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
+
+class ASTSecurityValidator:
+    """
+    SECURITY FIX: Comprehensive AST validation for secure code execution
+    Prevents dangerous operations through Abstract Syntax Tree analysis
+    """
+
+    DANGEROUS_BUILTINS = {
+        'eval', 'exec', 'compile', 'open', '__import__', 'globals', 'locals',
+        'vars', 'dir', 'hasattr', 'getattr', 'setattr', 'delattr',
+        'input', 'raw_input', 'reload', 'breakpoint'
+    }
+
+    DANGEROUS_MODULES = {
+        'os', 'sys', 'subprocess', 'shutil', 'tempfile', 'pickle', 'marshal',
+        'imp', 'importlib', 'types', 'code', 'codeop', 'compileall',
+        'socket', 'urllib', 'http', 'ftplib', 'smtplib', 'telnetlib',
+        'ctypes', 'multiprocessing', 'threading', 'asyncio'
+    }
+
+    ALLOWED_MODULES = {
+        'math', 'random', 'datetime', 'json', 're', 'string', 'itertools',
+        'collections', 'functools', 'operator', 'heapq', 'bisect', 'array',
+        'copy', 'decimal', 'fractions', 'statistics', 'uuid', 'hashlib',
+        'base64', 'binascii', 'struct', 'zlib', 'gzip', 'bz2', 'lzma'
+    }
+
+    @classmethod
+    def validate_code(cls, code: str) -> Tuple[bool, List[str]]:
+        """
+        Validate Python code using AST analysis
+
+        Args:
+            code: Python code to validate
+
+        Returns:
+            Tuple of (is_safe, violations_list)
+        """
+        violations = []
+
+        try:
+            # Parse code into AST
+            tree = ast.parse(code)
+        except SyntaxError as e:
+            violations.append(f"Syntax error: {e}")
+            return False, violations
+
+        # Walk the AST and check for dangerous operations
+        for node in ast.walk(tree):
+            # Check for dangerous function calls
+            if isinstance(node, ast.Call):
+                if isinstance(node.func, ast.Name):
+                    if node.func.id in cls.DANGEROUS_BUILTINS:
+                        violations.append(f"Dangerous builtin function: {node.func.id}")
+                elif isinstance(node.func, ast.Attribute):
+                    if hasattr(node.func.value, 'id') and node.func.value.id in cls.DANGEROUS_MODULES:
+                        violations.append(f"Dangerous module call: {node.func.value.id}.{node.func.attr}")
+
+            # Check for imports
+            elif isinstance(node, (ast.Import, ast.ImportFrom)):
+                if isinstance(node, ast.Import):
+                    for alias in node.names:
+                        module_name = alias.name.split('.')[0]
+                        if module_name in cls.DANGEROUS_MODULES:
+                            violations.append(f"Dangerous module import: {module_name}")
+                        elif module_name not in cls.ALLOWED_MODULES:
+                            violations.append(f"Unauthorized module import: {module_name}")
+                elif isinstance(node, ast.ImportFrom):
+                    module_name = node.module.split('.')[0] if node.module else ''
+                    if module_name in cls.DANGEROUS_MODULES:
+                        violations.append(f"Dangerous module import: {module_name}")
+                    elif module_name and module_name not in cls.ALLOWED_MODULES:
+                        violations.append(f"Unauthorized module import: {module_name}")
+
+            # Check for attribute access to dangerous attributes
+            elif isinstance(node, ast.Attribute):
+                dangerous_attrs = ['__globals__', '__locals__', '__dict__', '__class__', '__bases__']
+                if node.attr in dangerous_attrs:
+                    violations.append(f"Dangerous attribute access: {node.attr}")
+
+            # Check for exec/eval in string literals
+            elif isinstance(node, ast.Str):
+                if 'eval(' in node.s or 'exec(' in node.s:
+                    violations.append("String contains eval/exec code")
+
+        return len(violations) == 0, violations
 
 class ExecutionResult(Enum):
     SUCCESS = "success"
@@ -223,29 +311,49 @@ class SandboxExecutor:
             )
 
     def _validate_execution_context(self, context: ExecutionContext) -> ExecutionOutput:
-        """Validate execution context for security"""
+        """SECURITY FIX: Enhanced validation with AST analysis"""
         violations = []
 
         # Check code length
         if len(context.code) > 1024 * 1024:  # 1MB limit
             violations.append("Code too large (>1MB)")
 
-        # Check for blocked imports
+        # SECURITY FIX: Use AST validation for comprehensive security analysis
+        if context.language == "python":
+            is_safe, ast_violations = ASTSecurityValidator.validate_code(context.code)
+            if not is_safe:
+                violations.extend(ast_violations)
+
+        # Check for blocked imports (legacy fallback)
         if context.security_policy.blocked_imports:
             for blocked in context.security_policy.blocked_imports:
                 if f"import {blocked}" in context.code or f"from {blocked}" in context.code:
                     violations.append(f"Blocked import: {blocked}")
 
-        # Check for blocked system calls
+        # Check for blocked system calls (enhanced pattern matching)
         if context.security_policy.blocked_system_calls:
             for blocked in context.security_policy.blocked_system_calls:
-                if blocked in context.code:
+                # More sophisticated pattern matching
+                import re
+                pattern = rf'\b{re.escape(blocked)}\b'
+                if re.search(pattern, context.code):
                     violations.append(f"Blocked system call: {blocked}")
 
-        # Check for eval/exec if not allowed
+        # Strict eval/exec checking
         if not context.security_policy.allow_eval_exec:
-            if "eval(" in context.code or "exec(" in context.code:
-                violations.append("Dynamic code execution not allowed")
+            import re
+            # Check for various forms of dynamic execution
+            dangerous_patterns = [
+                r'\beval\s*\(',
+                r'\bexec\s*\(',
+                r'\bcompile\s*\(',
+                r'__import__\s*\(',
+                r'globals\s*\(\)',
+                r'locals\s*\(\)'
+            ]
+            for pattern in dangerous_patterns:
+                if re.search(pattern, context.code):
+                    violations.append(f"Dynamic code execution not allowed: {pattern}")
 
         if violations:
             return ExecutionOutput(
@@ -326,7 +434,7 @@ class SandboxExecutor:
                 'PYTHONUNBUFFERED': '1'
             })
 
-            # Run container
+            # SECURITY FIX: Run container with comprehensive security constraints
             container = self.docker_client.containers.run(
                 self.docker_image,
                 command=['python', '/workspace/code.py'],
@@ -336,6 +444,18 @@ class SandboxExecutor:
                 cpu_quota=cpu_quota,
                 cpu_period=100000,
                 network_disabled=not context.security_policy.allow_network,
+                # SECURITY FIX: Enhanced Docker security constraints
+                user='1000:1000',  # Run as non-root user
+                read_only=True,    # Read-only filesystem
+                security_opt=['no-new-privileges:true'],  # Prevent privilege escalation
+                cap_drop=['ALL'],  # Drop all capabilities
+                cap_add=['SETUID', 'SETGID'] if context.security_policy.allow_setuid else [],
+                pids_limit=context.limits.max_processes,  # Limit process count
+                privileged=False,  # Never run privileged containers
+                # Mount /tmp as tmpfs to prevent persistent file access
+                tmpfs={'/tmp': 'size=100m,noexec,nosuid,nodev'},
+                # Additional security options
+                shm_size='64m',    # Limit shared memory
                 remove=False,
                 detach=True,
                 stdout=True,
