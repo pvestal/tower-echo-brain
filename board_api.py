@@ -7,9 +7,10 @@ FastAPI endpoints for transparent decision tracking and user interaction
 import logging
 import json
 import uuid
+import os
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, BackgroundTasks
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, BackgroundTasks, Depends
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel, Field
 import asyncio
@@ -20,6 +21,10 @@ from directors.decision_tracker import (
     Evidence, EvidenceType, DecisionStatus
 )
 from directors.director_registry import DirectorRegistry
+from directors.auth_middleware import (
+    get_current_user, get_optional_user, require_permission,
+    authenticate_websocket, auth_middleware
+)
 
 logger = logging.getLogger(__name__)
 
@@ -136,6 +141,29 @@ class BoardAPI:
             version="1.0.0"
         )
 
+        # Add global exception handler
+        @self.app.exception_handler(Exception)
+        async def global_exception_handler(request, exc):
+            """Global exception handler for unhandled errors"""
+            request_id = str(uuid.uuid4())
+            logger.error(f"Unhandled exception [request_id: {request_id}]: {exc}", exc_info=True)
+
+            # Don't expose internal error details in production
+            if isinstance(exc, HTTPException):
+                return JSONResponse(
+                    status_code=exc.status_code,
+                    content={"detail": exc.detail, "request_id": request_id}
+                )
+
+            return JSONResponse(
+                status_code=500,
+                content={
+                    "detail": "Internal server error",
+                    "request_id": request_id,
+                    "type": "internal_error"
+                }
+            )
+
         self._setup_routes()
 
     def _setup_routes(self):
@@ -144,7 +172,8 @@ class BoardAPI:
         @self.app.post("/api/board/task", response_model=TaskSubmissionResponse)
         async def submit_task(
             request: TaskSubmissionRequest,
-            background_tasks: BackgroundTasks
+            background_tasks: BackgroundTasks,
+            user_info: Dict[str, Any] = Depends(require_permission("board.submit_task"))
         ) -> TaskSubmissionResponse:
             """Submit a task for board evaluation"""
             try:
@@ -153,7 +182,7 @@ class BoardAPI:
                 # Start task tracking
                 task_decision = self.decision_tracker.start_task_tracking(
                     task_id=task_id,
-                    user_id=request.user_id,
+                    user_id=user_info.get('user_id', 'anonymous'),
                     original_request=request.task_description
                 )
 
@@ -269,7 +298,8 @@ class BoardAPI:
         @self.app.post("/api/board/feedback/{task_id}", response_model=UserFeedbackResponse)
         async def submit_user_feedback(
             task_id: str,
-            request: UserFeedbackRequest
+            request: UserFeedbackRequest,
+            user_info: Dict[str, Any] = Depends(require_permission("board.provide_feedback"))
         ) -> UserFeedbackResponse:
             """Submit user feedback or override for a task decision"""
             try:
@@ -290,7 +320,7 @@ class BoardAPI:
 
                     success = self.decision_tracker.add_user_override(
                         task_id=task_id,
-                        user_id="user",  # TODO: Get from auth context
+                        user_id=user_info.get('user_id', 'anonymous'),
                         override_type=request.feedback_type,
                         original_rec=task_decision.final_recommendation,
                         new_rec=request.override_recommendation,
@@ -398,9 +428,33 @@ class BoardAPI:
 
         @self.app.websocket("/api/board/ws")
         async def websocket_endpoint(websocket: WebSocket):
-            """WebSocket endpoint for real-time board updates"""
+            """WebSocket endpoint for real-time board updates with authentication"""
+            # Authenticate WebSocket connection
+            user_info = await authenticate_websocket(websocket)
+
+            if not user_info:
+                await websocket.close(code=1008, reason="Authentication required")
+                logger.warning("WebSocket connection rejected: authentication failed")
+                return
+
+            # Check connection limits
+            if len(self.connection_manager.active_connections) >= int(os.environ.get("MAX_WEBSOCKET_CONNECTIONS", "50")):
+                await websocket.close(code=1013, reason="Connection limit exceeded")
+                logger.warning(f"WebSocket connection rejected: limit exceeded for user {user_info.get('user_id', 'unknown')}")
+                return
+
             await self.connection_manager.connect(websocket)
+            logger.info(f"Authenticated WebSocket connection for user: {user_info.get('user_id', 'unknown')}")
+
             try:
+                # Send welcome message with user info
+                await websocket.send_text(json.dumps({
+                    "type": "welcome",
+                    "user_id": user_info.get('user_id', 'unknown'),
+                    "message": "Connected to Echo Brain Board",
+                    "permissions": user_info.get('permissions', [])
+                }))
+
                 while True:
                     # Keep connection alive and listen for client messages
                     data = await websocket.receive_text()
@@ -408,13 +462,29 @@ class BoardAPI:
                     # Handle client messages (e.g., subscribe to specific task updates)
                     try:
                         message = json.loads(data)
+
                         if message.get("type") == "ping":
                             await websocket.send_text(json.dumps({"type": "pong"}))
+                        elif message.get("type") == "subscribe":
+                            # Handle subscription requests (could add permission checks here)
+                            task_id = message.get("task_id")
+                            if task_id:
+                                await websocket.send_text(json.dumps({
+                                    "type": "subscribed",
+                                    "task_id": task_id
+                                }))
+                                logger.info(f"User {user_info.get('user_id')} subscribed to task {task_id}")
+
                     except json.JSONDecodeError:
-                        logger.warning(f"Invalid JSON from WebSocket client: {data}")
+                        logger.warning(f"Invalid JSON from WebSocket client {user_info.get('user_id', 'unknown')}: {data}")
+                        await websocket.send_text(json.dumps({
+                            "type": "error",
+                            "message": "Invalid JSON format"
+                        }))
 
             except WebSocketDisconnect:
                 self.connection_manager.disconnect(websocket)
+                logger.info(f"WebSocket disconnected for user: {user_info.get('user_id', 'unknown')}")
 
         @self.app.get("/api/board/analytics")
         async def get_board_analytics(
