@@ -27,8 +27,10 @@ class AuthMiddleware:
         self.jwt_secret = os.environ.get("JWT_SECRET", "")
         self.token_expiry_minutes = int(os.environ.get("TOKEN_EXPIRY_MINUTES", "30"))
 
+        # SECURITY FIX: Require JWT_SECRET to be configured - no fallback authentication
         if not self.jwt_secret:
-            logger.warning("JWT_SECRET not configured - using fallback authentication")
+            logger.critical("JWT_SECRET environment variable is required for secure authentication")
+            raise ValueError("JWT_SECRET must be configured. Fallback authentication is disabled for security.")
 
     async def verify_token(self, token: str) -> Optional[Dict[str, Any]]:
         """
@@ -41,43 +43,38 @@ class AuthMiddleware:
             User information if valid, None if invalid
         """
         try:
-            # First try local JWT verification
-            if self.jwt_secret:
-                try:
-                    payload = jwt.decode(
-                        token,
-                        self.jwt_secret,
-                        algorithms=["HS256"]
-                    )
+            # SECURITY FIX: Only use JWT verification - no fallback authentication
+            payload = jwt.decode(
+                token,
+                self.jwt_secret,
+                algorithms=["HS256"]
+            )
 
-                    # Check expiration
-                    exp = payload.get('exp', 0)
-                    if datetime.utcnow().timestamp() > exp:
-                        logger.warning("Token expired")
-                        return None
+            # Check expiration
+            exp = payload.get('exp', 0)
+            if datetime.utcnow().timestamp() > exp:
+                logger.warning("Token expired")
+                return None
 
-                    return {
-                        'user_id': payload.get('user_id', 'unknown'),
-                        'username': payload.get('username', 'unknown'),
-                        'roles': payload.get('roles', []),
-                        'permissions': payload.get('permissions', [])
-                    }
-                except jwt.InvalidTokenError as e:
-                    logger.warning(f"JWT verification failed: {e}")
+            # Validate required fields
+            user_id = payload.get('user_id')
+            if not user_id:
+                logger.warning("Token missing required user_id field")
+                return None
 
-            # Fallback to Tower auth service verification
-            async with aiohttp.ClientSession() as session:
-                async with session.post(
-                    f"{self.auth_service_url}/api/auth/verify",
-                    headers={"Authorization": f"Bearer {token}"},
-                    timeout=aiohttp.ClientTimeout(total=5)
-                ) as response:
-                    if response.status == 200:
-                        return await response.json()
-                    else:
-                        logger.warning(f"Auth service verification failed: {response.status}")
-                        return None
+            return {
+                'user_id': user_id,
+                'username': payload.get('username', 'unknown'),
+                'roles': payload.get('roles', []),
+                'permissions': payload.get('permissions', [])
+            }
 
+        except jwt.ExpiredSignatureError:
+            logger.warning("JWT token has expired")
+            return None
+        except jwt.InvalidTokenError as e:
+            logger.warning(f"JWT verification failed: {e}")
+            return None
         except Exception as e:
             logger.error(f"Token verification error: {e}")
             return None
@@ -146,29 +143,37 @@ class AuthMiddleware:
             user_permissions = user.get('permissions', [])
             user_roles = user.get('roles', [])
 
-            # Check direct permission
+            # SECURITY FIX: Strengthen role-based permission checks
+            # Check direct permission first
             if permission in user_permissions:
                 return user
 
-            # Check role-based permissions
-            admin_roles = ['admin', 'board_admin', 'system_admin']
+            # Strict admin role verification with additional checks
+            admin_roles = ['system_admin']  # Reduced admin scope
             if any(role in user_roles for role in admin_roles):
+                # Additional verification for admin actions
+                admin_permissions = [
+                    'system.admin', 'board.admin', 'security.admin'
+                ]
+                if any(admin_perm in user_permissions for admin_perm in admin_permissions):
+                    return user
+
+            # Specific board permissions must be explicitly granted
+            board_permissions_map = {
+                'board.submit_task': ['board_user', 'board_contributor'],
+                'board.view_decisions': ['board_user', 'board_viewer', 'board_contributor'],
+                'board.provide_feedback': ['board_contributor', 'board_reviewer'],
+                'board.override_decisions': ['board_admin', 'system_admin']
+            }
+
+            required_roles = board_permissions_map.get(permission, [])
+            if permission in board_permissions_map and any(role in user_roles for role in required_roles):
                 return user
 
-            # Check specific board permissions
-            board_permissions = [
-                'board.submit_task',
-                'board.view_decisions',
-                'board.provide_feedback',
-                'board.override_decisions'
-            ]
-
-            if permission in board_permissions and 'board_user' in user_roles:
-                return user
-
+            logger.warning(f"Access denied for user {user.get('user_id')} to permission '{permission}'")
             raise HTTPException(
                 status_code=403,
-                detail=f"Permission '{permission}' required"
+                detail=f"Insufficient permissions. Required: '{permission}'"
             )
 
         return permission_checker
