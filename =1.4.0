@@ -1,0 +1,10 @@
+Collecting pytest-timeout
+  Using cached pytest_timeout-2.4.0-py3-none-any.whl.metadata (20 kB)
+Requirement already satisfied: pytest>=7.0.0 in ./venv/lib/python3.12/site-packages (from pytest-timeout) (8.4.2)
+Requirement already satisfied: iniconfig>=1 in ./venv/lib/python3.12/site-packages (from pytest>=7.0.0->pytest-timeout) (2.1.0)
+Requirement already satisfied: packaging>=20 in ./venv/lib/python3.12/site-packages (from pytest>=7.0.0->pytest-timeout) (25.0)
+Requirement already satisfied: pluggy<2,>=1.5 in ./venv/lib/python3.12/site-packages (from pytest>=7.0.0->pytest-timeout) (1.6.0)
+Requirement already satisfied: pygments>=2.7.2 in ./venv/lib/python3.12/site-packages (from pytest>=7.0.0->pytest-timeout) (2.19.2)
+Using cached pytest_timeout-2.4.0-py3-none-any.whl (14 kB)
+Installing collected packages: pytest-timeout
+Successfully installed pytest-timeout-2.4.0
