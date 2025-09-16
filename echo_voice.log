@@ -1,0 +1,30 @@
+/opt/tower-echo-brain/venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:149: UserWarning: Field "model_used" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/opt/tower-echo-brain/echo_voice_enhanced.py:330: DeprecationWarning: 
+        on_event is deprecated, use lifespan event handlers instead.
+
+        Read more about it in the
+        [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+        
+  @app.on_event("startup")
+INFO:__main__:🚀 Starting Echo Brain Unified Service with Voice Integration
+INFO:     Started server process [183241]
+INFO:     Waiting for application startup.
+INFO:echo_voice_enhanced:🧠 Echo Brain starting up with voice integration...
+WARNING:echo_voice_enhanced:Voice service returned 404
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8309 (Press CTRL+C to quit)
+INFO:     127.0.0.1:49194 - "GET /api/echo/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49196 - "GET /api/echo/voice/status HTTP/1.1" 200 OK
+WARNING:echo_voice_enhanced:Voice service returned 404
+INFO:echo_voice_enhanced:🧠 Echo routing to tinyllama:latest for query complexity analysis
+WARNING:echo_voice_enhanced:Voice service returned 404
+INFO:     127.0.0.1:47674 - "POST /api/echo/query HTTP/1.1" 200 OK
+WARNING:echo_voice_enhanced:Voice service returned 404
+INFO:     127.0.0.1:42226 - "POST /api/echo/voice/notify HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [183241]

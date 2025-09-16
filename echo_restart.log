@@ -1,0 +1,33 @@
+/opt/tower-echo-brain/echo_unified_service_with_voice.py:1227: DeprecationWarning: 
+        on_event is deprecated, use lifespan event handlers instead.
+
+        Read more about it in the
+        [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+        
+  @app.on_event("startup")
+INFO:__main__:🚀 Starting Echo Brain Unified Service
+INFO:__main__:🔗 Consolidating 5 fragmented Echo services
+INFO:__main__:🧠 Dynamic intelligence scaling: 1B → 70B parameters
+INFO:__main__:🔧 Tower Testing Framework: INTEGRATED
+INFO:__main__:🛡️ Safe shell execution: ENABLED
+INFO:__main__:📊 Universal testing capabilities: READY
+INFO:     Started server process [2002794]
+INFO:     Waiting for application startup.
+INFO:__main__:Echo unified database tables initialized
+INFO:__main__:🧠 Echo Brain Unified Service - Started
+INFO:__main__:📊 Intelligence Levels: 1B → 70B parameters
+INFO:__main__:🚀 Dynamic escalation enabled
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8309 (Press CTRL+C to quit)
+INFO:     192.168.50.100:0 - "GET /api/echo/brain HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/echo/brain HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/echo/brain HTTP/1.1" 200 OK
+INFO:     192.168.50.100:0 - "GET /api/echo/brain HTTP/1.1" 200 OK
+INFO:__main__:Intent: general, Confidence: 0.50, Params: {}
+INFO:     127.0.0.1:44494 - "POST /api/echo/query HTTP/1.1" 200 OK
+INFO:__main__:Intent: code_modification, Confidence: 0.80, Params: {}
+INFO:     127.0.0.1:44508 - "POST /api/echo/query HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2002794]

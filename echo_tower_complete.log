@@ -1,0 +1,27 @@
+/opt/tower-echo-brain/venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:149: UserWarning: Field "model_used" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/opt/tower-echo-brain/echo_unified_service_with_voice.py:1203: DeprecationWarning: 
+        on_event is deprecated, use lifespan event handlers instead.
+
+        Read more about it in the
+        [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+        
+  @app.on_event("startup")
+INFO:__main__:🚀 Starting Echo Brain Unified Service
+INFO:__main__:🔗 Consolidating 5 fragmented Echo services
+INFO:__main__:🧠 Dynamic intelligence scaling: 1B → 70B parameters
+INFO:__main__:🔧 Tower Testing Framework: INTEGRATED
+INFO:__main__:🛡️ Safe shell execution: ENABLED
+INFO:__main__:📊 Universal testing capabilities: READY
+INFO:     Started server process [1807013]
+INFO:     Waiting for application startup.
+INFO:__main__:Echo unified database tables initialized
+INFO:__main__:🧠 Echo Brain Unified Service - Started
+INFO:__main__:📊 Intelligence Levels: 1B → 70B parameters
+INFO:__main__:🚀 Dynamic escalation enabled
+INFO:     Application startup complete.
+ERROR:    [Errno 98] error while attempting to bind on address ('0.0.0.0', 8309): address already in use
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.

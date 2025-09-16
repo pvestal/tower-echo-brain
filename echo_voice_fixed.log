@@ -1,0 +1,39 @@
+/opt/tower-echo-brain/venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:149: UserWarning: Field "model_used" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/opt/tower-echo-brain/echo_voice_enhanced.py:330: DeprecationWarning: 
+        on_event is deprecated, use lifespan event handlers instead.
+
+        Read more about it in the
+        [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+        
+  @app.on_event("startup")
+INFO:__main__:🚀 Starting Echo Brain Unified Service with Voice Integration
+INFO:     Started server process [205809]
+INFO:     Waiting for application startup.
+INFO:echo_voice_enhanced:🧠 Echo Brain starting up with voice integration...
+INFO:echo_voice_enhanced:🔊 Voice notification sent: echo_default - helpful
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8309 (Press CTRL+C to quit)
+INFO:echo_voice_enhanced:🔊 Voice notification sent: echo_default - helpful
+INFO:     127.0.0.1:43166 - "POST /api/echo/voice/notify HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43178 - "POST /api/echo/query HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:50162 - "POST /api/echo/query HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:50178 - "POST /api/echo/query HTTP/1.1" 422 Unprocessable Entity
+INFO:echo_voice_enhanced:🔊 Voice notification sent: tokyo_debt_desire - professional
+INFO:     127.0.0.1:40826 - "POST /api/echo/voice/notify HTTP/1.1" 200 OK
+INFO:echo_voice_enhanced:🔊 Voice notification sent: sakura - friendly
+INFO:     127.0.0.1:33100 - "POST /api/echo/voice/notify HTTP/1.1" 200 OK
+INFO:     192.168.50.135:41456 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     192.168.50.135:33242 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     192.168.50.135:40338 - "GET /api/echo/health HTTP/1.1" 200 OK
+INFO:     192.168.50.135:52876 - "GET /api/echo/voice/characters HTTP/1.1" 404 Not Found
+INFO:echo_voice_enhanced:🔊 Voice notification sent: echo_default - neutral
+INFO:     192.168.50.135:34242 - "POST /api/echo/voice/notify HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53408 - "POST /api/echo/chat HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:40414 - "GET /api/vault/get/oauth_google/client_secret HTTP/1.1" 404 Not Found
+INFO:     192.168.50.135:47264 - "POST /api/vault/get HTTP/1.1" 404 Not Found
+INFO:     192.168.50.135:47528 - "POST /api/echo/stream HTTP/1.1" 404 Not Found
+WARNING:echo_voice_enhanced:Voice notification failed: 
+INFO:echo_voice_enhanced:🧠 Echo routing to codellama:70b for query complexity analysis
