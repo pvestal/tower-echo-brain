@@ -182,17 +182,17 @@ class ConversationManager:
             return False
 
         # Low confidence always needs clarification
-        if confidence < 0.3:  # Changed from 0.6 to only clarify on very low confidence
+        if confidence < 0.1:  # Changed from 0.6 to only clarify on very low confidence
             return True
 
         # Check for vague queries even with good intent classification
         vague_indicators = [
-            len(query.split()) < 5,  # Very short queries
-            "help" in query.lower() and len(query.split()) < 8,
+            len(query.split()) < 2,  # Very short queries
+            "help" in query.lower() and len(query.split()) < 3,
             query.count("?") == 0 and intent != "explanation",  # No questions but unclear intent
         ]
 
-        return any(vague_indicators)
+        return False  # Disabled vague indicators check
 
     def get_clarifying_questions(self, intent: str, query: str) -> List[str]:
         """Get relevant clarifying questions for intent"""
