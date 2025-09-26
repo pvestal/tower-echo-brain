@@ -81,6 +81,27 @@ class ConversationManager:
                 r"what.*is|how.*does|explain|understand",
                 r"learn|tutorial|guide",
                 r"difference between"
+            ],
+            "image_generation": [
+                r"generate.*image|create.*image|make.*image|draw.*image",
+                r"generate.*picture|create.*picture|make.*picture",
+                r"image.*of|picture.*of|visual.*of",
+                r"paint|sketch|render|visualize",
+                r"comfyui.*generate|use.*comfyui"
+            ],
+            "voice_generation": [
+                r"generate.*voice|create.*voice|make.*voice",
+                r"say.*this|speak.*this|voice.*this",
+                r"text.*to.*speech|tts|speech.*synthesis",
+                r"generate.*audio|create.*audio|make.*audio",
+                r"read.*aloud|voice.*over|narrate"
+            ],
+            "music_generation": [
+                r"generate.*music|create.*music|make.*music",
+                r"compose.*music|write.*music|music.*composition",
+                r"generate.*song|create.*song|make.*song",
+                r"soundtrack|background.*music|ambient.*music",
+                r"musical.*piece|audio.*track"
             ]
         }
 
@@ -165,6 +186,48 @@ class ConversationManager:
                                 if agent in query_lower:
                                     intent_params['target_agent'] = agent
                                     break
+
+                    # Extract multimedia generation parameters
+                    if intent == 'image_generation':
+                        # Extract prompt by removing generation keywords
+                        prompt = query.replace('generate image', '').replace('create image', '').replace('make image', '').replace('draw image', '').strip()
+                        if 'of ' in prompt:
+                            prompt = prompt.split('of ', 1)[1]
+                        if prompt:
+                            intent_params['prompt'] = prompt
+                        # Extract style if mentioned
+                        if 'anime' in query_lower:
+                            intent_params['style'] = 'anime'
+                        elif 'realistic' in query_lower:
+                            intent_params['style'] = 'realistic'
+                        elif 'cartoon' in query_lower:
+                            intent_params['style'] = 'cartoon'
+
+                    elif intent == 'voice_generation':
+                        # Extract text to speak
+                        text = query.replace('say', '').replace('speak', '').replace('voice', '').replace('this', '').strip()
+                        if 'generate voice' in query_lower:
+                            text = query.replace('generate voice', '').strip()
+                        if text:
+                            intent_params['text'] = text
+                        # Extract character if mentioned
+                        if 'echo' in query_lower:
+                            intent_params['character'] = 'echo_default'
+
+                    elif intent == 'music_generation':
+                        # Extract description
+                        description = query.replace('generate music', '').replace('create music', '').replace('make music', '').strip()
+                        if 'compose' in query_lower:
+                            description = query.replace('compose', '').strip()
+                        if description:
+                            intent_params['description'] = description
+                        # Extract duration if mentioned
+                        duration_match = re.search(r'(\d+)\s*(?:second|sec|minute|min)', query_lower)
+                        if duration_match:
+                            duration = int(duration_match.group(1))
+                            if 'minute' in duration_match.group(0) or 'min' in duration_match.group(0):
+                                duration *= 60  # Convert to seconds
+                            intent_params['duration'] = duration
 
             if score > 0:
                 intent_scores[intent] = min(score, 1.0)

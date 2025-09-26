@@ -112,6 +112,10 @@ except Exception as e:
 # Include modular API routes
 from src.api.routes import router as api_router
 app.include_router(api_router)
+
+# Include resilient orchestration routes (optional extra endpoints)
+from src.api.resilient_routes import resilient_router
+app.include_router(resilient_router)
 logger.info("🔗 Echo Brain API routes loaded")
 
 # Include external routers
@@ -163,6 +167,15 @@ async def startup_event():
     global board_api, model_manager, task_queue, background_worker, autonomous_behaviors
 
     logger.info("🚀 Echo Brain startup sequence initiated")
+
+    # Start tower orchestrator background tasks
+    try:
+        from src.utils.helpers import tower_orchestrator
+        if tower_orchestrator:
+            await tower_orchestrator.start_background_tasks()
+            logger.info("✅ Tower orchestrator background tasks started")
+    except Exception as e:
+        logger.warning(f"Could not start tower orchestrator tasks: {e}")
 
     # Initialize database
     await database.create_tables_if_needed()
