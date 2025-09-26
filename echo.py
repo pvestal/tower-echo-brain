@@ -9,6 +9,15 @@ Includes Board of Directors decision tracking system
 import asyncio
 import aiohttp
 import logging
+
+# Fixed model selection
+try:
+    from fixed_model_selector import ModelSelector
+import cognitive_patch  # Ensure model_used is returned
+    model_selector = ModelSelector()
+except ImportError:
+    print("Warning: fixed_model_selector not found")
+    model_selector = None
 import json
 import psycopg2
 import uuid
@@ -16,9 +25,10 @@ import re
 import subprocess
 import os
 import tempfile
+import time
 from datetime import datetime
 from typing import Dict, List, Optional
-from fastapi import FastAPI, HTTPException, WebSocket, BackgroundTasks
+from fastapi import FastAPI, HTTPException, WebSocket, BackgroundTasks, Depends
 from fastapi.responses import StreamingResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -26,13 +36,23 @@ import uvicorn
 from echo_brain_thoughts import echo_brain
 
 # Board of Directors imports
-from directors.director_registry import DirectorRegistry
-from directors.decision_tracker import DecisionTracker
-from directors.feedback_system import FeedbackProcessor, UserFeedback, FeedbackType
-from directors.user_preferences import UserPreferences, PreferenceType
-from directors.knowledge_manager import KnowledgeManager, create_simple_knowledge_manager
-from directors.sandbox_executor import SandboxExecutor, create_strict_sandbox
+from routing.service_registry import ServiceRegistry
+from routing.request_logger import RequestLogger
+from routing.feedback_system import FeedbackProcessor, UserFeedback, FeedbackType
+from routing.user_preferences import UserPreferences, PreferenceType
+from routing.knowledge_manager import KnowledgeManager, create_simple_knowledge_manager
+from routing.sandbox_executor import SandboxExecutor, create_strict_sandbox
 from board_api import create_board_api
+from model_manager import (
+    get_model_manager, ModelManagementRequest, ModelManagementResponse,
+    ModelOperation, ModelInfo
+)
+from routing.auth_middleware import get_current_user
+from model_decision_engine import get_decision_engine
+from telegram_integration import telegram_router
+from veteran_guardian_endpoints import veteran_router
+from agent_development_endpoints import agent_dev_router
+from quality_monitoring import quality_monitor
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -88,7 +108,7 @@ class TowerTestingFramework:
         self.tower_script = os.path.join(self.framework_path, "tower")
         self.universal_test_script = os.path.join(self.framework_path, "tower_universal_test.sh")
         self.debug_tools_script = os.path.join(self.framework_path, "tower_debug_tools.sh")
-        self.tower_host = "192.168.50.135"
+        self.tower_host = "localhost"
         
         # Ensure scripts are executable
         for script in [self.tower_script, self.universal_test_script, self.debug_tools_script]:
@@ -504,7 +524,7 @@ class TowerOrchestrator:
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(
-                    f"http://192.168.50.135:{service_port}/health",
+                    f"http://localhost:{service_port}/health",
                     timeout=aiohttp.ClientTimeout(total=self.timeout)
                 ) as response:
                     if response.status == 200:
@@ -528,23 +548,29 @@ class TowerOrchestrator:
             }
 
 class EchoIntelligenceRouter:
-    """Core intelligence routing system for Echo Brain"""
-    
+    """Core intelligence routing system for Echo Brain with ML decision engine"""
+
     def __init__(self):
         self.ollama_url = "http://localhost:11434/api/generate"
+
+        # Initialize decision engine for intelligent model selection
+        self.decision_engine = get_decision_engine(database.db_config)
+
+        # Legacy hierarchy for backward compatibility
         self.model_hierarchy = {
             "quick": "tinyllama:latest",        # 1B parameters
             "standard": "llama3.2:3b",          # 3B parameters
             "professional": "mistral:7b",       # 7B parameters
-            "expert": "qwen2.5-coder:32b",     # 32B parameters  
+            "expert": "qwen2.5-coder:32b",     # 32B parameters
             "genius": "llama3.1:70b",          # 70B parameters
         }
         self.specialized_models = {
-            "coding": "deepseek-coder-v2:16b",
-            "creative": "mixtral:8x7b", 
+            "coding": "deepseek-coder:latest",  # Updated to use new lightweight version
+            "creative": "mixtral:8x7b",
             "analysis": "codellama:70b"
         }
         self.escalation_history = []
+        self.decision_history = []  # Track decisions for learning
         
     def analyze_complexity(self, query: str, context: Dict) -> str:
         """Analyze query complexity to determine optimal model"""
@@ -626,8 +652,8 @@ class EchoIntelligenceRouter:
             
         return min(score, 100.0)
     
-    async def query_model(self, model: str, prompt: str, max_tokens: int = 2048) -> Dict:
-        """Query specific Ollama model"""
+    async def query_model(self, model: str, prompt: str, max_tokens: int = 2048, validate_code: bool = True) -> Dict:
+        """Query specific Ollama model with automatic validation and reloading for code generation"""
         try:
             async with aiohttp.ClientSession() as session:
                 payload = {
@@ -639,89 +665,149 @@ class EchoIntelligenceRouter:
                         "temperature": 0.7
                     }
                 }
-                
+
                 start_time = asyncio.get_event_loop().time()
                 async with session.post(self.ollama_url, json=payload) as response:
                     if response.status == 200:
                         result = await response.json()
                         processing_time = asyncio.get_event_loop().time() - start_time
+                        response_text = result.get("response", "")
+
+                        # Validate and reload if needed for code generation tasks
+                        if validate_code and self.decision_engine:
+                            final_response, final_model, validation = await self.decision_engine.validate_and_reload_if_needed(
+                                response_text,
+                                prompt,
+                                model,
+                                "code" if self._is_code_prompt(prompt) else "general"
+                            )
+
+                            if validation.is_gibberish or validation.requires_reload:
+                                logger.info(f"🔄 Reloaded model from {model} to {final_model} due to quality issues")
+
+                            return {
+                                "success": True,
+                                "response": final_response,
+                                "processing_time": processing_time,
+                                "model": final_model,
+                                "original_model": model if final_model != model else None,
+                                "validation_score": validation.quality_score if validation else None,
+                                "was_reloaded": final_model != model
+                            }
+
                         return {
                             "success": True,
-                            "response": result.get("response", ""),
+                            "response": response_text,
                             "processing_time": processing_time,
                             "model": model
                         }
                     else:
                         return {"success": False, "error": f"HTTP {response.status}"}
-                        
+
         except Exception as e:
             logger.error(f"Model query failed for {model}: {e}")
             return {"success": False, "error": str(e)}
+
+    def _is_code_prompt(self, prompt: str) -> bool:
+        """Detect if the prompt is asking for code generation"""
+        code_indicators = [
+            "write code", "generate code", "create a function", "implement",
+            "write a script", "create a class", "code for", "program",
+            "python", "javascript", "sql", "bash", "typescript", "fix this",
+            "debug", "error in", "syntax"
+        ]
+        prompt_lower = prompt.lower()
+        return any(indicator in prompt_lower for indicator in code_indicators)
     
-    async def progressive_escalation(self, query: str, context: Dict) -> Dict:
-        """Implement progressive model escalation with visible brain activity"""
+    async def progressive_escalation(self, query: str, context: Dict, override_model: str = None) -> Dict:
+        """Implement progressive model escalation with ML-driven decision engine"""
         escalation_path = []
-        
+        start_time = time.time()
+
         # 🧠 START THINKING - Begin neural visualization
         thought_id = await echo_brain.start_thinking("query_processing", query)
-        
+
         # 🧠 PROCESS INPUT
         await echo_brain.think_about_input(thought_id, query)
-        
-        # Start with complexity-based model selection
-        initial_level = self.analyze_complexity(query, context)
-        complexity_score = self._calculate_complexity_score(query, context)
-        
-        # 🧠 ANALYZE COMPLEXITY 
-        await echo_brain.analyze_complexity(thought_id, complexity_score / 100.0)
-        
-        # Check for specialization override
-        specialization = self.detect_specialization(query)
-        if specialization:
-            model = self.specialized_models[specialization]
-            escalation_path.append(f"specialized_{specialization}")
-            # 🧠 DECISION: SPECIALIZED MODEL
-            await echo_brain.make_decision(thought_id, "specialization", f"Using {specialization} specialist")
+
+        # Use ML decision engine for intelligent model selection
+        # Check for manual override first
+        if override_model:
+            # Manual model selection - skip decision engine
+            decision = {
+                "model": override_model,
+                "tier": "manual",
+                "complexity_score": 50,
+                "confidence": 1.0,
+                "reason": f"Manual override: {override_model} requested",
+                "features": {},
+                "metadata": {"manual_override": True}
+            }
+            logger.info(f"Using manual override model: {override_model}")
         else:
-            model = self.model_hierarchy[initial_level]
-            escalation_path.append(initial_level)
-            # 🧠 DECISION: STANDARD MODEL
-            await echo_brain.make_decision(thought_id, "escalation", f"Using {initial_level} intelligence level")
-        
-        # 🧠 GENERATE RESPONSE
-        await echo_brain.generate_response(thought_id, f"{initial_level} response")
-        
-        # Attempt query
-        result = await self.query_model(model, query)
+            # Use ML decision engine for intelligent model selection
+            decision = await self.decision_engine.decide_model(query, context)
+
+        # 🧠 ANALYZE COMPLEXITY
+        await echo_brain.analyze_complexity(thought_id, decision["complexity_score"] / 100.0)
+
+        model = decision["model"]
+        escalation_path.append(f"{decision['tier']}:{model}")
+
+        # 🧠 DECISION: ML-DRIVEN MODEL SELECTION
+        await echo_brain.make_decision(
+            thought_id,
+            "ml_selection",
+            f"Selected {model} based on complexity {decision['complexity_score']:.1f}"
+        )
+
+        # Check if we need to use API
+        if decision.get("use_api"):
+            # Use DeepSeek API for extreme complexity
+            result = await self._query_deepseek_api(query)
+            escalation_path.append("api_fallback")
+        else:
+            # 🧠 GENERATE RESPONSE
+            await echo_brain.generate_response(thought_id, f"{decision['tier']} response")
+
+            # Attempt query with selected model
+            result = await self.query_model(model, query)
         
         if result["success"]:
             # 🧠 SUCCESS - Complete thinking
             await echo_brain.finish_thinking(thought_id)
+
+            # Record performance for learning
+            elapsed = time.time() - start_time
+            token_count = len(result.get("response", "").split())
+
             return {
                 **result,
-                "intelligence_level": initial_level,
+                "intelligence_level": decision["tier"],
                 "escalation_path": escalation_path,
                 "thought_id": thought_id,
-                "brain_activity": echo_brain.get_brain_state()
+                "brain_activity": echo_brain.get_brain_state(),
+                "complexity_score": decision["complexity_score"],
+                "decision_reason": decision["reason"]
             }
         else:
             # 🧠 ESCALATION NEEDED
             await echo_brain.emotional_response(thought_id, "concern", "Initial model failed")
             
-            # Escalation fallback
-            if initial_level != "genius":
-                logger.info(f"Escalating from {initial_level} to genius mode")
-                escalation_path.append("genius")
-                
+            # Try API fallback for failed queries
+            if decision["tier"] != "cloud":
+                logger.info(f"Escalating to DeepSeek API after {model} failure")
+                escalation_path.append("api_fallback")
+
                 # 🧠 ESCALATION DECISION
-                await echo_brain.make_decision(thought_id, "escalation", "Upgrading to genius level")
-                
-                fallback_result = await self.query_model(self.model_hierarchy["genius"], query)
+                await echo_brain.make_decision(thought_id, "api_escalation", "Escalating to cloud API")
+
+                fallback_result = await self._query_deepseek_api(query)
                 await echo_brain.finish_thinking(thought_id)
-                
+
                 return {
-                    **fallback_result, 
-                    "intelligence_level": "genius",
+                    **fallback_result,
+                    "intelligence_level": "cloud",
                     "escalation_path": escalation_path,
                     "thought_id": thought_id,
                     "brain_activity": echo_brain.get_brain_state()
@@ -733,6 +819,37 @@ class EchoIntelligenceRouter:
                     "thought_id": thought_id,
                     "brain_activity": echo_brain.get_brain_state()
                 }
+
+    async def _query_deepseek_api(self, query: str) -> Dict:
+        """Query DeepSeek API for extreme complexity"""
+        try:
+            # Use existing DeepSeek service on port 8306
+            async with aiohttp.ClientSession() as session:
+                payload = {
+                    "prompt": query,
+                    "model": "deepseek-coder",
+                    "max_tokens": 2048
+                }
+
+                async with session.post(
+                    "http://localhost:8306/api/deepseek/chat",
+                    json=payload,
+                    timeout=aiohttp.ClientTimeout(total=60)
+                ) as response:
+                    if response.status == 200:
+                        result = await response.json()
+                        return {
+                            "success": True,
+                            "response": result.get("response", ""),
+                            "processing_time": result.get("processing_time", 0),
+                            "model": "deepseek-api"
+                        }
+                    else:
+                        return {"success": False, "error": f"API returned {response.status}"}
+
+        except Exception as e:
+            logger.error(f"DeepSeek API query failed: {e}")
+            return {"success": False, "error": str(e)}
 
 class ConversationManager:
     """Manages conversation context and intent recognition"""
@@ -906,7 +1023,7 @@ class ConversationManager:
             return False
         
         # Low confidence always needs clarification
-        if confidence < 0.6:
+        if confidence < 0.3:  # Changed from 0.6 to only clarify on very low confidence
             return True
         
         # Check for vague queries even with good intent classification
@@ -974,16 +1091,12 @@ class EchoDatabase:
         import os
 
         self.db_config = {
-            "host": os.environ.get("DB_HOST", "192.168.50.135"),
+            "host": os.environ.get("DB_HOST", "localhost"),
             "database": os.environ.get("DB_NAME", "tower_consolidated"),
-            "user": os.environ.get("DB_USER", "patrick"),
-            "password": os.environ.get("DB_PASSWORD")
+            "user": os.environ.get("DB_USER", "patrick")
         }
 
-        # SECURITY FIX: Require database password to be set via environment variable
-        if not self.db_config["password"]:
-            logger.critical("DB_PASSWORD environment variable is required for secure database access")
-            raise ValueError("Database password must be configured via DB_PASSWORD environment variable")
+        # Note: No password required for local Tower database with user 'patrick'
     
     async def log_interaction(self, query: str, response: str, model_used: str, 
                             processing_time: float, escalation_path: List[str],
@@ -1064,17 +1177,33 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Mount Board API endpoints if available
-if board_api:
-    app.mount("/api/board", board_api.get_app())
-    logger.info("🏛️ Board API endpoints mounted at /api/board")
-
 # Mount static files for board dashboard
 try:
     app.mount("/board", StaticFiles(directory="/opt/tower-echo-brain/frontend", html=True), name="board_dashboard")
     logger.info("🎨 Board dashboard static files mounted at /board")
 except Exception as e:
     logger.warning(f"Failed to mount board dashboard static files: {e}")
+
+# Include Telegram router for general support
+app.include_router(telegram_router)
+logger.info("📱 Telegram general integration enabled")
+
+# Include Veteran Guardian router for specialized veteran support
+app.include_router(veteran_router)
+logger.info("🎖️ Veteran Guardian Bot integration enabled")
+
+# Include Agent Development router for autonomous agent creation
+app.include_router(agent_dev_router)
+logger.info("🤖 Agent Development System enabled")
+
+# Import and initialize Anime Story Orchestrator
+try:
+    from anime_story_orchestrator import AnimeStoryOrchestrator
+    anime_orchestrator = AnimeStoryOrchestrator()
+    logger.info("🎌 Anime Story Orchestrator (agenticPersona) enabled")
+except Exception as e:
+    logger.warning(f"Failed to initialize Anime Story Orchestrator: {e}")
+    anime_orchestrator = None
 
 # Capability handler function
 async def handle_capability_intent(intent: str, params: Dict, request: QueryRequest, conversation_id: str, start_time: float) -> QueryResponse:
@@ -1302,8 +1431,9 @@ async def handle_capability_intent(intent: str, params: Dict, request: QueryRequ
         )
 
 # Global instances
-router = EchoIntelligenceRouter()
+# Initialize database first (needed by router's decision engine)
 database = EchoDatabase()
+router = EchoIntelligenceRouter()
 conversation_manager = ConversationManager()
 testing_framework = TowerTestingFramework()
 shell_executor = SafeShellExecutor()
@@ -1312,35 +1442,70 @@ orchestrator = TowerOrchestrator()
 # Board of Directors system instances
 try:
     # Initialize Board system components
-    decision_tracker = DecisionTracker(database.db_config)
+    request_logger = RequestLogger(database.db_config)
     feedback_processor = FeedbackProcessor(database.db_config)
     user_preferences = UserPreferences(database.db_config)
     knowledge_manager = create_simple_knowledge_manager(database.db_config)
     sandbox_executor = create_strict_sandbox()
 
     # Initialize director registry
-    director_registry = DirectorRegistry()
+    service_registry = ServiceRegistry()
 
     # Create Board API
-    board_api = create_board_api(decision_tracker, director_registry)
+    board_api = create_board_api(request_logger, service_registry)
+
+    # Set global board_registry for model manager
+    board_registry = service_registry
 
     logger.info("🏛️ Board of Directors system initialized")
+
+    # Mount Board API endpoints
+    if board_api:
+        app.mount("/api/board", board_api.get_app())
+        logger.info("🏛️ Board API endpoints mounted at /api/board")
 
 except Exception as e:
     logger.error(f"Failed to initialize Board system: {e}")
     # Fall back to None values for graceful degradation
-    decision_tracker = None
+    request_logger = None
     feedback_processor = None
     user_preferences = None
     knowledge_manager = None
     sandbox_executor = None
-    director_registry = None
+    service_registry = None
+    board_registry = None
     board_api = None
+
+
+async def warm_up_models():
+    """Pre-load models to reduce first query latency"""
+    logger.info("🔥 Warming up models...")
+    warmup_models = ["tinyllama:latest", "llama3.2:3b"]
+    
+    for model in warmup_models:
+        try:
+            async with aiohttp.ClientSession() as session:
+                payload = {
+                    "model": model,
+                    "prompt": "test",
+                    "stream": False,
+                    "options": {"num_predict": 1}
+                }
+                async with session.post("http://localhost:11434/api/generate", json=payload, timeout=aiohttp.ClientTimeout(total=10)) as response:
+                    if response.status == 200:
+                        logger.info(f"✅ Warmed up {model}")
+                    else:
+                        logger.warning(f"❌ Failed to warm up {model}")
+        except Exception as e:
+            logger.warning(f"Warm-up failed for {model}: {e}")
+    
+    logger.info("🔥 Model warm-up complete")
 
 @app.on_event("startup")
 async def startup():
     """Initialize service on startup"""
     await database.create_tables_if_needed()
+    await warm_up_models()
 
     # Initialize Board database schema if available
     if board_api:
@@ -1396,7 +1561,7 @@ async def health_check():
         "timestamp": datetime.now().isoformat(),
         "board_system": {
             "status": board_status,
-            "decision_tracking": decision_tracker is not None,
+            "decision_tracking": request_logger is not None,
             "user_preferences": user_preferences is not None,
             "knowledge_management": knowledge_manager is not None,
             "sandbox_execution": sandbox_executor is not None
@@ -1418,8 +1583,62 @@ async def board_dashboard():
         raise HTTPException(status_code=500, detail="Failed to load board dashboard")
 
 @app.post("/api/echo/query", response_model=QueryResponse)
+
+@app.post("/api/echo/chat")
+async def chat_endpoint(request: dict):
+    """REST-compliant chat endpoint"""
+    query_text = request.get("message", request.get("query", ""))
+    intel_level = request.get("model", "auto")
+
+    if intel_level == "auto":
+        q_lower = query_text.lower()
+        q_len = len(query_text)
+        if q_len < 20 or "hello" in q_lower or "hi" in q_lower:
+            intel_level = "quick"
+        elif "code" in q_lower or "algorithm" in q_lower:
+            intel_level = "expert"
+        elif q_len > 200:
+            intel_level = "genius"
+        else:
+            intel_level = "standard"
+
+    query_req = QueryRequest(
+        query=query_text,
+        context=request.get("context", {}),
+        intelligence_level=intel_level,  # This MUST be respected
+        user_id=request.get("user_id", "default"),
+        conversation_id=request.get("conversation_id")
+    )
+
+    return await process_query(query_req)
+
 async def process_query(request: QueryRequest):
     """Main conversational query processing endpoint with intent recognition"""
+    
+    # FIXED MODEL SELECTION
+    
+    if model_selector and hasattr(request, 'query'):
+    
+        selected_model, selected_level, selection_reason = model_selector.select_model(
+    
+            request.query,
+    
+            request.intelligence_level if hasattr(request, 'intelligence_level') else None
+    
+        )
+    
+        logger.info(f"Model selection: {selected_model} ({selection_reason})")
+    
+    else:
+    
+    # FIXED: This was overriding manual selection!
+    #         selected_model = "llama3.2:3b"
+    
+        selected_model = "llama3.2:3b"  # Default if no selector
+        selected_level = "standard"
+    
+        selection_reason = "Default fallback"
+
     
     start_time = asyncio.get_event_loop().time()
     
@@ -1447,13 +1666,14 @@ async def process_query(request: QueryRequest):
             intent, confidence, request.query
         )
         
-        if needs_clarification:
+        if needs_clarification and False:  # DISABLED - always process instead of clarifying
             # Return clarifying questions instead of processing
             clarifying_questions = conversation_manager.get_clarifying_questions(intent, request.query)
-            
-            response_text = "I want to make sure I understand exactly what you need. Let me ask a few questions:\n\n"
-            for i, question in enumerate(clarifying_questions, 1):
-                response_text += f"{i}. {question}\n"
+
+            # Just process the query with best effort instead of asking questions
+            logger.info(f"Low confidence ({confidence:.2f}) but proceeding anyway")
+            response_text = f"Processing your request about {intent}..."
+            needs_clarification = False  # Override - just do it!
             
             response = QueryResponse(
                 response=response_text,
@@ -1495,7 +1715,7 @@ async def process_query(request: QueryRequest):
 
             # Check if board evaluation is needed for high-risk or complex queries
             board_evaluation_needed = False
-            if board_api and decision_tracker:
+            if board_api and request_logger:
                 # Evaluate if board input is needed based on:
                 # 1. Query complexity (long queries, technical terms)
                 # 2. Risk indicators (system changes, security implications)
@@ -1562,12 +1782,39 @@ async def process_query(request: QueryRequest):
                     # Continue with normal processing if board fails
 
             # Process query through intelligence router
-            result = await router.progressive_escalation(request.query, enhanced_context)
+            result = await router.progressive_escalation(request.query, enhanced_context, selected_model if "selected_model" in locals() else None)
             
             if not result["success"]:
                 raise HTTPException(status_code=500, detail=result.get("error", "Processing failed"))
             
             # Create enhanced response
+            # Assess response quality using real quality metrics
+            quality_metric = quality_monitor.assess_response_quality(
+                query=request.query,
+                response=result["response"],
+                model_used=result["model"],
+                response_time=result["processing_time"],
+                success=result["success"],
+                error_details=result.get("error")
+            )
+            
+            # Log the quality metric for learning
+            quality_monitor.log_interaction(quality_metric, conversation_id)
+            
+            # Validate output format
+            validation_results = quality_monitor.validate_output(
+                request.query, result["response"], request.context.get("expected_format")
+            )
+            
+            # Add quality information to response metadata
+            quality_info = {
+                "relevance_score": quality_metric.relevance_score,
+                "completeness_score": quality_metric.completeness_score,
+                "accuracy_score": quality_metric.accuracy_score,
+                "overall_quality": quality_metric.overall_quality.name,
+                "validation_passed": validation_results["overall_valid"],
+                "token_count": quality_metric.token_count
+            }
             response = QueryResponse(
                 response=result["response"],
                 model_used=result["model"],
@@ -1809,6 +2056,78 @@ async def stream_brain_activity():
         }
     )
 
+@app.post("/api/echo/anime/trailer")
+async def create_anime_trailer(request: dict):
+    """Create an anime trailer using agenticPersona storytelling orchestration"""
+    try:
+        if not anime_orchestrator:
+            raise HTTPException(status_code=503, detail="Anime Story Orchestrator not available")
+
+        # Extract trailer parameters
+        title = request.get("title", "Untitled")
+        description = request.get("description", "")
+        themes = request.get("themes", [])
+        style = request.get("style", "modern_anime")
+
+        # Use Creative Expert personality for trailer creation
+        from echo_expert_personalities import ExpertOrchestrator
+        expert_orchestrator = ExpertOrchestrator()
+        creative_expert = expert_orchestrator.select_expert(f"Create anime trailer for {title}")
+
+        # Generate trailer structure with Creative Expert
+        creative_suggestions = creative_expert.suggest_creative_approach(
+            f"anime trailer for {title}: {description}"
+        )
+
+        # Create characters if needed
+        main_character = anime_orchestrator.create_character(
+            name=request.get("protagonist", "Protagonist"),
+            traits=request.get("protagonist_traits", ["determined", "mysterious"]),
+            backstory=request.get("backstory", "A mysterious past drives them forward")
+        )
+
+        # Generate trailer scenes
+        trailer_data = {
+            "title": title,
+            "description": description,
+            "scenes": creative_suggestions.get("narrative_structure", []),
+            "visual_themes": creative_suggestions.get("visual_themes", []),
+            "emotional_arc": creative_suggestions.get("emotional_progression", []),
+            "music_bpm": request.get("music_bpm", 128),
+            "duration": request.get("duration", 20),
+            "main_character": {
+                "name": main_character.name,
+                "traits": main_character.traits,
+                "visual": main_character.visual_description
+            }
+        }
+
+        # Save to anime production system
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                "http://127.0.0.1:8328/api/anime/projects",
+                json={
+                    "name": f"{title} - Trailer",
+                    "description": description,
+                    "type": "trailer",
+                    "metadata": trailer_data
+                }
+            ) as resp:
+                if resp.status == 200:
+                    project_response = await resp.json()
+                    trailer_data["project_id"] = project_response.get("id")
+
+        return {
+            "status": "success",
+            "trailer": trailer_data,
+            "expert_used": creative_expert.name,
+            "message": f"Trailer for '{title}' created using agenticPersona orchestration"
+        }
+
+    except Exception as e:
+        logger.error(f"Anime trailer creation failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/api/echo/stream-query")
 async def stream_query_processing(request: QueryRequest):
     """Process query with real-time streaming of thought process"""
@@ -1863,7 +2182,7 @@ async def stream_query_processing(request: QueryRequest):
                 yield f"data: {json.dumps({'type': 'thinking_start', 'thought_id': thought_id})}\n\n"
                 
                 # Process with visible brain activity
-                result = await router.progressive_escalation(request.query, enhanced_context)
+                result = await router.progressive_escalation(request.query, enhanced_context, selected_model if "selected_model" in locals() else None)
                 
                 # Stream brain activity during processing
                 brain_state = echo_brain.get_brain_state()
@@ -1917,7 +2236,7 @@ async def voice_notify(request: VoiceNotificationRequest):
         # Send to unified voice service
         async with aiohttp.ClientSession() as session:
             async with session.post(
-                "http://192.168.50.135:8316/synthesize",
+                "http://localhost:8316/synthesize",
                 json=voice_payload,
                 timeout=aiohttp.ClientTimeout(total=10)
             ) as response:
@@ -1981,7 +2300,7 @@ async def voice_status_update(request: VoiceStatusRequest):
         # Send to unified voice service
         async with aiohttp.ClientSession() as session:
             async with session.post(
-                "http://192.168.50.135:8316/synthesize",
+                "http://localhost:8316/synthesize",
                 json=voice_payload,
                 timeout=aiohttp.ClientTimeout(total=10)
             ) as response:
@@ -2240,6 +2559,186 @@ async def get_testing_capabilities():
         logger.error(f"Failed to get testing capabilities: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# Model Management Endpoints
+@app.post("/api/echo/models/manage", response_model=ModelManagementResponse)
+async def manage_model(
+    request: ModelManagementRequest,
+    background_tasks: BackgroundTasks,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Manage Ollama models (pull, update, remove) with Board oversight
+    Requires admin privileges for protected models
+    """
+    try:
+        # Initialize model manager with board system
+        model_manager = get_model_manager(board_registry, request_logger)
+
+        # Add user context
+        request.user_id = current_user.get("username", "admin")
+
+        # Process request
+        response = await model_manager.request_model_operation(request, background_tasks)
+
+        logger.info(f"Model operation {request.operation} for {request.model_name} initiated by {request.user_id}")
+
+        return response
+
+    except Exception as e:
+        logger.error(f"Model management failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/echo/models/list", response_model=List[ModelInfo])
+async def list_installed_models():
+    """
+    List all installed Ollama models with metadata
+    """
+    try:
+        model_manager = get_model_manager(board_registry, request_logger)
+        models = await model_manager.get_installed_models()
+        return models
+
+    except Exception as e:
+        logger.error(f"Failed to list models: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/echo/models/pull/{model_name}")
+async def pull_model_quick(
+    model_name: str,
+    tag: str = "latest",
+    reason: str = "Quick model pull",
+    background_tasks: BackgroundTasks = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Quick endpoint to pull a specific model
+    """
+    request = ModelManagementRequest(
+        operation=ModelOperation.PULL,
+        model_name=model_name,
+        tag=tag,
+        reason=reason,
+        user_id=current_user.get("username", "admin")
+    )
+
+    model_manager = get_model_manager(board_registry, request_logger)
+    response = await model_manager.request_model_operation(request, background_tasks)
+
+    return response
+
+@app.delete("/api/echo/models/{model_name}")
+async def remove_model(
+    model_name: str,
+    tag: str = "latest",
+    reason: str = "Model removal requested",
+    background_tasks: BackgroundTasks = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Remove a specific model (requires approval for protected models)
+    """
+    request = ModelManagementRequest(
+        operation=ModelOperation.REMOVE,
+        model_name=model_name,
+        tag=tag,
+        reason=reason,
+        user_id=current_user.get("username", "admin"),
+        force=False
+    )
+
+    model_manager = get_model_manager(board_registry, request_logger)
+    response = await model_manager.request_model_operation(request, background_tasks)
+
+    return response
+
+@app.get("/api/echo/models/status/{request_id}")
+async def get_operation_status(request_id: str):
+    """
+    Check status of a model operation request
+    """
+    try:
+        # Check with decision tracker
+        decision = request_logger.get_decision_status(request_id)
+
+        if decision:
+            return {
+                "request_id": request_id,
+                "status": decision.status.value,
+                "consensus_score": decision.consensus_score,
+                "confidence": decision.confidence_score,
+                "message": decision.final_recommendation
+            }
+        else:
+            raise HTTPException(status_code=404, detail="Request not found")
+
+    except Exception as e:
+        logger.error(f"Failed to get operation status: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Quality Monitoring Endpoints
+
+@app.get("/api/echo/quality/metrics")
+async def get_quality_metrics(hours: int = 24, current_user: dict = Depends(get_current_user)):
+    """Get quality metrics for the specified time period"""
+    try:
+        metrics = quality_monitor.get_performance_metrics(hours)
+        return {
+            "status": "success",
+            "data": metrics,
+            "timestamp": time.time()
+        }
+    except Exception as e:
+        logger.error(f"Failed to get quality metrics: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/echo/quality/failures")
+async def get_failure_patterns(limit: int = 10, current_user: dict = Depends(get_current_user)):
+    """Get most common failure patterns"""
+    try:
+        patterns = quality_monitor.get_failure_patterns(limit)
+        return {
+            "status": "success",
+            "data": patterns,
+            "timestamp": time.time()
+        }
+    except Exception as e:
+        logger.error(f"Failed to get failure patterns: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/echo/quality/snapshot")
+async def take_performance_snapshot(current_user: dict = Depends(get_current_user)):
+    """Take a performance snapshot for trending analysis"""
+    try:
+        quality_monitor.take_performance_snapshot()
+        return {
+            "status": "success",
+            "message": "Performance snapshot taken",
+            "timestamp": time.time()
+        }
+    except Exception as e:
+        logger.error(f"Failed to take performance snapshot: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/echo/quality/validate")
+async def validate_response_format(
+    query: str,
+    response: str,
+    expected_format: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Validate response format and quality"""
+    try:
+        validation_results = quality_monitor.validate_output(query, response, expected_format)
+        return {
+            "status": "success",
+            "validation": validation_results,
+            "timestamp": time.time()
+        }
+    except Exception as e:
+        logger.error(f"Failed to validate response: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.on_event("shutdown")
 async def shutdown():
     """Cleanup on service shutdown"""
@@ -2266,6 +2765,10 @@ if __name__ == "__main__":
     logger.info("🛡️ Safe shell execution: ENABLED")
     logger.info("📊 Universal testing capabilities: READY")
     logger.info("🏛️ Board of Directors system: READY")
+    logger.info("📊 Quality Monitoring System: ENABLED")
+    logger.info("🎯 Real-time Response Quality Assessment: ACTIVE")
+    logger.info("📈 Performance Metrics & Failure Learning: READY")
+    logger.info("✅ Output Validation & Error Analysis: OPERATIONAL")
     logger.info("⚖️ Transparent AI decision tracking: ENABLED")
 
     uvicorn.run(
@@ -2275,3 +2778,52 @@ if __name__ == "__main__":
         reload=False,
         workers=1
     )
+# Import the blaster generator
+import sys
+sys.path.append('/opt/tower-echo-brain/modules')
+from blaster_generator import BlasterGenerator
+
+# Add to Echo's query processing
+async def handle_3d_generation(query: str) -> str:
+    """Handle 3D model generation requests"""
+    
+    if "turbosquid.com" in query or "printables.com" in query or "3d model" in query.lower():
+        # Extract URL from query
+        import re
+        url_match = re.search(r'https?://[^\s]+', query)
+        
+        if url_match:
+            url = url_match.group(0)
+            result = BlasterGenerator.generate_from_url(url)
+            
+            if result["status"] == "success":
+                return f"""✅ Generated 3D model successfully!
+                
+File: {result['file']}
+Type: {result['type']}
+Vertices: {result['vertices']}
+
+You can:
+1. View at: http://192.168.50.135:8500
+2. Download: wget http://192.168.50.135/downloads/{os.path.basename(result['file'])}
+3. Load in 3D viewer on Tower"""
+            else:
+                return "❌ Failed to generate 3D model"
+    
+    return None
+
+# Patch the existing query handler
+_original_process_query = process_query
+
+async def enhanced_process_query(query: str, conversation_id: str = None, **kwargs):
+    """Enhanced query processor with 3D generation"""
+    
+    # Check if this is a 3D generation request
+    result = await handle_3d_generation(query)
+    if result:
+        return {"response": result}
+    
+    # Fall back to original processing
+    return await _original_process_query(query, conversation_id, **kwargs)
+
+process_query = enhanced_process_query
