@@ -27708,3 +27708,87 @@ ERROR:src.db.database:Database logging failed: permission denied for table echo_
 
 ERROR:src.tasks.task_queue:Failed to load task 8b24714e-b331-4d62-b456-819849c33a2b: the JSON object must be str, bytes or bytearray, not dict
 ERROR:src.tasks.task_queue:Failed to load task 99a69bd6-3b30-4bd1-9b31-e203c87b95a1: the JSON object must be str, bytes or bytearray, not dict
+ERROR:src.tasks.task_queue:Failed to load task ffd4350e-ac7f-4557-aadb-f4f9812feffc: the JSON object must be str, bytes or bytearray, not dict
+ERROR:src.tasks.task_queue:Failed to load task eebec998-74e1-47f5-9b05-2a7a7f6a3cd1: the JSON object must be str, bytes or bytearray, not dict
+ERROR:src.tasks.task_queue:Failed to load task ffe4fa31-a59e-4fc5-b50d-585cde245455: the JSON object must be str, bytes or bytearray, not dict
+INFO:src.tasks.task_queue:📝 Task dd1dd7a4-56fc-41d6-9a06-26bd79db17d1 (Service Health Issue: echo) added to URGENT queue
+WARNING:src.tasks.autonomous_behaviors:⚠️ Service echo unhealthy: HTTP 404
+INFO:src.tasks.task_queue:📝 Task f94d4424-bd7b-448e-9a33-b58be0b5c93b (Service Connection Error: comfyui) added to HIGH queue
+ERROR:src.tasks.autonomous_behaviors:🔌 Service comfyui connection error: Cannot connect to host localhost:8188 ssl:default [Connect call failed ('127.0.0.1', 8188)]
+INFO:src.tasks.task_queue:📝 Task 6990f3dd-7e85-431e-a174-fadd5e38cfef (Service Connection Error: notifications) added to HIGH queue
+ERROR:src.tasks.autonomous_behaviors:🔌 Service notifications connection error: Cannot connect to host localhost:8350 ssl:default [Connect call failed ('127.0.0.1', 8350)]
+ERROR:src.tasks.task_queue:Failed to load task dd1dd7a4-56fc-41d6-9a06-26bd79db17d1: the JSON object must be str, bytes or bytearray, not dict
+ERROR:src.tasks.task_queue:Failed to load task f94d4424-bd7b-448e-9a33-b58be0b5c93b: the JSON object must be str, bytes or bytearray, not dict
+ERROR:src.tasks.task_queue:Failed to load task 6990f3dd-7e85-431e-a174-fadd5e38cfef: the JSON object must be str, bytes or bytearray, not dict
+INFO:src.tasks.task_queue:📝 Task 11d26c83-3cd9-47b9-84a1-1af086c28318 (Service Health Issue: echo) added to URGENT queue
+WARNING:src.tasks.autonomous_behaviors:⚠️ Service echo unhealthy: HTTP 404
+INFO:src.tasks.task_queue:📝 Task 5ea3c173-0f04-4d7d-bd8f-8c7eb07e3cac (Service Health Issue: comfyui) added to URGENT queue
+WARNING:src.tasks.autonomous_behaviors:⚠️ Service comfyui unhealthy: HTTP 404
+INFO:src.tasks.task_queue:📝 Task a4d129ba-9784-490a-932c-92efa2fbb38b (Service Connection Error: notifications) added to HIGH queue
+ERROR:src.tasks.autonomous_behaviors:🔌 Service notifications connection error: Cannot connect to host localhost:8350 ssl:default [Connect call failed ('127.0.0.1', 8350)]
+ERROR:src.tasks.task_queue:Failed to load task 11d26c83-3cd9-47b9-84a1-1af086c28318: the JSON object must be str, bytes or bytearray, not dict
+ERROR:src.tasks.task_queue:Failed to load task 5ea3c173-0f04-4d7d-bd8f-8c7eb07e3cac: the JSON object must be str, bytes or bytearray, not dict
+ERROR:src.tasks.task_queue:Failed to load task a4d129ba-9784-490a-932c-92efa2fbb38b: the JSON object must be str, bytes or bytearray, not dict
+INFO:src.tasks.task_queue:📝 Task 9e400121-1b44-401d-bf4a-4326cc50cb41 (Service Health Issue: echo) added to URGENT queue
+WARNING:src.tasks.autonomous_behaviors:⚠️ Service echo unhealthy: HTTP 404
+ERROR:src.tasks.task_queue:Failed to load task 9e400121-1b44-401d-bf4a-4326cc50cb41: the JSON object must be str, bytes or bytearray, not dict
+INFO:src.tasks.task_queue:📝 Task 088285b7-4dd1-42f6-85c9-9bf0bc59395b (Service Health Issue: comfyui) added to URGENT queue
+WARNING:src.tasks.autonomous_behaviors:⚠️ Service comfyui unhealthy: HTTP 404
+INFO:src.tasks.task_queue:📝 Task fa50f577-980b-4893-99db-17aaf4e055fd (Service Connection Error: notifications) added to HIGH queue
+ERROR:src.tasks.autonomous_behaviors:🔌 Service notifications connection error: Cannot connect to host localhost:8350 ssl:default [Connect call failed ('127.0.0.1', 8350)]
+ERROR:src.tasks.task_queue:Failed to load task 088285b7-4dd1-42f6-85c9-9bf0bc59395b: the JSON object must be str, bytes or bytearray, not dict
+ERROR:src.tasks.task_queue:Failed to load task fa50f577-980b-4893-99db-17aaf4e055fd: the JSON object must be str, bytes or bytearray, not dict
+INFO:src.tasks.task_queue:📝 Task ac234e9d-dafb-4c38-bf2e-6c9905773bc9 (Service Health Issue: echo) added to URGENT queue
+WARNING:src.tasks.autonomous_behaviors:⚠️ Service echo unhealthy: HTTP 404
+INFO:src.tasks.task_queue:📝 Task a604eca4-d17c-403b-ba60-452ec82216e7 (Service Health Issue: comfyui) added to URGENT queue
+WARNING:src.tasks.autonomous_behaviors:⚠️ Service comfyui unhealthy: HTTP 404
+INFO:src.tasks.task_queue:📝 Task f6a6b5a5-cf9e-4f46-91e2-cafcba32403c (Service Connection Error: notifications) added to HIGH queue
+ERROR:src.tasks.autonomous_behaviors:🔌 Service notifications connection error: Cannot connect to host localhost:8350 ssl:default [Connect call failed ('127.0.0.1', 8350)]
+ERROR:src.tasks.task_queue:Failed to load task ac234e9d-dafb-4c38-bf2e-6c9905773bc9: the JSON object must be str, bytes or bytearray, not dict
+ERROR:src.tasks.task_queue:Failed to load task a604eca4-d17c-403b-ba60-452ec82216e7: the JSON object must be str, bytes or bytearray, not dict
+ERROR:src.tasks.task_queue:Failed to load task f6a6b5a5-cf9e-4f46-91e2-cafcba32403c: the JSON object must be str, bytes or bytearray, not dict
+INFO:src.tasks.task_queue:📝 Task 7740ec56-500f-4985-a3c0-70896261a1ab (Service Health Issue: echo) added to URGENT queue
+WARNING:src.tasks.autonomous_behaviors:⚠️ Service echo unhealthy: HTTP 404
+INFO:src.tasks.task_queue:📝 Task 459530c0-4d12-4822-b985-830a6e06c56c (Service Health Issue: comfyui) added to URGENT queue
+WARNING:src.tasks.autonomous_behaviors:⚠️ Service comfyui unhealthy: HTTP 404
+INFO:src.tasks.task_queue:📝 Task 366ebdcb-fc83-43fa-9eb3-00388f9dfae2 (Service Connection Error: notifications) added to HIGH queue
+ERROR:src.tasks.autonomous_behaviors:🔌 Service notifications connection error: Cannot connect to host localhost:8350 ssl:default [Connect call failed ('127.0.0.1', 8350)]
+ERROR:src.tasks.task_queue:Failed to load task 7740ec56-500f-4985-a3c0-70896261a1ab: the JSON object must be str, bytes or bytearray, not dict
+ERROR:src.tasks.task_queue:Failed to load task 459530c0-4d12-4822-b985-830a6e06c56c: the JSON object must be str, bytes or bytearray, not dict
+ERROR:src.tasks.task_queue:Failed to load task 366ebdcb-fc83-43fa-9eb3-00388f9dfae2: the JSON object must be str, bytes or bytearray, not dict
+INFO:src.tasks.task_queue:📝 Task 3cdd438a-2e70-4ee4-ad13-646045fff5ac (Service Health Issue: echo) added to URGENT queue
+WARNING:src.tasks.autonomous_behaviors:⚠️ Service echo unhealthy: HTTP 404
+INFO:src.tasks.task_queue:📝 Task 837593f9-1ce7-4cfd-b922-90ff197ae5cb (Service Health Issue: comfyui) added to URGENT queue
+WARNING:src.tasks.autonomous_behaviors:⚠️ Service comfyui unhealthy: HTTP 404
+INFO:src.tasks.task_queue:📝 Task 46cf8a30-3cfb-4527-b588-311d8970de8b (Service Connection Error: notifications) added to HIGH queue
+ERROR:src.tasks.autonomous_behaviors:🔌 Service notifications connection error: Cannot connect to host localhost:8350 ssl:default [Connect call failed ('127.0.0.1', 8350)]
+ERROR:src.tasks.task_queue:Failed to load task 3cdd438a-2e70-4ee4-ad13-646045fff5ac: the JSON object must be str, bytes or bytearray, not dict
+ERROR:src.tasks.task_queue:Failed to load task 837593f9-1ce7-4cfd-b922-90ff197ae5cb: the JSON object must be str, bytes or bytearray, not dict
+ERROR:src.tasks.task_queue:Failed to load task 46cf8a30-3cfb-4527-b588-311d8970de8b: the JSON object must be str, bytes or bytearray, not dict
+INFO:src.tasks.task_queue:📝 Task 50e2e384-cce5-41e5-9a30-db46762f4227 (Service Health Issue: echo) added to URGENT queue
+WARNING:src.tasks.autonomous_behaviors:⚠️ Service echo unhealthy: HTTP 404
+INFO:src.tasks.task_queue:📝 Task b6f9bd6e-e85e-4cb6-b27c-f58cd7ab4c35 (Service Health Issue: comfyui) added to URGENT queue
+WARNING:src.tasks.autonomous_behaviors:⚠️ Service comfyui unhealthy: HTTP 404
+INFO:src.tasks.task_queue:📝 Task 6467322b-5680-4c61-a319-4b6500f5ba0d (Service Connection Error: notifications) added to HIGH queue
+ERROR:src.tasks.autonomous_behaviors:🔌 Service notifications connection error: Cannot connect to host localhost:8350 ssl:default [Connect call failed ('127.0.0.1', 8350)]
+ERROR:src.tasks.task_queue:Failed to load task 50e2e384-cce5-41e5-9a30-db46762f4227: the JSON object must be str, bytes or bytearray, not dict
+ERROR:src.tasks.task_queue:Failed to load task b6f9bd6e-e85e-4cb6-b27c-f58cd7ab4c35: the JSON object must be str, bytes or bytearray, not dict
+ERROR:src.tasks.task_queue:Failed to load task 6467322b-5680-4c61-a319-4b6500f5ba0d: the JSON object must be str, bytes or bytearray, not dict
+INFO:src.tasks.task_queue:📝 Task e9662ec0-0cc0-49c1-83df-546273f03456 (Service Health Issue: echo) added to URGENT queue
+WARNING:src.tasks.autonomous_behaviors:⚠️ Service echo unhealthy: HTTP 404
+ERROR:src.tasks.task_queue:Failed to load task e9662ec0-0cc0-49c1-83df-546273f03456: the JSON object must be str, bytes or bytearray, not dict
+INFO:src.tasks.task_queue:📝 Task 6996df56-1948-4506-b458-cb9784b499c3 (Service Health Issue: comfyui) added to URGENT queue
+WARNING:src.tasks.autonomous_behaviors:⚠️ Service comfyui unhealthy: HTTP 404
+INFO:src.tasks.task_queue:📝 Task fe8b90c4-7069-4ecd-8b86-ad83a1040fe8 (Service Connection Error: notifications) added to HIGH queue
+ERROR:src.tasks.autonomous_behaviors:🔌 Service notifications connection error: Cannot connect to host localhost:8350 ssl:default [Connect call failed ('127.0.0.1', 8350)]
+ERROR:src.tasks.task_queue:Failed to load task 6996df56-1948-4506-b458-cb9784b499c3: the JSON object must be str, bytes or bytearray, not dict
+ERROR:src.tasks.task_queue:Failed to load task fe8b90c4-7069-4ecd-8b86-ad83a1040fe8: the JSON object must be str, bytes or bytearray, not dict
+INFO:src.tasks.task_queue:📝 Task 2a5f2440-7850-4dfc-abcd-15e26338dd74 (Service Health Issue: echo) added to URGENT queue
+WARNING:src.tasks.autonomous_behaviors:⚠️ Service echo unhealthy: HTTP 404
+INFO:src.tasks.task_queue:📝 Task 9d60da65-6a39-4e2f-8f9d-25f028f479cb (Service Health Issue: comfyui) added to URGENT queue
+WARNING:src.tasks.autonomous_behaviors:⚠️ Service comfyui unhealthy: HTTP 404
+INFO:src.tasks.task_queue:📝 Task 496c31cd-1322-4498-aa59-a0f12e4f6135 (Service Connection Error: notifications) added to HIGH queue
+ERROR:src.tasks.autonomous_behaviors:🔌 Service notifications connection error: Cannot connect to host localhost:8350 ssl:default [Connect call failed ('127.0.0.1', 8350)]
+ERROR:src.tasks.task_queue:Failed to load task 2a5f2440-7850-4dfc-abcd-15e26338dd74: the JSON object must be str, bytes or bytearray, not dict
+ERROR:src.tasks.task_queue:Failed to load task 9d60da65-6a39-4e2f-8f9d-25f028f479cb: the JSON object must be str, bytes or bytearray, not dict
+ERROR:src.tasks.task_queue:Failed to load task 496c31cd-1322-4498-aa59-a0f12e4f6135: the JSON object must be str, bytes or bytearray, not dict
