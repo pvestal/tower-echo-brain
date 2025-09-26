@@ -62,6 +62,15 @@ from agent_development_endpoints import agent_dev_router
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Import cognitive model selector for intelligent model selection
+model_selector = None
+try:
+    from fixed_model_selector import ModelSelector
+    model_selector = ModelSelector()
+    logger.info("✅ Cognitive model selector loaded")
+except ImportError:
+    logger.warning("⚠️ Cognitive model selector not available")
+
 # Initialize FastAPI application
 
 # Ollama Integration for NVIDIA GPU

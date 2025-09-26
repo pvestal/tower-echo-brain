@@ -31,7 +31,7 @@ class EchoMediaScanner:
     
     def __init__(self):
         self.db_config = {
-            'host': '192.168.50.135',
+            'host': 'localhost',
             'user': 'patrick',
             'database': 'tower_consolidated',
             'port': 5432

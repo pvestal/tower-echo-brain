@@ -129,7 +129,7 @@ class EchoVoiceService:
             "genius": "llama3.1:70b"
         }
         self.db_config = {
-            "host": "192.168.50.135",
+            "host": "localhost",
             "database": "tower_consolidated",
             "user": "patrick",
             "password": "admin123"
@@ -198,7 +198,7 @@ class EchoVoiceService:
         """Check if Ollama is accessible"""
         try:
             import requests
-            response = requests.get("http://192.168.50.135:11434/", timeout=3)
+            response = requests.get("http://localhost:11434/", timeout=3)
             return response.status_code == 200
         except:
             return False
@@ -207,7 +207,7 @@ class EchoVoiceService:
         """Check if music service is available"""
         try:
             import requests
-            response = requests.get("http://192.168.50.135:8080/api/services", timeout=3)
+            response = requests.get("http://localhost:8080/api/services", timeout=3)
             services = response.json()
             return any("music" in service.get("name", "").lower() for service in services)
         except:
@@ -235,7 +235,7 @@ class EchoVoiceService:
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.post(
-                    "http://192.168.50.135:11434/api/generate",
+                    "http://localhost:11434/api/generate",
                     json={
                         "model": model,
                         "prompt": contextual_prompt,
@@ -742,6 +742,6 @@ if __name__ == "__main__":
     logger.info(f"Ollama: {'Accessible' if echo.check_ollama() else 'Not Accessible'}")
     logger.info(f"Database: {'Connected' if echo.check_database() else 'Not Connected'}")
     logger.info(f"Music Service: {'Available' if echo.check_music_service() else 'Not Available'}")
-    logger.info("Voice interface: http://192.168.50.135:8311/")
-    logger.info("WebSocket: ws://192.168.50.135:8311/ws")
+    logger.info("Voice interface: http://localhost:8311/")
+    logger.info("WebSocket: ws://localhost:8311/ws")
     uvicorn.run(app, host="0.0.0.0", port=8311, log_level="info")

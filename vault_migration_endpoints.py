@@ -37,7 +37,7 @@ async def export_vault_to_hashicorp():
                             'type': 'oauth_provider',
                             'status': 'migrated_from_echo',
                             'migrated_at': datetime.now().isoformat(),
-                            'redirect_uri': cred_data.get('redirect_uri', f'https://192.168.50.135/api/auth/callback/{provider}')
+                            'redirect_uri': cred_data.get('redirect_uri', f'https://localhost/api/auth/callback/{provider}')
                         }
                         
                         vault_client.secrets.kv.v2.create_or_update_secret(

@@ -18,7 +18,7 @@ class CharacterEvolutionTester:
     def __init__(self):
         self.base_url = "http://localhost:8350"
         self.db_config = {
-            "host": "192.168.50.135",
+            "host": "localhost",
             "database": "tower_consolidated",
             "user": "patrick",
             "password": "admin123"

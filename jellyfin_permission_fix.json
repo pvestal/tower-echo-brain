@@ -1,0 +1,22 @@
+{
+  "timestamp": "2025-09-22T05:10:00Z",
+  "issue": "jellyfin_permission_errors",
+  "analysis": {
+    "problem": "Generated videos not accessible to Jellyfin due to permission restrictions",
+    "root_cause": "Video files created with restrictive permissions (600) instead of readable (644)",
+    "jellyfin_user_access": "Jellyfin service user lacks read access to patrick's Videos directory"
+  },
+  "solution": {
+    "immediate_fix": [
+      "chmod 644 on all video files",
+      "chmod g+rx on Videos directory", 
+      "Add jellyfin user to patrick group"
+    ],
+    "prevention": "Update video generation pipeline to set proper permissions automatically"
+  },
+  "training_data": {
+    "pattern": "video_generation_permissions",
+    "lesson": "Always set 644 permissions on generated media files for Jellyfin access",
+    "automation": "Add chmod 644 to all video generation scripts"
+  }
+}

@@ -58,9 +58,9 @@ class AnimeStoryOrchestrator:
 
     def __init__(self):
         self.db_conn = self._connect_db()
-        self.echo_api = "https://192.168.50.135/api/echo"
-        self.anime_api = "https://192.168.50.135/api/anime"
-        self.comfyui_api = "http://192.168.50.135:8188"
+        self.echo_api = "https://localhost/api/echo"
+        self.anime_api = "http://127.0.0.1:8328"
+        self.comfyui_api = "http://localhost:8188"
         self.characters = {}
         self.current_project = None
         self.story_memory = []
@@ -69,7 +69,7 @@ class AnimeStoryOrchestrator:
         """Connect to PostgreSQL for persistence"""
         try:
             return psycopg2.connect(
-                host="192.168.50.135",
+                host="localhost",
                 database="tower_consolidated",
                 user="patrick",
                 password="patrick"
@@ -425,7 +425,7 @@ class EchoAnimeIntegration:
 
     def __init__(self):
         self.orchestrator = AnimeStoryOrchestrator()
-        self.echo_api = "https://192.168.50.135/api/echo"
+        self.echo_api = "https://localhost/api/echo"
 
     async def process_creative_request(self, request: str) -> Dict[str, Any]:
         """Process creative request using Echo's expertise"""

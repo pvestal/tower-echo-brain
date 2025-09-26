@@ -1,0 +1,158 @@
+#!/usr/bin/env python3
+"""
+Echo Brain Unified Service - Refactored Main Entry Point
+"""
+
+import asyncio
+import logging
+import uvicorn
+import psycopg2
+import json
+import time
+import uuid
+from datetime import datetime
+from typing import Dict, List, Optional
+from fastapi import FastAPI, HTTPException, WebSocket, BackgroundTasks, Depends
+from fastapi.responses import StreamingResponse, HTMLResponse
+from fastapi.staticfiles import StaticFiles
+
+# Import modular components
+from src.db.models import (
+    QueryRequest, QueryResponse, ExecuteRequest, ExecuteResponse,
+    TestRequest, VoiceNotificationRequest, VoiceStatusRequest
+)
+from src.db.database import database
+from src.core.intelligence import intelligence_router
+from src.services.conversation import conversation_manager
+from src.services.testing import testing_framework
+from src.utils.helpers import safe_executor, tower_orchestrator
+
+# Import existing modules that remain external
+from echo_brain_thoughts import echo_brain
+from directors.director_registry import DirectorRegistry
+from directors.decision_tracker import DecisionTracker
+from directors.feedback_system import FeedbackProcessor, UserFeedback, FeedbackType
+from directors.user_preferences import UserPreferences, PreferenceType
+from directors.knowledge_manager import KnowledgeManager, create_simple_knowledge_manager
+from directors.sandbox_executor import SandboxExecutor, create_strict_sandbox
+from board_api import create_board_api
+from model_manager import (
+    get_model_manager, ModelManagementRequest, ModelManagementResponse,
+    ModelOperation, ModelInfo
+)
+from directors.auth_middleware import get_current_user
+from model_decision_engine import get_decision_engine
+from telegram_integration import telegram_router
+from veteran_guardian_endpoints import veteran_router
+from agent_development_endpoints import agent_dev_router
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Initialize FastAPI application
+app = FastAPI(
+    title="Echo Brain Unified Service",
+    description="Consolidated Echo intelligence with dynamic 1B-70B parameter scaling and Board of Directors decision system",
+    version="1.0.0"
+)
+
+# Mount static files for board dashboard
+try:
+    app.mount("/board", StaticFiles(directory="/opt/tower-echo-brain/frontend", html=True), name="board_dashboard")
+    logger.info("🎨 Board dashboard static files mounted at /board")
+except Exception as e:
+    logger.warning(f"Failed to mount board dashboard static files: {e}")
+
+# Include modular API routes
+from src.api.routes import router as api_router
+app.include_router(api_router)
+logger.info("🔗 Echo Brain API routes loaded")
+
+# Include external routers
+app.include_router(telegram_router)
+logger.info("📱 Telegram general integration enabled")
+
+app.include_router(veteran_router)
+logger.info("🎖️ Veteran Guardian Bot integration enabled")
+
+app.include_router(agent_dev_router)
+logger.info("🤖 Agent Development System enabled")
+
+# Import and initialize Anime Story Orchestrator
+try:
+    from anime_story_orchestrator import AnimeStoryOrchestrator
+    anime_orchestrator = AnimeStoryOrchestrator()
+    logger.info("🎌 Anime Story Orchestrator (agenticPersona) enabled")
+except Exception as e:
+    logger.warning(f"Failed to initialize Anime Story Orchestrator: {e}")
+    anime_orchestrator = None
+
+# Initialize global instances
+board_api = None
+model_manager = None
+director_registry = DirectorRegistry()
+decision_tracker = DecisionTracker(database.db_config)
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize all components on startup"""
+    global board_api, model_manager
+
+    logger.info("🚀 Echo Brain startup sequence initiated")
+
+    # Initialize database
+    await database.create_tables_if_needed()
+    logger.info("✅ Database initialized")
+
+    # Initialize board API
+    try:
+        board_api = create_board_api(director_registry, decision_tracker)
+        app.mount("/board-api", board_api, name="board_api")
+        logger.info("✅ Board of Directors API mounted")
+    except Exception as e:
+        logger.error(f"❌ Failed to initialize Board API: {e}")
+
+    # Initialize model manager
+    try:
+        model_manager = get_model_manager()
+        logger.info("✅ Model manager initialized")
+    except Exception as e:
+        logger.error(f"❌ Failed to initialize model manager: {e}")
+
+    # Initialize knowledge manager
+    try:
+        knowledge_manager = create_simple_knowledge_manager()
+        logger.info("✅ Knowledge manager initialized")
+    except Exception as e:
+        logger.error(f"❌ Failed to initialize knowledge manager: {e}")
+
+    logger.info("🧠 Echo Brain unified service ready")
+
+# The capability handler is now in the API routes module
+
+# API Routes are now in the router module
+
+@app.get("/board-dashboard", response_class=HTMLResponse)
+async def board_dashboard():
+    """Serve the board dashboard HTML"""
+    return """
+    <!DOCTYPE html>
+    <html>
+    <head><title>Echo Brain - Board of Directors</title></head>
+    <body>
+        <h1>🧠 Echo Brain - Board of Directors Dashboard</h1>
+        <p>Advanced AI governance and decision tracking system</p>
+        <p><a href="/board-api/docs">API Documentation</a></p>
+    </body>
+    </html>
+    """
+
+if __name__ == "__main__":
+    uvicorn.run(
+        "src.main:app",
+        host="127.0.0.1",
+        port=8309,
+        reload=False,
+        access_log=True
+    )

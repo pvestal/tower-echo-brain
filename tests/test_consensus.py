@@ -20,8 +20,8 @@ import asyncio
 # Add the parent directory to Python path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from directors.director_registry import DirectorRegistry
-from directors.base_director import DirectorBase
+from routing.service_registry import ServiceRegistry
+from routing.base_director import DirectorBase
 from directors import (
     SecurityDirector,
     QualityDirector,
@@ -55,7 +55,7 @@ class TestDirectorRegistry:
     @pytest.fixture
     def registry(self):
         """Create a DirectorRegistry instance for testing."""
-        return DirectorRegistry(consensus_threshold=0.6, max_directors_per_task=5)
+        return ServiceRegistry(consensus_threshold=0.6, max_directors_per_task=5)
 
     @pytest.fixture
     def mock_directors(self):
@@ -138,7 +138,7 @@ class TestConsensusCalculation:
     @pytest.fixture
     def registry(self):
         """Create a DirectorRegistry with low threshold for testing."""
-        return DirectorRegistry(consensus_threshold=0.5)
+        return ServiceRegistry(consensus_threshold=0.5)
 
     def test_unanimous_approval_consensus(self, registry, mock_directors):
         """Test consensus with unanimous approval."""
@@ -208,7 +208,7 @@ class TestConsensusCalculation:
 
     def test_high_threshold_consensus(self):
         """Test consensus with high threshold requirement."""
-        registry = DirectorRegistry(consensus_threshold=0.9)
+        registry = ServiceRegistry(consensus_threshold=0.9)
 
         # Add directors with slight disagreement
         directors = [
@@ -272,7 +272,7 @@ class TestTaskRouting:
     @pytest.fixture
     def registry_with_real_directors(self):
         """Create registry with real director implementations."""
-        registry = DirectorRegistry()
+        registry = ServiceRegistry()
 
         # Add all real directors
         registry.register_director(SecurityDirector())
@@ -378,7 +378,7 @@ class TestConflictResolution:
     @pytest.fixture
     def registry(self):
         """Create registry for conflict testing."""
-        return DirectorRegistry(consensus_threshold=0.6)
+        return ServiceRegistry(consensus_threshold=0.6)
 
     def test_complete_disagreement_resolution(self, registry):
         """Test resolution when directors completely disagree."""
@@ -477,7 +477,7 @@ class TestPerformanceMetrics:
     @pytest.fixture
     def registry(self):
         """Create registry for performance testing."""
-        return DirectorRegistry()
+        return ServiceRegistry()
 
     def test_evaluation_performance_tracking(self, registry):
         """Test that evaluation performance is tracked."""
