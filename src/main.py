@@ -18,6 +18,7 @@ import uuid
 from datetime import datetime
 from typing import Dict, List, Optional
 from fastapi import FastAPI, HTTPException, WebSocket, BackgroundTasks, Depends
+from fastapi.staticfiles import StaticFiles
 from fastapi.responses import StreamingResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -28,6 +29,8 @@ from src.db.models import (
 )
 from src.db.database import database
 from src.core.intelligence import intelligence_router
+# Board of Directors Integration
+from src.board_integration import board, BoardIntegration
 from src.services.conversation import conversation_manager
 from src.services.testing import testing_framework
 from src.utils.helpers import safe_executor, tower_orchestrator
@@ -38,18 +41,18 @@ from src.tasks.task_queue import Task, TaskType, TaskPriority, TaskStatus
 
 # Import existing modules that remain external
 from echo_brain_thoughts import echo_brain
-from directors.director_registry import DirectorRegistry
-from directors.decision_tracker import DecisionTracker
-from directors.feedback_system import FeedbackProcessor, UserFeedback, FeedbackType
-from directors.user_preferences import UserPreferences, PreferenceType
-from directors.knowledge_manager import KnowledgeManager, create_simple_knowledge_manager
-from directors.sandbox_executor import SandboxExecutor, create_strict_sandbox
+from routing.service_registry import ServiceRegistry
+from routing.request_logger import RequestLogger
+from routing.feedback_system import FeedbackProcessor, UserFeedback, FeedbackType
+from routing.user_preferences import UserPreferences, PreferenceType
+from routing.knowledge_manager import KnowledgeManager, create_simple_knowledge_manager
+from routing.sandbox_executor import SandboxExecutor, create_strict_sandbox
 from board_api import create_board_api
 from model_manager import (
     get_model_manager, ModelManagementRequest, ModelManagementResponse,
     ModelOperation, ModelInfo
 )
-from directors.auth_middleware import get_current_user
+from routing.auth_middleware import get_current_user
 from model_decision_engine import get_decision_engine
 from telegram_integration import telegram_router
 from veteran_guardian_endpoints import veteran_router
@@ -60,6 +63,30 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Initialize FastAPI application
+
+# Ollama Integration for NVIDIA GPU
+import requests
+
+def query_ollama(prompt: str, model: str = "qwen2.5-coder:7b"):
+    """Query Ollama running on NVIDIA GPU"""
+    try:
+        response = requests.post(
+            "http://localhost:11434/api/generate",
+            json={
+                "model": model,
+                "prompt": prompt,
+                "stream": False
+            },
+            timeout=30
+        )
+        if response.status_code == 200:
+            return response.json().get("response", "No response")
+    except Exception as e:
+        print(f"Ollama error: {e}")
+        return None
+    return None
+
+from src.photo_comparison import router as photo_router
 app = FastAPI(
     title="Echo Brain Unified Service with Autonomous Task System",
     description="Consolidated Echo intelligence with dynamic 1B-70B parameter scaling, Board of Directors decision system, and autonomous task execution",
@@ -100,16 +127,29 @@ except Exception as e:
 # Initialize global instances
 board_api = None
 model_manager = None
-director_registry = DirectorRegistry()
-decision_tracker = DecisionTracker(database.db_config)
+service_registry = ServiceRegistry()
+request_logger = RequestLogger()  # Fixed: RequestLogger takes no arguments
 
 # Initialize autonomous task system
 task_queue = None
 background_worker = None
 autonomous_behaviors = None
 
+
+# Expert System Integration
+try:
+    from src.experts.echo_expert_integration import (
+        get_expert_integration, enhance_echo_decision
+    )
+    EXPERT_SYSTEM_AVAILABLE = True
+    logger.info("🧠 Expert System loaded successfully")
+except ImportError as e:
+    logger.warning(f"Expert System not available: {e}")
+    EXPERT_SYSTEM_AVAILABLE = False
+
 @app.on_event("startup")
 async def startup_event():
+    app.include_router(photo_router)
     """Initialize all components on startup including autonomous task system"""
     global board_api, model_manager, task_queue, background_worker, autonomous_behaviors
 
@@ -121,7 +161,7 @@ async def startup_event():
 
     # Initialize board API
     try:
-        board_api = create_board_api(director_registry, decision_tracker)
+        board_api = create_board_api(service_registry, request_logger)
         app.mount("/board-api", board_api, name="board_api")
         logger.info("✅ Board of Directors API mounted")
     except Exception as e:
@@ -129,7 +169,7 @@ async def startup_event():
 
     # Initialize model manager
     try:
-        model_manager = get_model_manager(director_registry, decision_tracker)
+        model_manager = get_model_manager(service_registry, request_logger)
         logger.info("✅ Model manager initialized")
     except Exception as e:
         logger.error(f"❌ Failed to initialize model manager: {e}")
@@ -281,6 +321,7 @@ async def get_brain_state():
         logger.error(f"Error getting brain state: {e}")
         return {"brain_state": "error", "error": str(e)}
 
+
 @app.post("/api/tasks/emergency")
 async def trigger_emergency_response(emergency_data: Dict):
     """Trigger emergency task generation"""
@@ -325,11 +366,314 @@ async def board_dashboard():
     </html>
     """
 
+
+
+# This will be added to the main.py file
+
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: Set[WebSocket] = set()
+
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.active_connections.add(websocket)
+
+    def disconnect(self, websocket: WebSocket):
+        self.active_connections.discard(websocket)
+
+    async def send_personal_message(self, message: str, websocket: WebSocket):
+        await websocket.send_text(message)
+
+    async def broadcast(self, message: str):
+        for connection in self.active_connections:
+            await connection.send_text(message)
+
+manager = ConnectionManager()
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await manager.connect(websocket)
+    try:
+        while True:
+            data = await websocket.receive_text()
+            
+            # Send acknowledgment
+            response = {
+                "type": "response",
+                "text": f"Echo received: {data}",
+                "timestamp": time.time(),
+                "hemisphere": "both"
+            }
+            await websocket.send_json(response)
+            
+            # Send a thought
+            thought = {
+                "type": "thought",
+                "content": f"Processing: {data}",
+                "hemisphere": "left",
+                "confidence": 85
+            }
+            await websocket.send_json(thought)
+            
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
+    except Exception as e:
+        print(f"WebSocket error: {e}")
+        manager.disconnect(websocket)
+
 if __name__ == "__main__":
     uvicorn.run(
         "src.main:app",
-        host="127.0.0.1",
+        host="0.0.0.0",
         port=8309,
         reload=False,
         access_log=True
     )
+
+# Board-Enhanced Code Evaluation Endpoint
+@app.post("/api/evaluate", response_model=Dict)
+async def evaluate_code_with_board(request: Dict, background_tasks: BackgroundTasks):
+    """
+    Evaluate code through Board of Directors before execution
+    """
+    code = request.get("code", "")
+    context = request.get("context", {})
+    
+    # Get Board evaluation
+    async with BoardIntegration() as board_integration:
+        board_decision = await board_integration.evaluate_with_board(code, context)
+        
+        # Determine if safe to execute
+        should_execute = board_integration.should_execute(board_decision)
+        reasoning = board_integration.get_board_reasoning(board_decision)
+        
+        response = {
+            "code": code,
+            "board_decision": board_decision.get("final_recommendation", "unknown"),
+            "should_execute": should_execute,
+            "reasoning": reasoning,
+            "directors": board_decision.get("directors", []),
+            "consensus_strength": board_decision.get("consensus_strength", 0)
+        }
+        
+        if should_execute and context.get("auto_execute", False):
+            # Execute code if approved and requested
+            try:
+                exec_globals = {}
+                exec(code, exec_globals)
+                response["execution_result"] = "Success"
+            except Exception as e:
+                response["execution_result"] = f"Error: {str(e)}"
+        
+        return response
+
+logger.info("Board integration endpoint added at /api/evaluate")
+
+# Vision Analysis Endpoints
+from src.vision_capabilities import EchoVision
+
+vision = EchoVision()
+
+@app.post("/api/vision/analyze")
+async def analyze_image(request: dict):
+    """Analyze image with LLaVA"""
+    image_path = request.get('image_path')
+    prompt = request.get('prompt', 'Describe this image')
+    result = await vision.analyze_image(image_path, prompt)
+    return {"analysis": result, "model": "llava:7b"}
+
+@app.post("/api/vision/quality-check")
+async def quality_check_anime(request: dict):
+    """Quality check anime frame"""
+    frame_path = request.get('frame_path')
+    result = await vision.quality_check_anime(frame_path)
+    return {"quality_analysis": result, "frame": frame_path}
+
+# Service Repair and Diagnosis Endpoints
+@app.post("/api/service/diagnose")
+async def diagnose_service(request: dict):
+    """Diagnose a specific service"""
+    service_name = request.get('service_name')
+    port = request.get('port')
+    
+    # Basic service check
+    import subprocess
+    import requests
+    
+    result = {
+        "service_name": service_name,
+        "port": port,
+        "status": "unknown",
+        "issues": [],
+        "repair_suggestions": []
+    }
+    
+    try:
+        # Check if port is listening
+        proc = subprocess.run(['lsof', '-i', f':{port}'], capture_output=True, text=True)
+        if proc.returncode == 0:
+            result["status"] = "port_listening"
+            
+            # Check if service responds
+            try:
+                resp = requests.get(f'http://localhost:{port}/', timeout=3)
+                if resp.status_code == 200:
+                    result["status"] = "healthy"
+                elif resp.status_code == 404:
+                    result["status"] = "responding_but_broken"
+                    result["issues"].append("Service responds but endpoints return 404")
+                    result["repair_suggestions"].append("Check route configuration")
+                else:
+                    result["status"] = f"http_error_{resp.status_code}"
+            except requests.exceptions.RequestException as e:
+                result["status"] = "not_responding"
+                result["issues"].append(f"HTTP request failed: {str(e)}")
+        else:
+            result["status"] = "port_not_listening"
+            result["issues"].append("No process listening on port")
+            result["repair_suggestions"].append("Start the service")
+            
+    except Exception as e:
+        result["issues"].append(f"Diagnosis failed: {str(e)}")
+    
+    return result
+
+@app.post("/api/service/repair")
+async def repair_service(request: dict):
+    """Attempt to repair a service"""
+    service_name = request.get('service_name')
+    port = request.get('port')
+    repair_action = request.get('action', 'restart')
+    
+    result = {
+        "service_name": service_name,
+        "port": port,
+        "action": repair_action,
+        "success": False,
+        "message": "",
+        "steps_taken": []
+    }
+    
+    try:
+        if repair_action == "restart":
+            # Find and restart the service
+            import subprocess
+            
+            # Kill processes on the port
+            proc = subprocess.run(['lsof', '-ti', f':{port}'], capture_output=True, text=True)
+            if proc.returncode == 0 and proc.stdout.strip():
+                pids = proc.stdout.strip().split('\n')
+                for pid in pids:
+                    subprocess.run(['kill', pid], capture_output=True)
+                    result["steps_taken"].append(f"Killed process {pid}")
+            
+            # Start service based on name
+            service_paths = {
+                "anime": "/opt/tower-anime-production/anime_service.py",
+                "3d_studio": "/opt/tower-3d-models/3d_studio_server.py"
+            }
+            
+            if service_name in service_paths:
+                service_path = service_paths[service_name]
+                # Start the service
+                subprocess.Popen(['python3', service_path], cwd=os.path.dirname(service_path))
+                result["steps_taken"].append(f"Started {service_path}")
+                result["success"] = True
+                result["message"] = f"Service {service_name} restarted"
+            else:
+                result["message"] = f"Don't know how to restart {service_name}"
+                
+    except Exception as e:
+        result["message"] = f"Repair failed: {str(e)}"
+    
+    return result
+
+@app.get("/api/service/status-all")
+async def get_all_service_status():
+    """Get status of all Tower services"""
+    services = {
+        "echo_brain": 8309,
+        "anime_production": 8328, 
+        "3d_studio": 8500,
+        "comfyui": 8188,
+        "auth": 8088,
+        "knowledge_base": 8307
+    }
+    
+    status = {}
+    for name, port in services.items():
+        try:
+            import requests
+            resp = requests.get(f'http://localhost:{port}/', timeout=2)
+            status[name] = {
+                "port": port,
+                "status": "healthy" if resp.status_code == 200 else f"http_{resp.status_code}",
+                "response_time": resp.elapsed.total_seconds()
+            }
+        except Exception as e:
+            status[name] = {
+                "port": port, 
+                "status": "down",
+                "error": str(e)
+            }
+    
+    return status
+
+# Video Generation Endpoint
+from modules.video_generator import VideoGenerator
+
+video_gen = VideoGenerator()
+
+@app.post("/api/video/generate")
+async def generate_video(request: dict):
+    """Generate anime/video from prompt"""
+    prompt = request.get("prompt", "")
+    style = request.get("style", "anime")
+    duration = request.get("duration", 30)
+    
+    result = await video_gen.generate_video_from_prompt(prompt, style, duration)
+    return result
+
+@app.post("/api/video/batch_frames")
+async def batch_frames(request: dict):
+    """Generate batch frames for video"""
+    prompt = request.get("prompt", "")
+    style = request.get("style", "anime")
+    num_frames = request.get("num_frames", 30)
+    
+    frames = await video_gen.generate_batch_frames(prompt, style, num_frames)
+    return {"frames": frames, "count": len(frames)}
+
+# Add route to serve the dashboard
+@app.get("/dashboard", response_class=HTMLResponse)
+async def serve_dashboard():
+    """Serve the Echo dashboard"""
+    dashboard_path = "/opt/tower-echo-brain/static/echo_dashboard.html"
+    if os.path.exists(dashboard_path):
+        with open(dashboard_path, 'r') as f:
+            return HTMLResponse(content=f.read())
+    return HTMLResponse(content="Dashboard not found", status_code=404)
+
+@app.get("/brain-visual", response_class=HTMLResponse)
+async def serve_brain_visual():
+    """Serve the Echo brain visualization"""
+    brain_path = "/opt/tower-echo-brain/static/echo_brain_visual.html"
+    if os.path.exists(brain_path):
+        with open(brain_path, 'r') as f:
+            return HTMLResponse(content=f.read())
+    return HTMLResponse(content="Brain visualization not found", status_code=404)
+
+@app.get("/api/echo/brain")
+async def get_brain_activity():
+    """Get current brain activity for visualization"""
+    # Check if there's current processing
+    brain_state = await get_brain_state()
+    return {
+        "status": brain_state.get("state", "resting"),
+        "thoughts_active": brain_state.get("processing", False),
+        "hemisphere": "both",  # Could be enhanced based on query type
+        "timestamp": datetime.now().isoformat()
+    }
+
+# Mount static files
+app.mount("/static", StaticFiles(directory="/opt/tower-echo-brain/static"), name="static")
