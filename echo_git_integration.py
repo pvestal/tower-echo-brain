@@ -910,7 +910,7 @@ if __name__ == "__main__":
         try:
             import psycopg2
             db_config = {
-                'host': '***REMOVED***',
+                'host': 'localhost',
                 'database': 'tower_consolidated',
                 'user': 'patrick',
                 'password': 'Beau40818'
@@ -1000,7 +1000,7 @@ if __name__ == "__main__":
         try:
             import psycopg2
             db_config = {
-                'host': '***REMOVED***',
+                'host': 'localhost',
                 'database': 'tower_consolidated',
                 'user': 'patrick',
                 'password': 'Beau40818'

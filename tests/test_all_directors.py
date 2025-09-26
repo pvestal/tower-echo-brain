@@ -25,12 +25,12 @@ from unittest.mock import Mock, patch, MagicMock, AsyncMock
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from directors.base_director import DirectorBase
-from directors.security_director import SecurityDirector
-from directors.quality_director import QualityDirector
-from directors.performance_director import PerformanceDirector
-from directors.ethics_director import EthicsDirector
-from directors.ux_director import UXDirector
+from routing.base_director import DirectorBase
+from routing.security_director import SecurityDirector
+from routing.quality_director import QualityDirector
+from routing.performance_director import PerformanceDirector
+from routing.ethics_director import EthicsDirector
+from routing.ux_director import UXDirector
 
 
 # ============================================================================

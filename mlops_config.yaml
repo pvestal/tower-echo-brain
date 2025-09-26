@@ -1,0 +1,53 @@
+# Echo MLOps Configuration
+mlops:
+  drift_monitoring:
+    enabled: true
+    threshold: 0.1
+    window_days: 7
+    
+  auto_retraining:
+    enabled: true
+    performance_threshold: 0.05
+    schedule: "weekly"
+    
+  ab_testing:
+    enabled: true
+    default_allocation: "thompson_sampling"
+    
+  feature_store:
+    enabled: true
+    cache_ttl: 3600
+    
+  model_registry:
+    backup_enabled: true
+    versioning: true
+
+services:
+  model_registry:
+    port: 8340
+    host: "0.0.0.0"
+    
+  ab_testing:
+    port: 8341
+    host: "0.0.0.0"
+    
+  drift_detector:
+    port: 8342
+    host: "0.0.0.0"
+    
+  retraining_pipeline:
+    port: 8343
+    host: "0.0.0.0"
+    
+  feature_store:
+    port: 8344
+    host: "0.0.0.0"
+    
+  mlops_integration:
+    port: 8345
+    host: "0.0.0.0"
+
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "/opt/tower-echo-brain/logs/mlops.log"

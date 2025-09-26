@@ -33,7 +33,7 @@ OUTPUT_DIR = Path("***REMOVED***/Anime")
 TEMP_DIR = Path("/opt/tower-anime/data/temp")
 
 DB_CONFIG = {
-    'host': '***REMOVED***',
+    'host': 'localhost',
     'database': 'tower_consolidated',
     'user': 'patrick',
     'password': os.getenv('DB_PASSWORD', '')

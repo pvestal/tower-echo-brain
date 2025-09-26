@@ -330,9 +330,9 @@ def mock_database_pool():
 
 
 @pytest.fixture
-def mock_decision_tracker():
+def mock_request_logger():
     """Provide a mock decision tracker for testing."""
-    with patch('directors.decision_tracker.DecisionTracker') as mock_tracker_class:
+    with patch('directors.request_logger.DecisionTracker') as mock_tracker_class:
         mock_instance = AsyncMock()
 
         # Configure async methods

@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Echo Brain Voice Monitor</title>
+    <meta charset="utf-8">
+    <style>
+        body {
+            background: #1a1a1a;
+            color: #0ff;
+            font-family: 'Courier New', monospace;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #0ff;
+            text-shadow: 0 0 10px #0ff;
+            border-bottom: 2px solid #0ff;
+            padding-bottom: 10px;
+        }
+
+        .status-panel {
+            background: #0a0a0a;
+            border: 1px solid #0ff;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+            box-shadow: 0 0 20px rgba(0,255,255,0.3);
+        }
+
+        .task {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            background: #111;
+            border-left: 3px solid #444;
+            transition: all 0.3s;
+        }
+
+        .task.pending {
+            border-left-color: #666;
+            opacity: 0.6;
+        }
+
+        .task.in_progress {
+            border-left-color: #0ff;
+            animation: pulse 1s infinite;
+        }
+
+        .task.completed {
+            border-left-color: #0f0;
+        }
+
+        .task.failed {
+            border-left-color: #f00;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .task-icon {
+            width: 30px;
+            font-size: 20px;
+        }
+
+        .task-content {
+            flex: 1;
+            margin: 0 15px;
+        }
+
+        .task-progress {
+            width: 100px;
+            text-align: right;
+            color: #0ff;
+        }
+
+        .voice-controls {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #0a0a0a;
+            border: 1px solid #0ff;
+            border-radius: 5px;
+            padding: 15px;
+        }
+
+        button {
+            background: #0a0a0a;
+            color: #0ff;
+            border: 1px solid #0ff;
+            padding: 10px 20px;
+            cursor: pointer;
+            margin: 5px;
+            border-radius: 3px;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: #0ff;
+            color: #000;
+            box-shadow: 0 0 10px #0ff;
+        }
+
+        #voice-status {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #888;
+        }
+
+        .log-panel {
+            background: #000;
+            border: 1px solid #333;
+            padding: 10px;
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 12px;
+            font-family: monospace;
+        }
+
+        .log-entry {
+            margin: 2px 0;
+            padding: 2px;
+            border-left: 2px solid #333;
+            padding-left: 8px;
+        }
+
+        .log-entry.voice {
+            border-left-color: #0ff;
+            color: #0ff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧠 Echo Brain Voice Monitor</h1>
+
+        <div class="status-panel">
+            <h2>Current Tasks</h2>
+            <div id="task-list">
+                <div class="task pending">
+                    <span class="task-icon">⏳</span>
+                    <div class="task-content">Waiting for Echo Brain connection...</div>
+                    <div class="task-progress">--</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="log-panel" id="log-panel">
+            <div class="log-entry">System: Initializing Echo Voice Monitor...</div>
+        </div>
+    </div>
+
+    <div class="voice-controls">
+        <h3>🔊 Voice Output</h3>
+        <button onclick="toggleVoice()">Enable Voice</button>
+        <button onclick="testVoice()">Test Voice</button>
+        <button onclick="changeVoice()">Change Voice</button>
+        <div id="voice-status">Voice: Disabled</div>
+    </div>
+
+    <script>
+        let ws = null;
+        let voiceEnabled = false;
+        let voiceType = 'en-US';
+        let synth = window.speechSynthesis;
+
+        // Task status icons
+        const statusIcons = {
+            pending: '⏳',
+            in_progress: '🔄',
+            completed: '✅',
+            failed: '❌'
+        };
+
+        function connectWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const host = '***REMOVED***';
+            const port = '8309';
+
+            addLog('System: Connecting to Echo Brain WebSocket...');
+
+            ws = new WebSocket(`${protocol}//${host}:${port}/ws/progress`);
+
+            ws.onopen = function() {
+                addLog('System: Connected to Echo Brain!');
+                updateTaskList([{
+                    status: 'completed',
+                    content: 'Connected to Echo Brain',
+                    progress: 100
+                }]);
+            };
+
+            ws.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                handleWebSocketMessage(data);
+            };
+
+            ws.onerror = function() {
+                addLog('System: WebSocket error - retrying...');
+            };
+
+            ws.onclose = function() {
+                addLog('System: Disconnected - reconnecting in 3s...');
+                setTimeout(connectWebSocket, 3000);
+            };
+        }
+
+        function handleWebSocketMessage(data) {
+            if (data.action === 'task_updated' || data.action === 'task_added') {
+                updateTask(data.task);
+
+                if (voiceEnabled && data.task.status === 'in_progress') {
+                    speak(data.task.activeForm || data.task.content);
+                }
+            } else if (data.action === 'initial_status') {
+                updateTaskList(data.tasks);
+            }
+        }
+
+        function updateTask(task) {
+            let existingTask = document.getElementById(`task-${task.id}`);
+
+            if (!existingTask) {
+                existingTask = createTaskElement(task);
+                document.getElementById('task-list').appendChild(existingTask);
+            }
+
+            existingTask.className = `task ${task.status}`;
+            existingTask.innerHTML = `
+                <span class="task-icon">${statusIcons[task.status]}</span>
+                <div class="task-content">
+                    ${task.activeForm || task.content}
+                    ${task.details ? `<br><small>${task.details}</small>` : ''}
+                </div>
+                <div class="task-progress">${task.progress || 0}%</div>
+            `;
+
+            if (task.status === 'in_progress') {
+                addLog(`Echo: ${task.activeForm || task.content}`, 'voice');
+            }
+        }
+
+        function updateTaskList(tasks) {
+            const taskList = document.getElementById('task-list');
+            taskList.innerHTML = '';
+
+            tasks.forEach(task => {
+                const element = createTaskElement(task);
+                taskList.appendChild(element);
+            });
+        }
+
+        function createTaskElement(task) {
+            const div = document.createElement('div');
+            div.id = `task-${task.id}`;
+            div.className = `task ${task.status}`;
+            div.innerHTML = `
+                <span class="task-icon">${statusIcons[task.status]}</span>
+                <div class="task-content">
+                    ${task.activeForm || task.content}
+                    ${task.details ? `<br><small>${task.details}</small>` : ''}
+                </div>
+                <div class="task-progress">${task.progress || 0}%</div>
+            `;
+            return div;
+        }
+
+        function toggleVoice() {
+            voiceEnabled = !voiceEnabled;
+            document.getElementById('voice-status').textContent =
+                `Voice: ${voiceEnabled ? 'Enabled' : 'Disabled'}`;
+
+            if (voiceEnabled) {
+                speak('Echo Brain voice feedback enabled');
+            }
+        }
+
+        function testVoice() {
+            speak('Echo Brain voice system operational. Ready for anime generation progress updates.');
+        }
+
+        function changeVoice() {
+            const voices = synth.getVoices();
+            if (voices.length > 0) {
+                // Cycle through available voices
+                const currentIndex = voices.findIndex(v => v.lang === voiceType);
+                const nextIndex = (currentIndex + 1) % voices.length;
+                voiceType = voices[nextIndex].lang;
+
+                speak(`Voice changed to ${voices[nextIndex].name}`);
+                document.getElementById('voice-status').textContent =
+                    `Voice: ${voices[nextIndex].name}`;
+            }
+        }
+
+        function speak(text) {
+            if (!voiceEnabled) return;
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = voiceType;
+            utterance.rate = 1.1;
+            utterance.pitch = 1.0;
+
+            synth.speak(utterance);
+        }
+
+        function addLog(message, type = '') {
+            const logPanel = document.getElementById('log-panel');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logPanel.appendChild(entry);
+            logPanel.scrollTop = logPanel.scrollHeight;
+        }
+
+        // Initialize
+        connectWebSocket();
+
+        // Load voices
+        if (synth.onvoiceschanged !== undefined) {
+            synth.onvoiceschanged = function() {
+                const voices = synth.getVoices();
+                if (voices.length > 0) {
+                    addLog(`System: ${voices.length} voices available`);
+                }
+            };
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Echo Brain API Documentation</title>
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui.css" />
+    <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAdgAAAHYBTnsmCAAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAANCSURBVFiFtZe9axRBFMafJBqwsLGwsLBQsLBQsLBQG1sLwcJCwcJCG1sLwcLCwsLCQm1sLQQLCwsLCwsLtbGwsLBQsLBQsLCwsLBQG1sLwcJCwcJCbWwtBAsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLC" />
+    <style>
+        /* Custom styles for Echo Brain API documentation */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+            color: #ffffff;
+        }
+
+        .swagger-ui .topbar {
+            background: linear-gradient(90deg, #1a1a2e 0%, #16213e 100%);
+            border-bottom: 3px solid #00d4ff;
+        }
+
+        .swagger-ui .topbar .download-url-wrapper {
+            display: none;
+        }
+
+        /* Custom header */
+        .echo-brain-header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            padding: 2rem;
+            text-align: center;
+            border-bottom: 3px solid #00d4ff;
+            box-shadow: 0 4px 20px rgba(0, 212, 255, 0.3);
+        }
+
+        .echo-brain-header h1 {
+            margin: 0;
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(45deg, #00d4ff, #0099cc, #ffffff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(0, 212, 255, 0.5);
+        }
+
+        .echo-brain-header .subtitle {
+            margin: 0.5rem 0 0 0;
+            font-size: 1.2rem;
+            color: #cccccc;
+            font-weight: 300;
+        }
+
+        .echo-brain-header .capabilities {
+            margin: 1rem 0;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .capability-badge {
+            background: rgba(0, 212, 255, 0.2);
+            border: 1px solid #00d4ff;
+            border-radius: 20px;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            color: #00d4ff;
+            font-weight: 500;
+        }
+
+        /* Quick stats */
+        .quick-stats {
+            background: rgba(22, 33, 62, 0.8);
+            padding: 1.5rem;
+            margin: 2rem;
+            border-radius: 10px;
+            border: 1px solid #00d4ff;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 1rem;
+            background: rgba(0, 212, 255, 0.1);
+            border-radius: 8px;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #00d4ff;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #cccccc;
+            margin-top: 0.5rem;
+        }
+
+        /* Environment selector */
+        .environment-selector {
+            background: rgba(22, 33, 62, 0.9);
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #00d4ff;
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .env-button {
+            background: rgba(0, 212, 255, 0.2);
+            border: 1px solid #00d4ff;
+            color: #00d4ff;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .env-button:hover, .env-button.active {
+            background: #00d4ff;
+            color: #1a1a2e;
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+        }
+
+        /* Swagger UI customizations */
+        .swagger-ui {
+            background: transparent;
+        }
+
+        .swagger-ui .info {
+            background: rgba(22, 33, 62, 0.8);
+            border: 1px solid #00d4ff;
+            border-radius: 10px;
+            padding: 2rem;
+            margin: 2rem;
+        }
+
+        .swagger-ui .scheme-container {
+            background: rgba(22, 33, 62, 0.8);
+            border: 1px solid #00d4ff;
+            border-radius: 10px;
+            padding: 1rem;
+            margin: 1rem 2rem;
+        }
+
+        .swagger-ui .opblock {
+            background: rgba(22, 33, 62, 0.8);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            margin: 1rem 2rem;
+            border-radius: 8px;
+        }
+
+        .swagger-ui .opblock.opblock-get {
+            border-left: 4px solid #61affe;
+        }
+
+        .swagger-ui .opblock.opblock-post {
+            border-left: 4px solid #49cc90;
+        }
+
+        .swagger-ui .opblock.opblock-put {
+            border-left: 4px solid #fca130;
+        }
+
+        .swagger-ui .opblock.opblock-delete {
+            border-left: 4px solid #f93e3e;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1a1a2e;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #00d4ff;
+            border-radius: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #0099cc;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .echo-brain-header h1 {
+                font-size: 2rem;
+            }
+
+            .echo-brain-header .capabilities {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .quick-stats {
+                grid-template-columns: 1fr;
+                margin: 1rem;
+            }
+
+            .environment-selector {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+
+        /* Loading animation */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0, 212, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #00d4ff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Status indicators */
+        .status-healthy {
+            color: #49cc90;
+            font-weight: bold;
+        }
+
+        .status-degraded {
+            color: #fca130;
+            font-weight: bold;
+        }
+
+        .status-unhealthy {
+            color: #f93e3e;
+            font-weight: bold;
+        }
+
+        /* Custom info panel */
+        .info-panel {
+            background: rgba(22, 33, 62, 0.9);
+            border: 1px solid #00d4ff;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin: 2rem;
+        }
+
+        .info-panel h3 {
+            color: #00d4ff;
+            margin-top: 0;
+        }
+
+        .info-panel .note {
+            background: rgba(0, 212, 255, 0.1);
+            border-left: 4px solid #00d4ff;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 5px 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Custom Header -->
+    <div class="echo-brain-header">
+        <h1>Echo Brain API</h1>
+        <div class="subtitle">Advanced AI Orchestrator with Board of Directors Governance</div>
+        <div class="capabilities">
+            <span class="capability-badge">24+ Models (1B-70B Parameters)</span>
+            <span class="capability-badge">Board of Directors Governance</span>
+            <span class="capability-badge">Real-time Monitoring</span>
+            <span class="capability-badge">Universal Testing</span>
+            <span class="capability-badge">Voice Integration</span>
+            <span class="capability-badge">WebSocket Streaming</span>
+        </div>
+    </div>
+
+    <!-- Environment Selector -->
+    <div class="environment-selector">
+        <a href="#" class="env-button active" onclick="switchEnvironment('production')">
+            🏭 Production (HTTPS)
+        </a>
+        <a href="#" class="env-button" onclick="switchEnvironment('direct')">
+            🔗 Direct Access (HTTP)
+        </a>
+        <a href="#" class="env-button" onclick="switchEnvironment('local')">
+            💻 Local Development
+        </a>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="quick-stats">
+        <div class="stat-item">
+            <span class="stat-number" id="endpoint-count">50+</span>
+            <div class="stat-label">API Endpoints</div>
+        </div>
+        <div class="stat-item">
+            <span class="stat-number" id="model-count">24</span>
+            <div class="stat-label">AI Models</div>
+        </div>
+        <div class="stat-item">
+            <span class="stat-number" id="service-status">
+                <span class="loading-spinner"></span>
+            </span>
+            <div class="stat-label">Service Status</div>
+        </div>
+        <div class="stat-item">
+            <span class="stat-number" id="board-directors">6</span>
+            <div class="stat-label">Board Directors</div>
+        </div>
+    </div>
+
+    <!-- Info Panel -->
+    <div class="info-panel">
+        <h3>🚀 Quick Start Guide</h3>
+        <div class="note">
+            <strong>Authentication:</strong> Most endpoints require JWT authentication.
+            Get your token from the Tower Auth Service at <code>/api/auth/login</code>
+        </div>
+        <div class="note">
+            <strong>Try it out:</strong> Start with the <code>/health</code> endpoint to verify system status,
+            then explore <code>/query</code> for AI interactions or <code>/models/list</code> for available models.
+        </div>
+        <div class="note">
+            <strong>Real-time Updates:</strong> Connect to WebSocket endpoints for live monitoring of
+            brain activity and board decisions.
+        </div>
+    </div>
+
+    <!-- Swagger UI Container -->
+    <div id="swagger-ui"></div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui-bundle.js"></script>
+    <script src="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui-standalone-preset.js"></script>
+
+    <script>
+        // Environment configurations
+        const environments = {
+            production: 'https://***REMOVED***/api/echo',
+            direct: 'http://***REMOVED***:8309/api/echo',
+            local: 'http://localhost:8309/api/echo'
+        };
+
+        let currentEnvironment = 'production';
+        let swaggerUI;
+
+        // Initialize Swagger UI
+        function initSwaggerUI(serverUrl) {
+            const ui = SwaggerUIBundle({
+                url: './openapi.yaml',
+                dom_id: '#swagger-ui',
+                deepLinking: true,
+                presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIStandalonePreset
+                ],
+                plugins: [
+                    SwaggerUIBundle.plugins.DownloadUrl
+                ],
+                layout: "StandaloneLayout",
+                defaultModelExpandDepth: 2,
+                defaultModelsExpandDepth: 1,
+                displayOperationId: false,
+                showExtensions: true,
+                showCommonExtensions: true,
+                tryItOutEnabled: true,
+                requestInterceptor: (req) => {
+                    // Add correlation ID to all requests
+                    req.headers['X-Correlation-ID'] = generateUUID();
+                    return req;
+                },
+                responseInterceptor: (res) => {
+                    // Log response for debugging
+                    console.log('API Response:', res);
+                    return res;
+                },
+                onComplete: () => {
+                    console.log('Swagger UI loaded successfully');
+                    checkServiceStatus();
+                },
+                // Custom server configuration
+                servers: [
+                    {
+                        url: serverUrl,
+                        description: `Current Environment: ${currentEnvironment}`
+                    }
+                ]
+            });
+
+            return ui;
+        }
+
+        // Switch environment
+        function switchEnvironment(env) {
+            currentEnvironment = env;
+            const serverUrl = environments[env];
+
+            // Update active button
+            document.querySelectorAll('.env-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Reinitialize Swagger UI with new server
+            swaggerUI = initSwaggerUI(serverUrl);
+
+            // Update stats
+            checkServiceStatus();
+        }
+
+        // Check service status
+        async function checkServiceStatus() {
+            const statusElement = document.getElementById('service-status');
+            const serverUrl = environments[currentEnvironment];
+
+            try {
+                statusElement.innerHTML = '<span class="loading-spinner"></span>';
+
+                const response = await fetch(`${serverUrl}/health`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const status = data.status || 'unknown';
+                    const statusClass = `status-${status}`;
+                    statusElement.innerHTML = `<span class="${statusClass}">${status.toUpperCase()}</span>`;
+
+                    // Update model count if available
+                    if (data.intelligence_levels) {
+                        document.getElementById('model-count').textContent = data.intelligence_levels.length;
+                    }
+                } else {
+                    statusElement.innerHTML = '<span class="status-unhealthy">UNAVAILABLE</span>';
+                }
+            } catch (error) {
+                console.error('Health check failed:', error);
+                statusElement.innerHTML = '<span class="status-unhealthy">ERROR</span>';
+            }
+        }
+
+        // Utility functions
+        function generateUUID() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        // Live status updates
+        function startLiveUpdates() {
+            // Update service status every 30 seconds
+            setInterval(checkServiceStatus, 30000);
+
+            // Try to connect to WebSocket for real-time updates
+            try {
+                const wsUrl = environments[currentEnvironment].replace('http', 'ws') + '/stream';
+                const ws = new WebSocket(wsUrl);
+
+                ws.onopen = () => {
+                    console.log('WebSocket connected for live updates');
+                };
+
+                ws.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        if (data.brain_state) {
+                            // Update brain activity indicator
+                            console.log('Brain activity update:', data);
+                        }
+                    } catch (e) {
+                        console.log('WebSocket message:', event.data);
+                    }
+                };
+
+                ws.onerror = (error) => {
+                    console.log('WebSocket error (this is normal for direct API access):', error);
+                };
+
+                ws.onclose = () => {
+                    console.log('WebSocket disconnected');
+                };
+            } catch (e) {
+                console.log('WebSocket not available for this environment');
+            }
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize Swagger UI with default environment
+            swaggerUI = initSwaggerUI(environments[currentEnvironment]);
+
+            // Start live updates
+            startLiveUpdates();
+
+            // Add keyboard shortcuts
+            document.addEventListener('keydown', (e) => {
+                if (e.ctrlKey || e.metaKey) {
+                    switch (e.key) {
+                        case '1':
+                            e.preventDefault();
+                            switchEnvironment('production');
+                            break;
+                        case '2':
+                            e.preventDefault();
+                            switchEnvironment('direct');
+                            break;
+                        case '3':
+                            e.preventDefault();
+                            switchEnvironment('local');
+                            break;
+                        case 'r':
+                            e.preventDefault();
+                            checkServiceStatus();
+                            break;
+                    }
+                }
+            });
+
+            // Add tooltips for keyboard shortcuts
+            document.querySelectorAll('.env-button').forEach((btn, index) => {
+                btn.title = `Ctrl+${index + 1} to switch to this environment`;
+            });
+        });
+
+        // Export functions for global access
+        window.EchoBrainAPI = {
+            switchEnvironment,
+            checkServiceStatus,
+            generateUUID
+        };
+    </script>
+
+    <!-- Additional features -->
+    <script>
+        // Add copy-to-clipboard functionality for code examples
+        function addCopyButtons() {
+            setTimeout(() => {
+                document.querySelectorAll('pre code').forEach((block) => {
+                    if (block.parentElement.querySelector('.copy-button')) return;
+
+                    const button = document.createElement('button');
+                    button.className = 'copy-button';
+                    button.textContent = 'Copy';
+                    button.style.cssText = `
+                        position: absolute;
+                        top: 5px;
+                        right: 5px;
+                        background: #00d4ff;
+                        color: #1a1a2e;
+                        border: none;
+                        border-radius: 3px;
+                        padding: 4px 8px;
+                        font-size: 12px;
+                        cursor: pointer;
+                        z-index: 1000;
+                    `;
+
+                    button.addEventListener('click', () => {
+                        navigator.clipboard.writeText(block.textContent);
+                        button.textContent = 'Copied!';
+                        setTimeout(() => {
+                            button.textContent = 'Copy';
+                        }, 2000);
+                    });
+
+                    block.parentElement.style.position = 'relative';
+                    block.parentElement.appendChild(button);
+                });
+            }, 2000);
+        }
+
+        // Add copy buttons when content loads
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(addCopyButtons, 3000);
+
+            // Re-add copy buttons when expanding operations
+            const observer = new MutationObserver(() => {
+                addCopyButtons();
+            });
+
+            observer.observe(document.getElementById('swagger-ui'), {
+                childList: true,
+                subtree: true
+            });
+        });
+    </script>
+</body>
+</html>

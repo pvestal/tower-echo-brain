@@ -1,0 +1,293 @@
+version: '3.8'
+
+services:
+  # ================== MODEL ZOO WITH HOT-SWAPPING ==================
+  model-zoo:
+    image: ollama/ollama:latest
+    container_name: echo-model-zoo
+    volumes:
+      - /opt/tower-echo-brain/models:/root/.ollama
+      - /mnt/20TB/models:/models
+    ports:
+      - "11434:11434"
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    networks:
+      - echo-net
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  # ================== AI ORCHESTRATOR ==================
+  ai-orchestrator:
+    build:
+      context: /opt/tower-echo-brain
+      dockerfile: Dockerfile.orchestrator
+    container_name: echo-orchestrator
+    environment:
+      - OLLAMA_HOST=http://model-zoo:11434
+      - REDIS_URL=redis://redis:6379
+      - POSTGRES_URL=postgresql://echo:echo@postgres:5432/echo
+      - VAULT_URL=http://vault:8200
+    volumes:
+      - /opt/tower-echo-brain/workspace:/app/workspace
+      - /opt/tower-echo-brain/src:/app/src
+    ports:
+      - "8309:8309"
+    depends_on:
+      - model-zoo
+      - redis
+      - postgres
+      - vault
+    networks:
+      - echo-net
+    restart: unless-stopped
+
+  # ================== SECURE EXECUTION SANDBOX ==================
+  sandbox:
+    image: python:3.11-slim
+    container_name: echo-sandbox
+    cap_drop:
+      - ALL
+    cap_add:
+      - SETUID
+      - SETGID
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,size=64M
+      - /var/tmp:rw,noexec,size=64M
+    volumes:
+      - /opt/tower-echo-brain/sandbox:/workspace:ro
+    network_mode: none
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+      - seccomp:unconfined
+
+  # ================== REDIS FOR TASK QUEUE ==================
+  redis:
+    image: redis:7-alpine
+    container_name: echo-redis
+    volumes:
+      - /opt/tower-echo-brain/redis-data:/data
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    networks:
+      - echo-net
+    restart: unless-stopped
+
+  # ================== POSTGRESQL FOR PERSISTENCE ==================
+  postgres:
+    image: postgres:15-alpine
+    container_name: echo-postgres
+    environment:
+      - POSTGRES_USER=echo
+      - POSTGRES_PASSWORD=echo_secure_password
+      - POSTGRES_DB=echo
+    volumes:
+      - /opt/tower-echo-brain/postgres-data:/var/lib/postgresql/data
+      - /opt/tower-echo-brain/sql:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    networks:
+      - echo-net
+    restart: unless-stopped
+
+  # ================== HASHICORP VAULT FOR SECRETS ==================
+  vault:
+    image: vault:latest
+    container_name: echo-vault
+    cap_add:
+      - IPC_LOCK
+    environment:
+      - VAULT_ADDR=http://0.0.0.0:8200
+      - VAULT_API_ADDR=http://0.0.0.0:8200
+    volumes:
+      - /opt/vault/config:/vault/config
+      - /opt/vault/data:/vault/data
+      - /opt/vault/logs:/vault/logs
+    ports:
+      - "8200:8200"
+    command: server
+    networks:
+      - echo-net
+    restart: unless-stopped
+
+  # ================== AIRFLOW FOR WORKFLOW ORCHESTRATION ==================
+  airflow-webserver:
+    image: apache/airflow:2.7.3
+    container_name: echo-airflow-webserver
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://echo:echo_secure_password@postgres/airflow
+      - AIRFLOW__CORE__FERNET_KEY=YOUR_FERNET_KEY_HERE
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - AIRFLOW__WEBSERVER__SECRET_KEY=YOUR_SECRET_KEY_HERE
+    volumes:
+      - /opt/tower-echo-brain/airflow/dags:/opt/airflow/dags
+      - /opt/tower-echo-brain/airflow/logs:/opt/airflow/logs
+      - /opt/tower-echo-brain/airflow/plugins:/opt/airflow/plugins
+    ports:
+      - "8085:8080"
+    depends_on:
+      - postgres
+    command: webserver
+    networks:
+      - echo-net
+    restart: unless-stopped
+
+  airflow-scheduler:
+    image: apache/airflow:2.7.3
+    container_name: echo-airflow-scheduler
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://echo:echo_secure_password@postgres/airflow
+      - AIRFLOW__CORE__FERNET_KEY=YOUR_FERNET_KEY_HERE
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+    volumes:
+      - /opt/tower-echo-brain/airflow/dags:/opt/airflow/dags
+      - /opt/tower-echo-brain/airflow/logs:/opt/airflow/logs
+      - /opt/tower-echo-brain/airflow/plugins:/opt/airflow/plugins
+    depends_on:
+      - postgres
+    command: scheduler
+    networks:
+      - echo-net
+    restart: unless-stopped
+
+  # ================== MLFLOW FOR EXPERIMENT TRACKING ==================
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:latest
+    container_name: echo-mlflow
+    ports:
+      - "5000:5000"
+    environment:
+      - BACKEND_URI=postgresql://echo:echo_secure_password@postgres/mlflow
+      - ARTIFACT_ROOT=/mlflow/artifacts
+    volumes:
+      - /opt/tower-echo-brain/mlflow/artifacts:/mlflow/artifacts
+    command: >
+      mlflow server
+      --backend-store-uri postgresql://echo:echo_secure_password@postgres/mlflow
+      --default-artifact-root /mlflow/artifacts
+      --host 0.0.0.0
+      --port 5000
+    depends_on:
+      - postgres
+    networks:
+      - echo-net
+    restart: unless-stopped
+
+  # ================== MONITORING WITH PROMETHEUS ==================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: echo-prometheus
+    volumes:
+      - /opt/tower-echo-brain/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - /opt/tower-echo-brain/prometheus/data:/prometheus
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    networks:
+      - echo-net
+    restart: unless-stopped
+
+  # ================== GRAFANA FOR VISUALIZATION ==================
+  grafana:
+    image: grafana/grafana:latest
+    container_name: echo-grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+    volumes:
+      - /opt/tower-echo-brain/grafana/data:/var/lib/grafana
+      - /opt/tower-echo-brain/grafana/provisioning:/etc/grafana/provisioning
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - echo-net
+    restart: unless-stopped
+
+  # ================== JENKINS FOR CI/CD ==================
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: echo-jenkins
+    privileged: true
+    user: root
+    volumes:
+      - /opt/tower-echo-brain/jenkins/data:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /usr/bin/docker:/usr/bin/docker
+    ports:
+      - "8084:8080"
+      - "50000:50000"
+    networks:
+      - echo-net
+    restart: unless-stopped
+
+  # ================== SONARQUBE FOR CODE QUALITY ==================
+  sonarqube:
+    image: sonarqube:community
+    container_name: echo-sonarqube
+    depends_on:
+      - postgres
+    environment:
+      - SONAR_JDBC_URL=jdbc:postgresql://postgres:5432/sonar
+      - SONAR_JDBC_USERNAME=echo
+      - SONAR_JDBC_PASSWORD=echo_secure_password
+    volumes:
+      - /opt/tower-echo-brain/sonarqube/data:/opt/sonarqube/data
+      - /opt/tower-echo-brain/sonarqube/extensions:/opt/sonarqube/extensions
+      - /opt/tower-echo-brain/sonarqube/logs:/opt/sonarqube/logs
+    ports:
+      - "9000:9000"
+    networks:
+      - echo-net
+    restart: unless-stopped
+
+  # ================== NGINX REVERSE PROXY ==================
+  nginx:
+    image: nginx:alpine
+    container_name: echo-nginx
+    volumes:
+      - /opt/tower-echo-brain/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - /opt/tower-echo-brain/nginx/conf.d:/etc/nginx/conf.d
+      - /etc/ssl/tower:/etc/ssl/tower
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - ai-orchestrator
+      - mlflow
+      - grafana
+      - jenkins
+    networks:
+      - echo-net
+    restart: unless-stopped
+
+networks:
+  echo-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16
+
+volumes:
+  postgres-data:
+  redis-data:
+  vault-data:
+  mlflow-artifacts:
+  prometheus-data:
+  grafana-data:
+  jenkins-data:
+  sonarqube-data:

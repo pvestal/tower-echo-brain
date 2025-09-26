@@ -57,7 +57,7 @@ class EchoSelfAnalysis:
     
     def __init__(self):
         self.db_config = {
-            'host': '***REMOVED***',
+            'host': 'localhost',
             'database': 'tower_consolidated',
             'user': 'patrick',
             'password': 'Beau40818'

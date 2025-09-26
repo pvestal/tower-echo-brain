@@ -16,12 +16,12 @@ from pydantic import BaseModel, Field
 import asyncio
 from contextlib import asynccontextmanager
 
-from directors.decision_tracker import (
-    DecisionTracker, TaskDecision, DecisionPoint, DirectorEvaluation,
+from routing.request_logger import (
+    RequestLogger, TaskDecision, DecisionPoint, DirectorEvaluation,
     Evidence, EvidenceType, DecisionStatus
 )
-from directors.director_registry import DirectorRegistry
-from directors.auth_middleware import (
+from routing.service_registry import ServiceRegistry
+from routing.auth_middleware import (
     get_current_user, get_optional_user, require_permission,
     authenticate_websocket, auth_middleware
 )
@@ -128,9 +128,9 @@ class BoardAPI:
     Provides real-time decision tracking and user interaction
     """
 
-    def __init__(self, decision_tracker: DecisionTracker, director_registry: DirectorRegistry):
-        self.decision_tracker = decision_tracker
-        self.director_registry = director_registry
+    def __init__(self, request_logger: RequestLogger, service_registry: ServiceRegistry):
+        self.request_logger = request_logger
+        self.service_registry = service_registry
         self.connection_manager = ConnectionManager()
         self.active_evaluations: Dict[str, asyncio.Task] = {}
 
@@ -180,7 +180,7 @@ class BoardAPI:
                 task_id = str(uuid.uuid4())
 
                 # Start task tracking
-                task_decision = self.decision_tracker.start_task_tracking(
+                task_decision = self.request_logger.start_task_tracking(
                     task_id=task_id,
                     user_id=user_info.get('user_id', 'anonymous'),
                     original_request=request.task_description
@@ -222,7 +222,7 @@ class BoardAPI:
         ) -> DecisionDetailsResponse:
             """Get detailed decision information for a task"""
             try:
-                task_decision = self.decision_tracker.get_task_decision(task_id)
+                task_decision = self.request_logger.get_task_decision(task_id)
                 if not task_decision:
                     raise HTTPException(status_code=404, detail="Task not found")
 
@@ -303,7 +303,7 @@ class BoardAPI:
         ) -> UserFeedbackResponse:
             """Submit user feedback or override for a task decision"""
             try:
-                task_decision = self.decision_tracker.get_task_decision(task_id)
+                task_decision = self.request_logger.get_task_decision(task_id)
                 if not task_decision:
                     raise HTTPException(status_code=404, detail="Task not found")
 
@@ -318,7 +318,7 @@ class BoardAPI:
                             detail="Override recommendation required for override feedback"
                         )
 
-                    success = self.decision_tracker.add_user_override(
+                    success = self.request_logger.add_user_override(
                         task_id=task_id,
                         user_id=user_info.get('user_id', 'anonymous'),
                         override_type=request.feedback_type,
@@ -361,18 +361,18 @@ class BoardAPI:
             """Get current board status and metrics"""
             try:
                 # Get active tasks count
-                active_tasks = len(self.decision_tracker.active_tasks)
+                active_tasks = len(self.request_logger.active_tasks)
 
                 # Get analytics for today
                 today = datetime.utcnow().date()
                 start_of_day = datetime.combine(today, datetime.min.time())
                 end_of_day = datetime.combine(today, datetime.max.time())
 
-                analytics = self.decision_tracker.get_board_analytics(start_of_day, end_of_day)
+                analytics = self.request_logger.get_board_analytics(start_of_day, end_of_day)
 
                 # Get director status
                 director_status = {}
-                for director_id, director in self.director_registry.directors.items():
+                for director_id, director in self.service_registry.directors.items():
                     director_status[director_id] = {
                         "name": director.get_director_name(),
                         "specialization": director.get_specialization(),
@@ -401,7 +401,7 @@ class BoardAPI:
                 directors = []
                 active_count = 0
 
-                for director_id, director in self.director_registry.directors.items():
+                for director_id, director in self.service_registry.directors.items():
                     # TODO: Get actual metrics from database
                     director_info = DirectorInfo(
                         director_id=director_id,
@@ -503,7 +503,7 @@ class BoardAPI:
                 else:
                     end = datetime.utcnow()
 
-                analytics = self.decision_tracker.get_board_analytics(start, end)
+                analytics = self.request_logger.get_board_analytics(start, end)
                 return analytics
 
             except Exception as e:
@@ -517,7 +517,7 @@ class BoardAPI:
                 "status": "healthy",
                 "timestamp": datetime.utcnow().isoformat(),
                 "active_connections": len(self.connection_manager.active_connections),
-                "active_tasks": len(self.decision_tracker.active_tasks)
+                "active_tasks": len(self.request_logger.active_tasks)
             }
 
     async def _evaluate_task_async(self, task_id: str, task_description: str,
@@ -528,7 +528,7 @@ class BoardAPI:
 
             # Create evaluation tasks for all directors
             evaluation_tasks = []
-            for director_id, director in self.director_registry.directors.items():
+            for director_id, director in self.service_registry.directors.items():
                 eval_task = asyncio.create_task(
                     self._evaluate_with_director(task_id, director_id, director,
                                                task_description, context, priority)
@@ -542,7 +542,7 @@ class BoardAPI:
             successful_evaluations = []
             for i, result in enumerate(evaluations):
                 if isinstance(result, Exception):
-                    director_id = list(self.director_registry.directors.keys())[i]
+                    director_id = list(self.service_registry.directors.keys())[i]
                     logger.error(f"Director {director_id} evaluation failed: {result}")
                 else:
                     successful_evaluations.append(result)
@@ -550,13 +550,13 @@ class BoardAPI:
             # Update task with all evaluations
             for evaluation in successful_evaluations:
                 if evaluation:
-                    self.decision_tracker.add_director_evaluation(task_id, evaluation)
+                    self.request_logger.add_director_evaluation(task_id, evaluation)
 
             # Generate final recommendation
             final_recommendation = self._generate_final_recommendation(successful_evaluations)
 
             # Finalize task
-            self.decision_tracker.finalize_task_decision(task_id, final_recommendation)
+            self.request_logger.finalize_task_decision(task_id, final_recommendation)
 
             # Broadcast completion
             await self.connection_manager.broadcast_json({
@@ -697,16 +697,16 @@ class BoardAPI:
         return self.app
 
 # Factory function to create BoardAPI instance
-def create_board_api(decision_tracker: DecisionTracker,
-                    director_registry: DirectorRegistry) -> BoardAPI:
+def create_board_api(request_logger: RequestLogger,
+                    service_registry: ServiceRegistry) -> BoardAPI:
     """
     Factory function to create BoardAPI instance
 
     Args:
-        decision_tracker: DecisionTracker instance
-        director_registry: DirectorRegistry instance
+        request_logger: RequestLogger instance
+        service_registry: ServiceRegistry instance
 
     Returns:
         BoardAPI: Configured BoardAPI instance
     """
-    return BoardAPI(decision_tracker, director_registry)
+    return BoardAPI(request_logger, service_registry)

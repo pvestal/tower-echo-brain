@@ -25,7 +25,7 @@ class EchoBoardOfDirectors:
     """Integration layer between Echo Brain and Board of Directors"""
 
     def __init__(self):
-        self.registry = DirectorRegistry()
+        self.registry = ServiceRegistry()
         self._initialize_directors()
         logger.info("Echo Board of Directors initialized with 5 specialized directors")
 

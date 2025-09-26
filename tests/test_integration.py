@@ -21,8 +21,8 @@ from unittest.mock import Mock, patch, AsyncMock, MagicMock
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Mock dependencies before importing
-with patch('directors.decision_tracker.DecisionTracker'), \
-     patch('directors.director_registry.DirectorRegistry'), \
+with patch('directors.request_logger.DecisionTracker'), \
+     patch('directors.service_registry.DirectorRegistry'), \
      patch('directors.db_pool.DatabasePool'):
 
     from echo_board_integration import EchoBoardOfDirectors

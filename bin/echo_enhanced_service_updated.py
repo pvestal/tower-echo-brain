@@ -137,7 +137,7 @@ app = FastAPI(title="Enhanced Echo Service with Tower Management")
 class EnhancedEchoService:
     def __init__(self):
         self.db_config = {
-            "host": "***REMOVED***",
+            "host": "localhost",
             "database": "tower_consolidated", 
             "user": "patrick",
             "password": "admin123"

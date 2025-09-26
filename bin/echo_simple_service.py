@@ -24,7 +24,7 @@ app = FastAPI(title="Echo Simple Voice Service")
 class EchoSimpleService:
     def __init__(self):
         self.db_config = {
-            "host": "***REMOVED***",
+            "host": "localhost",
             "database": "tower_consolidated", 
             "user": "patrick",
             "password": "password"

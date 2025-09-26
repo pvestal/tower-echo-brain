@@ -12,7 +12,7 @@ import psycopg2.extras
 
 # Database configuration
 DB_CONFIG = {
-    "host": "***REMOVED***",
+    "host": "localhost",
     "database": "tower_consolidated",
     "user": "patrick",
     "password": "admin123"

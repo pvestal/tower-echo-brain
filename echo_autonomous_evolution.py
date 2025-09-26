@@ -613,7 +613,7 @@ class EchoAutonomousEvolution:
             import psycopg2.extras
             
             db_config = {
-                'host': '***REMOVED***',
+                'host': 'localhost',
                 'database': 'tower_consolidated',
                 'user': 'patrick',
                 'password': 'Beau40818'

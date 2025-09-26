@@ -12,7 +12,7 @@ import sys
 class MediaScanMonitor:
     def __init__(self):
         self.db_config = {
-            'host': '***REMOVED***',
+            'host': 'localhost',
             'user': 'patrick',
             'database': 'tower_consolidated',
             'port': 5432

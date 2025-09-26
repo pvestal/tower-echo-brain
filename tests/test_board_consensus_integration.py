@@ -26,14 +26,14 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from directors.director_registry import DirectorRegistry
-from directors.decision_tracker import DecisionTracker, TaskDecision
-from directors.feedback_system import FeedbackSystem
-from directors.security_director import SecurityDirector
-from directors.quality_director import QualityDirector
-from directors.performance_director import PerformanceDirector
-from directors.ethics_director import EthicsDirector
-from directors.ux_director import UXDirector
+from routing.service_registry import ServiceRegistry
+from routing.request_logger import RequestLogger, TaskDecision
+from routing.feedback_system import FeedbackSystem
+from routing.security_director import SecurityDirector
+from routing.quality_director import QualityDirector
+from routing.performance_director import PerformanceDirector
+from routing.ethics_director import EthicsDirector
+from routing.ux_director import UXDirector
 
 
 # ============================================================================
@@ -43,7 +43,7 @@ from directors.ux_director import UXDirector
 @pytest.fixture
 def full_board_setup():
     """Set up a complete board with all directors."""
-    registry = DirectorRegistry()
+    registry = ServiceRegistry()
     
     # Register all directors
     directors = {
@@ -61,9 +61,9 @@ def full_board_setup():
 
 
 @pytest.fixture
-async def decision_tracker_with_db():
+async def request_logger_with_db():
     """Set up decision tracker with mock database."""
-    with patch('directors.decision_tracker.DatabasePool') as mock_db:
+    with patch('directors.request_logger.DatabasePool') as mock_db:
         # Configure mock database
         mock_connection = MagicMock()
         mock_cursor = MagicMock()
@@ -71,7 +71,7 @@ async def decision_tracker_with_db():
         mock_db.return_value.get_connection.return_value.__enter__ = Mock(return_value=mock_connection)
         mock_db.return_value.get_connection.return_value.__exit__ = Mock(return_value=None)
         
-        tracker = DecisionTracker()
+        tracker = RequestLogger()
         await tracker.initialize()
         yield tracker
 
@@ -352,10 +352,10 @@ class TestBoardConsensusIntegration:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_full_board_evaluation_process(self, full_board_setup, 
-                                                 decision_tracker_with_db):
+                                                 request_logger_with_db):
         """Test complete evaluation process with all directors."""
         registry, directors = full_board_setup
-        tracker = decision_tracker_with_db
+        tracker = request_logger_with_db
         
         # Submit a task for evaluation
         task_data = {
@@ -545,9 +545,9 @@ def track_user_behavior(user_id, page, actions, personal_data):
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_decision_persistence(self, decision_tracker_with_db, full_board_setup):
+    async def test_decision_persistence(self, request_logger_with_db, full_board_setup):
         """Test that decisions are properly persisted and retrievable."""
-        tracker = decision_tracker_with_db
+        tracker = request_logger_with_db
         registry, directors = full_board_setup
         
         # Submit a task

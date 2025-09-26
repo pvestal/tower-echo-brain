@@ -29,7 +29,7 @@ mock_psycopg2.pool = mock_pool
 sys.modules['psycopg2'] = mock_psycopg2
 sys.modules['psycopg2.pool'] = mock_pool
 
-from directors.db_pool import DatabasePool
+from routing.db_pool import DatabasePool
 
 
 class TestDatabasePoolInitialization:
@@ -464,7 +464,7 @@ class TestDatabasePoolConfiguration:
         pool = DatabasePool()
 
         args, kwargs = mock_psycopg2.pool.ThreadedConnectionPool.call_args
-        assert kwargs['host'] == '***REMOVED***'  # default
+        assert kwargs['host'] == 'localhost'  # default
         assert kwargs['database'] == 'tower_consolidated'  # default
         assert kwargs['user'] == 'patrick'  # default
         assert kwargs['port'] == 5432  # default

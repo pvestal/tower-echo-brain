@@ -19,7 +19,7 @@ class TowerTestingFramework:
         self.tower_script = os.path.join(self.framework_path, "tower")
         self.universal_test_script = os.path.join(self.framework_path, "tower_universal_test.sh")
         self.debug_tools_script = os.path.join(self.framework_path, "tower_debug_tools.sh")
-        self.tower_host = "***REMOVED***"
+        self.tower_host = "localhost"
 
         # Ensure scripts are executable
         for script in [self.tower_script, self.universal_test_script, self.debug_tools_script]:

@@ -31,11 +31,11 @@ from cryptography.fernet import Fernet
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from directors.auth_middleware import (
+from routing.auth_middleware import (
     get_current_user, require_permission, authenticate_websocket,
     generate_jwt_token, verify_jwt_token
 )
-from directors.security_director import SecurityDirector
+from routing.security_director import SecurityDirector
 
 
 # ============================================================================

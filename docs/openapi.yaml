@@ -1,0 +1,1184 @@
+openapi: 3.0.3
+info:
+  title: Echo Brain Advanced AI Orchestrator API
+  description: |
+    Comprehensive API for the Echo Brain system - an advanced AI orchestrator with 24+ models,
+    Board of Directors governance, real-time monitoring, and universal testing capabilities.
+
+    ## Features
+    - **Model Management**: Full CRUD operations for 24+ Ollama models (1B-70B parameters)
+    - **Board of Directors**: Transparent AI decision tracking with governance workflows
+    - **Intelligence Escalation**: Dynamic scaling from 1B to 70B parameters based on complexity
+    - **Testing Framework**: Universal service testing and debugging capabilities
+    - **Real-time Monitoring**: WebSocket streaming of brain activity and decision processes
+    - **Voice Integration**: Complete voice notification system
+    - **Conversation Memory**: PostgreSQL persistence with thought stream analysis
+
+    ## Architecture
+    The Echo Brain system consolidates multiple AI services into a single intelligent router
+    with sophisticated governance and monitoring capabilities.
+  version: "1.0.0"
+  contact:
+    name: Echo Brain API Support
+    url: https://***REMOVED***/kb
+  license:
+    name: MIT
+servers:
+  - url: https://***REMOVED***/api/echo
+    description: Production Echo Brain API (HTTPS)
+  - url: http://***REMOVED***:8309/api/echo
+    description: Direct API Access (HTTP)
+  - url: http://localhost:8309/api/echo
+    description: Local Development
+
+tags:
+  - name: Core Intelligence
+    description: Main AI query processing and conversation management
+  - name: Model Management
+    description: Full CRUD operations for Ollama models (24+ models, 280GB+ storage)
+  - name: Board of Directors
+    description: Transparent AI decision tracking and governance system
+  - name: Brain Visualization
+    description: Real-time neural activity monitoring and thought streams
+  - name: Testing Framework
+    description: Universal service testing and debugging capabilities
+  - name: Voice Integration
+    description: Voice notification and character management system
+  - name: Tower Integration
+    description: Integration with Tower ecosystem services
+  - name: WebSocket Streaming
+    description: Real-time data streams for brain activity and decisions
+
+paths:
+  # Core Intelligence Endpoints
+  /health:
+    get:
+      tags: [Core Intelligence]
+      summary: System Health Check
+      description: Returns comprehensive health status including available models and capabilities
+      responses:
+        '200':
+          description: System is healthy and operational
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: "healthy"
+                service: "Echo Brain Unified"
+                intelligence_levels: ["tinyllama", "llama3.2", "mistral", "qwen2.5-coder", "llama3.1"]
+                specialized_models: ["qwen2.5-coder:32b", "deepseek-coder-v2:16b"]
+                max_parameters: "70B"
+                timestamp: "2025-01-15T10:30:00Z"
+                board_system:
+                  status: "enabled"
+                  decision_tracking: true
+                  user_preferences: true
+                  knowledge_management: true
+                  sandbox_execution: true
+
+  /query:
+    post:
+      tags: [Core Intelligence]
+      summary: Process AI Query
+      description: |
+        Main conversational query processing with dynamic intelligence escalation.
+        Automatically selects optimal model based on query complexity (1B-70B parameters).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryRequest'
+            example:
+              query: "How do I implement a REST API with FastAPI?"
+              intelligence_level: "auto"
+              user_id: "developer_123"
+              context:
+                domain: "web_development"
+                complexity: "intermediate"
+      responses:
+        '200':
+          description: Query processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryResponse'
+              example:
+                response: "Here's how to implement a REST API with FastAPI..."
+                model_used: "llama3.1:8b"
+                intelligence_level: "advanced"
+                processing_time: 2.5
+                escalation_path: ["tinyllama", "llama3.2", "llama3.1"]
+                requires_clarification: false
+                clarifying_questions: []
+                conversation_id: "uuid-1234"
+                intent: "technical_assistance"
+                confidence: 0.95
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # Model Management Endpoints
+  /models/list:
+    get:
+      tags: [Model Management]
+      summary: List All Available Models
+      description: |
+        Returns comprehensive list of all installed Ollama models with metadata.
+        Includes model sizes, parameters, specializations, and usage statistics.
+      responses:
+        '200':
+          description: Models retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelListResponse'
+              example:
+                models:
+                  - name: "llama3.1"
+                    tag: "70b"
+                    size: "40GB"
+                    parameters: 70000000000
+                    specialization: "General Intelligence"
+                    status: "installed"
+                    modified: "2025-01-15T10:30:00Z"
+                  - name: "qwen2.5-coder"
+                    tag: "32b"
+                    size: "18GB"
+                    parameters: 32000000000
+                    specialization: "Code Generation"
+                    status: "installed"
+                    modified: "2025-01-15T10:30:00Z"
+                total_models: 24
+                total_size: "280GB"
+                storage_path: "/usr/share/ollama/.ollama/models"
+
+  /models/manage:
+    post:
+      tags: [Model Management]
+      summary: Manage Model Operations
+      description: |
+        Perform CRUD operations on Ollama models. Operations on 70B+ models require
+        Board of Directors approval. Background processing with progress tracking.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModelManagementRequest'
+            example:
+              action: "pull"
+              model: "llama3.1:70b"
+              user_id: "patrick"
+              reason: "Need powerful model for complex reasoning tasks"
+      responses:
+        '202':
+          description: Operation accepted and processing in background
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelManagementResponse'
+              example:
+                request_id: "uuid-5678"
+                operation: "pull"
+                model: "llama3.1:70b"
+                status: "downloading"
+                message: "Model download started in background"
+                board_decision_id: "uuid-board-1234"
+                requires_approval: true
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /models/status/{request_id}:
+    get:
+      tags: [Model Management]
+      summary: Check Operation Status
+      description: Get status of background model management operation
+      parameters:
+        - name: request_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Request ID from model management operation
+      responses:
+        '200':
+          description: Operation status retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationStatusResponse'
+
+  # Board of Directors Endpoints
+  /board/task:
+    post:
+      tags: [Board of Directors]
+      summary: Submit Task for Board Evaluation
+      description: |
+        Submit a task for transparent AI decision tracking with Board oversight.
+        Returns task ID for monitoring decision process via WebSocket.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskSubmissionRequest'
+            example:
+              task_description: "Deploy new authentication microservice to production"
+              user_id: "user_123"
+              priority: "high"
+              context:
+                service_name: "auth-service"
+                environment: "production"
+                security_level: "enterprise"
+              expected_completion_time: "2025-01-15T12:00:00Z"
+      responses:
+        '201':
+          description: Task submitted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskSubmissionResponse'
+              example:
+                task_id: "uuid-task-1234"
+                status: "submitted"
+                message: "Task submitted for board evaluation"
+                estimated_completion_time: "2025-01-15T10:35:00Z"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /board/decisions/{task_id}:
+    get:
+      tags: [Board of Directors]
+      summary: Get Decision Details
+      description: |
+        Retrieve detailed decision information including director evaluations,
+        evidence, timeline, and consensus scores.
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Task ID from board submission
+        - name: include_evidence
+          in: query
+          schema:
+            type: boolean
+            default: true
+          description: Include evidence details in response
+        - name: include_timeline
+          in: query
+          schema:
+            type: boolean
+            default: true
+          description: Include decision timeline
+        - name: include_director_details
+          in: query
+          schema:
+            type: boolean
+            default: true
+          description: Include detailed director evaluations
+      responses:
+        '200':
+          description: Decision details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DecisionDetailsResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /board/feedback/{task_id}:
+    post:
+      tags: [Board of Directors]
+      summary: Submit User Feedback
+      description: Submit user feedback or override for a board decision
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserFeedbackRequest'
+            example:
+              feedback_type: "approve"
+              feedback_content: "Looks good to proceed"
+              override_recommendation: "approve_with_conditions"
+              reasoning: "Add additional monitoring during deployment"
+      responses:
+        '200':
+          description: Feedback submitted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserFeedbackResponse'
+
+  # Brain Visualization Endpoints
+  /brain:
+    get:
+      tags: [Brain Visualization]
+      summary: Get Brain Activity
+      description: Returns current brain visualization state with neural activity metrics
+      responses:
+        '200':
+          description: Brain activity data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrainActivityResponse'
+              example:
+                brain_visualization:
+                  active_regions: ["reasoning", "language", "technical"]
+                  neural_firing_rate: 0.75
+                  cognitive_load: 0.6
+                  processing_intensity: 0.8
+                thought_history_count: 150
+                active_neurons: 42
+                service: "Echo Brain Neural Visualization"
+                timestamp: "2025-01-15T10:30:00Z"
+
+  /thoughts/{thought_id}:
+    get:
+      tags: [Brain Visualization]
+      summary: Get Thought Stream Details
+      description: Retrieve detailed thought stream for specific thought process
+      parameters:
+        - name: thought_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Thought ID from brain activity
+      responses:
+        '200':
+          description: Thought stream details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThoughtStreamResponse'
+
+  # Testing Framework Endpoints
+  /test/{target}:
+    post:
+      tags: [Testing Framework]
+      summary: Universal Service Testing
+      description: |
+        Run comprehensive testing on any target service in the Tower ecosystem.
+        Supports connectivity, response time, JSON validation, and health checks.
+      parameters:
+        - name: target
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Target service name (e.g., 'comfyui', 'anime-production')
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TestRequest'
+            example:
+              target: "comfyui"
+              test_type: "universal"
+              user_id: "admin"
+              comprehensive: true
+      responses:
+        '200':
+          description: Test completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestResponse'
+              example:
+                success: true
+                target: "comfyui"
+                test_results:
+                  connectivity: "pass"
+                  response_time: 150
+                  status_code: 200
+                  json_valid: true
+                  health_check: "pass"
+                service: "Echo Brain Testing Framework"
+                timestamp: "2025-01-15T10:30:00Z"
+
+  /debug/{service}:
+    post:
+      tags: [Testing Framework]
+      summary: Debug Service Issues
+      description: |
+        Debug a specific Tower service with comprehensive analysis including
+        network diagnostics, resource usage, and log analysis.
+      parameters:
+        - name: service
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Service name to debug
+      responses:
+        '200':
+          description: Debug analysis completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DebugResponse'
+
+  # Voice Integration Endpoints
+  /voice/notify:
+    post:
+      tags: [Voice Integration]
+      summary: Send Voice Notification
+      description: Send voice notification using unified voice service with character selection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VoiceNotificationRequest'
+            example:
+              message: "Task completed successfully"
+              character: "echo_default"
+              tone: "helpful"
+              priority: "normal"
+      responses:
+        '200':
+          description: Voice notification sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoiceNotificationResponse'
+
+  /voice/characters:
+    get:
+      tags: [Voice Integration]
+      summary: Get Available Voice Characters
+      description: List all available voice characters and their capabilities
+      responses:
+        '200':
+          description: Voice characters retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoiceCharactersResponse'
+
+  # WebSocket Endpoints
+  /stream:
+    get:
+      tags: [WebSocket Streaming]
+      summary: Real-time Brain Activity Stream
+      description: |
+        Server-Sent Events stream of real-time brain activity and thought processes.
+        Provides continuous updates on neural firing, cognitive load, and processing states.
+      responses:
+        '200':
+          description: SSE stream established
+          content:
+            text/event-stream:
+              schema:
+                type: string
+              example: |
+                data: {"timestamp": "2025-01-15T10:30:00Z", "brain_state": {...}, "service": "Echo Brain Stream"}
+
+                data: {"timestamp": "2025-01-15T10:30:01Z", "brain_state": {...}, "neural_activity": 0.75}
+
+  /board/ws:
+    get:
+      tags: [WebSocket Streaming]
+      summary: Board Decision WebSocket
+      description: |
+        WebSocket connection for real-time board decision tracking.
+        Requires JWT authentication via query parameter.
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+          description: JWT authentication token
+      responses:
+        '101':
+          description: WebSocket connection established
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+# Components Section
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT token from Tower auth service. Required for board operations and model management.
+        Token format: Bearer <JWT_TOKEN>
+
+  schemas:
+    # Core Intelligence Schemas
+    QueryRequest:
+      type: object
+      required: [query]
+      properties:
+        query:
+          type: string
+          description: The user's query or request
+          example: "How do I deploy a FastAPI application?"
+        context:
+          type: object
+          description: Additional context for the query
+          additionalProperties: true
+        intelligence_level:
+          type: string
+          enum: [auto, basic, intermediate, advanced, expert, genius]
+          default: auto
+          description: Desired intelligence level (auto = dynamic escalation)
+        user_id:
+          type: string
+          default: "default"
+          description: User identifier for conversation tracking
+        conversation_id:
+          type: string
+          description: Optional conversation ID for context continuity
+
+    QueryResponse:
+      type: object
+      properties:
+        response:
+          type: string
+          description: AI-generated response
+        model_used:
+          type: string
+          description: Model that generated the response
+        intelligence_level:
+          type: string
+          description: Intelligence level used for processing
+        processing_time:
+          type: number
+          description: Processing time in seconds
+        escalation_path:
+          type: array
+          items:
+            type: string
+          description: Models tried during escalation
+        requires_clarification:
+          type: boolean
+          description: Whether response needs clarification
+        clarifying_questions:
+          type: array
+          items:
+            type: string
+          description: Questions to clarify the request
+        conversation_id:
+          type: string
+          description: Conversation identifier
+        intent:
+          type: string
+          description: Detected user intent
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Confidence score for the response
+
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        service:
+          type: string
+        intelligence_levels:
+          type: array
+          items:
+            type: string
+        specialized_models:
+          type: array
+          items:
+            type: string
+        max_parameters:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        board_system:
+          type: object
+          properties:
+            status:
+              type: string
+            decision_tracking:
+              type: boolean
+            user_preferences:
+              type: boolean
+            knowledge_management:
+              type: boolean
+            sandbox_execution:
+              type: boolean
+
+    # Model Management Schemas
+    ModelManagementRequest:
+      type: object
+      required: [action, model, reason]
+      properties:
+        action:
+          type: string
+          enum: [pull, update, remove]
+          description: Operation to perform
+        model:
+          type: string
+          description: Model name and tag (e.g., 'llama3.1:70b')
+        user_id:
+          type: string
+          description: User requesting the operation
+        reason:
+          type: string
+          description: Justification for the operation
+        force:
+          type: boolean
+          default: false
+          description: Force operation without board approval
+
+    ModelManagementResponse:
+      type: object
+      properties:
+        request_id:
+          type: string
+          description: Unique request identifier for tracking
+        operation:
+          type: string
+          description: Operation being performed
+        model:
+          type: string
+          description: Target model
+        status:
+          type: string
+          enum: [downloading, installing, completed, failed]
+        message:
+          type: string
+          description: Human-readable status message
+        board_decision_id:
+          type: string
+          description: Board decision ID if approval required
+        requires_approval:
+          type: boolean
+          description: Whether operation requires board approval
+
+    ModelListResponse:
+      type: object
+      properties:
+        models:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModelInfo'
+        total_models:
+          type: integer
+          description: Total number of installed models
+        total_size:
+          type: string
+          description: Total storage used by all models
+        storage_path:
+          type: string
+          description: Path where models are stored
+
+    ModelInfo:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Model name
+        tag:
+          type: string
+          description: Model tag/version
+        size:
+          type: string
+          description: Model size on disk
+        parameters:
+          type: integer
+          description: Number of parameters
+        specialization:
+          type: string
+          description: Model specialization area
+        status:
+          type: string
+          enum: [installed, downloading, failed, updating]
+        modified:
+          type: string
+          format: date-time
+          description: Last modification time
+
+    # Board of Directors Schemas
+    TaskSubmissionRequest:
+      type: object
+      required: [task_description]
+      properties:
+        task_description:
+          type: string
+          description: Detailed description of the task
+        user_id:
+          type: string
+          default: "default"
+          description: User submitting the task
+        priority:
+          type: string
+          enum: [low, normal, high, critical]
+          default: normal
+          description: Task priority level
+        context:
+          type: object
+          additionalProperties: true
+          description: Additional context for decision making
+        expected_completion_time:
+          type: string
+          format: date-time
+          description: When task should be completed
+
+    TaskSubmissionResponse:
+      type: object
+      properties:
+        task_id:
+          type: string
+          description: Unique task identifier
+        status:
+          type: string
+          description: Current task status
+        message:
+          type: string
+          description: Confirmation message
+        estimated_completion_time:
+          type: string
+          format: date-time
+          description: Estimated completion time
+
+    DecisionDetailsResponse:
+      type: object
+      properties:
+        task_id:
+          type: string
+        current_status:
+          type: string
+          enum: [submitted, in_progress, completed, failed, user_override]
+        consensus_score:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Agreement level among directors
+        confidence_score:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Overall confidence in decision
+        director_count:
+          type: integer
+          description: Number of directors evaluated
+        evidence_count:
+          type: integer
+          description: Pieces of evidence collected
+        timeline:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              timestamp:
+                type: string
+                format: date-time
+              status:
+                type: string
+              description:
+                type: string
+              consensus_score:
+                type: number
+              confidence:
+                type: number
+              director_count:
+                type: integer
+        director_evaluations:
+          type: array
+          items:
+            type: object
+            properties:
+              director_id:
+                type: string
+              director_name:
+                type: string
+              recommendation:
+                type: string
+                enum: [approve, reject, modify, defer]
+              confidence:
+                type: number
+              risk_score:
+                type: number
+              processing_time:
+                type: number
+              timestamp:
+                type: string
+                format: date-time
+              reasoning:
+                type: string
+              evidence:
+                type: array
+                items:
+                  type: object
+        user_override_available:
+          type: boolean
+        estimated_completion:
+          type: string
+          format: date-time
+
+    UserFeedbackRequest:
+      type: object
+      required: [feedback_type, feedback_content, reasoning]
+      properties:
+        feedback_type:
+          type: string
+          enum: [approve, reject, modify, comment]
+          description: Type of feedback
+        feedback_content:
+          type: string
+          description: Detailed feedback content
+        override_recommendation:
+          type: string
+          enum: [approve, reject, modify, defer, approve_with_conditions]
+          description: Override recommendation if different from board
+        reasoning:
+          type: string
+          description: Reasoning for the feedback
+
+    UserFeedbackResponse:
+      type: object
+      properties:
+        feedback_id:
+          type: string
+        status:
+          type: string
+        message:
+          type: string
+        decision_updated:
+          type: boolean
+
+    # Brain Visualization Schemas
+    BrainActivityResponse:
+      type: object
+      properties:
+        brain_visualization:
+          type: object
+          properties:
+            active_regions:
+              type: array
+              items:
+                type: string
+              description: Currently active brain regions
+            neural_firing_rate:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: Rate of neural activity
+            cognitive_load:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: Current cognitive processing load
+            processing_intensity:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: Intensity of current processing
+        thought_history_count:
+          type: integer
+          description: Number of thoughts in history
+        active_neurons:
+          type: integer
+          description: Number of active neurons
+        service:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    ThoughtStreamResponse:
+      type: object
+      properties:
+        thought_id:
+          type: string
+        thought_stream:
+          type: array
+          items:
+            type: object
+            properties:
+              timestamp:
+                type: string
+                format: date-time
+              process:
+                type: string
+              content:
+                type: string
+        neuron_count:
+          type: integer
+        service:
+          type: string
+
+    # Testing Framework Schemas
+    TestRequest:
+      type: object
+      required: [target]
+      properties:
+        target:
+          type: string
+          description: Target service to test
+        test_type:
+          type: string
+          enum: [universal, connectivity, performance, security]
+          default: universal
+        user_id:
+          type: string
+          default: "default"
+        comprehensive:
+          type: boolean
+          default: false
+          description: Run comprehensive test suite
+
+    TestResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        target:
+          type: string
+        test_results:
+          type: object
+          properties:
+            connectivity:
+              type: string
+              enum: [pass, fail]
+            response_time:
+              type: number
+              description: Response time in milliseconds
+            status_code:
+              type: integer
+            json_valid:
+              type: boolean
+            health_check:
+              type: string
+              enum: [pass, fail]
+        service:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    DebugResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        debug_target:
+          type: string
+        network_analysis:
+          type: object
+          properties:
+            port_status:
+              type: string
+            connectivity:
+              type: string
+            latency_ms:
+              type: number
+        resource_analysis:
+          type: object
+          properties:
+            cpu_usage:
+              type: string
+            memory_usage:
+              type: string
+            disk_usage:
+              type: string
+        service:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    # Voice Integration Schemas
+    VoiceNotificationRequest:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+          description: Message to be spoken
+        character:
+          type: string
+          default: "echo_default"
+          description: Voice character to use
+        tone:
+          type: string
+          enum: [helpful, urgent, casual, professional]
+          default: helpful
+        priority:
+          type: string
+          enum: [low, normal, high, urgent]
+          default: normal
+
+    VoiceNotificationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        character:
+          type: string
+        processing_time:
+          type: number
+
+    VoiceCharactersResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        characters:
+          type: array
+          items:
+            type: string
+        voice_service_url:
+          type: string
+
+    # Operation Status Schema
+    OperationStatusResponse:
+      type: object
+      properties:
+        request_id:
+          type: string
+        operation:
+          type: string
+        status:
+          type: string
+          enum: [pending, in_progress, completed, failed, cancelled]
+        progress:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Progress percentage
+        message:
+          type: string
+        estimated_completion:
+          type: string
+          format: date-time
+        error:
+          type: string
+          description: Error message if operation failed
+
+  responses:
+    BadRequest:
+      description: Bad request - invalid parameters
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              detail:
+                type: string
+              request_id:
+                type: string
+              type:
+                type: string
+              timestamp:
+                type: string
+                format: date-time
+
+    Unauthorized:
+      description: Unauthorized - invalid or missing JWT token
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              detail:
+                type: string
+                example: "Invalid or expired token"
+              request_id:
+                type: string
+              type:
+                type: string
+                example: "authentication_error"
+              headers:
+                type: object
+                properties:
+                  WWW-Authenticate:
+                    type: string
+                    example: "Bearer"
+
+    Forbidden:
+      description: Forbidden - insufficient permissions
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              detail:
+                type: string
+                example: "Insufficient permissions. Required: 'board.submit_task'"
+              request_id:
+                type: string
+              type:
+                type: string
+                example: "permission_error"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              detail:
+                type: string
+                example: "Task not found"
+              request_id:
+                type: string
+              type:
+                type: string
+                example: "not_found_error"
+              task_id:
+                type: string
+
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              detail:
+                type: string
+                example: "Internal processing error"
+              request_id:
+                type: string
+              type:
+                type: string
+                example: "internal_error"
+              timestamp:
+                type: string
+                format: date-time
+
+# Security applied globally to protected endpoints
+security:
+  - BearerAuth: []

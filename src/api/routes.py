@@ -183,6 +183,7 @@ async def handle_capability_intent(intent: str, params: Dict, request: QueryRequ
         )
 
 @router.post("/api/echo/query", response_model=QueryResponse)
+@router.post("/api/echo/chat", response_model=QueryResponse)  # Alias for compatibility
 async def query_echo(request: QueryRequest):
     """Main query endpoint with intelligent routing and conversation management"""
     start_time = time.time()
@@ -192,6 +193,22 @@ async def query_echo(request: QueryRequest):
         request.conversation_id = str(uuid.uuid4())
 
     logger.info(f"🧠 Query received: {request.query[:100]}...")
+
+    # Cognitive model selection if available
+    selected_model = None
+    selection_reason = "default"
+    try:
+        from fixed_model_selector import ModelSelector
+        selector = ModelSelector()
+        selected_model, intelligence_level, selection_reason = selector.select_model(
+            request.query,
+            request.intelligence_level if request.intelligence_level != "auto" else None
+        )
+        logger.info(f"🎯 Cognitive selection: {selected_model} ({intelligence_level}) - {selection_reason}")
+        # Override intelligence level with cognitive selection
+        request.intelligence_level = intelligence_level
+    except ImportError:
+        logger.debug("Cognitive selector not available, using default routing")
 
     try:
         # Get conversation context
@@ -727,3 +744,27 @@ async def get_model_operation_status(request_id: str):
     except Exception as e:
         logger.error(f"Status check failed: {e}")
         return {"error": str(e)}
+    except Exception as e:
+        logger.error(f"Code generation error: {e}")
+        return {
+            "error": str(e),
+            "processing_time": time.time() - start_time
+        }
+
+
+# Simple code-only endpoint
+@router.post("/api/echo/code")
+async def generate_code_only(request: QueryRequest):
+    """Code generation endpoint - forces code output"""
+    # Modify query to force code generation
+    code_request = QueryRequest(
+        query=f"Write only code, no explanations: {request.query}",
+        conversation_id=request.conversation_id,
+        user_id=request.user_id,
+        intelligence_level="small"  # Use code model
+    )
+    # Call the regular query handler with modified request
+    response = await handle_echo_query(code_request)
+    response.mode = "code_only"
+    return response
+

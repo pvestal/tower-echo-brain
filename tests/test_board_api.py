@@ -21,8 +21,8 @@ import asyncio
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Mock dependencies before importing the app
-with patch('directors.decision_tracker.DecisionTracker'), \
-     patch('directors.director_registry.DirectorRegistry'), \
+with patch('directors.request_logger.DecisionTracker'), \
+     patch('directors.service_registry.DirectorRegistry'), \
      patch('directors.auth_middleware.get_current_user'), \
      patch('directors.auth_middleware.authenticate_websocket'):
 
@@ -81,9 +81,9 @@ class TestTaskSubmission:
         return TestClient(app)
 
     @pytest.fixture
-    def mock_decision_tracker(self):
+    def mock_request_logger(self):
         """Mock decision tracker."""
-        with patch('board_api.decision_tracker') as mock:
+        with patch('board_api.request_logger') as mock:
             mock.submit_task = AsyncMock(return_value="test-task-123")
             mock.get_decision = AsyncMock(return_value={
                 "task_id": "test-task-123",
@@ -95,7 +95,7 @@ class TestTaskSubmission:
             yield mock
 
     @patch('board_api.get_current_user')
-    def test_submit_task_success(self, mock_auth, client, mock_decision_tracker):
+    def test_submit_task_success(self, mock_auth, client, mock_request_logger):
         """Test successful task submission."""
         # Mock authentication
         mock_auth.return_value = {
@@ -113,7 +113,7 @@ class TestTaskSubmission:
             }
         }
 
-        with patch('board_api.decision_tracker', mock_decision_tracker):
+        with patch('board_api.request_logger', mock_request_logger):
             response = client.post(
                 "/api/board/task",
                 json=task_data,
@@ -216,7 +216,7 @@ class TestDecisionRetrieval:
 
         task_id = "test-task-123"
 
-        with patch('board_api.decision_tracker') as mock_tracker:
+        with patch('board_api.request_logger') as mock_tracker:
             mock_tracker.get_decision = AsyncMock(return_value=mock_decision_data)
 
             response = client.get(
@@ -245,7 +245,7 @@ class TestDecisionRetrieval:
             "permissions": ["board:view"]
         }
 
-        with patch('board_api.decision_tracker') as mock_tracker:
+        with patch('board_api.request_logger') as mock_tracker:
             mock_tracker.get_decision = AsyncMock(return_value=None)
 
             response = client.get(
@@ -292,7 +292,7 @@ class TestTaskListing:
             "permissions": ["board:view"]
         }
 
-        with patch('board_api.decision_tracker') as mock_tracker:
+        with patch('board_api.request_logger') as mock_tracker:
             mock_tracker.list_tasks = AsyncMock(return_value=mock_task_list)
 
             response = client.get(
@@ -314,7 +314,7 @@ class TestTaskListing:
             "permissions": ["board:view"]
         }
 
-        with patch('board_api.decision_tracker') as mock_tracker:
+        with patch('board_api.request_logger') as mock_tracker:
             mock_tracker.list_tasks = AsyncMock(return_value=[])
 
             response = client.get(
@@ -347,7 +347,7 @@ class TestFeedbackSystem:
             "helpful": True
         }
 
-        with patch('board_api.decision_tracker') as mock_tracker:
+        with patch('board_api.request_logger') as mock_tracker:
             mock_tracker.add_feedback = AsyncMock(return_value=True)
 
             response = client.post(
@@ -429,7 +429,7 @@ class TestErrorHandling:
         )
         assert response.status_code in [400, 422, 401]  # Bad request, validation error, or auth required
 
-    @patch('board_api.decision_tracker')
+    @patch('board_api.request_logger')
     def test_internal_server_error_handling(self, mock_tracker, client):
         """Test handling of internal server errors."""
         # Mock an exception in the decision tracker
