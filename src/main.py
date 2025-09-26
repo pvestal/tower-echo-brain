@@ -128,6 +128,14 @@ logger.info("🎖️ Veteran Guardian Bot integration enabled")
 app.include_router(agent_dev_router)
 logger.info("🤖 Agent Development System enabled")
 
+# Include control endpoints
+try:
+    from src.api.control_endpoints import control_router
+    app.include_router(control_router)
+    logger.info("✅ Control endpoints router included")
+except Exception as e:
+    logger.warning(f"⚠️ Could not load control endpoints: {e}")
+
 # Import and initialize Anime Story Orchestrator
 try:
     from anime_story_orchestrator import AnimeStoryOrchestrator
