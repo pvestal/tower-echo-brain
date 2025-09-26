@@ -29,3 +29,5 @@ models/
 temp/
 *.tmp
 logs/
+.env
+node_modules/
