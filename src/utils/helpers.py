@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Utility functions and helper classes for Echo Brain system
 """
@@ -10,6 +9,8 @@ import os
 import re
 import shlex
 import logging
+import time
+import json
 from typing import Dict, List, Tuple, Optional
 
 logger = logging.getLogger(__name__)
@@ -18,221 +19,159 @@ class SafeShellExecutor:
     """Safe shell command execution with security controls"""
 
     def __init__(self):
-        # Allowed commands for safe mode
-        self.safe_commands = {
-            'ls', 'pwd', 'echo', 'cat', 'head', 'tail', 'grep', 'find',
-            'ps', 'top', 'df', 'free', 'uptime', 'whoami', 'id', 'date',
-            'curl', 'wget', 'nc', 'ping', 'nmap', 'systemctl', 'journalctl',
-            'git', 'docker', 'python3', 'pip3', 'npm', 'node', 'pnpm'
-        }
-
-        # SECURITY FIX: Enhanced dangerous patterns to block including directory traversal
-        self.dangerous_patterns = [
-            r'rm\s+-rf?\s*/', r'sudo\s+rm', r'>\s*/dev/', r'dd\s+if=',
-            r'mkfs', r'fdisk', r'parted', r'format', r'del\s+/[qsf]',
-            r'shutdown', r'reboot', r'halt', r'init\s+[06]',
-            r':\(\)\{', r'fork\s*\(', r'while\s*true', r'yes\s*\|',
-            # Directory traversal patterns
-            r'\.\./', r'\.\.\\', r'\.\.%2f', r'\.\.%5c',
-            r'%2e%2e%2f', r'%2e%2e%5c', r'%252e%252e%252f',
-            r'\.\.\/\.\.\/', r'\.\.\\\.\.\\',
-            # Path injection patterns
-            r'/etc/passwd', r'/etc/shadow', r'/proc/', r'/sys/',
-            r'C:\\Windows\\System32', r'C:\\Windows\\system32',
-            # Command injection patterns
-            r';\s*rm', r'&&\s*rm', r'\|\s*rm', r'`rm', r'\$\(rm',
-            r';\s*cat\s+/etc', r'&&\s*cat\s+/etc', r'\|\s*cat\s+/etc'
+        self.allowed_commands = [
+            'ls', 'pwd', 'echo', 'cat', 'grep', 'find', 'which',
+            'python', 'python3', 'pip', 'pip3', 'node', 'npm',
+            'git', 'curl', 'wget', 'ps', 'kill', 'pkill'
+        ]
+        self.forbidden_patterns = [
+            r';\s*rm\s+-rf',
+            r'>\s*/dev/.*',
+            r'mkfs',
+            r'dd\s+if=.*of=/dev/',
+            r'format\s+[cC]:',
+            r'del\s+/[sS]'
         ]
 
-    def is_command_safe(self, command: str, safe_mode: bool = True) -> Tuple[bool, str]:
-        """SECURITY FIX: Enhanced command safety validation with path normalization"""
-        if not safe_mode:
-            return True, "Safe mode disabled"
+    async def execute(self, command: str, timeout: int = 30, allow_all: bool = False) -> dict:
+        """
+        Execute shell command with safety controls
 
-        # Check for dangerous patterns
-        for pattern in self.dangerous_patterns:
-            if re.search(pattern, command, re.IGNORECASE):
-                return False, f"Command blocked by pattern: {pattern}"
+        Args:
+            command: Shell command to execute
+            timeout: Maximum execution time in seconds
+            allow_all: Bypass safety checks (use with caution)
 
-        # SECURITY FIX: Validate file paths in command arguments
-        try:
-            args = shlex.split(command)
-        except ValueError:
-            return False, "Invalid command syntax"
-
-        for arg in args:
-            # Check for path traversal in arguments
-            if self._contains_path_traversal(arg):
-                return False, f"Path traversal detected in argument: {arg}"
-
-        # Check if base command is in safe list
-        base_cmd = args[0] if args else ""
-        if base_cmd not in self.safe_commands:
-            return False, f"Command '{base_cmd}' not in safe commands list"
-
-        return True, "Command passed safety checks"
-
-    def _contains_path_traversal(self, path: str) -> bool:
-        """SECURITY FIX: Check if path contains directory traversal attempts"""
-        # Normalize the path to resolve any relative components
-        try:
-            normalized = os.path.normpath(path)
-
-            # Check for directory traversal indicators
-            traversal_indicators = [
-                '..', '../', '..\\', './', '.\\',
-                '%2e%2e', '%2e%2e%2f', '%2e%2e%5c',
-                '%252e%252e%252f', '%252e%252e%255c'
-            ]
-
-            for indicator in traversal_indicators:
-                if indicator in path.lower():
-                    return True
-
-            # Check if normalized path goes outside intended boundaries
-            if normalized.startswith('/etc/') or normalized.startswith('/proc/') or normalized.startswith('/sys/'):
-                return True
-
-            if normalized.startswith('C:\\Windows\\') or normalized.startswith('c:\\windows\\'):
-                return True
-
-            return False
-
-        except (ValueError, OSError):
-            # If path cannot be normalized, consider it suspicious
-            return True
-
-    async def execute_command(self, command: str, safe_mode: bool = True) -> Dict:
-        """Execute a shell command safely"""
+        Returns:
+            Dictionary with execution results
+        """
         start_time = asyncio.get_event_loop().time()
 
-        # Safety check
-        is_safe, safety_msg = self.is_command_safe(command, safe_mode)
+        # Safety checks
         safety_checks = {
-            "passed_safety_check": is_safe,
-            "safe_mode_enabled": safe_mode,
-            "safety_message": safety_msg
+            'command_allowed': True,
+            'patterns_safe': True,
+            'timeout_valid': timeout <= 300
         }
 
-        if not is_safe:
-            return {
-                "command": command,
-                "success": False,
-                "output": "",
-                "error": f"Command blocked for security: {safety_msg}",
-                "exit_code": -1,
-                "processing_time": asyncio.get_event_loop().time() - start_time,
-                "safety_checks": safety_checks
-            }
+        if not allow_all:
+            # Check if base command is allowed
+            base_command = command.split()[0] if command else ''
+            if base_command not in self.allowed_commands:
+                logger.warning(f"Command '{base_command}' not in allowed list")
+                safety_checks['command_allowed'] = False
 
-        try:
-            # Execute command with timeout
-            result = subprocess.run(
-                command,
-                shell=True,
-                capture_output=True,
-                text=True,
-                timeout=30,
-                cwd=os.path.expanduser("~")
-            )
+            # Check for forbidden patterns
+            for pattern in self.forbidden_patterns:
+                if re.search(pattern, command):
+                    logger.error(f"Forbidden pattern detected: {pattern}")
+                    safety_checks['patterns_safe'] = False
+                    break
 
-            processing_time = asyncio.get_event_loop().time() - start_time
-
-            return {
-                "command": command,
-                "success": result.returncode == 0,
-                "output": result.stdout,
-                "error": result.stderr if result.stderr else None,
-                "exit_code": result.returncode,
-                "processing_time": processing_time,
-                "safety_checks": safety_checks
-            }
-
-        except subprocess.TimeoutExpired:
-            return {
-                "command": command,
-                "success": False,
-                "output": "",
-                "error": "Command timed out after 30 seconds",
-                "exit_code": -1,
-                "processing_time": 30.0,
-                "safety_checks": safety_checks
-            }
-        except Exception as e:
-            return {
-                "command": command,
-                "success": False,
-                "output": "",
-                "error": str(e),
-                "exit_code": -1,
-                "processing_time": asyncio.get_event_loop().time() - start_time,
-                "safety_checks": safety_checks
-            }
-
-
-class TowerOrchestrator:
-    """Integration with Tower Orchestrator Service for task delegation"""
-
-    def __init__(self):
-        self.orchestrator_url = "http://localhost:8400"
-        self.timeout = 30
-
-    async def submit_task(self, task_type: str, description: str, requirements: dict = {}, priority: int = 5) -> dict:
-        """Submit a task to the orchestrator for delegation"""
-        try:
-            async with aiohttp.ClientSession() as session:
-                payload = {
-                    "type": task_type,
-                    "description": description,
-                    "requirements": requirements,
-                    "priority": priority
+            # Enforce safety
+            if not all(safety_checks.values()):
+                return {
+                    'success': False,
+                    'error': 'Command failed safety checks',
+                    'safety_checks': safety_checks,
+                    'stdout': '',
+                    'stderr': '',
+                    'exit_code': -1,
+                    'processing_time': asyncio.get_event_loop().time() - start_time
                 }
 
-                async with session.post(
-                    f"{self.orchestrator_url}/submit_task",
-                    json=payload,
-                    timeout=aiohttp.ClientTimeout(total=self.timeout)
-                ) as response:
-                    if response.status == 200:
-                        result = await response.json()
-                        return {
-                            "success": True,
-                            "task_id": result.get("task_id"),
-                            "status": result.get("status", "submitted")
-                        }
-                    else:
-                        return {
-                            "success": False,
-                            "error": f"Orchestrator returned status {response.status}"
-                        }
+        try:
+            # Parse command safely
+            if isinstance(command, str):
+                args = shlex.split(command)
+            else:
+                args = command
+
+            # Execute with timeout
+            process = await asyncio.create_subprocess_exec(
+                *args,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+                cwd=os.getcwd()
+            )
+
+            try:
+                stdout, stderr = await asyncio.wait_for(
+                    process.communicate(),
+                    timeout=timeout
+                )
+
+                return {
+                    'success': process.returncode == 0,
+                    'stdout': stdout.decode('utf-8', errors='replace'),
+                    'stderr': stderr.decode('utf-8', errors='replace'),
+                    'exit_code': process.returncode,
+                    'processing_time': asyncio.get_event_loop().time() - start_time,
+                    'safety_checks': safety_checks
+                }
+
+            except asyncio.TimeoutError:
+                process.kill()
+                await process.communicate()  # Clean up
+                return {
+                    'success': False,
+                    'error': f'Command timed out after {timeout} seconds',
+                    'stdout': '',
+                    'stderr': '',
+                    'exit_code': -1,
+                    'processing_time': asyncio.get_event_loop().time() - start_time,
+                    'safety_checks': safety_checks
+                }
+
         except Exception as e:
-            logger.error(f"Failed to submit task to orchestrator: {e}")
+            logger.error(f"Command execution failed: {e}")
             return {
-                "success": False,
-                "error": str(e)
+                'success': False,
+                'error': str(e),
+                'stdout': '',
+                'stderr': '',
+                'exit_code': -1,
+                'processing_time': asyncio.get_event_loop().time() - start_time,
+                'safety_checks': safety_checks
             }
 
-    async def get_task_status(self, task_id: str) -> dict:
-        """Get status of a submitted task"""
+    async def execute_python(self, code: str, timeout: int = 30) -> dict:
+        """Execute Python code safely"""
+        # Write code to temporary file
+        import tempfile
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+            f.write(code)
+            temp_file = f.name
+
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(
-                    f"{self.orchestrator_url}/task_status/{task_id}",
-                    timeout=aiohttp.ClientTimeout(total=self.timeout)
-                ) as response:
-                    if response.status == 200:
-                        return await response.json()
-                    else:
-                        return {
-                            "success": False,
-                            "error": f"Status check failed: {response.status}"
-                        }
-        except Exception as e:
-            logger.error(f"Failed to get task status: {e}")
-            return {
-                "success": False,
-                "error": str(e)
-            }
+            result = await self.execute(f"python3 {temp_file}", timeout=timeout)
+            return result
+        finally:
+            # Clean up temp file
+            try:
+                os.unlink(temp_file)
+            except:
+                pass
+
+    async def execute_with_retry(self, command: str, max_retries: int = 3,
+                                timeout: int = 30) -> dict:
+        """Execute command with retry logic"""
+        for attempt in range(max_retries):
+            result = await self.execute(command, timeout=timeout)
+
+            if result['success']:
+                return result
+
+            if attempt < max_retries - 1:
+                await asyncio.sleep(2 ** attempt)  # Exponential backoff
+                logger.info(f"Retrying command (attempt {attempt + 2}/{max_retries})")
+
+        return result
+
+
+# TowerOrchestrator now uses resilient implementation
+# Old code archived in helpers_tower_orchestrator_archived.py
+from src.orchestrators.resilient_orchestrator import ResilientOrchestrator as TowerOrchestrator
 
 
 def format_response_for_web(response: str) -> str:
@@ -293,4 +232,8 @@ def sanitize_filename(filename: str) -> str:
 
 # Global utility instances
 safe_executor = SafeShellExecutor()
-tower_orchestrator = TowerOrchestrator()
+# Import the actual ResilientOrchestrator that has ComfyUI integration
+from src.orchestrators.resilient_orchestrator import ResilientOrchestrator
+
+# Use ResilientOrchestrator as tower_orchestrator for actual execution
+tower_orchestrator = ResilientOrchestrator(firebase_config=None)
