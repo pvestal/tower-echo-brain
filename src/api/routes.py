@@ -23,7 +23,7 @@ from src.db.database import database
 from src.core.intelligence import intelligence_router
 from src.services.conversation import conversation_manager
 from src.services.testing import testing_framework
-from src.utils.helpers import safe_executor
+from src.utils.helpers import safe_executor, tower_orchestrator
 
 # Import external modules
 from echo_brain_thoughts import echo_brain
@@ -33,6 +33,8 @@ logger = logging.getLogger(__name__)
 
 # Create router
 router = APIRouter()
+
+# Use tower_orchestrator from helpers (which is now ResilientOrchestrator)
 
 @router.get("/api/echo/health")
 async def health_check():
@@ -150,6 +152,70 @@ async def handle_capability_intent(intent: str, params: Dict, request: QueryRequ
                     status_icon = "✅" if status.get('active') else "❌"
                     response_text += f"  {status_icon} {service}: {status.get('status', 'unknown')}\n"
 
+        elif intent == "image_generation":
+            logger.info(f"🎨 AUTO-IMAGE: Generating image with params: {params}")
+            try:
+                # Extract prompt and style from params
+                prompt = params.get('prompt', request.query.replace('generate image', '').replace('create image', '').strip())
+                if not prompt:
+                    prompt = "cyberpunk anime scene"
+                style = params.get('style', 'anime')
+
+                # Actually generate the image using tower_orchestrator
+                result = await tower_orchestrator.generate_image(prompt=prompt, style=style)
+
+                if result.get('success'):
+                    prompt_id = result.get('prompt_id', 'unknown')
+                    image_url = f"http://***REMOVED***:8188/view?filename=ComfyUI_{prompt_id[:8]}.png"
+                    response_text = f"🎨 Image generated successfully!\n\nPrompt: {prompt}\nStyle: {style}\nPrompt ID: {prompt_id}\n\nImage URL: {image_url}\n\n✅ Generation complete! Check ComfyUI output directory."
+                    if result.get('compute_location'):
+                        response_text += f"\nCompute: {result['compute_location']}"
+                else:
+                    response_text = f"❌ Image generation failed: {result.get('error', 'Unknown error')}"
+            except Exception as e:
+                response_text = f"❌ Image generation error: {str(e)}"
+        elif intent == "voice_generation":
+            logger.info(f"🎵 AUTO-VOICE: Generating voice with params: {params}")
+            try:
+                # Extract text and character from params
+                text = params.get('text', request.query.replace('generate voice', '').replace('say', '').strip())
+                if not text:
+                    text = "Hello from Echo Brain"
+                character = params.get('character', 'echo_default')
+
+                # Actually generate voice using tower_orchestrator
+                result = await tower_orchestrator.generate_voice(text=text, character=character)
+
+                if result.get('success'):
+                    audio_url = result.get('audio_url', '')
+                    response_text = f"🎵 Voice generated successfully!\n\nText: {text}\nCharacter: {character}\n\nAudio URL: {audio_url}"
+                    if result.get('metadata'):
+                        response_text += f"\nMetadata: {result['metadata']}"
+                else:
+                    response_text = f"❌ Voice generation failed: {result.get('error', 'Unknown error')}"
+            except Exception as e:
+                response_text = f"❌ Voice generation error: {str(e)}"
+        elif intent == "music_generation":
+            logger.info(f"🎼 AUTO-MUSIC: Generating music with params: {params}")
+            try:
+                # Extract description and duration from params
+                description = params.get('description', request.query.replace('generate music', '').replace('create music', '').strip())
+                if not description:
+                    description = "Epic cinematic soundtrack"
+                duration = params.get('duration', 30)
+
+                # Actually generate music using tower_orchestrator
+                result = await tower_orchestrator.create_music(description=description, duration=duration)
+
+                if result.get('success'):
+                    music_url = result.get('music_url', '')
+                    response_text = f"🎼 Music generated successfully!\n\nDescription: {description}\nDuration: {duration}s\n\nMusic URL: {music_url}"
+                    if result.get('metadata'):
+                        response_text += f"\nMetadata: {result['metadata']}"
+                else:
+                    response_text = f"❌ Music generation failed: {result.get('error', 'Unknown error')}"
+            except Exception as e:
+                response_text = f"❌ Music generation error: {str(e)}"
         else:
             # Fallback for other capability intents
             response_text = f"🤖 Echo capability '{intent}' executed with parameters: {params}"
@@ -250,7 +316,7 @@ async def query_echo(request: QueryRequest):
             return response
 
         # Handle capability intents automatically
-        capability_intents = ['service_testing', 'service_debugging', 'service_monitoring', 'agent_delegation', 'inter_service_communication']
+        capability_intents = ['service_testing', 'service_debugging', 'service_monitoring', 'agent_delegation', 'inter_service_communication', 'image_generation', 'voice_generation', 'music_generation']
         if intent in capability_intents:
             response = await handle_capability_intent(intent, intent_params, request, request.conversation_id, start_time)
 
@@ -268,7 +334,7 @@ async def query_echo(request: QueryRequest):
 
             return response
 
-        # For other intents, use intelligent routing
+        # For other intents, use cognitive model selection if available
         context = {
             "conversation_history": conversation_context.get("history", []),
             "user_id": request.user_id,
@@ -281,8 +347,20 @@ async def query_echo(request: QueryRequest):
         if request.intelligence_level and request.intelligence_level != "auto":
             context["requested_level"] = request.intelligence_level
 
-        # Use progressive escalation for intelligent routing
-        result = await intelligence_router.progressive_escalation(request.query, context)
+        # Use cognitive model selection if available, otherwise fall back to intelligent routing
+        if selected_model:
+            logger.info(f"🧠 Using cognitively selected model: {selected_model} - {selection_reason}")
+            result = await intelligence_router.query_model(selected_model, request.query)
+            if result["success"]:
+                result["intelligence_level"] = intelligence_level
+                result["escalation_path"] = [f"cognitive_selection:{selected_model}"]
+                result["decision_reason"] = selection_reason
+            else:
+                logger.warning(f"⚠️ Cognitive model {selected_model} failed, falling back to progressive escalation")
+                result = await intelligence_router.progressive_escalation(request.query, context)
+        else:
+            # Use progressive escalation for intelligent routing
+            result = await intelligence_router.progressive_escalation(request.query, context)
 
         if result["success"]:
             processing_time = time.time() - start_time
@@ -525,17 +603,29 @@ async def stream_brain_activity():
 # Voice notification endpoints
 @router.post("/api/echo/voice/notify")
 async def voice_notify(request: VoiceNotificationRequest):
-    """Send voice notification"""
+    """Send REAL voice notification using Tower voice service"""
     logger.info(f"🗣️ Voice notification: {request.message[:50]}...")
 
     try:
-        # Voice system integration would go here
-        return {
-            "success": True,
-            "message": "Voice notification sent",
-            "character": request.character,
-            "priority": request.priority
-        }
+        # Use REAL Tower orchestrator for voice generation
+        result = await tower_orchestrator.generate_voice(
+            text=request.message,
+            character=request.character
+        )
+
+        if result["success"]:
+            return {
+                "success": True,
+                "message": "Voice notification sent successfully",
+                "character": request.character,
+                "priority": request.priority,
+                "voice_result": result
+            }
+        else:
+            return {
+                "success": False,
+                "error": f"Voice generation failed: {result.get('error', 'Unknown error')}"
+            }
     except Exception as e:
         logger.error(f"Voice notification failed: {e}")
         return {"success": False, "error": str(e)}
@@ -764,7 +854,124 @@ async def generate_code_only(request: QueryRequest):
         intelligence_level="small"  # Use code model
     )
     # Call the regular query handler with modified request
-    response = await handle_echo_query(code_request)
+    response = await query_echo(code_request)
     response.mode = "code_only"
     return response
+
+# REAL MULTIMEDIA ORCHESTRATION ENDPOINTS
+# These actually call Tower services and generate content
+
+@router.post("/api/echo/multimedia/generate/image")
+async def generate_image_multimedia(request: dict):
+    """Generate image using ComfyUI through real orchestration"""
+    logger.info(f"🎨 Image generation request: {request.get('prompt', 'No prompt')[:50]}...")
+
+    try:
+        result = await tower_orchestrator.generate_image(
+            prompt=request.get('prompt', 'cyberpunk anime scene'),
+            style=request.get('style', 'anime')
+        )
+
+        return {
+            "endpoint": "/api/echo/multimedia/generate/image",
+            "action": "image_generation",
+            "timestamp": datetime.now().isoformat(),
+            "result": result
+        }
+    except Exception as e:
+        logger.error(f"Image generation failed: {e}")
+        return {"success": False, "error": str(e)}
+
+@router.post("/api/echo/multimedia/generate/voice")
+async def generate_voice_multimedia(request: dict):
+    """Generate voice using Tower voice service"""
+    logger.info(f"🗣️ Voice generation request: {request.get('text', 'No text')[:50]}...")
+
+    try:
+        result = await tower_orchestrator.generate_voice(
+            text=request.get('text', 'Hello from Echo Brain'),
+            character=request.get('character', 'echo_default')
+        )
+
+        return {
+            "endpoint": "/api/echo/multimedia/generate/voice",
+            "action": "voice_generation",
+            "timestamp": datetime.now().isoformat(),
+            "result": result
+        }
+    except Exception as e:
+        logger.error(f"Voice generation failed: {e}")
+        return {"success": False, "error": str(e)}
+
+@router.post("/api/echo/multimedia/generate/music")
+async def generate_music_multimedia(request: dict):
+    """Generate music using Tower music service"""
+    logger.info(f"🎵 Music generation request: {request.get('description', 'No description')[:50]}...")
+
+    try:
+        result = await tower_orchestrator.create_music(
+            description=request.get('description', 'Epic cinematic soundtrack'),
+            duration=request.get('duration', 30)
+        )
+
+        return {
+            "endpoint": "/api/echo/multimedia/generate/music",
+            "action": "music_generation",
+            "timestamp": datetime.now().isoformat(),
+            "result": result
+        }
+    except Exception as e:
+        logger.error(f"Music generation failed: {e}")
+        return {"success": False, "error": str(e)}
+
+@router.post("/api/echo/multimedia/orchestrate")
+async def orchestrate_multimedia_task(request: dict):
+    """Orchestrate complex multimedia tasks across services"""
+    task_type = request.get('task_type', 'unknown')
+    description = request.get('description', 'No description')
+    requirements = request.get('requirements', {})
+
+    logger.info(f"🎬 Multimedia orchestration: {task_type} - {description[:50]}...")
+
+    try:
+        result = await tower_orchestrator.orchestrate_multimedia(
+            task_type=task_type,
+            description=description,
+            requirements=requirements
+        )
+
+        return {
+            "endpoint": "/api/echo/multimedia/orchestrate",
+            "action": "multimedia_orchestration",
+            "task_type": task_type,
+            "timestamp": datetime.now().isoformat(),
+            "result": result
+        }
+    except Exception as e:
+        logger.error(f"Multimedia orchestration failed: {e}")
+        return {"success": False, "error": str(e)}
+
+@router.get("/api/echo/multimedia/services/status")
+async def get_multimedia_services_status():
+    """Get status of all multimedia services"""
+    logger.info("📊 Checking multimedia services status...")
+
+    try:
+        services = ['comfyui', 'voice', 'music', 'anime']
+        status_results = {}
+
+        for service in services:
+            status_results[service] = await tower_orchestrator.get_service_status(service)
+
+        overall_health = all(result.get('success', False) for result in status_results.values())
+
+        return {
+            "endpoint": "/api/echo/multimedia/services/status",
+            "overall_health": "healthy" if overall_health else "degraded",
+            "timestamp": datetime.now().isoformat(),
+            "services": status_results
+        }
+    except Exception as e:
+        logger.error(f"Service status check failed: {e}")
+        return {"success": False, "error": str(e)}
 
