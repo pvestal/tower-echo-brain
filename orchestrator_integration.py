@@ -150,8 +150,11 @@ class ApprovalWorkflowOrchestrator:
             
             for attempt in range(self.max_retries):
                 print(f"    Attempt {attempt + 1}/{self.max_retries}")
-                
-                # Progressive quality enhancement
+
+                # START BASIC, BUILD IN LAYERS
+                # First pass: FAST draft (low quality, quick generation)
+                # Second pass: Add detail
+                # Third pass: Polish if needed
                 quality_level = attempt
                 
                 workflow = self.create_character_workflow(
@@ -201,15 +204,28 @@ class ApprovalWorkflowOrchestrator:
         return images
     
     def create_character_workflow(self, character: str, ref_num: int, quality_level: int) -> Dict:
-        """Create ComfyUI workflow for character generation"""
-        
-        # Enhanced prompts for better quality
-        prompt = f"{character}, character sheet, reference pose {ref_num + 1}, masterpiece, best quality"
-        
-        if quality_level > 0:
-            prompt += ", ultra detailed, professional artwork, 8k"
-        if quality_level > 1:
-            prompt += ", award winning, perfect anatomy, dynamic lighting"
+        """Create ComfyUI workflow - START SIMPLE, LAYER QUALITY"""
+
+        # LAYER 0: FAST DRAFT (5-10 seconds)
+        if quality_level == 0:
+            prompt = f"{character}, character sheet, reference pose {ref_num + 1}"
+            steps = 15  # Fast
+            cfg = 6.0   # Low
+            sampler = "euler"  # Fastest
+
+        # LAYER 1: ADD DETAIL (10-15 seconds)
+        elif quality_level == 1:
+            prompt = f"{character}, character sheet, reference pose {ref_num + 1}, detailed"
+            steps = 20
+            cfg = 7.0
+            sampler = "euler_a"
+
+        # LAYER 2: QUALITY POLISH (15-20 seconds)
+        else:
+            prompt = f"{character}, character sheet, reference pose {ref_num + 1}, masterpiece, best quality"
+            steps = 25
+            cfg = 7.5
+            sampler = "dpmpp_2m_sde"
         
         return {
             "1": {
@@ -234,10 +250,10 @@ class ApprovalWorkflowOrchestrator:
             "5": {
                 "inputs": {
                     "seed": int(time.time()) + ref_num * 1000 + quality_level,
-                    "steps": 25 + quality_level * 10,
-                    "cfg": 7.5 + quality_level * 0.5,
-                    "sampler_name": "dpmpp_2m_sde" if quality_level > 0 else "euler",
-                    "scheduler": "karras",
+                    "steps": steps,  # Use layered steps
+                    "cfg": cfg,      # Use layered CFG
+                    "sampler_name": sampler,  # Use layered sampler
+                    "scheduler": "normal" if quality_level == 0 else "karras",
                     "denoise": 1.0,
                     "model": ["1", 0],
                     "positive": ["2", 0],
