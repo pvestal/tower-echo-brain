@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Echo Brain Media Scanner Progress Monitor
+AI Assist Media Scanner Progress Monitor
 Monitors the progress of local media file analysis
 """
 
@@ -78,7 +78,7 @@ class MediaScanMonitor:
     
     def monitor_progress(self, interval=30):
         """Monitor progress with regular updates"""
-        print("Echo Brain Media Scanner Progress Monitor")
+        print("AI Assist Media Scanner Progress Monitor")
         print("=" * 50)
         
         try:

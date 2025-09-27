@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Echo Brain Media Scanner - Local Media File Analysis
-Scans and analyzes local media files for Echo Brain training
+AI Assist Media Scanner - Local Media File Analysis
+Scans and analyzes local media files for AI Assist training
 Processes images and videos in ***REMOVED*** and /home/patrick/Pictures
 """
 
@@ -27,7 +27,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class EchoMediaScanner:
-    """Media scanner for Echo Brain local file analysis"""
+    """Media scanner for AI Assist local file analysis"""
     
     def __init__(self):
         self.db_config = {

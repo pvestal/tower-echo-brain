@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-User Preferences System for Echo Brain Board of Directors
+User Preferences System for AI Assist Board of Directors
 Manages user-specific settings, constraints, and customization options
 """
 
@@ -80,7 +80,7 @@ class PreferenceProfile:
 class UserPreferences:
     """
     Manages user preferences, constraints, and customization settings
-    for the Echo Brain Board of Directors system
+    for the AI Assist Board of Directors system
     """
 
     def __init__(self, db_config: Dict[str, str]):

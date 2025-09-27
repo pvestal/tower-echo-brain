@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-WORKING Echo Brain Service - ACTUALLY generates images through ComfyUI
+WORKING AI Assist Service - ACTUALLY generates images through ComfyUI
 Requirements:
 1. Detect creative/anime/video keywords
 2. Track story state across multiple calls
@@ -636,7 +636,7 @@ async def health_check():
     """Health check endpoint"""
     return {
         "status": "healthy",
-        "service": "Echo Brain Working",
+        "service": "AI Assist Working",
         "timestamp": datetime.now().isoformat(),
         "comfyui_status": "checking"
     }
@@ -667,7 +667,7 @@ async def get_status():
 
 
 if __name__ == "__main__":
-    print("🚀 Starting Echo Brain Working Service with Stats on port 8309")
+    print("🚀 Starting AI Assist Working Service with Stats on port 8309")
     print("🎨 ComfyUI integration enabled")
     print("📊 Story state tracking enabled")
     print("📈 User statistics tracking enabled")

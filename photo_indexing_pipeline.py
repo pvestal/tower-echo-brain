@@ -173,7 +173,7 @@ class PhotoIndexer:
 - Fast duplicate detection via hash
 - Visual similarity search via perceptual hash
 - Metadata search (date, location, camera info)
-- Integration with Echo Brain for memory queries
+- Integration with AI Assist for memory queries
 
 ## Next Steps:
 - Query photos via Echo: "Show me photos from [date/location]"

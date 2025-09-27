@@ -7,7 +7,7 @@ import asyncio
 import requests
 import os
 
-app = FastAPI(title="Echo Brain with WebSocket", version="2.0.0")
+app = FastAPI(title="AI Assist with WebSocket", version="2.0.0")
 
 # Add CORS middleware
 app.add_middleware(
@@ -24,7 +24,7 @@ websocket_clients = []
 # Core Echo functionality
 @app.get("/")
 async def root():
-    return {"service": "Echo Brain with WebSocket", "version": "2.0.0", "websocket": "/ws/cognitive"}
+    return {"service": "AI Assist with WebSocket", "version": "2.0.0", "websocket": "/ws/cognitive"}
 
 @app.get("/api/echo/health")
 async def health_check():
@@ -63,7 +63,7 @@ async def cognitive_websocket(websocket: WebSocket):
     websocket_clients.append(websocket)
     
     try:
-        await websocket.send_text("✅ Connected to Echo Brain WebSocket!")
+        await websocket.send_text("✅ Connected to AI Assist WebSocket!")
         
         while True:
             data = await websocket.receive_text()

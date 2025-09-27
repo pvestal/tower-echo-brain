@@ -1,11 +1,11 @@
 """
-Base Director Framework for Echo Brain Board of Directors System
+Base Director Framework for AI Assist Board of Directors System
 
 This module provides the abstract base class for all specialized directors
-in the Echo Brain system. Each director acts as a domain expert that can
+in the AI Assist system. Each director acts as a domain expert that can
 evaluate tasks, provide reasoning, and suggest improvements.
 
-Author: Echo Brain Board of Directors System
+Author: AI Assist Board of Directors System
 Created: 2025-09-16
 """
 
@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 class DirectorBase(ABC):
     """
-    Abstract base class for all Echo Brain directors.
+    Abstract base class for all AI Assist directors.
 
     Each director represents a specialized domain expert that can:
     - Evaluate tasks and provide domain-specific insights

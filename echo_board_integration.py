@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Echo Brain Board of Directors Integration
-Connects the new Board of Directors system with Echo Brain's unified service
+AI Assist Board of Directors Integration
+Connects the new Board of Directors system with AI Assist's unified service
 """
 
 import asyncio
@@ -22,7 +22,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class EchoBoardOfDirectors:
-    """Integration layer between Echo Brain and Board of Directors"""
+    """Integration layer between AI Assist and Board of Directors"""
 
     def __init__(self):
         self.registry = ServiceRegistry()
@@ -48,7 +48,7 @@ class EchoBoardOfDirectors:
                 None, self.registry.evaluate_task, task
             )
 
-            # Process the result into Echo Brain format
+            # Process the result into AI Assist format
             processed_result = self._process_board_decision(result, task)
             return processed_result
 
@@ -57,11 +57,11 @@ class EchoBoardOfDirectors:
             return {
                 'success': False,
                 'error': str(e),
-                'fallback': 'Using Echo Brain default evaluation'
+                'fallback': 'Using AI Assist default evaluation'
             }
 
     def _process_board_decision(self, board_result: Dict, original_task: Dict) -> Dict:
-        """Process board decision into Echo Brain compatible format"""
+        """Process board decision into AI Assist compatible format"""
 
         # Extract evaluations
         evaluations = board_result.get('evaluations', [])

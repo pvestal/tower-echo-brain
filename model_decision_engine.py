@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Model Decision Engine for Echo Brain
+Model Decision Engine for AI Assist
 Intelligent routing between local models and API with performance tracking
 """
 

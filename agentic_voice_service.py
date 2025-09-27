@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Deploy AgenticPersona Voice Integration Standalone Service
-Creates a separate service that works with existing Echo Brain
+Creates a separate service that works with existing AI Assist
 """
 
 import asyncio
@@ -115,7 +115,7 @@ class AgenticPersonaVoiceService:
         return response
 
     async def call_echo_brain(self, message: str) -> str:
-        """Call Echo Brain service"""
+        """Call AI Assist service"""
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.post(
@@ -130,10 +130,10 @@ class AgenticPersonaVoiceService:
                         data = await response.json()
                         return data.get("response", "No response from Echo")
                     else:
-                        return f"Echo Brain error: {response.status}"
+                        return f"AI Assist error: {response.status}"
         except Exception as e:
-            logger.error(f"Echo Brain call failed: {e}")
-            return f"Echo Brain unavailable: {str(e)}"
+            logger.error(f"AI Assist call failed: {e}")
+            return f"AI Assist unavailable: {str(e)}"
 
     async def synthesize_voice(self, text: str, character: VoiceCharacter) -> Dict[str, Any]:
         """Mock voice synthesis (would integrate with actual voice service)"""
@@ -178,7 +178,7 @@ async def agentic_chat(request: dict):
         # 1. Select character based on context
         selected_character = agentic_service.select_character_for_context(message)
 
-        # 2. Get response from Echo Brain
+        # 2. Get response from AI Assist
         echo_response = await agentic_service.call_echo_brain(message)
 
         # 3. Enhance response with character persona
@@ -226,7 +226,7 @@ async def synthesize_voice(request: dict):
 @app.get("/health")
 async def health_check():
     """Health check"""
-    # Test Echo Brain connection
+    # Test AI Assist connection
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(f"{agentic_service.echo_url}/api/echo/health") as response:

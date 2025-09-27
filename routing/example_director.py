@@ -9,7 +9,7 @@ that inherits from DirectorBase. This example shows best practices for:
 
 This can be used as a template for creating new specialized directors.
 
-Author: Echo Brain Board of Directors System
+Author: AI Assist Board of Directors System
 Created: 2025-09-16
 """
 
@@ -352,7 +352,7 @@ def demonstrate_director():
     Demonstrate the Example Director functionality.
     This can be run to test the director implementation.
     """
-    print("=== Echo Brain Director Framework Demo ===\n")
+    print("=== AI Assist Director Framework Demo ===\n")
 
     # Create director instance
     director = ExampleDirector()

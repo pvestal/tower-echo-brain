@@ -3,7 +3,7 @@
 Echo Model Registry - Version Control and Lifecycle Management
 ============================================================
 
-Comprehensive model registry for Echo Brain that handles:
+Comprehensive model registry for AI Assist that handles:
 - Model versioning and metadata tracking
 - Lifecycle management (dev/staging/prod)
 - Rollback capabilities

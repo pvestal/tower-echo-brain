@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Simple Echo Brain with basic video support"""
+"""Simple AI Assist with basic video support"""
 
 from fastapi import FastAPI
 import uvicorn
@@ -11,7 +11,7 @@ app = FastAPI()
 
 @app.get("/api/echo/health")
 async def health():
-    return {"status": "healthy", "service": "Echo Brain"}
+    return {"status": "healthy", "service": "AI Assist"}
 
 @app.post("/api/echo/generate_video")
 async def generate_video(request: dict):
@@ -44,7 +44,7 @@ async def generate_video(request: dict):
 
 @app.post("/api/echo/chat")
 async def chat(request: dict):
-    return {"response": "Echo Brain is working with video generation!"}
+    return {"response": "AI Assist is working with video generation!"}
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8309)

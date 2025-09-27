@@ -1,4 +1,4 @@
-# Article 71 Integration for Echo Brain
+# Article 71 Integration for AI Assist
 import sys
 sys.path.append('/opt/tower-echo-brain')
 from article71_compliant_workflow import Article71Workflow

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Feedback System for Echo Brain Board of Directors
+Feedback System for AI Assist Board of Directors
 Implements user control, feedback processing, and machine learning from user decisions
 """
 

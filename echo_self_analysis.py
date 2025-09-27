@@ -53,7 +53,7 @@ class SelfAnalysisResult:
     recursive_observations: List[str]  # Observations about the analysis itself
 
 class EchoSelfAnalysis:
-    """Sophisticated self-analysis system for Echo Brain"""
+    """Sophisticated self-analysis system for AI Assist"""
     
     def __init__(self):
         self.db_config = {
@@ -433,5 +433,5 @@ class EchoSelfAnalysis:
         except Exception as e:
             logger.error(f"Error storing self-analysis: {e}")
 
-# Global instance for Echo Brain to use
+# Global instance for AI Assist to use
 echo_self_analysis = EchoSelfAnalysis()

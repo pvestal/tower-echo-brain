@@ -1,7 +1,7 @@
 """
-Echo Brain Board of Directors System
+AI Assist Board of Directors System
 
-This module provides the Board of Directors framework for Echo Brain,
+This module provides the Board of Directors framework for AI Assist,
 enabling specialized domain experts to evaluate tasks, provide guidance,
 and suggest improvements across different areas of expertise.
 
@@ -34,7 +34,7 @@ Usage:
 
     evaluations = registry.evaluate_task(task, context)
 
-Author: Echo Brain Board of Directors System
+Author: AI Assist Board of Directors System
 Created: 2025-09-16
 Version: 1.0.0
 """
@@ -43,7 +43,7 @@ from .base_director import DirectorBase
 
 # Version information
 __version__ = "1.0.0"
-__author__ = "Echo Brain Board of Directors System"
+__author__ = "AI Assist Board of Directors System"
 __email__ = "echo@tower.local"
 
 # Module-level exports
@@ -64,11 +64,11 @@ from .ux_director import UXDirector
 __all__.extend(["SecurityDirector", "QualityDirector", "PerformanceDirector", "EthicsDirector", "UXDirector"])
 
 # Module metadata
-__title__ = "Echo Brain Directors"
-__description__ = "Board of Directors framework for Echo Brain domain expertise system"
+__title__ = "AI Assist Directors"
+__description__ = "Board of Directors framework for AI Assist domain expertise system"
 __url__ = "https://tower.local/api/echo"
 __license__ = "Proprietary - Tower System"
-__copyright__ = "2025 Tower System - Echo Brain"
+__copyright__ = "2025 Tower System - AI Assist"
 
 def get_version():
     """Return the version string."""

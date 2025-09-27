@@ -22,7 +22,7 @@ class AllHandsIntegration:
         self.board_api_url = "http://localhost:8309/api/board"
         self.directors = {
             'Patrick': 'User/Owner - Final authority',
-            'Echo': 'Primary AI Assistant',
+            'AI Assist': 'Primary AI Assistant',
             'Mistral': 'Creative reasoning (70B)',
             'DeepSeek': 'Code generation specialist',
             'Claude': 'Analysis and planning',
@@ -257,7 +257,7 @@ class AllHandsIntegration:
         except:
             pass
         
-        availability['Echo'] = True  # Echo is always available
+        availability['AI Assist'] = True  # Echo is always available
         availability['Claude'] = True  # We are Claude
         availability['Patrick'] = False  # Human, async response
         
@@ -281,7 +281,7 @@ async def test_allhands():
     # Test all hands meeting
     meeting = await integration.coordinate_allhands_meeting(
         topic="How to improve Echo's autonomous capabilities?",
-        participants=['Echo', 'Mistral', 'Claude']
+        participants=['AI Assist', 'Mistral', 'Claude']
     )
     print(f"AllHands meeting: {json.dumps(meeting, indent=2)}")
     

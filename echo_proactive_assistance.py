@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Echo Brain Proactive Assistance System
+AI Assist Proactive Assistance System
 Anticipates user needs and provides proactive help
 """
 import asyncio
@@ -299,7 +299,7 @@ class EchoProactiveAssistance:
             suggestions = [
                 "Ready to review the anime generation queue?",
                 "Shall I prepare the daily system report?",
-                "Would you like to check recent Echo Brain conversations?"
+                "Would you like to check recent AI Assist conversations?"
             ]
         # Afternoon tasks
         elif 12 <= current_hour < 17:
@@ -436,7 +436,7 @@ Ready to assist with your creative projects today!"""
 • Learned: {len(summary['learnings'])} new patterns
 • Tomorrow: {summary['tomorrow_suggestions'][0]}
 
-Great work today! Echo Brain is {self._get_random_emotion()} and ready for tomorrow."""
+Great work today! AI Assist is {self._get_random_emotion()} and ready for tomorrow."""
 
     def _get_random_emotion(self) -> str:
         """Get random positive emotion for Echo"""
@@ -502,7 +502,7 @@ Great work today! Echo Brain is {self._get_random_emotion()} and ready for tomor
 
 # Integration function
 async def integrate_proactive_assistance():
-    """Integrate proactive assistance with Echo Brain"""
+    """Integrate proactive assistance with AI Assist"""
     from echo_memory_consolidation import EchoMemoryConsolidation
 
     # Initialize memory system

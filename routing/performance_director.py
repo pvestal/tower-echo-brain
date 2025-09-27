@@ -1,11 +1,11 @@
 """
-Performance Director for Echo Brain Board of Directors System
+Performance Director for AI Assist Board of Directors System
 
 This module provides comprehensive performance evaluation capabilities including
 time complexity analysis, space complexity assessment, database query optimization,
 caching strategies evaluation, and resource usage monitoring.
 
-Author: Echo Brain Board of Directors System
+Author: AI Assist Board of Directors System
 Created: 2025-09-16
 Version: 1.0.0
 """

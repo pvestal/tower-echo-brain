@@ -3,7 +3,7 @@
 Echo Feature Store - Centralized Feature Management
 =================================================
 
-Comprehensive feature store for Echo Brain that provides:
+Comprehensive feature store for AI Assist that provides:
 - Centralized feature definition and storage
 - Feature versioning and lineage tracking
 - Real-time and batch feature serving

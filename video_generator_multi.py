@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Multi-method Video Generator for Echo Brain
+Multi-method Video Generator for AI Assist
 Supports AnimateDiff (text-to-video) and frame interpolation
 """
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Echo Brain Thoughts - Neural Activity Visualization
+AI Assist Thoughts - Neural Activity Visualization
 Shows Echo's thought process like neurons firing in a human brain
 Real-time visualization of Echo's cognitive processes
 """

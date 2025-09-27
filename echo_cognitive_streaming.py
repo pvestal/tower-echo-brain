@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Echo Brain Cognitive Streaming - Phase 2 Implementation
+AI Assist Cognitive Streaming - Phase 2 Implementation
 Provides real-time WebSocket streaming of Echo's cognitive processes
 """
 

@@ -68,7 +68,7 @@ class EchoGitManager:
                 
                 # Add initial files
                 self._run_git_command(["git", "add", "."])
-                self._run_git_command(["git", "commit", "-m", "Initial Echo Brain repository"])
+                self._run_git_command(["git", "commit", "-m", "Initial AI Assist repository"])
                 
                 logger.info("Git repository initialized for Echo")
         except Exception as e:
@@ -172,7 +172,7 @@ Improvement Actions:
 {chr(10).join(f"- {action}" for action in analysis_context.get('action_items', [])[:5])}
 
 Generated: {datetime.now().isoformat()}
-By: Echo Brain Autonomous Improvement System
+By: AI Assist Autonomous Improvement System
 """
             
             # Commit with detailed message
@@ -676,7 +676,7 @@ if __name__ == "__main__":
         return self._run_pre_deployment_tests()
     
     def _restart_echo_service(self) -> Dict[str, Any]:
-        """Restart Echo Brain service"""
+        """Restart AI Assist service"""
         result = {
             "success": False,
             "error": None

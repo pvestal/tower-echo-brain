@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Echo Brain Unified API - Consolidated endpoint management with temporal logic
+AI Assist Unified API - Consolidated endpoint management with temporal logic
 """
 
 from fastapi import FastAPI, HTTPException, BackgroundTasks
@@ -20,7 +20,7 @@ from echo_temporal_db_integration import TemporalDatabaseManager, setup_temporal
 import sys
 sys.path.append('/opt/tower-echo-brain/src')
 
-app = FastAPI(title="Echo Brain Unified API", version="2.0.0")
+app = FastAPI(title="AI Assist Unified API", version="2.0.0")
 
 # Global instances
 temporal_interface = None
@@ -61,7 +61,7 @@ async def startup_event():
     # Initialize database
     db_manager = await setup_temporal_database()
     
-    print("✅ Echo Brain Unified API initialized with temporal logic and self-awareness")
+    print("✅ AI Assist Unified API initialized with temporal logic and self-awareness")
 
 @app.on_event("shutdown")
 async def shutdown_event():
@@ -188,11 +188,11 @@ async def analyze_timeline(timeline_id: str = 'main'):
     
     return {"error": "Database not initialized"}
 
-# Core Echo Brain endpoints (simplified from original)
+# Core AI Assist endpoints (simplified from original)
 @app.post("/api/echo/brain")
 @app.post("/api/echo/chat")
 async def process_message(message: ChatMessage):
-    """Main Echo Brain processing endpoint"""
+    """Main AI Assist processing endpoint"""
     # Check if this is a temporal logic query
     if 'temporal' in message.message.lower() or 'timeline' in message.message.lower():
         # Route to temporal reasoning
@@ -215,7 +215,7 @@ async def process_message(message: ChatMessage):
 
 @app.get("/api/echo/stats")
 async def get_stats():
-    """Get Echo Brain statistics"""
+    """Get AI Assist statistics"""
     stats = {
         "temporal_events": 0,
         "paradoxes_detected": 0,

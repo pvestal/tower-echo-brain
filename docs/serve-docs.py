@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Simple HTTP server for Echo Brain documentation
+Simple HTTP server for AI Assist documentation
 Serves the documentation with proper MIME types and CORS headers
 """
 
@@ -35,7 +35,7 @@ class DocumentationHandler(http.server.SimpleHTTPRequestHandler):
 
         # Default route - serve README.md as index
         if path == '/' or path == '':
-            self.serve_markdown('README.md', 'Echo Brain Documentation Hub')
+            self.serve_markdown('README.md', 'AI Assist Documentation Hub')
             return
 
         # Serve Swagger UI with custom configuration
@@ -244,7 +244,7 @@ def main():
     port = int(sys.argv[1]) if len(sys.argv) > 1 else 8000
 
     print(f"""
-Echo Brain Documentation Server
+AI Assist Documentation Server
 ===============================
 
 Starting server on port {port}...

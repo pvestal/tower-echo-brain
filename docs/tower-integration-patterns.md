@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Echo Brain system serves as the central AI orchestrator within the Tower ecosystem, integrating with 10+ services through standardized patterns. This document outlines the integration architecture, data flows, communication patterns, and best practices for service interoperability.
+The AI Assist system serves as the central AI orchestrator within the Tower ecosystem, integrating with 10+ services through standardized patterns. This document outlines the integration architecture, data flows, communication patterns, and best practices for service interoperability.
 
 ## Table of Contents
 
@@ -24,7 +24,7 @@ The Echo Brain system serves as the central AI orchestrator within the Tower eco
 ```
 Tower Ecosystem (***REMOVED***)
 ├── Tower Dashboard (8080) - Main entry point and service orchestration
-├── Echo Brain (8309) - AI orchestrator and intelligence hub
+├── AI Assist (8309) - AI orchestrator and intelligence hub
 ├── Anime Production (8305) - Creative production pipeline
 ├── Agent Manager (8301) - AI agent lifecycle management
 ├── Loan Search (8302) - Financial services integration
@@ -49,7 +49,7 @@ graph TB
     subgraph "Tower Core Services"
         TD[Tower Dashboard<br/>:8080]
         AUTH[Auth Service<br/>:8088]
-        EB[Echo Brain<br/>:8309]
+        EB[AI Assist<br/>:8309]
     end
 
     subgraph "Production Services"
@@ -102,13 +102,13 @@ graph TB
 
 ## Integration Patterns
 
-### 1. Hub-and-Spoke Pattern (Echo Brain Central)
+### 1. Hub-and-Spoke Pattern (AI Assist Central)
 
-**Description**: Echo Brain acts as the central intelligence hub, coordinating requests across Tower services.
+**Description**: AI Assist acts as the central intelligence hub, coordinating requests across Tower services.
 
 **Implementation**:
 ```python
-# Echo Brain Universal Testing Framework
+# AI Assist Universal Testing Framework
 class TowerTestingFramework:
     def __init__(self):
         self.services = {
@@ -121,7 +121,7 @@ class TowerTestingFramework:
         }
 
     async def test_service(self, service_name: str):
-        """Universal service testing via Echo Brain"""
+        """Universal service testing via AI Assist"""
         url = self.services.get(service_name)
         return await self._comprehensive_test(url)
 ```
@@ -144,7 +144,7 @@ class TowerTestingFramework:
 
 **Implementation**:
 ```python
-# Echo Brain WebSocket Broadcasting
+# AI Assist WebSocket Broadcasting
 class ConnectionManager:
     async def broadcast_service_event(self, event_type: str, service: str, data: dict):
         """Broadcast service events to all connected clients"""
@@ -158,7 +158,7 @@ class ConnectionManager:
 
 # Example: Anime Production Service Integration
 async def notify_echo_brain(project_status: str, project_id: str):
-    """Notify Echo Brain of project status changes"""
+    """Notify AI Assist of project status changes"""
     async with aiohttp.ClientSession() as session:
         await session.post(
             "http://***REMOVED***:8309/api/echo/events/anime",
@@ -227,7 +227,7 @@ server {
 ```sql
 -- Tower Consolidated Database Structure
 tower_consolidated/
-├── echo_* tables          -- Echo Brain core data
+├── echo_* tables          -- AI Assist core data
 ├── board_* tables         -- Board of Directors governance
 ├── anime_* tables         -- Anime Production workflows
 ├── agent_* tables         -- Agent Manager data
@@ -238,7 +238,7 @@ tower_consolidated/
 
 **Integration Example**:
 ```python
-# Echo Brain database integration
+# AI Assist database integration
 class EchoBrainDatabase:
     def __init__(self):
         self.config = {
@@ -257,7 +257,7 @@ class EchoBrainDatabase:
         await self.execute(query, service, action, json.dumps(data), datetime.utcnow())
 
     async def get_service_analytics(self, service: str, days: int = 7):
-        """Get service usage analytics for Echo Brain insights"""
+        """Get service usage analytics for AI Assist insights"""
         query = """
         SELECT action_type, COUNT(*), AVG(processing_time)
         FROM echo_service_interactions
@@ -273,7 +273,7 @@ class EchoBrainDatabase:
 
 **Implementation**:
 ```python
-# Echo Brain Auth Middleware
+# AI Assist Auth Middleware
 from directors.auth_middleware import get_current_user, require_permission
 
 @app.post("/api/echo/board/task")
@@ -308,11 +308,11 @@ async def validate_service_request(service_name: str, token: str):
 
 ## Service Dependencies
 
-### Echo Brain Dependencies
+### AI Assist Dependencies
 
 ```mermaid
 graph LR
-    EB[Echo Brain] --> AUTH[Auth Service]
+    EB[AI Assist] --> AUTH[Auth Service]
     EB --> PG[PostgreSQL]
     EB --> REDIS[Redis]
     EB --> OLLAMA[Ollama]
@@ -367,7 +367,7 @@ class ServiceHealthManager:
         return self._determine_service_mode(health_status)
 
     def _determine_service_mode(self, health_status):
-        """Determine Echo Brain operational mode based on dependencies"""
+        """Determine AI Assist operational mode based on dependencies"""
         if not all([health_status['postgres'], health_status['ollama']]):
             return "degraded"  # Core functionality impacted
         elif not health_status['auth']:
@@ -387,7 +387,7 @@ class ServiceHealthManager:
 Client Request → nginx → Service → Database → Response
 ```
 
-**Example: Echo Brain Query Processing**:
+**Example: AI Assist Query Processing**:
 ```python
 @app.post("/api/echo/query")
 async def process_query(request: QueryRequest):
@@ -403,7 +403,7 @@ async def process_query(request: QueryRequest):
 
 **WebSocket Real-time Data**:
 ```
-Service Event → Echo Brain → WebSocket Broadcast → Connected Clients
+Service Event → AI Assist → WebSocket Broadcast → Connected Clients
 ```
 
 **Implementation**:
@@ -501,7 +501,7 @@ sequenceDiagram
 ### Permission Model
 
 ```python
-# Role-based permissions for Echo Brain operations
+# Role-based permissions for AI Assist operations
 PERMISSIONS = {
     "board.submit_task": ["board_user", "board_contributor", "admin"],
     "board.view_decisions": ["board_user", "board_viewer", "board_contributor", "admin"],
@@ -615,11 +615,11 @@ async def resilient_service_call(service_url: str, max_retries: int = 3):
 async def get_ai_response_with_fallback(query: str, context: dict = None):
     """Get AI response with multiple fallback strategies"""
 
-    # Primary: Echo Brain with full context
+    # Primary: AI Assist with full context
     try:
         return await call_echo_brain(query, context)
     except ServiceUnavailableError:
-        logger.warning("Echo Brain unavailable, trying DeepSeek fallback")
+        logger.warning("AI Assist unavailable, trying DeepSeek fallback")
 
     # Fallback 1: DeepSeek AI service
     try:
@@ -765,7 +765,7 @@ async def call_service_with_tracing(service_url: str, **kwargs):
 
 ### Service Integration Checklist
 
-**When integrating with Echo Brain:**
+**When integrating with AI Assist:**
 
 ✅ **Authentication**
 - [ ] Implement JWT token validation
@@ -827,10 +827,10 @@ class HealthResponse(BaseModel):
 ```python
 # Integration test template for Tower services
 class TestTowerIntegration:
-    """Template for testing Echo Brain service integration"""
+    """Template for testing AI Assist service integration"""
 
     async def test_service_discovery(self):
-        """Test that Echo Brain can discover and test the service"""
+        """Test that AI Assist can discover and test the service"""
         response = await client.post("/api/echo/test/your-service")
         assert response.status_code == 200
         assert response.json()["success"] == True
@@ -888,7 +888,7 @@ class TestTowerIntegration:
 
 ## Summary
 
-The Tower ecosystem integration patterns provide a robust foundation for service interoperability with Echo Brain as the central intelligence hub. Key principles include:
+The Tower ecosystem integration patterns provide a robust foundation for service interoperability with AI Assist as the central intelligence hub. Key principles include:
 
 1. **Standardized Communication**: Consistent API patterns, authentication, and error handling
 2. **Resilient Design**: Circuit breakers, retries, and graceful degradation

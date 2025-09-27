@@ -1,8 +1,8 @@
-# Echo Brain Troubleshooting Playbook & Operational Runbooks
+# AI Assist Troubleshooting Playbook & Operational Runbooks
 
 ## Overview
 
-This comprehensive troubleshooting guide provides systematic approaches to diagnosing and resolving issues with the Echo Brain Advanced AI Orchestrator. It covers common problems, diagnostic procedures, and operational maintenance tasks.
+This comprehensive troubleshooting guide provides systematic approaches to diagnosing and resolving issues with the AI Assist Advanced AI Orchestrator. It covers common problems, diagnostic procedures, and operational maintenance tasks.
 
 ## Table of Contents
 
@@ -44,7 +44,7 @@ curl -X POST http://***REMOVED***:8309/api/echo/test/comfyui \
 ### Service Status Commands
 
 ```bash
-# Check Echo Brain systemd service
+# Check AI Assist systemd service
 sudo systemctl status tower-echo-brain
 
 # View service logs
@@ -165,7 +165,7 @@ htop
 nvidia-smi  # If using GPU
 df -h  # Check disk space
 
-# Monitor Echo Brain logs during query
+# Monitor AI Assist logs during query
 sudo journalctl -u tower-echo-brain -f &
 curl -X POST http://localhost:8309/api/echo/query \
   -H "Content-Type: application/json" \
@@ -221,7 +221,7 @@ curl http://***REMOVED***:8088/api/auth/health
 curl -H "Authorization: Bearer YOUR_TOKEN" \
   http://***REMOVED***:8088/api/auth/verify
 
-# Test Echo Brain auth integration
+# Test AI Assist auth integration
 curl -H "Authorization: Bearer YOUR_TOKEN" \
   http://***REMOVED***:8309/api/echo/board/status
 ```
@@ -308,7 +308,7 @@ grep -A 5 -B 5 "upgrade" /etc/nginx/sites-available/tower.conf
 #!/bin/bash
 # /opt/tower-echo-brain/scripts/health-check.sh
 
-echo "=== Echo Brain Health Check ==="
+echo "=== AI Assist Health Check ==="
 echo "Timestamp: $(date)"
 echo ""
 
@@ -362,11 +362,11 @@ echo ""
 # 4. API Health Check
 echo "4. API Health:"
 if curl -s http://localhost:8309/api/echo/health >/dev/null 2>&1; then
-    echo "   ✓ Echo Brain API responding"
+    echo "   ✓ AI Assist API responding"
     # Get detailed health info
     curl -s http://localhost:8309/api/echo/health | jq -r '.status'
 else
-    echo "   ✗ Echo Brain API NOT responding"
+    echo "   ✗ AI Assist API NOT responding"
 fi
 echo ""
 
@@ -401,10 +401,10 @@ send_alert() {
 
     # Send email alert (if configured)
     if command -v mail >/dev/null 2>&1; then
-        echo "$message" | mail -s "Echo Brain Alert" "$ALERT_EMAIL"
+        echo "$message" | mail -s "AI Assist Alert" "$ALERT_EMAIL"
     fi
 
-    # Send to Echo Brain voice notification
+    # Send to AI Assist voice notification
     curl -s -X POST http://localhost:8309/api/echo/voice/notify \
         -H "Content-Type: application/json" \
         -d "{\"message\": \"$message\", \"priority\": \"urgent\"}" || true
@@ -412,13 +412,13 @@ send_alert() {
 
 # Check service status
 if ! systemctl is-active --quiet tower-echo-brain; then
-    send_alert "Echo Brain service is not running"
+    send_alert "AI Assist service is not running"
     exit 1
 fi
 
 # Check API response
 if ! curl -s -f http://localhost:8309/api/echo/health >/dev/null 2>&1; then
-    send_alert "Echo Brain API is not responding"
+    send_alert "AI Assist API is not responding"
     exit 1
 fi
 
@@ -665,7 +665,7 @@ htop
 iotop
 sudo iftop
 
-# Check Echo Brain process
+# Check AI Assist process
 ps aux | grep echo.py
 pmap -d $(pgrep -f echo.py)
 
@@ -772,9 +772,9 @@ curl -H "Authorization: Bearer YOUR_TOKEN" \
 
 ```bash
 #!/bin/bash
-# Daily Echo Brain Operations Checklist
+# Daily AI Assist Operations Checklist
 
-echo "=== Daily Echo Brain Operations - $(date) ==="
+echo "=== Daily AI Assist Operations - $(date) ==="
 
 # 1. Service Health Check
 echo "1. Checking service health..."
@@ -808,9 +808,9 @@ echo "=== Daily check complete ==="
 
 ```bash
 #!/bin/bash
-# Weekly Echo Brain Maintenance
+# Weekly AI Assist Maintenance
 
-echo "=== Weekly Echo Brain Maintenance - $(date) ==="
+echo "=== Weekly AI Assist Maintenance - $(date) ==="
 
 # 1. Database Maintenance
 echo "1. Database maintenance..."
@@ -941,7 +941,7 @@ echo "=== Model update procedure complete ==="
 
 ```bash
 #!/bin/bash
-# Emergency Echo Brain Recovery
+# Emergency AI Assist Recovery
 
 echo "=== EMERGENCY ECHO BRAIN RECOVERY ==="
 echo "Timestamp: $(date)"
@@ -989,14 +989,14 @@ sleep 15
 # 6. Verify recovery
 echo "6. Verifying recovery..."
 if curl -s http://localhost:8309/api/echo/health >/dev/null 2>&1; then
-    echo "✓ Echo Brain recovered successfully"
+    echo "✓ AI Assist recovered successfully"
 
     # Send recovery notification
     curl -X POST http://localhost:8309/api/echo/voice/notify \
         -H "Content-Type: application/json" \
-        -d '{"message": "Echo Brain emergency recovery completed", "priority": "normal"}'
+        -d '{"message": "AI Assist emergency recovery completed", "priority": "normal"}'
 else
-    echo "✗ Echo Brain recovery failed"
+    echo "✗ AI Assist recovery failed"
     exit 1
 fi
 
@@ -1063,7 +1063,7 @@ ls -la /tmp/*backup* /tmp/*inventory*
 # Create metrics endpoint for Prometheus
 cat > /opt/tower-echo-brain/metrics_exporter.py << 'EOF'
 #!/usr/bin/env python3
-"""Prometheus metrics exporter for Echo Brain"""
+"""Prometheus metrics exporter for AI Assist"""
 
 import time
 import psycopg2
@@ -1071,14 +1071,14 @@ import requests
 from prometheus_client import start_http_server, Gauge, Counter, Histogram
 
 # Metrics definitions
-echo_requests_total = Counter('echo_requests_total', 'Total Echo Brain requests', ['method', 'endpoint'])
+echo_requests_total = Counter('echo_requests_total', 'Total AI Assist requests', ['method', 'endpoint'])
 echo_processing_time = Histogram('echo_processing_time_seconds', 'Request processing time')
 echo_model_usage = Gauge('echo_model_usage_total', 'Model usage count', ['model'])
 echo_board_decisions = Counter('echo_board_decisions_total', 'Board decisions', ['status'])
 echo_service_health = Gauge('echo_service_health', 'Service health status', ['service'])
 
 def collect_metrics():
-    """Collect metrics from Echo Brain"""
+    """Collect metrics from AI Assist"""
     try:
         # Database metrics
         conn = psycopg2.connect(
@@ -1151,7 +1151,7 @@ EOF
 # Create systemd service for metrics exporter
 sudo tee /etc/systemd/system/echo-brain-metrics.service > /dev/null << 'EOF'
 [Unit]
-Description=Echo Brain Prometheus Metrics Exporter
+Description=AI Assist Prometheus Metrics Exporter
 After=network.target
 
 [Service]
@@ -1176,7 +1176,7 @@ sudo systemctl start echo-brain-metrics
 ```json
 {
   "dashboard": {
-    "title": "Echo Brain Monitoring",
+    "title": "AI Assist Monitoring",
     "panels": [
       {
         "title": "Request Rate",
@@ -1236,7 +1236,7 @@ groups:
         labels:
           severity: critical
         annotations:
-          summary: "Echo Brain service is down"
+          summary: "AI Assist service is down"
 
       - alert: HighErrorRate
         expr: rate(echo_requests_total{status=~"5.."}[5m]) > 0.1
@@ -1263,4 +1263,4 @@ groups:
           summary: "Disk space usage high"
 ```
 
-This comprehensive troubleshooting playbook provides systematic approaches to diagnosing and resolving Echo Brain issues, along with operational procedures for maintaining system health and performance.
+This comprehensive troubleshooting playbook provides systematic approaches to diagnosing and resolving AI Assist issues, along with operational procedures for maintaining system health and performance.

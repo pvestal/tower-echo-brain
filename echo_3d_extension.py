@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""3D Generation Extension for Echo Brain"""
+"""3D Generation Extension for AI Assist"""
 
 import sys
 import os
@@ -24,7 +24,7 @@ def process_3d_request(query: str) -> dict:
         
         if result["status"] == "success":
             filename = os.path.basename(result["file"])
-            response = f"""✅ Echo Brain generated 3D model successfully!
+            response = f"""✅ AI Assist generated 3D model successfully!
 
 📁 File: {result['file']}
 🎮 Type: {result['type']}

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Echo Brain Unified API - Simplified version with temporal logic (no DB)
+AI Assist Unified API - Simplified version with temporal logic (no DB)
 """
 
 from fastapi import FastAPI
@@ -17,7 +17,7 @@ sys.path.insert(0, '/opt/tower-echo-brain')
 from temporal_reasoning import EchoTemporalInterface
 from echo_self_awareness import EchoSelfAwareness, EchoCapabilityEndpoint
 
-app = FastAPI(title="Echo Brain Unified API", version="2.0.0")
+app = FastAPI(title="AI Assist Unified API", version="2.0.0")
 
 # Initialize modules
 temporal_interface = EchoTemporalInterface()

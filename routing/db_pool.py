@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Database Connection Pool for Echo Brain Board of Directors
+Database Connection Pool for AI Assist Board of Directors
 Implements secure, efficient database connections with proper resource management
 """
 

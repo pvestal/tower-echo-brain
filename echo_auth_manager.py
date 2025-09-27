@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Echo Brain Auth Management Module
+AI Assist Auth Management Module
 Handles authentication for all Tower services
 """
 
@@ -121,9 +121,9 @@ class EchoAuthManager:
         return f"{self.oauth_service_url}/login"
 
 
-# Echo Brain integration
+# AI Assist integration
 class EchoWithAuth:
-    """Echo Brain with integrated auth management"""
+    """AI Assist with integrated auth management"""
 
     def __init__(self):
         self.auth_manager = EchoAuthManager()
@@ -176,9 +176,9 @@ class EchoWithAuth:
         }
 
 
-# Integration with Echo Brain main service
+# Integration with AI Assist main service
 async def integrate_with_echo():
-    """Add auth capabilities to Echo Brain"""
+    """Add auth capabilities to AI Assist"""
     echo = EchoWithAuth()
 
     # Check auth status

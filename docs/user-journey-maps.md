@@ -1,8 +1,8 @@
-# Echo Brain User Journey Maps
+# AI Assist User Journey Maps
 
 ## Overview
 
-This document outlines user journey maps for different personas interacting with the Echo Brain Advanced AI Orchestrator. Each persona has distinct needs, goals, and interaction patterns with the system's 50+ endpoints and sophisticated features.
+This document outlines user journey maps for different personas interacting with the AI Assist Advanced AI Orchestrator. Each persona has distinct needs, goals, and interaction patterns with the system's 50+ endpoints and sophisticated features.
 
 ## Table of Contents
 
@@ -26,7 +26,7 @@ This document outlines user journey maps for different personas interacting with
 #### Phase 1: Issue Discovery
 - **Trigger**: Service alerts or user reports
 - **Touchpoints**:
-  - `/api/echo/health` - Check Echo Brain status
+  - `/api/echo/health` - Check AI Assist status
   - `/api/echo/tower/status` - Get Tower services overview
 - **Thoughts**: "I need to quickly identify which service is failing"
 - **Pain Points**: Multiple services to check individually
@@ -117,7 +117,7 @@ This document outlines user journey maps for different personas interacting with
 
 #### Phase 4: Validation & Monitoring
 - **Actions**:
-  - POST `/api/echo/test/echo-brain` - Validate Echo Brain functionality
+  - POST `/api/echo/test/echo-brain` - Validate AI Assist functionality
   - GET `/api/echo/stats` - Check usage statistics
   - POST `/api/echo/query` - Test new model capabilities
 - **Touchpoints**: Testing Framework, Analytics, Core Intelligence
@@ -430,4 +430,4 @@ This document outlines user journey maps for different personas interacting with
 3. **Create integration SDKs** for common enterprise tools
 4. **Develop governance frameworks** for different organizational structures
 
-This user journey mapping reveals the Echo Brain system's strength in serving diverse personas while highlighting opportunities for improved user experience through targeted enhancements.
+This user journey mapping reveals the AI Assist system's strength in serving diverse personas while highlighting opportunities for improved user experience through targeted enhancements.

@@ -16,7 +16,7 @@ class MockEchoInterface:
     async def query(self, query_text):
         """Mock query method"""
         return {
-            "response": f"Echo Brain analysis of: {query_text}",
+            "response": f"AI Assist analysis of: {query_text}",
             "intelligence_level": "standard",
             "processing_time": 0.5
         }
@@ -150,7 +150,7 @@ async def main():
         print("✅ Generated agent is fully functional")
         print("✅ Task execution pipeline works")
         print("✅ Error handling implemented")
-        print("✅ Echo Brain integration ready")
+        print("✅ AI Assist integration ready")
         print("✅ Multi-task capability confirmed")
         print()
         print("🚀 The Echo Agent Development System successfully created")

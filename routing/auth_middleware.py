@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Authentication Middleware for Echo Brain Board of Directors
+Authentication Middleware for AI Assist Board of Directors
 Integrates with Tower's centralized auth service for JWT validation
 """
 
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 security = HTTPBearer()
 
 class AuthMiddleware:
-    """Authentication middleware for Echo Brain Board"""
+    """Authentication middleware for AI Assist Board"""
 
     def __init__(self):
         self.auth_service_url = os.environ.get("AUTH_SERVICE_URL", "http://localhost:8088")

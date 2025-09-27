@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Sandbox Executor for Echo Brain Board of Directors
+Sandbox Executor for AI Assist Board of Directors
 Provides secure, isolated execution environment for code validation and testing
 """
 
