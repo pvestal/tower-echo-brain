@@ -1,12 +1,12 @@
-# Echo Brain Documentation Hub
+# AI Assist Documentation Hub
 
 ## Overview
 
-Welcome to the comprehensive documentation for Echo Brain - the Advanced AI Orchestrator that serves as the central intelligence hub for the Tower ecosystem. This documentation represents a complete refactoring of enterprise AI orchestration documentation, designed to eliminate documentation debt and accelerate developer productivity.
+Welcome to the comprehensive documentation for AI Assist - the Advanced AI Orchestrator that serves as the central intelligence hub for the Tower ecosystem. This documentation represents a complete refactoring of enterprise AI orchestration documentation, designed to eliminate documentation debt and accelerate developer productivity.
 
 ## 🚀 Quick Navigation
 
-### New to Echo Brain? Start Here:
+### New to AI Assist? Start Here:
 - **[Quick Start Guide](./quick-start-guide.md)** - Get productive in 5 minutes
 - **[Interactive API Docs](./swagger-ui.html)** - Live API exploration and testing
 - **[User Journey Maps](./user-journey-maps.md)** - Find your persona and optimal workflow
@@ -25,7 +25,7 @@ Welcome to the comprehensive documentation for Echo Brain - the Advanced AI Orch
 
 ## 🧠 System Capabilities
 
-Echo Brain is an enterprise-grade AI orchestrator with sophisticated governance and monitoring:
+AI Assist is an enterprise-grade AI orchestrator with sophisticated governance and monitoring:
 
 ### Core Features
 - **24+ AI Models**: From 1B to 70B parameters (280GB+ storage)
@@ -191,7 +191,7 @@ curl http://localhost:8309/api/echo/health
 # Test AI query
 curl -X POST http://localhost:8309/api/echo/query \
   -H "Content-Type: application/json" \
-  -d '{"query": "Hello Echo Brain"}'
+  -d '{"query": "Hello AI Assist"}'
 
 # Test service integration
 curl -X POST http://localhost:8309/api/echo/test/echo-brain
@@ -214,7 +214,7 @@ curl -X POST http://localhost:8309/api/echo/test/echo-brain
 │                              ▲                                  │
 │                              │                                  │
 │  ┌─────────────────────────────────────────────────────────────┐│
-│  │              Echo Brain AI Orchestrator                    ││
+│  │              AI Assist AI Orchestrator                    ││
 │  │                       :8309                                ││
 │  ├─────────────────────────────────────────────────────────────┤│
 │  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐     ││
@@ -336,6 +336,6 @@ This documentation is designed for long-term maintainability:
 
 ---
 
-**Welcome to Echo Brain! This documentation represents a complete overhaul designed to eliminate documentation debt and accelerate your productivity. Start with the [Quick Start Guide](./quick-start-guide.md) and explore the interactive features to get the most out of this powerful AI orchestration platform.**
+**Welcome to AI Assist! This documentation represents a complete overhaul designed to eliminate documentation debt and accelerate your productivity. Start with the [Quick Start Guide](./quick-start-guide.md) and explore the interactive features to get the most out of this powerful AI orchestration platform.**
 
-🧠✨ **Happy building with Echo Brain!**
+🧠✨ **Happy building with AI Assist!**

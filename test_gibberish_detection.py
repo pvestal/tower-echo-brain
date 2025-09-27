@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Test Gibberish Detection and Model Reloading
-Demonstrates how Echo Brain detects invalid code output and automatically reloads with better models
+Demonstrates how AI Assist detects invalid code output and automatically reloads with better models
 """
 
 import asyncio
@@ -61,7 +61,7 @@ print(f"Sum: {result}")""",
     return `Welcome, ${name}`;
 }
 
-const message = greet("Echo");""",
+const message = greet("AI Assist");""",
             "expected": "valid"
         },
         {

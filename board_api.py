@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Board API for Echo Brain Board of Directors
+Board API for AI Assist Board of Directors
 FastAPI endpoints for transparent decision tracking and user interaction
 """
 
@@ -124,7 +124,7 @@ class ConnectionManager:
 
 class BoardAPI:
     """
-    FastAPI application for Echo Brain Board of Directors
+    FastAPI application for AI Assist Board of Directors
     Provides real-time decision tracking and user interaction
     """
 
@@ -136,7 +136,7 @@ class BoardAPI:
 
         # Initialize FastAPI app
         self.app = FastAPI(
-            title="Echo Brain Board API",
+            title="AI Assist Board API",
             description="API for transparent AI decision tracking and user control",
             version="1.0.0"
         )
@@ -451,7 +451,7 @@ class BoardAPI:
                 await websocket.send_text(json.dumps({
                     "type": "welcome",
                     "user_id": user_info.get('user_id', 'unknown'),
-                    "message": "Connected to Echo Brain Board",
+                    "message": "Connected to AI Assist Board",
                     "permissions": user_info.get('permissions', [])
                 }))
 

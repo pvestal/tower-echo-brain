@@ -1,4 +1,4 @@
-"""Proper model selection for Echo Brain"""
+"""Proper model selection for AI Assist"""
 from typing import Dict, Optional, Tuple
 import logging
 

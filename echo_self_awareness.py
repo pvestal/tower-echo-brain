@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Self-Awareness and Capability Reporting Module for Echo Brain
+Self-Awareness and Capability Reporting Module for AI Assist
 """
 
 import json
@@ -124,7 +124,7 @@ class EchoSelfAwareness:
         
         report = {
             'identity': {
-                'name': 'Echo Brain',
+                'name': 'AI Assist',
                 'version': '2.0.0',
                 'architecture': 'Modular Refactored',
                 'location': 'Tower (192.168.50.135)',
@@ -233,7 +233,7 @@ class EchoCapabilityEndpoint:
             report = await self.self_awareness.generate_self_report(detailed=True)
             
             # Generate natural language response
-            response = f"""I am Echo Brain, a modular AI system running on Tower.
+            response = f"""I am AI Assist, a modular AI system running on Tower.
 
 My core capabilities include:
 - **Reasoning**: Multi-model orchestration with {len(report['capabilities']['models'])} available models

@@ -1,8 +1,8 @@
-# Echo Brain Quick Start Guide & Developer Tutorials
+# AI Assist Quick Start Guide & Developer Tutorials
 
 ## Overview
 
-Welcome to Echo Brain - the Advanced AI Orchestrator with 24+ models, Board of Directors governance, and comprehensive testing capabilities. This guide will get you from zero to productive in under 15 minutes.
+Welcome to AI Assist - the Advanced AI Orchestrator with 24+ models, Board of Directors governance, and comprehensive testing capabilities. This guide will get you from zero to productive in under 15 minutes.
 
 ## Table of Contents
 
@@ -27,7 +27,7 @@ curl -k https://192.168.50.135/api/echo/health
 # Expected response:
 {
   "status": "healthy",
-  "service": "Echo Brain Unified",
+  "service": "AI Assist Unified",
   "intelligence_levels": ["tinyllama", "llama3.2", "mistral", "qwen2.5-coder", "llama3.1"],
   "specialized_models": ["qwen2.5-coder:32b", "deepseek-coder-v2:16b"],
   "max_parameters": "70B",
@@ -46,13 +46,13 @@ curl -k https://192.168.50.135/api/echo/health
 curl -X POST https://192.168.50.135/api/echo/query \
   -H "Content-Type: application/json" \
   -d '{
-    "query": "Explain what Echo Brain is in one sentence",
+    "query": "Explain what AI Assist is in one sentence",
     "intelligence_level": "auto"
   }' | jq .
 
 # Expected response includes:
 {
-  "response": "Echo Brain is an advanced AI orchestrator...",
+  "response": "AI Assist is an advanced AI orchestrator...",
   "model_used": "llama3.1:8b",
   "intelligence_level": "intermediate",
   "processing_time": 2.3,
@@ -97,7 +97,7 @@ curl -N https://192.168.50.135/api/echo/stream
 ```
 
 🎉 **Congratulations!** You've successfully:
-- ✅ Connected to Echo Brain
+- ✅ Connected to AI Assist
 - ✅ Made your first AI query with automatic model selection
 - ✅ Explored available models (1B to 70B parameters)
 - ✅ Tested service integrations
@@ -207,7 +207,7 @@ esac
 
 ### Tutorial 1: AI Query Processing with Intelligence Escalation
 
-Learn how Echo Brain automatically selects the best model for your query.
+Learn how AI Assist automatically selects the best model for your query.
 
 ```bash
 # Simple query - will use lightweight model
@@ -243,7 +243,7 @@ curl -X POST https://192.168.50.135/api/echo/query \
 
 ### Tutorial 2: Conversation Management
 
-Echo Brain maintains conversation context across multiple queries.
+AI Assist maintains conversation context across multiple queries.
 
 ```bash
 # Start a conversation
@@ -303,7 +303,7 @@ wscat -c "wss://192.168.50.135/api/echo/board/ws?token=$JWT_TOKEN"
 
 ### Tutorial 4: Universal Testing Framework
 
-Echo Brain can test any service in the Tower ecosystem.
+AI Assist can test any service in the Tower ecosystem.
 
 ```bash
 # Test ComfyUI image generation service
@@ -354,7 +354,7 @@ fi
 
 ### Tutorial 6: Voice Integration
 
-Echo Brain supports voice notifications for hands-free operation.
+AI Assist supports voice notifications for hands-free operation.
 
 ```bash
 # Send a voice notification
@@ -387,7 +387,7 @@ curl -X POST https://192.168.50.135/api/echo/voice/notify \
 
 ### Use Case 1: AI-Powered DevOps Automation
 
-Integrate Echo Brain into your DevOps workflow for intelligent automation.
+Integrate AI Assist into your DevOps workflow for intelligent automation.
 
 ```bash
 #!/bin/bash
@@ -403,7 +403,7 @@ analyze_deployment() {
     # Get recent logs
     logs=$(tail -100 "$log_file" | jq -Rs .)
 
-    # Send to Echo Brain for analysis
+    # Send to AI Assist for analysis
     analysis=$(curl -s -X POST https://192.168.50.135/api/echo/query \
         -H "Content-Type: application/json" \
         -d "{
@@ -464,7 +464,7 @@ get_scaling_recommendations() {
 
 ### Use Case 2: Intelligent Code Review Assistant
 
-Use Echo Brain for AI-powered code review and suggestions.
+Use AI Assist for AI-powered code review and suggestions.
 
 ```python
 #!/usr/bin/env python3
@@ -758,7 +758,7 @@ fi
 ### Python Client Library
 
 ```python
-# echo_brain_client.py - Python client library for Echo Brain
+# echo_brain_client.py - Python client library for AI Assist
 import requests
 import json
 import time
@@ -789,7 +789,7 @@ class ModelInfo:
     status: str = "unknown"
 
 class EchoBrainClient:
-    """Python client for Echo Brain API"""
+    """Python client for AI Assist API"""
 
     def __init__(self, base_url="https://192.168.50.135/api/echo", verify_ssl=False):
         self.base_url = base_url.rstrip('/')
@@ -814,7 +814,7 @@ class EchoBrainClient:
               context: Optional[Dict] = None,
               user_id: str = "default",
               conversation_id: Optional[str] = None) -> QueryResponse:
-        """Send query to Echo Brain AI"""
+        """Send query to AI Assist AI"""
 
         payload = {
             "query": text,
@@ -978,7 +978,7 @@ if __name__ == "__main__":
 ### JavaScript/Node.js Integration
 
 ```javascript
-// echo-brain-client.js - Node.js client for Echo Brain
+// echo-brain-client.js - Node.js client for AI Assist
 const axios = require('axios');
 const WebSocket = require('ws');
 const https = require('https');
@@ -1281,7 +1281,7 @@ def safe_query(query_text, max_retries=3):
 # Create auth helper script
 cat > ~/.echo-auth << 'EOF'
 #!/bin/bash
-# Echo Brain Authentication Helper
+# AI Assist Authentication Helper
 
 TOKEN_FILE="$HOME/.echo-token"
 AUTH_URL="https://192.168.50.135/api/auth"
@@ -1372,7 +1372,7 @@ groups:
         labels:
           severity: critical
         annotations:
-          summary: "Echo Brain is down"
+          summary: "AI Assist is down"
 
       - alert: SlowQueries
         expr: echo_processing_time_seconds{quantile="0.95"} > 30
@@ -1380,7 +1380,7 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "Echo Brain queries are slow"
+          summary: "AI Assist queries are slow"
 EOF
 ```
 
@@ -1465,4 +1465,4 @@ Now that you've completed the quick start guide:
 4. **Set Up Monitoring:** Implement health checks and alerting
 5. **Join the Community:** Access the [Knowledge Base](https://192.168.50.135/kb/) for updates
 
-**Happy building with Echo Brain! 🧠✨**
+**Happy building with AI Assist! 🧠✨**

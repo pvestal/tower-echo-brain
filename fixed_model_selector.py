@@ -1,5 +1,5 @@
 """
-Fixed model selection for Echo Brain
+Fixed model selection for AI Assist
 This module provides WORKING model selection
 """
 import logging
@@ -46,9 +46,23 @@ class ModelSelector:
 
     def select_model(self, query: str, requested_level: Optional[str] = None) -> Tuple[str, str, str]:
         """
-        Select optimal model for query
+        Select optimal model for query with "think harder" detection
         Returns: (model_name, level, reasoning)
         """
+        query_lower = query.lower()
+        query_len = len(query)
+        
+        # PRIORITY: Detect "think harder" requests - ALWAYS escalate to highest model
+        if "think harder" in query_lower:
+            return self.model_hierarchy["genius"], "genius", "Think harder mode - escalated to 70B model"
+        
+        # PRIORITY: Deep analysis requests should use high-end models
+        if any(phrase in query_lower for phrase in [
+            "analyze this", "review this", "refactor this", "optimize this",
+            "improve this", "what.s wrong with", "better way to", "performance issue"
+        ]):
+            return self.model_hierarchy["genius"], "genius", "Deep analysis request - using 70B model"
+        
         # If user explicitly requests a level, RESPECT IT
         if requested_level and requested_level != "auto":
             if requested_level in self.model_hierarchy:
@@ -59,18 +73,18 @@ class ModelSelector:
                 logger.warning(f"Unknown level {requested_level}, using standard")
                 return self.model_hierarchy["standard"], "standard", "Invalid level, using standard"
 
-        # Auto-detect based on query analysis
-        query_lower = query.lower()
-        query_len = len(query)
-
         # Quick responses for simple queries
         if query_len < 25 and any(w in query_lower for w in ["hi", "hello", "hey", "thanks", "bye"]):
             return self.model_hierarchy["quick"], "quick", "Simple greeting/acknowledgment"
 
-        # Code tasks need specialized model
+        # Code tasks - distinguish between analysis vs implementation
         if any(w in query_lower for w in ["code", "function", "algorithm", "implement", "debug", "program"]):
-            # Use specialized coder
-            return self.specialized["code"], "expert", "Coding task - using specialized model"
+            # Analysis/review tasks get high-end model
+            if any(w in query_lower for w in ["review", "analyze", "refactor", "optimize", "improve"]):
+                return self.model_hierarchy["genius"], "genius", "Code analysis - using 70B model"
+            else:
+                # Implementation tasks use specialized coder
+                return self.specialized["code"], "expert", "Coding task - using specialized model"
 
         # Complex analytical tasks
         if query_len > 200 and any(w in query_lower for w in ["analyze", "architect", "design", "evaluate"]):

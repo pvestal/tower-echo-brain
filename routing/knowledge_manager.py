@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Knowledge Manager for Echo Brain Board of Directors
+Knowledge Manager for AI Assist Board of Directors
 Manages knowledge base integration, versioning, analytics, and reporting
 """
 
@@ -108,7 +108,7 @@ class KnowledgeAnalytics:
 
 class KnowledgeManager:
     """
-    Comprehensive knowledge management system for Echo Brain Board of Directors
+    Comprehensive knowledge management system for AI Assist Board of Directors
     Handles knowledge storage, versioning, caching, and analytics
     """
 

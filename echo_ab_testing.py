@@ -3,7 +3,7 @@
 Echo A/B Testing Framework - Scientific Model Comparison
 ======================================================
 
-Advanced A/B testing framework for Echo Brain that enables:
+Advanced A/B testing framework for AI Assist that enables:
 - Simultaneous testing of multiple models/configurations
 - Statistical significance testing
 - Automated winner selection

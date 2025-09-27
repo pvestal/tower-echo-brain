@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Echo Brain Unified Service - Refactored Architecture
+AI Assist Unified Service - Refactored Architecture
 Consolidates 5 fragmented Echo services into single intelligent router
 Implements dynamic model escalation from 1B to 70B parameters
 Includes Board of Directors decision tracking system
@@ -13,6 +13,7 @@ import logging
 # Fixed model selection
 try:
     from fixed_model_selector import ModelSelector
+import cognitive_patch  # Ensure model_used is returned
     model_selector = ModelSelector()
 except ImportError:
     print("Warning: fixed_model_selector not found")
@@ -100,7 +101,7 @@ class TestRequest(BaseModel):
     user_id: Optional[str] = "default"
 
 class TowerTestingFramework:
-    """Tower Testing Framework Integration for Echo Brain"""
+    """Tower Testing Framework Integration for AI Assist"""
     
     def __init__(self):
         self.framework_path = "/home/patrick/Documents"
@@ -547,7 +548,7 @@ class TowerOrchestrator:
             }
 
 class EchoIntelligenceRouter:
-    """Core intelligence routing system for Echo Brain with ML decision engine"""
+    """Core intelligence routing system for AI Assist with ML decision engine"""
 
     def __init__(self):
         self.ollama_url = "http://localhost:11434/api/generate"
@@ -1171,7 +1172,7 @@ class EchoDatabase:
 
 # FastAPI Application
 app = FastAPI(
-    title="Echo Brain Unified Service",
+    title="AI Assist Unified Service",
     description="Consolidated Echo intelligence with dynamic 1B-70B parameter scaling and Board of Directors decision system",
     version="1.0.0"
 )
@@ -1266,7 +1267,7 @@ async def handle_capability_intent(intent: str, params: Dict, request: QueryRequ
                     conn.close()
                     
                     if stats:
-                        response_text = "📊 Echo Brain Statistics\n\n"
+                        response_text = "📊 AI Assist Statistics\n\n"
                         total_queries = stats[0][0] if stats else 0
                         response_text += f"Total queries processed: {total_queries}\n\n"
                         response_text += "Model Usage:\n"
@@ -1540,7 +1541,7 @@ async def startup():
         except Exception as e:
             logger.error(f"Failed to initialize board database schema: {e}")
 
-    logger.info("🧠 Echo Brain Unified Service - Started")
+    logger.info("🧠 AI Assist Unified Service - Started")
     logger.info("📊 Intelligence Levels: 1B → 70B parameters")
     logger.info("🚀 Dynamic escalation enabled")
     if board_api:
@@ -1553,7 +1554,7 @@ async def health_check():
     board_status = "enabled" if board_api else "disabled"
     return {
         "status": "healthy",
-        "service": "Echo Brain Unified",
+        "service": "AI Assist Unified",
         "intelligence_levels": list(router.model_hierarchy.keys()),
         "specialized_models": list(router.specialized_models.keys()),
         "max_parameters": "70B",
@@ -1853,7 +1854,7 @@ async def get_brain_activity():
         "brain_visualization": echo_brain.get_brain_state(),
         "thought_history_count": len(echo_brain.thought_history),
         "active_neurons": len(echo_brain.active_neurons),
-        "service": "Echo Brain Neural Visualization",
+        "service": "AI Assist Neural Visualization",
         "timestamp": datetime.now().isoformat()
     }
 
@@ -1868,12 +1869,12 @@ async def get_thought_stream(thought_id: str):
         "thought_id": thought_id,
         "thought_stream": thought_stream,
         "neuron_count": len(thought_stream),
-        "service": "Echo Brain Thought Visualization"
+        "service": "AI Assist Thought Visualization"
     }
 
 @app.get("/api/echo/stats")
 async def get_statistics():
-    """Get Echo Brain usage statistics"""
+    """Get AI Assist usage statistics"""
     try:
         conn = psycopg2.connect(**database.db_config)
         cursor = conn.cursor()
@@ -2031,7 +2032,7 @@ async def stream_brain_activity():
                 event_data = json.dumps({
                     "timestamp": datetime.now().isoformat(),
                     "brain_state": brain_state,
-                    "service": "Echo Brain Stream"
+                    "service": "AI Assist Stream"
                 })
                 
                 yield f"data: {event_data}\n\n"
@@ -2390,7 +2391,7 @@ async def run_universal_test(target: str, request: TestRequest = None):
         result = await testing_framework.run_universal_test(actual_target)
         
         # Add metadata
-        result["service"] = "Echo Brain Testing Framework"
+        result["service"] = "AI Assist Testing Framework"
         result["timestamp"] = datetime.now().isoformat()
         result["requested_target"] = target
         result["actual_target"] = actual_target
@@ -2411,7 +2412,7 @@ async def debug_service(service: str):
         result = await testing_framework.run_debug_analysis(service)
         
         # Add metadata
-        result["service"] = "Echo Brain Debug Tools"
+        result["service"] = "AI Assist Debug Tools"
         result["timestamp"] = datetime.now().isoformat()
         result["debug_target"] = service
         
@@ -2436,7 +2437,7 @@ async def get_tower_status():
             "output": result["output"],
             "error": result.get("error"),
             "processing_time": result["processing_time"],
-            "service": "Echo Brain Tower Status",
+            "service": "AI Assist Tower Status",
             "timestamp": datetime.now().isoformat()
         }
         
@@ -2459,7 +2460,7 @@ async def get_tower_health():
             "output": result["output"],
             "error": result.get("error"),
             "processing_time": result["processing_time"],
-            "service": "Echo Brain Tower Health",
+            "service": "AI Assist Tower Health",
             "timestamp": datetime.now().isoformat()
         }
         
@@ -2482,7 +2483,7 @@ async def run_tower_command(command: str, request: dict = None):
         result = await testing_framework.run_tower_command(command, args)
         
         # Add metadata
-        result["service"] = "Echo Brain Tower Command"
+        result["service"] = "AI Assist Tower Command"
         result["timestamp"] = datetime.now().isoformat()
         result["requested_command"] = command
         result["args"] = args
@@ -2499,7 +2500,7 @@ async def get_testing_capabilities():
     try:
         capabilities = {
             "framework_name": "Tower Testing Framework",
-            "integrated_with": "Echo Brain Unified Service",
+            "integrated_with": "AI Assist Unified Service",
             "version": "1.0.0",
             "capabilities": {
                 "universal_testing": {
@@ -2548,7 +2549,7 @@ async def get_testing_capabilities():
                 "execute_command": "POST /api/echo/execute {\"command\": \"ls -la\"}",
                 "tower_status": "GET /api/echo/tower/status"
             },
-            "service": "Echo Brain Testing Framework",
+            "service": "AI Assist Testing Framework",
             "timestamp": datetime.now().isoformat()
         }
         
@@ -2751,13 +2752,13 @@ async def shutdown():
             knowledge_manager.cleanup()
             logger.info("🏛️ Board knowledge manager cleaned up")
 
-        logger.info("🧠 Echo Brain Unified Service - Shutdown complete")
+        logger.info("🧠 AI Assist Unified Service - Shutdown complete")
 
     except Exception as e:
         logger.error(f"Error during shutdown: {e}")
 
 if __name__ == "__main__":
-    logger.info("🚀 Starting Echo Brain Unified Service")
+    logger.info("🚀 Starting AI Assist Unified Service")
     logger.info("🔗 Consolidating 5 fragmented Echo services")
     logger.info("🧠 Dynamic intelligence scaling: 1B → 70B parameters")
     logger.info("🔧 Tower Testing Framework: INTEGRATED")

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Agent Development Endpoints for Echo Brain
+Agent Development Endpoints for AI Assist
 API endpoints for developing and managing Echo's agent capabilities
 """
 

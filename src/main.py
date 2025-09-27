@@ -136,6 +136,14 @@ try:
 except Exception as e:
     logger.warning(f"⚠️ Could not load control endpoints: {e}")
 
+# Include multi-LLM collaboration routes
+try:
+    from src.api.collaboration_routes import router as collaboration_router
+    app.include_router(collaboration_router)
+    logger.info("🤝 Multi-LLM collaboration routes included")
+except Exception as e:
+    logger.warning(f"⚠️ Could not load collaboration routes: {e}")
+
 # Import and initialize Anime Story Orchestrator
 try:
     from anime_story_orchestrator import AnimeStoryOrchestrator

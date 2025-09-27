@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Echo Brain Progress Tracker - Claude Code Integration
+AI Assist Progress Tracker - Claude Code Integration
 Provides TodoWrite-style progress transparency during operations
 """
 
@@ -115,7 +115,7 @@ class TaskTracker:
         """Format current status for display"""
         active = self.get_active_task()
         if not active:
-            return "Echo Brain idle"
+            return "AI Assist idle"
 
         completed = len([t for t in self.tasks
                         if t["status"] == TaskStatus.COMPLETED.value])
@@ -132,10 +132,10 @@ class TaskTracker:
 
         return message
 
-# Integration with Echo Brain
+# Integration with AI Assist
 class EchoProgressIntegration:
     """
-    Integrates progress tracking into Echo Brain operations
+    Integrates progress tracking into AI Assist operations
     """
 
     def __init__(self, echo_brain):

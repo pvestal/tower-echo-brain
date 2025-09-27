@@ -1,11 +1,11 @@
 """
-Ethics Director for Echo Brain Board of Directors System
+Ethics Director for AI Assist Board of Directors System
 
 This module provides comprehensive ethics evaluation capabilities including
 bias detection, fairness assessment, privacy compliance, transparency verification,
 and accountability measures for AI and software systems.
 
-Author: Echo Brain Board of Directors System
+Author: AI Assist Board of Directors System
 Created: 2025-09-16
 Version: 1.0.0
 """

@@ -1,11 +1,11 @@
-# Echo Brain Board of Directors Framework
+# AI Assist Board of Directors Framework
 
-The Board of Directors system provides a comprehensive framework for domain expertise evaluation within Echo Brain. Each director acts as a specialized expert that can evaluate tasks, provide recommendations, and build consensus across different areas of knowledge.
+The Board of Directors system provides a comprehensive framework for domain expertise evaluation within AI Assist. Each director acts as a specialized expert that can evaluate tasks, provide recommendations, and build consensus across different areas of knowledge.
 
 ## Architecture Overview
 
 ```
-Echo Brain Directors/
+AI Assist Directors/
 ├── base_director.py        # Abstract base class for all directors
 ├── director_registry.py    # Central registry and coordination system
 ├── example_director.py     # Example implementation and template
@@ -273,9 +273,9 @@ def evaluate(self, task, context):
         }
 ```
 
-## Integration with Echo Brain
+## Integration with AI Assist
 
-The Directors framework integrates with Echo Brain's unified service through:
+The Directors framework integrates with AI Assist's unified service through:
 
 ### 1. Task Evaluation Endpoint
 ```python
@@ -381,7 +381,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 ## License
 
-Proprietary - Tower System - Echo Brain Board of Directors Framework
+Proprietary - Tower System - AI Assist Board of Directors Framework
 Copyright 2025 Tower System
 
 ---

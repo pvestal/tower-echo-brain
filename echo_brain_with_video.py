@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Echo Brain with Video Generation"""
+"""AI Assist with Video Generation"""
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
@@ -19,7 +19,7 @@ class VideoRequest(BaseModel):
 
 @app.get("/api/echo/health")
 async def health():
-    return {"status": "healthy", "service": "Echo Brain with Video"}
+    return {"status": "healthy", "service": "AI Assist with Video"}
 
 @app.post("/api/echo/generate_video")
 async def generate_video(request: VideoRequest):

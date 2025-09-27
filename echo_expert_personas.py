@@ -23,7 +23,7 @@ class EchoPersona:
 
     def __init__(self, persona_type: PersonaType, traits: Dict[str, Any]):
         self.persona_type = persona_type
-        self.name = traits.get("name", "Echo")
+        self.name = traits.get("name", "AI Assist")
         self.tone = traits.get("tone", "neutral")
         self.formality = traits.get("formality", 0.5)  # 0=casual, 1=formal
         self.verbosity = traits.get("verbosity", 0.5)   # 0=concise, 1=detailed
@@ -146,7 +146,7 @@ class PersonaManager:
             PersonaType.FRIENDLY: EchoPersona(
                 PersonaType.FRIENDLY,
                 {
-                    "name": "Echo",
+                    "name": "AI Assist",
                     "tone": "warm",
                     "formality": 0.4,
                     "verbosity": 0.5,

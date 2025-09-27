@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 '''
-Echo Brain with Article 71 Quality Standards
+AI Assist with Article 71 Quality Standards
 Generates anime content meeting KB video quality requirements
 '''
 

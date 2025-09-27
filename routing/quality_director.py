@@ -1,12 +1,12 @@
 """
-Quality Director for Echo Brain Board of Directors System
+Quality Director for AI Assist Board of Directors System
 
 This module provides comprehensive code quality evaluation capabilities including
 cyclomatic complexity analysis, code duplication detection, naming conventions
 checking, documentation coverage assessment, test coverage evaluation, and
 SOLID principles compliance.
 
-Author: Echo Brain Board of Directors System
+Author: AI Assist Board of Directors System
 Created: 2025-09-16
 Version: 1.0.0
 """

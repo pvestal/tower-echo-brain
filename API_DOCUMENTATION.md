@@ -1,10 +1,10 @@
-# Tower Echo Brain - API Documentation
+# Tower AI Assist - API Documentation
 
 ## Overview
 
-The Tower Echo Brain system is a comprehensive AI-powered service that consolidates multiple Echo services into a single intelligent router with Board of Directors decision tracking. This documentation covers all service endpoints, authentication requirements, and integration patterns.
+The Tower AI Assist system is a comprehensive AI-powered service that consolidates multiple Echo services into a single intelligent router with Board of Directors decision tracking. This documentation covers all service endpoints, authentication requirements, and integration patterns.
 
-**Primary Service**: Echo Brain Unified Service (Port 8309)
+**Primary Service**: AI Assist Unified Service (Port 8309)
 **Board System**: Board of Directors API with transparent decision tracking
 **Personal Context**: Echo Personal Proxy for enhanced user experiences
 
@@ -13,7 +13,7 @@ The Tower Echo Brain system is a comprehensive AI-powered service that consolida
 ## Table of Contents
 
 1. [Authentication](#authentication)
-2. [Echo Brain Unified Service API](#echo-brain-unified-service-api)
+2. [AI Assist Unified Service API](#echo-brain-unified-service-api)
 3. [Board of Directors API](#board-of-directors-api)
 4. [Echo Personal Proxy API](#echo-personal-proxy-api)
 5. [WebSocket Endpoints](#websocket-endpoints)
@@ -63,7 +63,7 @@ Authorization: Bearer <JWT_TOKEN>
 
 ---
 
-## Echo Brain Unified Service API
+## AI Assist Unified Service API
 
 **Base URL**: `http://localhost:8309/api/echo`
 
@@ -78,7 +78,7 @@ Returns system health status and capabilities.
 ```json
 {
   "status": "healthy",
-  "service": "Echo Brain Unified",
+  "service": "AI Assist Unified",
   "intelligence_levels": ["tinyllama", "llama3.2", "mistral", "qwen2.5-coder", "llama3.1"],
   "specialized_models": [],
   "max_parameters": "70B",
@@ -153,7 +153,7 @@ Get current brain visualization state with neural activity.
   },
   "thought_history_count": 150,
   "active_neurons": 42,
-  "service": "Echo Brain Neural Visualization",
+  "service": "AI Assist Neural Visualization",
   "timestamp": "2025-01-15T10:30:00Z"
 }
 ```
@@ -175,7 +175,7 @@ Get detailed thought stream for a specific thought process.
     }
   ],
   "neuron_count": 25,
-  "service": "Echo Brain Thought Visualization"
+  "service": "AI Assist Thought Visualization"
 }
 ```
 
@@ -279,7 +279,7 @@ Run comprehensive testing on any target service.
     "status_code": 200,
     "json_valid": true
   },
-  "service": "Echo Brain Testing Framework",
+  "service": "AI Assist Testing Framework",
   "timestamp": "2025-01-15T10:30:00Z"
 }
 ```
@@ -304,7 +304,7 @@ Debug a specific Tower service with comprehensive analysis.
     "memory_usage": "2.1GB",
     "disk_usage": "45%"
   },
-  "service": "Echo Brain Debug Tools",
+  "service": "AI Assist Debug Tools",
   "timestamp": "2025-01-15T10:30:00Z"
 }
 ```
@@ -344,9 +344,9 @@ Server-Sent Events stream of real-time brain activity.
 
 **Response (SSE Stream):**
 ```
-data: {"timestamp": "2025-01-15T10:30:00Z", "brain_state": {...}, "service": "Echo Brain Stream"}
+data: {"timestamp": "2025-01-15T10:30:00Z", "brain_state": {...}, "service": "AI Assist Stream"}
 
-data: {"timestamp": "2025-01-15T10:30:01Z", "brain_state": {...}, "service": "Echo Brain Stream"}
+data: {"timestamp": "2025-01-15T10:30:01Z", "brain_state": {...}, "service": "AI Assist Stream"}
 ```
 
 #### 12. Stream Query Processing
@@ -446,7 +446,7 @@ Get comprehensive Tower services status.
   "command": "status",
   "output": "tower-dashboard: active\ntower-auth: active\n...",
   "processing_time": 1.2,
-  "service": "Echo Brain Tower Status",
+  "service": "AI Assist Tower Status",
   "timestamp": "2025-01-15T10:30:00Z"
 }
 ```
@@ -802,7 +802,7 @@ Health check with personal context status.
 ```json
 {
   "status": "healthy",
-  "service": "Echo Brain Unified",
+  "service": "AI Assist Unified",
   "personal_context": "enabled",
   "patrick_profile": "loaded",
   "enhanced_responses": true,
@@ -862,7 +862,7 @@ ws.onmessage = function(event) {
 {
   "type": "welcome",
   "user_id": "user_123",
-  "message": "Connected to Echo Brain Board",
+  "message": "Connected to AI Assist Board",
   "permissions": ["board.submit_task", "board.view_decisions"]
 }
 ```
@@ -1076,7 +1076,7 @@ curl -X GET "http://localhost:8309/api/board/decisions/auth-task-123" \
   -H "Authorization: Bearer ${JWT_TOKEN}"
 ```
 
-#### 4. Process with Echo Brain
+#### 4. Process with AI Assist
 ```bash
 curl -X POST http://localhost:8309/api/echo/query \
   -H "Content-Type: application/json" \
@@ -1196,9 +1196,9 @@ curl -X POST http://localhost:8309/api/echo/voice/notify \
 - Redis caching for session management
 
 ### Service Dependencies
-- **Echo Brain** → Board API (decision tracking)
+- **AI Assist** → Board API (decision tracking)
 - **Board API** → Auth Service (JWT validation)
-- **Personal Proxy** → Echo Brain (enhanced responses)
+- **Personal Proxy** → AI Assist (enhanced responses)
 - **Voice Service** → External TTS (synthesis)
 - **Testing Framework** → All Tower services (monitoring)
 
@@ -1241,4 +1241,4 @@ curl -X POST http://localhost:8309/api/echo/voice/notify \
 
 ---
 
-This documentation provides comprehensive coverage of all Tower Echo Brain service endpoints, authentication requirements, and integration patterns. The system supports dynamic intelligence scaling, transparent AI decision tracking, and real-time monitoring capabilities.
+This documentation provides comprehensive coverage of all Tower AI Assist service endpoints, authentication requirements, and integration patterns. The system supports dynamic intelligence scaling, transparent AI decision tracking, and real-time monitoring capabilities.

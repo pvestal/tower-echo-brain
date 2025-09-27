@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Echo Brain extension to handle integration queries
+AI Assist extension to handle integration queries
 Add this to the chat endpoint in echo_working.py
 """
 

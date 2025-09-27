@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Echo Brain Memory Consolidation System
+AI Assist Memory Consolidation System
 Implements long-term memory storage and retrieval for continuous learning
 """
 import asyncio
@@ -543,9 +543,9 @@ class EchoMemoryConsolidation:
         return [memory for _, memory in results[:top_k]]
 
 
-# Integration with Echo Brain
+# Integration with AI Assist
 async def integrate_with_echo():
-    """Integrate memory consolidation with Echo Brain"""
+    """Integrate memory consolidation with AI Assist"""
     memory_system = EchoMemoryConsolidation()
 
     # Example: Store conversation memory

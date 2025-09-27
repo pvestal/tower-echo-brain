@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Echo Brain Task Agent System - Claude Code Integration
+AI Assist Task Agent System - Claude Code Integration
 Implements specialized agents for different aspects of anime generation
 """
 
@@ -567,9 +567,9 @@ class CoordinatorAgent(TaskAgent):
 
         return " | ".join(summary_parts)
 
-# Integration point with Echo Brain
+# Integration point with AI Assist
 class EchoAgentSystem:
-    """Main integration point for agent system in Echo Brain"""
+    """Main integration point for agent system in AI Assist"""
 
     def __init__(self):
         self.coordinator = CoordinatorAgent()
@@ -619,4 +619,4 @@ if __name__ == "__main__":
     print("Available Agents:")
     for agent_type in AgentType:
         print(f"  - {agent_type.value}: {agent_type.name}")
-    print("\nAgent system ready for integration with Echo Brain")
+    print("\nAgent system ready for integration with AI Assist")

@@ -36,7 +36,7 @@ class ServiceMonitor:
                 ]
             },
             "echo_brain": {
-                "name": "Echo Brain",
+                "name": "AI Assist",
                 "check_method": "port",
                 "port": 8309,
                 "restart_command": "cd /opt/tower-echo-brain && nohup python3 echo_working.py > echo.log 2>&1 &",

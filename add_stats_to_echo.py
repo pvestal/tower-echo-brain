@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Script to add comprehensive user statistics tracking to existing Echo Brain
+Script to add comprehensive user statistics tracking to existing AI Assist
 """
 
 import re

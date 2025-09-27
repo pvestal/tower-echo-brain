@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Echo Brain Apple Music Authentication Provider
+AI Assist Apple Music Authentication Provider
 Integrates with existing Apple Music service for authentication and data access
 """
 
@@ -18,7 +18,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 class AppleMusicAuthProvider:
-    """Apple Music authentication provider for Echo Brain"""
+    """Apple Music authentication provider for AI Assist"""
 
     def __init__(self):
         # Apple credentials from existing setup
@@ -205,7 +205,7 @@ class AppleMusicAuthProvider:
             return {"error": str(e)}
 
     async def collect_training_data_for_echo(self) -> Dict[str, Any]:
-        """Collect Apple Music data for Echo Brain training"""
+        """Collect Apple Music data for AI Assist training"""
         logger.info("🎵 Collecting Apple Music data for Echo training...")
 
         # Generate token first

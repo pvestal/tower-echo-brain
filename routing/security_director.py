@@ -1,11 +1,11 @@
 """
-Security Director for Echo Brain Board of Directors System
+Security Director for AI Assist Board of Directors System
 
 This module provides comprehensive security evaluation capabilities including
 vulnerability scanning, OWASP Top 10 compliance checking, and security
 best practices assessment.
 
-Author: Echo Brain Board of Directors System
+Author: AI Assist Board of Directors System
 Created: 2025-09-16
 Version: 1.0.0
 """

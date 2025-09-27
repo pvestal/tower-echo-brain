@@ -481,7 +481,7 @@ class {agent_name}:
 
     async def analyze_task(self, task: Dict) -> Dict:
         """Analyze the task to understand requirements"""
-        # Use Echo Brain for task analysis
+        # Use AI Assist for task analysis
         analysis_query = f"Analyze this task and break it down: {{task.get('description', '')}}"
 
         echo_response = await self.echo_interface.query(analysis_query)
@@ -550,7 +550,7 @@ class {agent_name}:
             elif action == "synthesize_results":
                 result["synthesis"] = await self.synthesize_results()
             else:
-                # Use Echo Brain for generic execution
+                # Use AI Assist for generic execution
                 echo_response = await self.echo_interface.query(f"Execute: {{action}}")
                 result["echo_response"] = echo_response
 
@@ -679,7 +679,7 @@ def create_{agent_name.lower()}(echo_interface, tools):
             'details': {}
         }
 
-        # Register agent with Echo Brain
+        # Register agent with AI Assist
         agent_registration = {
             'name': agent_spec.get('name'),
             'type': agent_spec.get('type', 'task_agent'),

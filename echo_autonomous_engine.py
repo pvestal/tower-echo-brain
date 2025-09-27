@@ -450,7 +450,7 @@ class EchoAutonomousEngineWithBoard(EchoAutonomousEngine):
         
         meeting = await self.allhands.coordinate_allhands_meeting(
             topic=topic,
-            participants=['Echo', 'Mistral', 'Claude']
+            participants=['AI Assist', 'Mistral', 'Claude']
         )
         
         # Save meeting results
