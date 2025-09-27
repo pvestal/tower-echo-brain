@@ -1630,3 +1630,507 @@ Traceback (most recent call last):
   File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
     from .echo_system_prompt import get_echo_system_prompt
 ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/tower-echo-brain/src/main.py", line 31, in <module>
+    from src.core.intelligence import intelligence_router
+  File "/opt/tower-echo-brain/src/core/intelligence.py", line 10, in <module>
+    from .echo_system_prompt import get_echo_system_prompt
+ImportError: cannot import name 'get_echo_system_prompt' from 'src.core.echo_system_prompt' (/opt/tower-echo-brain/src/core/echo_system_prompt.py)
