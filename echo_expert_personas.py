@@ -33,22 +33,64 @@ class EchoPersona:
         self.voice_params = traits.get("voice_params", {})
 
     def format_response(self, content: str, context: Dict[str, Any] = None) -> str:
-        """Format response according to persona style"""
-        response = content
-
-        # Add greeting if appropriate
-        if context and context.get("is_greeting", False):
-            response = f"{self._get_greeting()}\n{response}"
-
-        # Add personality flavor
-        if self.signature_phrases and random.random() > 0.7:
-            response = f"{response}\n{random.choice(self.signature_phrases)}"
-
-        # Add emoji if persona uses them
-        if self.emoji_usage and context:
-            response = self._add_contextual_emoji(response, context)
+        """Format response according to persona style with hallucination detection"""
+        if context is None:
+            context = {}
+        
+        # Detect and replace hallucinations with inquisitive questions
+        if self.detect_hallucination(content):
+            response = self.generate_inquisitive_response(content, context)
+        else:
+            response = content
 
         return response
+
+    def detect_hallucination(self, response: str) -> bool:
+        """Detect if response contains hallucinated multi-turn conversations"""
+        hallucination_indicators = [
+            # Multi-speaker conversations
+            "User:" in response and "Echo:" in response,
+            "Patrick:" in response or "Mary:" in response,
+            "Me:" in response and "User:" in response,
+            
+            # Overly long responses (likely hallucinated)
+            len(response.split()) > 100,
+            response.count("\n") > 5,
+            
+            # Multiple question marks or excessive punctuation
+            response.count("?") > 2,
+            
+            # Mentions of dishwashers, appliances (common tinyllama hallucination)
+            any(word in response.lower() for word in ["dishwasher", "appliance", "washing machine"]),
+            
+            # Multiple colons indicating dialogue
+            ":" in response and response.count(":") > 2,
+        ]
+        return any(hallucination_indicators)
+
+    def generate_inquisitive_response(self, original_response: str, context: Dict[str, Any]) -> str:
+        """Generate inquisitive follow-up instead of hallucinated content"""
+        import random
+        message = context.get("message", "").lower()
+        
+        if any(word in message for word in ["create", "generate", "make", "build"]):
+            questions = [
+                "I can help with that! What specific details would you like to include?",
+                "Great! Can you tell me more about what you have in mind?",
+                "Sure thing! What are the key elements you want?",
+            ]
+        elif any(word in message for word in ["explain", "how", "why", "what"]):
+            questions = [
+                "I can explain that. Which aspect interests you most?",
+                "Good question! Would you like a simple overview or technical details?",
+            ]
+        else:
+            questions = [
+                "Interesting! Can you tell me more?",
+                "I would like to help. Could you provide more details?",
+            ]
+        
+        return random.choice(questions)
 
     def _get_greeting(self) -> str:
         """Get persona-appropriate greeting"""

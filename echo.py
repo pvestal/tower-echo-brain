@@ -48,6 +48,15 @@ from model_manager import (
     ModelOperation, ModelInfo
 )
 from routing.auth_middleware import get_current_user
+
+# Persona System Import
+try:
+    from echo_expert_personas import PersonaManager, PersonaType, EchoPersonalityIntegration
+    persona_system = EchoPersonalityIntegration()
+    logger.info("Echo Persona System enabled")
+except Exception as e:
+    logger.warning(f"Persona system not available: {e}")
+    persona_system = None
 from model_decision_engine import get_decision_engine
 from telegram_integration import telegram_router
 from veteran_guardian_endpoints import veteran_router
@@ -1220,7 +1229,7 @@ logger.info("🤖 Agent Development System enabled")
 try:
     from anime_story_orchestrator import AnimeStoryOrchestrator
     anime_orchestrator = AnimeStoryOrchestrator()
-    logger.info("🎌 Anime Story Orchestrator (agenticPersona) enabled")
+    # Persona system integrated - anime orchestrator disabled
 except Exception as e:
     logger.warning(f"Failed to initialize Anime Story Orchestrator: {e}")
     anime_orchestrator = None
@@ -1863,6 +1872,25 @@ async def process_query(request: QueryRequest):
                 "validation_passed": validation_results["overall_valid"],
                 "token_count": quality_metric.token_count
             }
+
+            # Apply persona formatting
+            if persona_system:
+                try:
+                    persona_context = {
+                        "message": request.query,
+                        "task_type": intent,
+                        "is_greeting": any(word in request.query.lower() for word in ["hello", "hi", "hey"])
+                    }
+                    persona_result = persona_system.process_with_personality(
+                        request.query, 
+                        result["response"]
+                    )
+                    result["response"] = persona_result["response"]
+                    quality_info["persona"] = persona_result.get("persona", "friendly")
+                    quality_info["voice_params"] = persona_result.get("voice_params", {})
+                except Exception as e:
+                    logger.warning(f"Persona formatting failed: {e}")
+
             response = QueryResponse(
                 response=result["response"],
                 model_used=result["model"],
