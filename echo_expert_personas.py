@@ -47,26 +47,44 @@ class EchoPersona:
 
     def detect_hallucination(self, response: str) -> bool:
         """Detect if response contains hallucinated multi-turn conversations"""
-        hallucination_indicators = [
-            # Multi-speaker conversations
-            "User:" in response and "Echo:" in response,
-            "Patrick:" in response or "Mary:" in response,
-            "Me:" in response and "User:" in response,
-            
-            # Overly long responses (likely hallucinated)
-            len(response.split()) > 100,
-            response.count("\n") > 5,
-            
-            # Multiple question marks or excessive punctuation
-            response.count("?") > 2,
-            
-            # Mentions of dishwashers, appliances (common tinyllama hallucination)
-            any(word in response.lower() for word in ["dishwasher", "appliance", "washing machine"]),
-            
-            # Multiple colons indicating dialogue
-            ":" in response and response.count(":") > 2,
+        import re
+
+        # CRITICAL: Detect ANY dialogue markers (catches single-speaker hallucinations)
+        dialogue_markers = ["User:", "Echo:", "Patrick:", "Mary:", "Me:", "You:", "Assistant:"]
+        if any(marker in response for marker in dialogue_markers):
+            return True
+
+        # Detect conversation-like structures (Speaker: Text patterns)
+        # Pattern: word followed by colon and capital letter
+        if re.search(r'\w+:\s*[A-Z]', response):
+            return True
+
+        # Stricter word count threshold (lowered from 100 to 60)
+        if len(response.split()) > 60:
+            return True
+
+        # Excessive line breaks indicate multi-paragraph hallucination
+        if response.count("\n") > 5:
+            return True
+
+        # Multiple question marks suggest rambling
+        if response.count("?") > 2:
+            return True
+
+        # Expanded hallucination keyword list
+        hallucination_keywords = [
+            "dishwasher", "appliance", "washing machine",
+            "thermostat", "smart home", "device setup",
+            "sounds helpful", "that's great", "okay then"
         ]
-        return any(hallucination_indicators)
+        if any(word in response.lower() for word in hallucination_keywords):
+            return True
+
+        # Multiple colons still indicate dialogue structure
+        if ":" in response and response.count(":") > 2:
+            return True
+
+        return False
 
     def generate_inquisitive_response(self, original_response: str, context: Dict[str, Any]) -> str:
         """Generate inquisitive follow-up instead of hallucinated content"""
