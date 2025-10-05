@@ -59,8 +59,8 @@ class EchoPersona:
         if re.search(r'\w+:\s*[A-Z]', response):
             return True
 
-        # Stricter word count threshold (lowered from 100 to 60)
-        if len(response.split()) > 60:
+        # Reasonable word count threshold (allows detailed responses)
+        if len(response.split()) > 600:
             return True
 
         # Excessive line breaks indicate multi-paragraph hallucination
