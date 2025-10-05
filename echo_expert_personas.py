@@ -64,11 +64,11 @@ class EchoPersona:
             return True
 
         # Excessive line breaks indicate multi-paragraph hallucination
-        if response.count("\n") > 5:
+        if response.count("\n") > 50:
             return True
 
         # Multiple question marks suggest rambling
-        if response.count("?") > 2:
+        if response.count("?") > 8:
             return True
 
         # Expanded hallucination keyword list
@@ -81,7 +81,7 @@ class EchoPersona:
             return True
 
         # Multiple colons still indicate dialogue structure
-        if ":" in response and response.count(":") > 2:
+        if ":" in response and response.count(":") > 20:
             return True
 
         return False
