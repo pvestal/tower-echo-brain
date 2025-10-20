@@ -318,10 +318,13 @@
         let linkHandler;
         let currentSession = null;
 
+        // Dynamic hostname detection for FQDN support
+        const BASE_URL = `${window.location.protocol}//${window.location.hostname}`;
+
         // Configuration - Replace with your actual values
         const TOWER_CONFIG = {
-            authUrl: 'https://***REMOVED***/api/auth',
-            plaidWebhook: 'https://***REMOVED***/api/plaid/webhook',
+            authUrl: `${BASE_URL}/api/auth`,
+            plaidWebhook: `${BASE_URL}/api/plaid/webhook`,
             sessionId: new URLSearchParams(window.location.search).get('session') || 'demo'
         };
 
@@ -422,7 +425,7 @@
 
                     // Redirect to dashboard after 3 seconds
                     setTimeout(() => {
-                        window.location.href = 'https://***REMOVED***/dashboard';
+                        window.location.href = `${BASE_URL}/dashboard`;
                     }, 3000);
 
                 } else {

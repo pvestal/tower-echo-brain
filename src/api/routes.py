@@ -326,11 +326,17 @@ async def query_echo(request: QueryRequest):
             )
 
             # Log to database
-            await database.log_interaction(
-                request.query, response.response, response.model_used,
-                response.processing_time, response.escalation_path,
-                request.conversation_id, request.user_id, intent, confidence
-            )
+            logger.info(f"🔍 DEBUG: About to log_interaction for capability intent '{intent}'")
+            logger.info(f"🔍 DEBUG: Params - conv_id={request.conversation_id}, user_id={request.user_id}, query='{request.query[:50]}...'")
+            try:
+                await database.log_interaction(
+                    request.query, response.response, response.model_used,
+                    response.processing_time, response.escalation_path,
+                    request.conversation_id, request.user_id, intent, confidence
+                )
+                logger.info(f"✅ DEBUG: log_interaction SUCCESS for conv_id={request.conversation_id}")
+            except Exception as e:
+                logger.error(f"❌ DEBUG: log_interaction FAILED: {e}", exc_info=True)
 
             return response
 
@@ -382,11 +388,17 @@ async def query_echo(request: QueryRequest):
             )
 
             # Log to database
-            await database.log_interaction(
-                request.query, response.response, response.model_used,
-                response.processing_time, response.escalation_path,
-                request.conversation_id, request.user_id, intent, confidence
-            )
+            logger.info(f"🔍 DEBUG: About to log_interaction for general intent '{intent}'")
+            logger.info(f"🔍 DEBUG: Params - conv_id={request.conversation_id}, user_id={request.user_id}, query='{request.query[:50]}...'")
+            try:
+                await database.log_interaction(
+                    request.query, response.response, response.model_used,
+                    response.processing_time, response.escalation_path,
+                    request.conversation_id, request.user_id, intent, confidence
+                )
+                logger.info(f"✅ DEBUG: log_interaction SUCCESS for conv_id={request.conversation_id}")
+            except Exception as e:
+                logger.error(f"❌ DEBUG: log_interaction FAILED: {e}", exc_info=True)
 
             return response
         else:
@@ -737,13 +749,19 @@ async def get_testing_capabilities():
     }
 
 # Model management endpoints
-@router.post("/api/echo/models/manage", response_model=ModelManagementResponse)
-async def manage_model(request: ModelManagementRequest, background_tasks: BackgroundTasks):
+# Commented out - using individual endpoints instead
+# @router.post("/api/echo/models/manage", response_model=ModelManagementResponse)
+async def manage_model_disabled(request: ModelManagementRequest, background_tasks: BackgroundTasks):
     """Manage Ollama models (pull, update, remove)"""
     logger.info(f"🔧 Model management: {request.action} {request.model}")
 
     try:
-        model_manager = get_model_manager()
+        # Initialize dependencies if not available
+        from routing.service_registry import ServiceRegistry
+        from routing.request_logger import RequestLogger
+        board_registry = ServiceRegistry()
+        request_logger = RequestLogger()
+        model_manager = get_model_manager(board_registry, request_logger)
 
         if request.action in ["pull", "update"]:
             # Start background task for model operations
@@ -779,9 +797,26 @@ async def manage_model(request: ModelManagementRequest, background_tasks: Backgr
 async def list_models():
     """List all available Ollama models"""
     try:
-        model_manager = get_model_manager()
-        models = await model_manager.list_models()
-        return models
+        # Use direct ollama command as fallback
+        from src.api.dependencies import execute_ollama_command
+        import subprocess
+
+        # Direct ollama list command
+        result = subprocess.run(["ollama", "list"], capture_output=True, text=True)
+        if result.returncode == 0:
+            lines = result.stdout.strip().split('\n')[1:]  # Skip header
+            models = []
+            for line in lines:
+                if line:
+                    parts = line.split()
+                    if len(parts) >= 4:
+                        models.append({
+                            "name": parts[0],
+                            "size": f"{parts[2]} {parts[3]}",
+                            "modified": " ".join(parts[4:]) if len(parts) > 4 else ""
+                        })
+            return models
+        return {"error": "Failed to list models"}
     except Exception as e:
         logger.error(f"Model listing failed: {e}")
         return {"error": str(e)}
@@ -792,15 +827,18 @@ async def pull_model(model_name: str, background_tasks: BackgroundTasks):
     logger.info(f"📥 Pulling model: {model_name}")
 
     try:
-        model_manager = get_model_manager()
-        task_id = str(uuid.uuid4())
+        from src.api.dependencies import execute_ollama_command
 
-        background_tasks.add_task(
-            model_manager.pull_model_background,
-            model_name,
-            task_id,
-            "default"
-        )
+        async def pull_model_async(model: str):
+            result = await execute_ollama_command(["ollama", "pull", model])
+            if result["success"]:
+                logger.info(f"✅ Model {model} pulled successfully")
+            else:
+                logger.error(f"❌ Failed to pull {model}: {result.get('stderr', result.get('error'))}")
+            return result
+
+        task_id = str(uuid.uuid4())
+        background_tasks.add_task(pull_model_async, model_name)
 
         return {
             "success": True,
@@ -817,9 +855,14 @@ async def remove_model(model_name: str):
     logger.info(f"🗑️ Removing model: {model_name}")
 
     try:
-        model_manager = get_model_manager()
-        result = await model_manager.remove_model(model_name)
-        return result
+        from src.api.dependencies import execute_ollama_command
+
+        result = await execute_ollama_command(["ollama", "rm", model_name])
+
+        if result["success"]:
+            return {"success": True, "message": f"Model {model_name} removed successfully"}
+        else:
+            return {"success": False, "error": result.get("stderr", "Failed to remove model")}
     except Exception as e:
         logger.error(f"Model removal failed: {e}")
         return {"success": False, "error": str(e)}
@@ -828,7 +871,12 @@ async def remove_model(model_name: str):
 async def get_model_operation_status(request_id: str):
     """Get status of a model operation"""
     try:
-        model_manager = get_model_manager()
+        # Initialize dependencies if not available
+        from routing.service_registry import ServiceRegistry
+        from routing.request_logger import RequestLogger
+        board_registry = ServiceRegistry()
+        request_logger = RequestLogger()
+        model_manager = get_model_manager(board_registry, request_logger)
         status = await model_manager.get_operation_status(request_id)
         return status
     except Exception as e:

@@ -430,7 +430,9 @@
 
         // Initialize WebSocket connection
         function initWebSocket() {
-            const wsUrl = 'ws://***REMOVED***:8309/ws';
+            // Dynamic hostname detection for FQDN support
+            const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${wsProtocol}//${window.location.hostname}:8309/ws`;
             try {
                 echoSocket = new WebSocket(wsUrl);
 
@@ -471,7 +473,7 @@
             const startTime = Date.now();
 
             try {
-                const response = await fetch('http://***REMOVED***:8309/chat', {
+                const response = await fetch(`${window.location.protocol}//${window.location.hostname}:8309/chat`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ message: input, model: 'auto' })

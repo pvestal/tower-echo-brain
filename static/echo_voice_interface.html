@@ -477,9 +477,13 @@
             async connectToEcho() {
                 try {
                     this.updateStatus('Connecting to Echo...');
-                    
+
+                    // Dynamic hostname detection for FQDN support
+                    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                    const wsUrl = `${wsProtocol}//${window.location.hostname}:8312/ws`;
+
                     // Connect via WebSocket to Echo voice service
-                    this.ws = new WebSocket('ws://***REMOVED***:8312/ws');
+                    this.ws = new WebSocket(wsUrl);
                     
                     this.ws.onopen = () => {
                         this.elements.connectionStatus.classList.add('connected');
@@ -538,7 +542,7 @@
                 if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
                     // Fallback to HTTP API if WebSocket not available
                     try {
-                        const response = await fetch('http://***REMOVED***:8312/api/chat', {
+                        const response = await fetch(`${window.location.protocol}//${window.location.hostname}:8312/api/chat`, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',

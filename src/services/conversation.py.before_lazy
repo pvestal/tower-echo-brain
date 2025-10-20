@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Conversation management with lazy database connection
+Conversation management and intent recognition for Echo Brain
 """
 
 import re
@@ -11,13 +11,10 @@ from typing import Dict, List, Optional, Tuple
 logger = logging.getLogger(__name__)
 
 class ConversationManager:
-    """Manages conversation context with lazy database persistence"""
+    """Manages conversation context and intent recognition"""
 
     def __init__(self):
-        self.conversations = {}  # In-memory cache
-        self._database = None  # Will be set lazily
-        
-        # Rest of the initialization (intent patterns, etc.)
+        self.conversations = {}  # In-memory for now, can move to Redis/DB later
         self.intent_patterns = {
             "service_testing": [
                 r"test\s+(\w+)",
@@ -140,19 +137,6 @@ class ConversationManager:
                 "Do you prefer code examples or conceptual explanations?"
             ]
         }
-    
-    @property
-    def database(self):
-        """Lazy database connection - connects on first access"""
-        if self._database is None:
-            try:
-                from src.db.database import database
-                self._database = database
-                logger.info("✅ Conversation manager connected to database")
-            except Exception as e:
-                logger.warning(f"Could not connect to database: {e}")
-                self._database = False  # Mark as attempted but failed
-        return self._database if self._database is not False else None
 
     def classify_intent(self, query: str, conversation_history: List[Dict] = []) -> Tuple[str, float, Dict]:
         """Classify user intent with confidence score and extracted parameters"""
@@ -172,12 +156,78 @@ class ConversationManager:
             for pattern in patterns:
                 match = re.search(pattern, query_lower)
                 if match:
-                    score += 0.8
-                    # Parameter extraction logic (abbreviated for brevity - keep existing)
-                    if intent in ['service_testing', 'service_debugging', 'service_monitoring']:
+                    score += 0.8  # Higher confidence for direct matches
+                    # Extract service names from patterns
+                    if intent in ['service_testing', 'service_debugging', 'service_monitoring', 'inter_service_communication']:
+                        # Try to extract service name from the match
                         groups = match.groups()
                         if groups:
                             intent_params['target_service'] = groups[0]
+                        else:
+                            # Look for known service names in the query
+                            services = ['comfyui', 'anime', 'dashboard', 'auth', 'echo', 'kb', 'deepseek', 'voice']
+                            for service in services:
+                                if service in query_lower:
+                                    intent_params['target_service'] = service
+                                    break
+                            # Also try to extract from the match groups for more complex patterns
+                            if len(groups) > 0 and groups[0] in ['comfyui', 'anime', 'dashboard', 'auth', 'echo', 'kb', 'deepseek', 'voice']:
+                                intent_params['target_service'] = groups[0]
+
+                    # Extract agent names for delegation
+                    if intent == 'agent_delegation':
+                        groups = match.groups()
+                        if groups:
+                            intent_params['target_agent'] = groups[0]
+                        else:
+                            # Look for known agent names in the query
+                            agents = ['architect', 'security', 'guardian', 'weights', 'balances', 'vision']
+                            for agent in agents:
+                                if agent in query_lower:
+                                    intent_params['target_agent'] = agent
+                                    break
+
+                    # Extract multimedia generation parameters
+                    if intent == 'image_generation':
+                        # Extract prompt by removing generation keywords
+                        prompt = query.replace('generate image', '').replace('create image', '').replace('make image', '').replace('draw image', '').strip()
+                        if 'of ' in prompt:
+                            prompt = prompt.split('of ', 1)[1]
+                        if prompt:
+                            intent_params['prompt'] = prompt
+                        # Extract style if mentioned
+                        if 'anime' in query_lower:
+                            intent_params['style'] = 'anime'
+                        elif 'realistic' in query_lower:
+                            intent_params['style'] = 'realistic'
+                        elif 'cartoon' in query_lower:
+                            intent_params['style'] = 'cartoon'
+
+                    elif intent == 'voice_generation':
+                        # Extract text to speak
+                        text = query.replace('say', '').replace('speak', '').replace('voice', '').replace('this', '').strip()
+                        if 'generate voice' in query_lower:
+                            text = query.replace('generate voice', '').strip()
+                        if text:
+                            intent_params['text'] = text
+                        # Extract character if mentioned
+                        if 'echo' in query_lower:
+                            intent_params['character'] = 'echo_default'
+
+                    elif intent == 'music_generation':
+                        # Extract description
+                        description = query.replace('generate music', '').replace('create music', '').replace('make music', '').strip()
+                        if 'compose' in query_lower:
+                            description = query.replace('compose', '').strip()
+                        if description:
+                            intent_params['description'] = description
+                        # Extract duration if mentioned
+                        duration_match = re.search(r'(\d+)\s*(?:second|sec|minute|min)', query_lower)
+                        if duration_match:
+                            duration = int(duration_match.group(1))
+                            if 'minute' in duration_match.group(0) or 'min' in duration_match.group(0):
+                                duration *= 60  # Convert to seconds
+                            intent_params['duration'] = duration
 
             if score > 0:
                 intent_scores[intent] = min(score, 1.0)
@@ -190,12 +240,22 @@ class ConversationManager:
 
     def needs_clarification(self, intent: str, confidence: float, query: str) -> bool:
         """Determine if query needs clarification"""
-        if intent in ['service_testing', 'service_debugging', 'service_monitoring', 
-                      'agent_delegation', 'inter_service_communication', 'code_modification']:
+        # Capability intents never need clarification - execute directly
+        if intent in ['service_testing', 'service_debugging', 'service_monitoring', 'agent_delegation', 'inter_service_communication', 'code_modification']:
             return False
-        if confidence < 0.1:
+
+        # Low confidence always needs clarification
+        if confidence < 0.1:  # Changed from 0.6 to only clarify on very low confidence
             return True
-        return False
+
+        # Check for vague queries even with good intent classification
+        vague_indicators = [
+            len(query.split()) < 2,  # Very short queries
+            "help" in query.lower() and len(query.split()) < 3,
+            query.count("?") == 0 and intent != "explanation",  # No questions but unclear intent
+        ]
+
+        return False  # Disabled vague indicators check
 
     def get_clarifying_questions(self, intent: str, query: str) -> List[str]:
         """Get relevant clarifying questions for intent"""
@@ -204,11 +264,13 @@ class ConversationManager:
             "What specific aspects would you like me to focus on?",
             "Are there any constraints or preferences I should know about?"
         ])
+
+        # Limit to 2-3 most relevant questions to avoid overwhelming
         return questions[:3]
 
     def update_conversation(self, conversation_id: str, user_query: str,
                           intent: str, response: str, requires_clarification: bool):
-        """Update conversation history in memory (DB logging handled by API endpoint)"""
+        """Update conversation history"""
         if conversation_id not in self.conversations:
             self.conversations[conversation_id] = {
                 "history": [],
@@ -226,65 +288,23 @@ class ConversationManager:
 
         self.conversations[conversation_id]["last_intent"] = intent
 
-        # Keep last 10 interactions in memory
+        # Keep conversation history manageable (last 10 interactions)
         if len(self.conversations[conversation_id]["history"]) > 10:
-            self.conversations[conversation_id]["history"] =                 self.conversations[conversation_id]["history"][-10:]
+            self.conversations[conversation_id]["history"] = \
+                self.conversations[conversation_id]["history"][-10:]
 
     def get_conversation_context(self, conversation_id: str) -> Dict:
-        """Get conversation context from memory or database"""
-        # Check memory cache first
-        if conversation_id in self.conversations:
-            conv = self.conversations[conversation_id]
-            return {
-                "history": conv["history"],
-                "last_intent": conv.get("last_intent"),
-                "created_at": conv.get("created_at"),
-                "interaction_count": len(conv["history"])
-            }
+        """Get conversation context for better processing"""
+        if conversation_id not in self.conversations:
+            return {}
 
-        # Try loading from database
-        if self.database:
-            try:
-                import asyncio
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                history = loop.run_until_complete(
-                    self.database.get_conversation_history(conversation_id)
-                )
-                loop.close()
+        conv = self.conversations[conversation_id]
+        return {
+            "history": conv["history"],
+            "last_intent": conv.get("last_intent"),
+            "created_at": conv.get("created_at"),
+            "interaction_count": len(conv["history"])
+        }
 
-                if history:
-                    # Convert database records to conversation format
-                    formatted_history = []
-                    for record in history:
-                        formatted_history.append({
-                            "user_query": record.get("query", ""),
-                            "intent": record.get("intent", ""),
-                            "response": record.get("response", ""),
-                            "requires_clarification": False,
-                            "timestamp": record.get("timestamp", datetime.now())
-                        })
-
-                    # Cache in memory
-                    self.conversations[conversation_id] = {
-                        "history": formatted_history[-10:],
-                        "created_at": history[0].get("timestamp", datetime.now()) if history else datetime.now(),
-                        "last_intent": formatted_history[-1].get("intent") if formatted_history else None
-                    }
-
-                    logger.info(f"✅ Loaded {len(formatted_history)} messages from database for conversation {conversation_id}")
-
-                    return {
-                        "history": formatted_history[-10:],
-                        "last_intent": formatted_history[-1].get("intent") if formatted_history else None,
-                        "created_at": history[0].get("timestamp", datetime.now()) if history else datetime.now(),
-                        "interaction_count": len(formatted_history)
-                    }
-            except Exception as e:
-                logger.error(f"Failed to load conversation from database: {e}")
-
-        # Return empty context if not found
-        return {}
-
-# Global instance - immediately available
+# Global conversation manager instance
 conversation_manager = ConversationManager()

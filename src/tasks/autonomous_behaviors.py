@@ -30,6 +30,20 @@ class AutonomousBehaviors:
     def __init__(self, task_queue: TaskQueue):
         self.task_queue = task_queue
         self.running = False
+
+        # Map monitoring names to actual systemd service names
+        self.service_name_map = {
+            'echo': 'tower-echo-brain.service',
+            'telegram_bot': 'echo-telegram-bot.service',
+            'auth': 'tower-auth.service',
+            'comfyui': 'comfyui.service',
+            'knowledge_base': 'tower-kb.service',
+            'anime': 'tower-anime-production.service',
+            'apple_music': 'tower-apple-music.service',
+            'notifications': 'tower-notification-bot.service',
+            'vault': 'vault.service'
+        }
+
         self.behavior_stats = {
             'started_at': None,
             'tasks_generated': 0,
@@ -45,10 +59,11 @@ class AutonomousBehaviors:
             'anime': 'http://localhost:8328',
             'knowledge_base': 'http://localhost:8307',
             'comfyui': 'http://localhost:8188',
-            'auth': 'http://localhost:8088',
+            'auth': 'http://localhost:8088/api/auth/health',
             'apple_music': 'http://localhost:8315',
             'vault': 'http://localhost:8200',
-            'notifications': 'http://localhost:8350'
+            'notifications': 'http://localhost:8350',
+            'telegram_bot': 'http://localhost:8309/api/telegram/health',
         }
         
         # Thresholds for proactive detection
@@ -195,19 +210,26 @@ class AutonomousBehaviors:
                         response_time = time.time() - start_time
                         
                         if response.status != 200:
-                            # Service unhealthy - create urgent task
-                            task = create_monitoring_task(
-                                f"Service Health Issue: {service_name}",
-                                service_url,
-                                "service_health",
+                            # Service unhealthy - create repair task
+                            # Map to actual systemd service name
+                            actual_service_name = self.service_name_map.get(service_name, service_name)
+                            logger.info(f"🔍 Service mapping: {service_name} → {actual_service_name}")
+                            
+                            # Create maintenance task to ACTUALLY RESTART THE SERVICE
+                            repair_task = create_maintenance_task(
+                                f"Emergency Service Restart: {service_name}",
+                                "restart",
+                                actual_service_name,
                                 TaskPriority.URGENT
                             )
-                            task.payload.update({
-                                'issue': 'http_error',
+                            repair_task.payload.update({
+                                'issue': f'http_error: HTTP {response.status}',
                                 'status_code': response.status,
-                                'service_name': service_name
+                                'service_name': actual_service_name
                             })
-                            await self.task_queue.add_task(task)
+                            await self.task_queue.add_task(repair_task)
+                            
+                            logger.info(f"🔧 Created repair task for {actual_service_name}")
                             
                             self.behavior_stats['system_issues_detected'] += 1
                             logger.warning(f"⚠️ Service {service_name} unhealthy: HTTP {response.status}")

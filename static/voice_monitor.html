@@ -183,7 +183,8 @@
 
         function connectWebSocket() {
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const host = '***REMOVED***';
+            // Dynamic hostname detection for FQDN support
+            const host = window.location.hostname;
             const port = '8309';
 
             addLog('System: Connecting to Echo Brain WebSocket...');

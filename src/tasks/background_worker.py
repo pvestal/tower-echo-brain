@@ -5,6 +5,7 @@ Continuous task processor that runs autonomously in background
 """
 
 import asyncio
+from src.tasks.autonomous_repair_executor import repair_executor
 import logging
 import time
 import traceback
@@ -271,19 +272,50 @@ class BackgroundWorker:
                 return {'analysis': f"Learning from {data_source} for pattern {pattern}"}
                 
         async def handle_maintenance_task(task: Task) -> Dict[str, Any]:
-            """Handle maintenance tasks"""
+            """Handle maintenance tasks - NOW WITH ACTUAL REPAIR EXECUTION"""
             action = task.payload.get('action')
             target = task.payload.get('target')
             
-            if action == 'cleanup':
-                return await self._cleanup_system(target)
-            elif action == 'backup':
-                return await self._backup_data(target)
-            elif action == 'update':
-                return await self._update_system(target)
-            else:
-                raise ValueError(f"Unknown maintenance action: {action}")
+            # Extract issue information
+            issue = task.payload.get('issue', task.name)
+            service_name = task.payload.get('service_name', target)
+            
+            logger.info(f"🔧 Executing maintenance task: {action} on {target}")
+            
+            if action == 'restart':
+                # ACTUALLY RESTART THE SERVICE using repair executor
+                result = await repair_executor.execute_repair(
+                    repair_type='service_restart',
+                    target=service_name,
+                    issue=issue
+                )
+                return result
                 
+            elif action == 'cleanup':
+                result = await repair_executor.execute_repair(
+                    repair_type='disk_cleanup',
+                    target=target,
+                    issue=issue,
+                    clean_logs=True,
+                    clean_temp=False  # Be conservative
+                )
+                return result
+                
+            elif action == 'rotate_logs':
+                result = await repair_executor.execute_repair(
+                    repair_type='log_rotation',
+                    target=target,
+                    issue=issue
+                )
+                return result
+                
+            else:
+                return {
+                    'status': 'unknown_action',
+                    'action': action,
+                    'message': f"Don't know how to perform action: {action}"
+                }
+        
         async def handle_analysis_task(task: Task) -> Dict[str, Any]:
             """Handle analysis tasks"""
             return await self._perform_analysis(task.payload)

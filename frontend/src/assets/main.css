@@ -1,0 +1,63 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Tower Dark Theme Global Styles */
+@layer base {
+  html {
+    @apply dark;
+  }
+  
+  body {
+    @apply bg-tower-bg text-tower-text font-mono antialiased;
+  }
+  
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    @apply bg-tower-surface;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    @apply bg-tower-border rounded hover:bg-tower-surface-light;
+  }
+}
+
+@layer components {
+  /* Tower UI Components */
+  .tower-card {
+    @apply bg-tower-surface border border-tower-border rounded-lg p-4;
+  }
+  
+  .tower-button {
+    @apply bg-tower-primary hover:bg-tower-primary-hover text-white px-4 py-2 rounded-md transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  
+  .tower-button-secondary {
+    @apply bg-tower-surface-light hover:bg-tower-border text-tower-text border border-tower-border px-4 py-2 rounded-md transition-colors duration-200;
+  }
+  
+  .tower-input {
+    @apply bg-tower-surface border border-tower-border text-tower-text px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-tower-primary focus:border-transparent placeholder-tower-text-secondary;
+  }
+  
+  .tower-badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+  
+  .tower-badge-success {
+    @apply tower-badge bg-tower-success/20 text-tower-success border border-tower-success/30;
+  }
+  
+  .tower-badge-warning {
+    @apply tower-badge bg-tower-warning/20 text-tower-warning border border-tower-warning/30;
+  }
+  
+  .tower-badge-error {
+    @apply tower-badge bg-tower-error/20 text-tower-error border border-tower-error/30;
+  }
+}

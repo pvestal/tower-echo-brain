@@ -17,11 +17,10 @@ class EchoDatabase:
 
     def __init__(self):
         # SECURITY FIX: Use environment variables for sensitive database credentials
+        # Use peer authentication for local PostgreSQL connection
         self.db_config = {
-            "host": os.environ.get("DB_HOST", "localhost"),
-            "database": os.environ.get("DB_NAME", "tower_consolidated"),
-            "user": os.environ.get("DB_USER", "patrick"),
-            "password": os.environ.get("DB_PASSWORD", "***REMOVED***")
+            "database": os.environ.get("DB_NAME", "echo_brain"),
+            "user": os.environ.get("DB_USER", "patrick")
         }
 
     async def log_interaction(self, query: str, response: str, model_used: str,
