@@ -362,10 +362,11 @@
                     document.getElementById('response-time').textContent = Math.round(Math.random() * 50 + 10) + 'ms';
                 }
                 
-                // Check services
-                checkService('kb', 'http://localhost:8307/api/health');
-                checkService('comfy', 'http://localhost:8188/api/health');
-                checkService('anime', 'http://localhost:8328/api/health');
+                // Check services (dynamic hostname detection for FQDN support)
+                const baseUrl = `${window.location.protocol}//${window.location.hostname}`;
+                checkService('kb', `${baseUrl}:8307/api/health`);
+                checkService('comfy', `http://${window.location.hostname}:8188/api/health`);
+                checkService('anime', `${baseUrl}:8328/api/health`);
                 
                 // Update uptime
                 const uptimeSeconds = Math.floor((Date.now() - startTime) / 1000);
@@ -380,7 +381,7 @@
         
         async function checkService(name, url) {
             try {
-                const resp = await fetch(url.replace('localhost', window.location.hostname));
+                const resp = await fetch(url);
                 const statusEl = document.getElementById(name + '-status');
                 const textEl = document.getElementById(name + '-text');
                 

@@ -75,7 +75,7 @@ except ImportError:
 
 # Ollama Integration for NVIDIA GPU
 import requests
-from managers.dynamic_escalation_manager import DynamicEscalationManager
+from src.managers.dynamic_escalation_manager import DynamicEscalationManager
 
 escalation_manager = None
 
@@ -162,6 +162,14 @@ model_manager = None
 service_registry = ServiceRegistry()
 request_logger = RequestLogger()  # Fixed: RequestLogger takes no arguments
 
+# Register dependencies for API routes
+try:
+    from src.api.dependencies import set_dependencies
+    set_dependencies(service_registry, request_logger)
+    logger.info("✅ Dependencies registered for API routes")
+except Exception as e:
+    logger.warning(f"Could not register dependencies: {e}")
+
 # Initialize autonomous task system
 task_queue = None
 background_worker = None
@@ -199,6 +207,8 @@ async def startup_event():
     # Initialize database
     await database.create_tables_if_needed()
     logger.info("✅ Database initialized")
+
+    # Initialize conversation manager with database persistence
 
     # Initialize board API
     try:
@@ -685,6 +695,115 @@ async def batch_frames(request: dict):
     frames = await video_gen.generate_batch_frames(prompt, style, num_frames)
     return {"frames": frames, "count": len(frames)}
 
+# Model Management Endpoints
+@app.get("/api/echo/models/list")
+async def list_installed_models():
+    """List all installed Ollama models"""
+    try:
+        if model_manager is None:
+            # Fallback: directly list models using ollama
+            import subprocess
+            result = subprocess.run(["ollama", "list"], capture_output=True, text=True)
+            if result.returncode == 0:
+                lines = result.stdout.strip().split('\n')[1:]  # Skip header
+                models = []
+                for line in lines:
+                    if line:
+                        parts = line.split()
+                        if len(parts) >= 4:
+                            models.append({
+                                "name": parts[0],
+                                "size": f"{parts[2]} {parts[3]}",
+                                "modified": " ".join(parts[4:]) if len(parts) > 4 else ""
+                            })
+                return models
+            return {"error": "Failed to list models"}
+
+        models = await model_manager.get_installed_models()
+        return models
+    except Exception as e:
+        logger.error(f"Failed to list models: {e}")
+        return {"error": str(e)}
+
+@app.post("/api/echo/models/pull/{model_name}")
+async def pull_model_quick(
+    model_name: str,
+    tag: str = "latest",
+    background_tasks: BackgroundTasks = None
+):
+    """Pull a specific model"""
+    try:
+        if model_manager is None:
+            # Fallback: directly pull using ollama
+            import subprocess
+            import asyncio
+
+            model_full = f"{model_name}:{tag}"
+            process = await asyncio.create_subprocess_exec(
+                "ollama", "pull", model_full,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            stdout, stderr = await process.communicate()
+
+            if process.returncode == 0:
+                return {"status": "success", "model": model_full, "message": "Model pulled successfully"}
+            else:
+                return {"status": "error", "model": model_full, "error": stderr.decode()}
+
+        request = ModelManagementRequest(
+            operation=ModelOperation.PULL,
+            model_name=model_name,
+            tag=tag,
+            reason="API request",
+            user_id="admin"
+        )
+        response = await model_manager.request_model_operation(request, background_tasks)
+        return response
+    except Exception as e:
+        logger.error(f"Failed to pull model: {e}")
+        return {"error": str(e)}
+
+@app.delete("/api/echo/models/{model_name}")
+async def remove_model(
+    model_name: str,
+    tag: str = "latest",
+    background_tasks: BackgroundTasks = None
+):
+    """Remove a specific model"""
+    try:
+        if model_manager is None:
+            # Fallback: directly remove using ollama
+            import subprocess
+            import asyncio
+
+            model_full = f"{model_name}:{tag}"
+            process = await asyncio.create_subprocess_exec(
+                "ollama", "rm", model_full,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            stdout, stderr = await process.communicate()
+
+            if process.returncode == 0:
+                return {"status": "success", "model": model_full, "message": "Model removed successfully"}
+            else:
+                return {"status": "error", "model": model_full, "error": stderr.decode()}
+
+        request = ModelManagementRequest(
+            operation=ModelOperation.REMOVE,
+            model_name=model_name,
+            tag=tag,
+            reason="API request",
+            user_id="admin",
+            force=False
+        )
+        response = await model_manager.request_model_operation(request, background_tasks)
+        return response
+    except Exception as e:
+        logger.error(f"Failed to remove model: {e}")
+        return {"error": str(e)}
+
 # Add route to serve the dashboard
 @app.get("/dashboard", response_class=HTMLResponse)
 async def serve_dashboard():
@@ -718,3 +837,8 @@ async def get_brain_activity():
 
 # Mount static files
 app.mount("/static", StaticFiles(directory="/opt/tower-echo-brain/static"), name="static")
+
+@app.get("/echo-brain/")
+async def serve_vue_spa_root():
+    """Serve Vue3 SPA root"""
+    return FileResponse("/opt/tower-echo-brain/static/dist/index.html")

@@ -49,6 +49,10 @@ from model_manager import (
 )
 from routing.auth_middleware import get_current_user
 
+# Initialize logging first
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 # Persona System Import
 try:
     from echo_expert_personas import PersonaManager, PersonaType, EchoPersonalityIntegration
@@ -62,9 +66,6 @@ from telegram_integration import telegram_router
 from veteran_guardian_endpoints import veteran_router
 from agent_development_endpoints import agent_dev_router
 from quality_monitoring import quality_monitor
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 # Request/Response Models
 class QueryRequest(BaseModel):
@@ -1483,7 +1484,7 @@ orchestrator = TowerOrchestrator()
 # Board of Directors system instances
 try:
     # Initialize Board system components
-    request_logger = RequestLogger(database.db_config)
+    request_logger = RequestLogger()
     feedback_processor = FeedbackProcessor(database.db_config)
     user_preferences = UserPreferences(database.db_config)
     knowledge_manager = create_simple_knowledge_manager(database.db_config)
@@ -2670,6 +2671,16 @@ async def list_installed_models():
     List all installed Ollama models with metadata
     """
     try:
+        # Initialize dependencies if not available
+        global board_registry, request_logger
+        if board_registry is None or request_logger is None:
+            from routing.service_registry import ServiceRegistry
+            from routing.request_logger import RequestLogger
+            if board_registry is None:
+                board_registry = ServiceRegistry()
+            if request_logger is None:
+                request_logger = RequestLogger()
+
         model_manager = get_model_manager(board_registry, request_logger)
         models = await model_manager.get_installed_models()
         return models
@@ -2689,6 +2700,16 @@ async def pull_model_quick(
     """
     Quick endpoint to pull a specific model
     """
+    # Initialize dependencies if not available
+    global board_registry, request_logger
+    if board_registry is None or request_logger is None:
+        from routing.service_registry import ServiceRegistry
+        from routing.request_logger import RequestLogger
+        if board_registry is None:
+            board_registry = ServiceRegistry()
+        if request_logger is None:
+            request_logger = RequestLogger()
+
     request = ModelManagementRequest(
         operation=ModelOperation.PULL,
         model_name=model_name,
@@ -2713,6 +2734,16 @@ async def remove_model(
     """
     Remove a specific model (requires approval for protected models)
     """
+    # Initialize dependencies if not available
+    global board_registry, request_logger
+    if board_registry is None or request_logger is None:
+        from routing.service_registry import ServiceRegistry
+        from routing.request_logger import RequestLogger
+        if board_registry is None:
+            board_registry = ServiceRegistry()
+        if request_logger is None:
+            request_logger = RequestLogger()
+
     request = ModelManagementRequest(
         operation=ModelOperation.REMOVE,
         model_name=model_name,

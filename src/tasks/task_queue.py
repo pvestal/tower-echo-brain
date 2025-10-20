@@ -91,9 +91,9 @@ class Task:
         data['task_type'] = TaskType(data['task_type'])
         data['priority'] = TaskPriority(data['priority'])
         data['status'] = TaskStatus(data['status'])
-        # Convert ISO strings back to datetime
+        # Convert ISO strings back to datetime (if not already datetime)
         for field in ['created_at', 'updated_at', 'scheduled_for', 'started_at', 'completed_at']:
-            if data[field]:
+            if data[field] and isinstance(data[field], str):
                 data[field] = datetime.fromisoformat(data[field])
         return cls(**data)
 
@@ -235,7 +235,8 @@ class TaskQueue:
             if task_id:
                 return await self._load_task(task_id.decode())
                 
-        return None
+        # Fall back to database if Redis queues are empty
+        return await self._get_next_task_from_db()
         
     async def _get_next_task_from_db(self) -> Optional[Task]:
         """Fallback: get next task directly from database"""
@@ -257,9 +258,14 @@ class TaskQueue:
             
             if row:
                 task_data = dict(row)
-                task_data['payload'] = json.loads(task_data['payload'])
-                task_data['dependencies'] = json.loads(task_data['dependencies'] or '[]')
-                if task_data['result']:
+                # Handle JSONB fields that might already be dicts
+                if isinstance(task_data['payload'], str):
+                    task_data['payload'] = json.loads(task_data['payload'])
+                if isinstance(task_data['dependencies'], str):
+                    task_data['dependencies'] = json.loads(task_data['dependencies'] or '[]')
+                elif task_data['dependencies'] is None:
+                    task_data['dependencies'] = []
+                if task_data['result'] and isinstance(task_data['result'], str):
                     task_data['result'] = json.loads(task_data['result'])
                 return Task.from_dict(task_data)
                 
@@ -281,9 +287,14 @@ class TaskQueue:
             
             if row:
                 task_data = dict(row)
-                task_data['payload'] = json.loads(task_data['payload'])
-                task_data['dependencies'] = json.loads(task_data['dependencies'] or '[]')
-                if task_data['result']:
+                # Handle JSONB fields that might already be dicts
+                if isinstance(task_data['payload'], str):
+                    task_data['payload'] = json.loads(task_data['payload'])
+                if isinstance(task_data['dependencies'], str):
+                    task_data['dependencies'] = json.loads(task_data['dependencies'] or '[]')
+                elif task_data['dependencies'] is None:
+                    task_data['dependencies'] = []
+                if task_data['result'] and isinstance(task_data['result'], str):
                     task_data['result'] = json.loads(task_data['result'])
                 return Task.from_dict(task_data)
                 
