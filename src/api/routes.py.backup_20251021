@@ -317,15 +317,7 @@ async def query_echo(request: QueryRequest):
 
         # Handle capability intents automatically
         capability_intents = ['service_testing', 'service_debugging', 'service_monitoring', 'agent_delegation', 'inter_service_communication', 'image_generation', 'voice_generation', 'music_generation']
-        # Skip service operations for regular Telegram conversation
-        is_telegram_chat = request.context and request.context.get("source") == "telegram_conversation"
-        is_explicit_command = request.context and request.context.get("command") is not None
-        service_intents = ["service_testing", "service_debugging", "service_monitoring"]
-        
-        # Only route to capability if: (1) explicit command OR (2) not telegram chat OR (3) not a service intent
-        should_route_capability = (is_explicit_command or not is_telegram_chat or intent not in service_intents)
-        
-        if intent in capability_intents and should_route_capability:
+        if intent in capability_intents:
             response = await handle_capability_intent(intent, intent_params, request, request.conversation_id, start_time)
 
             # Update conversation

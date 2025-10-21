@@ -19,12 +19,8 @@ import schedule
 from .task_queue import (
     TaskQueue, Task, TaskType, TaskPriority, TaskStatus,
     create_monitoring_task, create_optimization_task,
-
     create_learning_task, create_maintenance_task, create_scheduled_task
 )
-
-# Import repair executor for daily digest
-from .autonomous_repair_executor import repair_executor
 
 logger = logging.getLogger(__name__)
 
@@ -107,7 +103,6 @@ class AutonomousBehaviors:
         asyncio.create_task(self._system_optimization_loop())
         asyncio.create_task(self._learning_loop())
         asyncio.create_task(self._maintenance_loop())
-        asyncio.create_task(self._daily_digest_loop())
         asyncio.create_task(self._scheduled_task_processor())
         
         logger.info("✅ Echo autonomous behaviors active")
@@ -508,36 +503,6 @@ class AutonomousBehaviors:
             except Exception as e:
                 logger.error(f"❌ Error in maintenance loop: {e}")
                 await asyncio.sleep(300)
-                
-                
-    async def _daily_digest_loop(self):
-        """Send daily repair digest at 9 AM"""
-        logger.info("📧 Daily repair digest loop started")
-        
-        while self.running:
-            try:
-                now = datetime.now()
-                # Calculate next 9 AM
-                next_digest = now.replace(hour=9, minute=0, second=0, microsecond=0)
-                
-                # If it's already past 9 AM today, schedule for tomorrow
-                if now >= next_digest:
-                    next_digest += timedelta(days=1)
-                
-                # Calculate seconds until next digest
-                wait_seconds = (next_digest - now).total_seconds()
-                logger.info(f"📧 Next repair digest scheduled for {next_digest.strftime('%Y-%m-%d %H:%M')}")
-                
-                # Wait until 9 AM
-                await asyncio.sleep(wait_seconds)
-                
-                # Send the digest
-                logger.info("📧 Sending daily repair digest...")
-                await repair_executor.send_daily_digest()
-                
-            except Exception as e:
-                logger.error(f"❌ Error in daily digest loop: {e}")
-                await asyncio.sleep(3600)  # Wait an hour on error
                 
     async def _scheduled_task_processor(self):
         """Process scheduled tasks when their time comes"""
