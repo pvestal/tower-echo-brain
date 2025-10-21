@@ -53,8 +53,10 @@ const sendMessage = async () => {
   loading.value = true
 
   try {
-    const response = await axios.post('/api/echo/chat', {
-      message: msg
+    const response = await axios.post('http://192.168.50.135:8309/api/echo/chat', {
+      query: msg,
+      user_id: 'web_user',
+      conversation_id: 'web_chat_' + Date.now()
     })
     messages.value.push({ role: 'assistant', content: response.data.response })
   } catch (error) {
