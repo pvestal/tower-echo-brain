@@ -115,6 +115,11 @@ except Exception as e:
 # Include modular API routes
 from src.api.routes import router as api_router
 app.include_router(api_router)
+# Include system metrics routes
+from src.api.system_metrics import router as system_metrics_router
+app.include_router(system_metrics_router)
+logger.info("📊 System metrics API routes loaded")
+
 
 # Include resilient orchestration routes (optional extra endpoints)
 from src.api.resilient_routes import resilient_router
