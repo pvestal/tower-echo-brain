@@ -7,8 +7,9 @@
           CPU Usage
         </h3>
         <p class="text-3xl font-bold text-tower-accent-primary">
-          {{ metrics.cpu_percent }}%
+          {{ metrics.cpu_percent || 0 }}%
         </p>
+        <p class="text-xs text-tower-text-muted mt-2">Current processor load</p>
       </TowerCard>
 
       <TowerCard hoverable>
@@ -16,37 +17,47 @@
           Memory
         </h3>
         <p class="text-3xl font-bold text-tower-accent-success">
-          {{ metrics.memory_percent }}%
+          {{ metrics.memory_percent || 0 }}%
+        </p>
+        <p class="text-xs text-tower-text-muted mt-2">
+          {{ metrics.memory_used_gb?.toFixed(1) || 0 }} / {{ metrics.memory_total_gb?.toFixed(0) || 0 }} GB
         </p>
       </TowerCard>
 
       <TowerCard hoverable>
         <h3 class="text-lg font-semibold mb-2 text-tower-text-primary">
-          VRAM
+          VRAM (NVIDIA)
         </h3>
         <p class="text-3xl font-bold text-tower-accent-warning">
-          {{ metrics.vram_used_gb }}/{{ metrics.vram_total_gb }} GB
+          {{ metrics.vram_used_gb?.toFixed(1) || 0 }} GB
+        </p>
+        <p class="text-xs text-tower-text-muted mt-2">
+          {{ metrics.vram_total_gb?.toFixed(0) || 0 }} GB total
         </p>
       </TowerCard>
 
       <TowerCard hoverable>
         <h3 class="text-lg font-semibold mb-2 text-tower-text-primary">
-          Services Online
+          Services
         </h3>
         <p class="text-3xl font-bold text-tower-accent-primary">
           {{ servicesOnline }}/{{ totalServices }}
         </p>
+        <p class="text-xs text-tower-text-muted mt-2">Online services</p>
       </TowerCard>
     </div>
 
     <!-- System Status -->
     <TowerCard>
       <template #header>
-        <h2 class="text-xl font-bold text-tower-text-primary">System Status</h2>
+        <h2 class="text-xl font-bold text-tower-text-primary">Service Status</h2>
       </template>
       <div class="space-y-3">
         <div class="status-item" v-for="service in services" :key="service.name">
-          <span class="text-tower-text-secondary">{{ service.name }}</span>
+          <div>
+            <div class="text-tower-text-secondary">{{ service.name }}</div>
+            <div class="text-xs text-tower-text-muted">{{ service.description }}</div>
+          </div>
           <span class="status-badge" :class="service.online ? 'success' : 'offline'">
             {{ service.online ? 'Online' : 'Offline' }}
           </span>
@@ -57,20 +68,39 @@
     <!-- Database Stats -->
     <TowerCard>
       <template #header>
-        <h2 class="text-xl font-bold text-tower-text-primary">Database Status</h2>
+        <div class="flex justify-between items-center">
+          <h2 class="text-xl font-bold text-tower-text-primary">Database Status</h2>
+          <span class="text-xs text-tower-text-muted">PostgreSQL</span>
+        </div>
       </template>
       <div class="space-y-3">
         <div class="status-item">
-          <span class="text-tower-text-secondary">echo_brain</span>
-          <span class="text-tower-text-primary">{{ dbStats.echo_brain || '-' }}</span>
+          <div>
+            <div class="text-tower-text-secondary">echo_brain</div>
+            <div class="text-xs text-tower-text-muted">Main production database</div>
+          </div>
+          <span class="text-tower-text-primary font-mono">{{ dbStats.echo_brain || '-' }}</span>
         </div>
         <div class="status-item">
-          <span class="text-tower-text-secondary">knowledge_base</span>
-          <span class="text-tower-text-primary">{{ dbStats.knowledge_base || '-' }}</span>
+          <div>
+            <div class="text-tower-text-secondary">knowledge_base</div>
+            <div class="text-xs text-tower-text-muted">KB articles storage</div>
+          </div>
+          <span class="text-tower-text-primary font-mono">{{ dbStats.knowledge_base || '-' }}</span>
         </div>
         <div class="status-item">
-          <span class="text-tower-text-secondary">Active Connections</span>
-          <span class="text-tower-text-primary">{{ dbStats.active_connections || 0 }}</span>
+          <div>
+            <div class="text-tower-text-secondary">Active Connections</div>
+            <div class="text-xs text-tower-text-muted">Current DB connections</div>
+          </div>
+          <span class="text-tower-text-primary font-mono">{{ dbStats.active_connections || 0 }}</span>
+        </div>
+        <div class="status-item">
+          <div>
+            <div class="text-tower-text-secondary">Tables</div>
+            <div class="text-xs text-tower-text-muted">echo_brain table count</div>
+          </div>
+          <span class="text-tower-text-primary font-mono">{{ dbStats.echo_brain_tables || 0 }}</span>
         </div>
       </div>
     </TowerCard>
@@ -82,23 +112,38 @@
       </template>
       <div class="space-y-4">
         <div>
-          <h3 class="text-sm font-semibold text-tower-text-secondary mb-2">Current Persona</h3>
-          <p class="text-tower-text-primary">{{ echoStatus.agentic_persona || 'Default mode' }}</p>
+          <h3 class="text-sm font-semibold text-tower-text-secondary mb-2">Current Cognitive Mode</h3>
+          <p class="text-tower-text-primary">{{ echoStatus.agentic_persona || 'Loading...' }}</p>
         </div>
         <div>
           <h3 class="text-sm font-semibold text-tower-text-secondary mb-2">Recent Activity</h3>
           <div class="space-y-2">
             <div
-              v-for="(msg, idx) in echoStatus.recent_messages?.slice(0, 3)"
+              v-if="echoStatus.recent_messages && echoStatus.recent_messages.length > 0"
+              v-for="(msg, idx) in echoStatus.recent_messages.slice(0, 5)"
               :key="idx"
-              class="text-sm text-tower-text-muted"
+              class="text-sm p-2 bg-tower-bg-elevated rounded"
             >
-              <span class="text-tower-text-secondary">{{ msg.time }}:</span>
-              {{ msg.text }}
+              <span class="text-tower-text-secondary font-mono text-xs">{{ msg.time }}:</span>
+              <span class="text-tower-text-primary ml-2">{{ msg.text }}</span>
+            </div>
+            <div v-else class="text-sm text-tower-text-muted">
+              No recent activity
             </div>
           </div>
         </div>
       </div>
+    </TowerCard>
+
+    <!-- Error Display -->
+    <TowerCard v-if="errorMessage" class="border-tower-accent-danger">
+      <template #header>
+        <h2 class="text-xl font-bold text-tower-accent-danger">Connection Error</h2>
+      </template>
+      <p class="text-tower-text-secondary">{{ errorMessage }}</p>
+      <p class="text-xs text-tower-text-muted mt-2">
+        Check that Echo Brain API is running on port 8309
+      </p>
     </TowerCard>
   </div>
 </template>
@@ -108,18 +153,38 @@ import { ref, onMounted } from 'vue'
 import { TowerCard } from '@tower/ui-components'
 import axios from 'axios'
 
-// Reactive state
+// Configure axios base URL
+const API_BASE = 'http://***REMOVED***:8309'
+
+// Reactive state with default values
 const metrics = ref({
   cpu_percent: 0,
   memory_percent: 0,
+  memory_used_gb: 0,
+  memory_total_gb: 0,
   vram_used_gb: 0,
   vram_total_gb: 0
 })
 
 const services = ref([
-  { name: 'Echo Brain', endpoint: '/api/echo/health', online: false },
-  { name: 'Knowledge Base', endpoint: '/api/kb/stats', online: false },
-  { name: 'ComfyUI', endpoint: '/api/comfyui/system_stats', online: false }
+  {
+    name: 'Echo Brain',
+    description: 'Main AI orchestration service',
+    endpoint: '/api/echo/health',
+    online: false
+  },
+  {
+    name: 'Knowledge Base',
+    description: 'Article storage and retrieval',
+    endpoint: '/api/kb/stats',
+    online: false
+  },
+  {
+    name: 'ComfyUI',
+    description: 'Image/video generation',
+    endpoint: '/api/comfyui/system_stats',
+    online: false
+  }
 ])
 
 const servicesOnline = ref(0)
@@ -128,21 +193,26 @@ const totalServices = ref(services.value.length)
 const dbStats = ref({
   echo_brain: null,
   knowledge_base: null,
-  active_connections: 0
+  active_connections: 0,
+  echo_brain_tables: 0
 })
 
 const echoStatus = ref({
-  agentic_persona: 'Loading...',
+  agentic_persona: 'Connecting...',
   recent_messages: []
 })
+
+const errorMessage = ref('')
 
 // Fetch functions
 async function fetchMetrics() {
   try {
-    const response = await axios.get('/api/echo/system/metrics')
+    const response = await axios.get(`${API_BASE}/api/echo/system/metrics`)
     metrics.value = response.data
+    errorMessage.value = ''
   } catch (error) {
     console.error('Failed to fetch metrics:', error)
+    errorMessage.value = 'Failed to connect to Echo Brain API'
   }
 }
 
@@ -150,7 +220,7 @@ async function fetchServices() {
   let onlineCount = 0
   for (const service of services.value) {
     try {
-      const response = await axios.get(service.endpoint)
+      const response = await axios.get(`${API_BASE}${service.endpoint}`)
       service.online = response.status === 200
       if (service.online) onlineCount++
     } catch {
@@ -162,7 +232,7 @@ async function fetchServices() {
 
 async function fetchDatabaseStats() {
   try {
-    const response = await axios.get('/api/echo/db/stats')
+    const response = await axios.get(`${API_BASE}/api/echo/db/stats`)
     dbStats.value = response.data
   } catch (error) {
     console.error('Failed to fetch database stats:', error)
@@ -171,10 +241,11 @@ async function fetchDatabaseStats() {
 
 async function fetchEchoStatus() {
   try {
-    const response = await axios.get('/api/echo/status')
+    const response = await axios.get(`${API_BASE}/api/echo/status`)
     echoStatus.value = response.data
   } catch (error) {
     console.error('Failed to fetch Echo status:', error)
+    echoStatus.value.agentic_persona = 'Connection error'
   }
 }
 
@@ -187,10 +258,10 @@ onMounted(() => {
   fetchEchoStatus()
 
   // Auto-refresh
-  setInterval(fetchMetrics, 5000)       // 5 seconds
-  setInterval(fetchServices, 30000)     // 30 seconds
+  setInterval(fetchMetrics, 5000)        // 5 seconds
+  setInterval(fetchServices, 30000)      // 30 seconds
   setInterval(fetchDatabaseStats, 60000) // 1 minute
-  setInterval(fetchEchoStatus, 10000)   // 10 seconds
+  setInterval(fetchEchoStatus, 10000)    // 10 seconds
 })
 </script>
 
@@ -212,6 +283,7 @@ onMounted(() => {
   border-radius: 0.25rem;
   font-size: 0.875rem;
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .status-badge.success {
