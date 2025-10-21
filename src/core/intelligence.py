@@ -141,7 +141,7 @@ class EchoIntelligenceRouter:
                 }
 
                 start_time = asyncio.get_event_loop().time()
-                async with session.post(self.ollama_url, json=payload) as response:
+                async with session.post(self.ollama_url, json=payload, timeout=aiohttp.ClientTimeout(total=120)) as response:
                     if response.status == 200:
                         result = await response.json()
                         processing_time = asyncio.get_event_loop().time() - start_time

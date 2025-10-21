@@ -170,19 +170,19 @@ const services = ref([
   {
     name: 'Echo Brain',
     description: 'Main AI orchestration service',
-    endpoint: '/api/echo/health',
+    endpoint: 'http://192.168.50.135:8309/api/echo/health',
     online: false
   },
   {
     name: 'Knowledge Base',
     description: 'Article storage and retrieval',
-    endpoint: '/api/kb/stats',
+    endpoint: 'https://192.168.50.135/api/kb/articles?limit=1',
     online: false
   },
   {
     name: 'ComfyUI',
     description: 'Image/video generation',
-    endpoint: '/api/comfyui/system_stats',
+    endpoint: 'http://192.168.50.135:8188/',
     online: false
   }
 ])
@@ -220,7 +220,7 @@ async function fetchServices() {
   let onlineCount = 0
   for (const service of services.value) {
     try {
-      const response = await axios.get(`${API_BASE}${service.endpoint}`)
+      const response = await axios.get(service.endpoint)
       service.online = response.status === 200
       if (service.online) onlineCount++
     } catch {
