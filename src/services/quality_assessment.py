@@ -53,7 +53,7 @@ class VideoQualityAssessment:
         }
 
         # Create quality database
-        self.quality_db_path = "/home/patrick/Documents/Tower/core-services/echo-brain-unified/quality_scores.json"
+        self.quality_db_path = "/home/patrick/Documents/Tower/core-services/echo-brain/quality_scores.json"
         self.load_quality_database()
 
     def load_quality_database(self):
