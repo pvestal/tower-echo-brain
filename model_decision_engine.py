@@ -131,7 +131,7 @@ class ModelDecisionEngine:
                 minconn=1,
                 maxconn=20,
                 host=db_config.get('host', 'localhost'),
-                database=db_config.get('database', 'tower_consolidated'),
+                database=db_config.get('database', 'echo_brain'),
                 user=db_config.get('user', 'patrick'),
                 password=db_config.get('password', 'patrick123')
             )
