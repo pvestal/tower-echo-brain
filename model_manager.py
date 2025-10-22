@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 # Database connection
 DB_CONFIG = {
     "host": "localhost",
-    "database": "tower_consolidated",
+    "database": "echo_brain",
     "user": "patrick"
 }
 
