@@ -47,23 +47,22 @@
       </TowerCard>
     </div>
 
-    <!-- System Status -->
-    <TowerCard>
-      <template #header>
-        <h2 class="text-xl font-bold text-tower-text-primary">Service Status</h2>
-      </template>
-      <div class="space-y-3">
-        <div class="status-item" v-for="service in services" :key="service.name">
-          <div>
-            <div class="text-tower-text-secondary">{{ service.name }}</div>
-            <div class="text-xs text-tower-text-muted">{{ service.description }}</div>
-          </div>
+    <!-- Service Status Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <TowerCard v-for="service in services" :key="service.name" hoverable>
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="font-semibold text-tower-text-primary">{{ service.name }}</h3>
           <span class="status-badge" :class="service.online ? 'success' : 'offline'">
             {{ service.online ? 'Online' : 'Offline' }}
           </span>
         </div>
-      </div>
-    </TowerCard>
+        <p class="text-xs text-tower-text-muted mb-2">{{ service.description }}</p>
+        <p v-if="service.port" class="text-xs text-tower-text-secondary font-mono">Port: {{ service.port }}</p>
+        <a v-if="service.ui && service.online" :href="service.ui" target="_blank" class="text-xs text-tower-accent-primary hover:underline">
+          Open UI →
+        </a>
+      </TowerCard>
+    </div>
 
     <!-- Database Stats -->
     <TowerCard>
@@ -73,34 +72,26 @@
           <span class="text-xs text-tower-text-muted">PostgreSQL</span>
         </div>
       </template>
-      <div class="space-y-3">
-        <div class="status-item">
-          <div>
-            <div class="text-tower-text-secondary">echo_brain</div>
-            <div class="text-xs text-tower-text-muted">Main production database</div>
-          </div>
-          <span class="text-tower-text-primary font-mono">{{ dbStats.echo_brain || '-' }}</span>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="stat-item">
+          <div class="text-tower-text-secondary">echo_brain</div>
+          <div class="text-xs text-tower-text-muted">Main production database</div>
+          <span class="text-tower-text-primary font-mono font-bold">{{ dbStats.echo_brain || '-' }}</span>
         </div>
-        <div class="status-item">
-          <div>
-            <div class="text-tower-text-secondary">knowledge_base</div>
-            <div class="text-xs text-tower-text-muted">KB articles storage</div>
-          </div>
-          <span class="text-tower-text-primary font-mono">{{ dbStats.knowledge_base || '-' }}</span>
+        <div class="stat-item">
+          <div class="text-tower-text-secondary">knowledge_base</div>
+          <div class="text-xs text-tower-text-muted">KB articles storage</div>
+          <span class="text-tower-text-primary font-mono font-bold">{{ dbStats.knowledge_base || '-' }}</span>
         </div>
-        <div class="status-item">
-          <div>
-            <div class="text-tower-text-secondary">Active Connections</div>
-            <div class="text-xs text-tower-text-muted">Current DB connections</div>
-          </div>
-          <span class="text-tower-text-primary font-mono">{{ dbStats.active_connections || 0 }}</span>
+        <div class="stat-item">
+          <div class="text-tower-text-secondary">Active Connections</div>
+          <div class="text-xs text-tower-text-muted">Current DB connections</div>
+          <span class="text-tower-text-primary font-mono font-bold">{{ dbStats.active_connections || 0 }}</span>
         </div>
-        <div class="status-item">
-          <div>
-            <div class="text-tower-text-secondary">Tables</div>
-            <div class="text-xs text-tower-text-muted">echo_brain table count</div>
-          </div>
-          <span class="text-tower-text-primary font-mono">{{ dbStats.echo_brain_tables || 0 }}</span>
+        <div class="stat-item">
+          <div class="text-tower-text-secondary">Tables</div>
+          <div class="text-xs text-tower-text-muted">echo_brain table count</div>
+          <span class="text-tower-text-primary font-mono font-bold">{{ dbStats.echo_brain_tables || 0 }}</span>
         </div>
       </div>
     </TowerCard>
@@ -167,22 +158,107 @@ const metrics = ref({
 })
 
 const services = ref([
+  // Core Infrastructure
   {
     name: 'Echo Brain',
-    description: 'Main AI orchestration service',
+    description: 'AI orchestration & conversation',
     endpoint: 'http://192.168.50.135:8309/api/echo/health',
+    ui: 'http://192.168.50.135:8309/static/dist/',
+    port: 8309,
     online: false
   },
   {
     name: 'Knowledge Base',
-    description: 'Article storage and retrieval',
+    description: 'Article storage & retrieval',
     endpoint: 'https://192.168.50.135/api/kb/articles?limit=1',
+    ui: null,
+    port: 8307,
     online: false
   },
+  {
+    name: 'HashiCorp Vault',
+    description: 'Secrets management',
+    endpoint: null,
+    ui: 'http://192.168.50.135:8200/ui',
+    port: 8200,
+    online: false
+  },
+  
+  // Media & Generation
   {
     name: 'ComfyUI',
     description: 'Image/video generation',
     endpoint: 'http://192.168.50.135:8188/',
+    ui: 'http://192.168.50.135:8188/',
+    port: 8188,
+    online: false
+  },
+  {
+    name: 'Anime Production',
+    description: 'Anime generation pipeline',
+    endpoint: 'http://192.168.50.135:8328/api/health',
+    ui: 'http://192.168.50.135:8328/project_manager',
+    port: 8328,
+    online: false
+  },
+  {
+    name: 'Music Production',
+    description: 'Music generation service',
+    endpoint: 'http://192.168.50.135:8316/api/music-prod/health',
+    ui: null,
+    port: 8316,
+    online: false
+  },
+  {
+    name: 'Jellyfin Media',
+    description: 'Media server & streaming',
+    endpoint: null,
+    ui: 'http://192.168.50.135:8096/',
+    port: 8096,
+    online: false
+  },
+  
+  // Communication
+  {
+    name: 'Telegram Bot',
+    description: '@PatricksEchobot',
+    endpoint: null,
+    ui: null,
+    port: null,
+    online: false
+  },
+  {
+    name: 'Voice WebSocket',
+    description: 'Voice streaming service',
+    endpoint: 'http://192.168.50.135:8312/api/voice/health',
+    ui: null,
+    port: 8312,
+    online: false
+  },
+  
+  // Integration Services
+  {
+    name: 'Apple Music',
+    description: 'Music integration API',
+    endpoint: 'http://192.168.50.135:8315/api/music/health',
+    ui: null,
+    port: 8315,
+    online: false
+  },
+  {
+    name: 'Plaid Financial',
+    description: 'Bank account integration',
+    endpoint: 'http://192.168.50.135:8089/api/plaid/health',
+    ui: 'http://192.168.50.135:8089/plaid/auth',
+    port: 8089,
+    online: false
+  },
+  {
+    name: 'Auth Service',
+    description: 'OAuth & authentication',
+    endpoint: 'http://192.168.50.135:8088/api/auth/health',
+    ui: null,
+    port: 8088,
     online: false
   }
 ])
@@ -219,8 +295,14 @@ async function fetchMetrics() {
 async function fetchServices() {
   let onlineCount = 0
   for (const service of services.value) {
+    if (!service.endpoint) {
+      // No health endpoint - check if UI is accessible or assume offline
+      service.online = false
+      continue
+    }
+    
     try {
-      const response = await axios.get(service.endpoint)
+      const response = await axios.get(service.endpoint, { timeout: 3000 })
       service.online = response.status === 200
       if (service.online) onlineCount++
     } catch {
@@ -266,16 +348,10 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.status-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.75rem 0;
-  border-bottom: 1px solid var(--tower-border);
-}
-
-.status-item:last-child {
-  border-bottom: none;
+.stat-item {
+  padding: 1rem;
+  background: var(--tower-bg-elevated);
+  border-radius: 0.5rem;
 }
 
 .status-badge {
