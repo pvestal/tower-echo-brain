@@ -23,7 +23,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-      '@tower/ui-components': path.resolve(__dirname, '../../../tower-ui-components/src')
+      '@tower/ui-components': path.resolve(__dirname, '../../tower-ui-components')
     }
   }
 })

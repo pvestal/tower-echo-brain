@@ -48,11 +48,6 @@ class AutonomousBehaviors:
             'vault': 'vault.service'
         }
 
-        # Restart cooldown tracking (prevent aggressive restarts)
-        self.last_restart_times: Dict[str, datetime] = {}
-        self.RESTART_COOLDOWN_MINUTES = 5  # Don't restart same service within 5 minutes
-        self.STARTUP_GRACE_PERIOD = 120  # 2 minutes for services to stabilize
-
         self.behavior_stats = {
             'started_at': None,
             'tasks_generated': 0,
