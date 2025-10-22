@@ -8,6 +8,7 @@ import aiohttp
 import logging
 import time
 from .echo_system_prompt import get_echo_system_prompt
+from src.core.complexity_analyzer import ComplexityAnalyzer
 from typing import Dict, List, Optional
 from echo_brain_thoughts import echo_brain
 from model_decision_engine import get_decision_engine
@@ -41,45 +42,14 @@ class EchoIntelligenceRouter:
         self.decision_history = []  # Track decisions for learning
 
     def analyze_complexity(self, query: str, context: Dict) -> str:
-        """Analyze query complexity to determine optimal model"""
-        complexity_score = 0.0
+        """
+        Analyze query complexity to determine optimal model tier
+        REFACTORED: Now delegates to ComplexityAnalyzer (Oct 22, 2025)
+        """
+        result = ComplexityAnalyzer.analyze(query, context)
+        return result.tier  # Returns: tiny, small, medium, large, cloud
 
-        # Basic query analysis
-        complexity_score += len(query.split()) * 0.3
-        complexity_score += query.count('?') * 3
-        complexity_score += query.count('.') * 1
-
-        # Technical complexity indicators
-        technical_terms = [
-            'database', 'architecture', 'algorithm', 'implementation',
-            'refactor', 'optimization', 'integration', 'system'
-        ]
-        complexity_score += sum(8 for term in technical_terms if term.lower() in query.lower())
-
-        # Programming language detection
-        code_terms = ['python', 'javascript', 'sql', 'function', 'class', 'async']
-        if any(term in query.lower() for term in code_terms):
-            complexity_score += 15
-
-        # Context complexity
-        if context.get('previous_failures', 0) > 0:
-            complexity_score += 20  # Escalate if previous attempts failed
-
-        if context.get('user_expertise') == 'expert':
-            complexity_score += 10
-
-        # Route based on score (adjusted for better escalation)
-        if complexity_score < 8:
-            return "quick"
-        elif complexity_score < 25:
-            return "standard"
-        elif complexity_score < 40:
-            return "professional"
-        elif complexity_score < 60:
-            return "expert"
-        else:
-            return "genius"
-
+    
     def detect_specialization(self, query: str) -> Optional[str]:
         """Detect if query requires specialized model"""
         query_lower = query.lower()
@@ -93,33 +63,14 @@ class EchoIntelligenceRouter:
         return None
 
     def _calculate_complexity_score(self, query: str, context: Dict) -> float:
-        """Calculate numerical complexity score for brain visualization"""
-        score = 0.0
+        """
+        Calculate numerical complexity score for brain visualization
+        REFACTORED: Now delegates to ComplexityAnalyzer (Oct 22, 2025)
+        """
+        result = ComplexityAnalyzer.analyze(query, context)
+        return result.score  # Returns: 0-100
 
-        # Basic query analysis
-        score += len(query.split()) * 0.3
-        score += query.count('?') * 3
-        score += query.count('.') * 1
-
-        # Technical complexity indicators (increased scoring)
-        technical_terms = [
-            'database', 'architecture', 'algorithm', 'implementation',
-            'refactor', 'optimization', 'integration', 'system', 'distributed',
-            'microservice', 'scalable', 'performance', 'design', 'patterns'
-        ]
-        score += sum(12 for term in technical_terms if term.lower() in query.lower())
-
-        # Programming language detection (increased weight)
-        code_terms = ['python', 'javascript', 'sql', 'function', 'class', 'async']
-        if any(term in query.lower() for term in code_terms):
-            score += 20
-
-        # Context complexity
-        if context.get('previous_failures', 0) > 0:
-            score += 20
-
-        return min(score, 100.0)
-
+    
     async def query_model(self, model: str, prompt: str, max_tokens: int = 2048, validate_code: bool = True) -> Dict:
         """Query specific Ollama model with automatic validation and reloading for code generation"""
         try:

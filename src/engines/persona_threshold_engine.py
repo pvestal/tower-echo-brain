@@ -5,6 +5,7 @@ Improved complexity scoring algorithm with proper task type detection
 Designed in collaboration with deepseek-coder and qwen2.5-coder on Tower
 """
 
+from src.core.complexity_analyzer import ComplexityAnalyzer
 import asyncio
 import asyncpg
 from typing import Dict, List, Optional, Tuple
@@ -62,70 +63,13 @@ class PersonaThresholdEngine:
     
     def calculate_complexity_score(self, message: str) -> float:
         """
-        IMPROVED COMPLEXITY SCORING ALGORITHM (October 2025)
-        
-        Designed in collaboration with deepseek-coder and qwen2.5-coder
-        Accuracy: 92% on test cases
-        
-        Key improvements:
-        - Detects generation tasks (generate, create, render)
-        - Detects media types (video, anime, animation)
-        - Detects quality requirements (professional, cinematic)
-        - Detects technical/scientific terms (quantum, neural, distributed)
-        - Proper weight balancing for tier targeting
-        
-        Test results:
-        - "2+2" → tiny (0.4)
-        - "What's my name?" → small (6.2)
-        - "Explain quantum entanglement" → medium (21.2)
-        - "Generate a 2-minute anime trailer" → large (35.8)
-        - "Create professional cinematic video" → large (49.2)
+        Calculate complexity score
+        REFACTORED: Now delegates to ComplexityAnalyzer (Oct 22, 2025)
         """
-        message_lower = message.lower()
-        word_count = len(message.split())
-        questions = message.count("?")
-        
-        # Programming indicators
-        code_keywords = ["def ", "class ", "import ", "function", "async ", "await ", "=>", "lambda", "const ", "let ", "var "]
-        code_markers = sum(1 for kw in code_keywords if kw in message_lower)
-        
-        # Generation task indicators
-        generation_keywords = ["generate", "create", "make", "render", "produce", "build", "design", "craft"]
-        gen_count = sum(1 for kw in generation_keywords if kw in message_lower)
-        
-        # Media/content type indicators
-        media_keywords = ["video", "anime", "image", "animation", "trailer", "audio", "music", "graphic", "scene", "episode"]
-        media_count = sum(1 for kw in media_keywords if kw in message_lower)
-        
-        # Quality/complexity indicators
-        quality_keywords = ["professional", "cinematic", "detailed", "dramatic", "high-quality", "complex", "advanced", "sophisticated"]
-        qual_count = sum(1 for kw in quality_keywords if kw in message_lower)
-        
-        # Duration/scale indicators
-        duration_keywords = ["minute", "second", "frame", "hour", "episode"]
-        duration_count = sum(1 for kw in duration_keywords if kw in message_lower)
-        
-        # Technical/scientific terms
-        technical_keywords = ["quantum", "algorithm", "neural", "machine learning", "encryption", 
-                             "architecture", "distributed", "optimization", "entanglement", "relativity",
-                             "cryptography", "topology", "differential", "integration"]
-        tech_count = sum(1 for kw in technical_keywords if kw in message_lower)
-        
-        # BALANCED WEIGHTS for proper tier targeting
-        # Targets: tiny=0-5, small=5-15, medium=15-30, large=30-50, cloud=50+
-        complexity_score = (
-            word_count * 0.4 +           # Base word count
-            questions * 5 +               # Questions
-            code_markers * 12 +           # Programming indicators
-            gen_count * 8 +               # Generation tasks
-            media_count * 10 +            # Media content
-            qual_count * 6 +              # Quality modifiers
-            duration_count * 5 +          # Duration/scale
-            tech_count * 10               # Technical terms
-        )
-        
-        return complexity_score
-        
+        result = ComplexityAnalyzer.analyze(message)
+        return result.score
+
+    
     async def select_tier(self, message: str, context: Dict = None) -> Tuple[str, Dict]:
         """Dynamically select tier based on message + persona"""
         
