@@ -43,7 +43,6 @@ class TaskType(Enum):
     USER_REQUEST = "user_request"
     SYSTEM_REPAIR = "system_repair"
     ANALYSIS = "analysis"
-    CODE_REFACTOR = "code_refactor"
     BACKUP = "backup"
 
 @dataclass
