@@ -8,6 +8,7 @@ Architecture:
 - GCloud Burst: Handles tier large, cloud (qwen2.5-coder:32b, llama3.1:70b equivalent)
 - Trigger: Complexity score > 30 OR local GPU VRAM > 90%
 
+from src.core.complexity_analyzer import ComplexityAnalyzer
 Author: Claude Code + Patrick
 Date: October 22, 2025
 """
@@ -337,24 +338,12 @@ class EchoBrainWithBurst:
         }
 
     def _estimate_complexity(self, query: str) -> float:
-        """Simple complexity estimation (would use persona_threshold_engine in production)"""
-        score = 0.0
-        score += len(query.split()) * 0.3
-        score += query.count('?') * 5
-
-        # Generation keywords
-        gen_keywords = ['generate', 'create', 'make', 'render', 'produce']
-        score += sum(8 for kw in gen_keywords if kw in query.lower())
-
-        # Media keywords
-        media_keywords = ['video', 'anime', 'animation', 'trailer', 'scene']
-        score += sum(10 for kw in media_keywords if kw in query.lower())
-
-        # Quality keywords
-        quality_keywords = ['professional', 'cinematic', 'detailed', 'high-quality']
-        score += sum(6 for kw in quality_keywords if kw in query.lower())
-
-        return min(score, 100.0)
+        """
+        Estimate complexity
+        REFACTORED: Now delegates to ComplexityAnalyzer (Oct 22, 2025)
+        """
+        result = ComplexityAnalyzer.analyze(query)
+        return result.score
 
     async def _get_vram_usage(self) -> float:
         """Get current VRAM usage percentage"""
