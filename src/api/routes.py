@@ -49,7 +49,7 @@ async def health_check():
 
     return {
         "status": "healthy",
-        "service": "echo-brain-unified-refactored",
+        "service": "echo-brain",
         "version": "1.0.0",
         "architecture": "modular",
         "database": db_status,

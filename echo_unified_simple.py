@@ -44,7 +44,7 @@ class CapabilityTest(BaseModel):
 async def health_check():
     return {
         "status": "healthy",
-        "service": "echo-brain-unified",
+        "service": "echo-brain",
         "version": "2.0.0",
         "temporal_logic": True,
         "self_awareness": True,

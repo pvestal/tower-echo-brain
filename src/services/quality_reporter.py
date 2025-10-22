@@ -19,7 +19,7 @@ class QualityReporter:
     def __init__(self, db_path: str = None):
         """Initialize the quality reporting system"""
         if db_path is None:
-            db_path = "/home/patrick/Documents/Tower/core-services/echo-brain-unified/quality_scores.json"
+            db_path = "/home/patrick/Documents/Tower/core-services/echo-brain/quality_scores.json"
 
         self.db_path = db_path
         self.load_database()
@@ -331,7 +331,7 @@ class QualityReporter:
         """Export report to a formatted file"""
         if filename is None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"/home/patrick/Documents/Tower/core-services/echo-brain-unified/quality_report_{timestamp}.json"
+            filename = f"/home/patrick/Documents/Tower/core-services/echo-brain/quality_report_{timestamp}.json"
 
         try:
             with open(filename, 'w') as f:

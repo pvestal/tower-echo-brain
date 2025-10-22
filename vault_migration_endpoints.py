@@ -6,7 +6,7 @@ async def export_vault_to_hashicorp():
     """Export Echo vault credentials to HashiCorp Vault"""
     try:
         # Import vault extension
-        sys.path.append('/opt/tower-deepseek-api/echo-brain-unified')
+        sys.path.append('/opt/tower-deepseek-api/echo-brain')
         from echo_vault_extension import EchoVault
         
         # Initialize Echo vault
@@ -87,7 +87,7 @@ async def export_vault_to_hashicorp():
 async def list_vault_credentials():
     """List credentials available in Echo vault"""
     try:
-        sys.path.append('/opt/tower-deepseek-api/echo-brain-unified')
+        sys.path.append('/opt/tower-deepseek-api/echo-brain')
         from echo_vault_extension import EchoVault
         
         echo_vault = EchoVault()
