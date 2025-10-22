@@ -25,6 +25,7 @@ from .task_queue import (
 
 # Import repair executor for daily digest
 from .autonomous_repair_executor import repair_executor
+from .code_refactor_executor import code_refactor_executor
 
 logger = logging.getLogger(__name__)
 
@@ -114,6 +115,7 @@ class AutonomousBehaviors:
         asyncio.create_task(self._maintenance_loop())
         asyncio.create_task(self._daily_digest_loop())
         asyncio.create_task(self._scheduled_task_processor())
+        asyncio.create_task(self._code_quality_loop())
         
         logger.info("✅ Echo autonomous behaviors active")
         
@@ -224,6 +226,18 @@ class AutonomousBehaviors:
                             # Map to actual systemd service name
                             actual_service_name = self.service_name_map.get(service_name, service_name)
                             logger.info(f"🔍 Service mapping: {service_name} → {actual_service_name}")
+                            
+                            # Check cooldown - do not restart if recently restarted
+                            last_restart = self.last_restart_times.get(actual_service_name)
+                            
+                            if last_restart:
+                                minutes_since_restart = (datetime.now() - last_restart).total_seconds() / 60
+                                if minutes_since_restart < self.RESTART_COOLDOWN_MINUTES:
+                                    logger.info(f"Skipping restart of {actual_service_name} - cooldown active ({minutes_since_restart:.1f}m / {self.RESTART_COOLDOWN_MINUTES}m)")
+                                    continue
+                            
+                            # Track this restart
+                            self.last_restart_times[actual_service_name] = datetime.now()
                             
                             # Create maintenance task to ACTUALLY RESTART THE SERVICE
                             repair_task = create_maintenance_task(
@@ -615,6 +629,50 @@ class AutonomousBehaviors:
         logger.critical(f"🚨 Generated {len(tasks)} emergency tasks for {issue_type}")
         return tasks
         
+    async def _code_quality_loop(self):
+        """Monitor code quality and create refactoring tasks"""
+        logger.info("🔧 Code quality monitoring started")
+        
+        while self.running:
+            try:
+                # Check code quality for tower services
+                service_paths = [
+                    "/opt/tower-echo-brain/src",
+                    "/opt/tower-anime-production",
+                    "/opt/tower-auth",
+                    "/opt/tower-kb"
+                ]
+                
+                for service_path in service_paths:
+                    from pathlib import Path
+                    if Path(service_path).exists():
+                        # Analyze code quality
+                        results = await code_refactor_executor.analyze_code_quality(service_path)
+                        
+                        # Only create task if quality is below threshold
+                        pylint_score = results.get("pylint_score")
+                        if pylint_score is not None and pylint_score < 7.0:
+                            # Code quality below threshold - create refactor task
+                            import uuid
+                            task = Task(
+                                id=str(uuid.uuid4()),
+                                name=f"Code Refactor: {Path(service_path).name}",
+                                task_type=TaskType.CODE_REFACTOR,
+                                priority=TaskPriority.LOW,
+                                payload={"project_path": service_path, "results": results}
+                            )
+                            await self.task_queue.add_task(task)
+                            logger.info(f"📝 Created refactor task for {service_path} (score: {pylint_score:.1f}/10)")
+                        elif pylint_score is not None:
+                            logger.info(f"✅ {Path(service_path).name} code quality OK (score: {pylint_score:.1f}/10)")
+                
+                # Check daily (86400 seconds)
+                await asyncio.sleep(86400)
+                
+            except Exception as e:
+                logger.error(f"Code quality monitoring error: {e}")
+                await asyncio.sleep(3600)  # Retry in 1 hour on error
+    
     def get_behavior_stats(self) -> Dict[str, Any]:
         """Get autonomous behavior statistics"""
         return {
