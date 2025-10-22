@@ -853,7 +853,7 @@ class ResilientOrchestrator:
             "comfyui": "http://localhost:8188",
             "voice": "http://localhost:8312",
             "music": "http://localhost:8308",
-            "anime": "http://localhost:8305",
+            "anime": "http://localhost:8328",
             "kb": "http://localhost:8307"
         }
 

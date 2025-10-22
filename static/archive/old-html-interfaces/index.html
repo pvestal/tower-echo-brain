@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Echo Brain - Cognitive Visualization</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: radial-gradient(ellipse at center, #0a0e27 0%, #000000 100%);
+            color: #e0e6ed;
+            overflow-x: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            padding: 20px;
+            background: rgba(10, 14, 39, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(99, 179, 237, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: 300;
+            letter-spacing: 2px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #4ade80;
+            box-shadow: 0 0 10px #4ade80;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Main Container */
+        .main-container {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr;
+            gap: 20px;
+            padding: 20px;
+            max-height: calc(100vh - 100px);
+        }
+
+        /* Left Panel - Input */
+        .input-panel {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(99, 179, 237, 0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .input-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .chat-input {
+            width: 100%;
+            padding: 15px;
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(99, 179, 237, 0.2);
+            border-radius: 10px;
+            color: #e0e6ed;
+            font-size: 14px;
+            resize: none;
+            min-height: 100px;
+            transition: all 0.3s;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: #63b3ed;
+            background: rgba(30, 41, 59, 0.8);
+            box-shadow: 0 0 20px rgba(99, 179, 237, 0.2);
+        }
+
+        .send-btn {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .send-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        /* Center - Brain Visualization */
+        .brain-container {
+            background: rgba(15, 23, 42, 0.3);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid rgba(99, 179, 237, 0.1);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .visualization-mode {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+
+        .mode-btn {
+            padding: 8px 20px;
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(99, 179, 237, 0.2);
+            border-radius: 6px;
+            color: #94a3b8;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .mode-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: transparent;
+        }
+
+        #brain-canvas {
+            flex: 1;
+            border-radius: 10px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* SVG Brain 2D */
+        .brain-svg {
+            width: 100%;
+            max-width: 500px;
+            height: auto;
+        }
+
+        .neuron-path {
+            fill: none;
+            stroke: rgba(99, 179, 237, 0.3);
+            stroke-width: 1.5;
+            opacity: 0;
+            animation: neuronFire 3s infinite;
+        }
+
+        @keyframes neuronFire {
+            0%, 100% { opacity: 0; stroke: rgba(99, 179, 237, 0.3); }
+            50% { opacity: 1; stroke: rgba(99, 179, 237, 1); }
+        }
+
+        .hemisphere {
+            fill: rgba(30, 41, 59, 0.2);
+            stroke: rgba(99, 179, 237, 0.5);
+            stroke-width: 2;
+            transition: all 0.3s;
+        }
+
+        .hemisphere.active {
+            fill: rgba(99, 179, 237, 0.1);
+            stroke: rgba(99, 179, 237, 1);
+            filter: drop-shadow(0 0 20px rgba(99, 179, 237, 0.6));
+        }
+
+        /* Right Panel - Cognitive State */
+        .cognitive-panel {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(99, 179, 237, 0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            overflow-y: auto;
+        }
+
+        .cognitive-metric {
+            padding: 15px;
+            background: rgba(30, 41, 59, 0.3);
+            border-radius: 8px;
+            border-left: 3px solid #667eea;
+        }
+
+        .metric-label {
+            font-size: 12px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .metric-value {
+            font-size: 18px;
+            font-weight: 500;
+            color: #e0e6ed;
+        }
+
+        .metric-bar {
+            height: 4px;
+            background: rgba(99, 179, 237, 0.2);
+            border-radius: 2px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .metric-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            border-radius: 2px;
+            transition: width 0.5s ease;
+        }
+
+        /* Thought Process Display */
+        .thought-stream {
+            flex: 1;
+            background: rgba(30, 41, 59, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            overflow-y: auto;
+            font-family: 'Fira Code', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .thought-line {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 2px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .thought-line.analyzing {
+            border-color: #3b82f6;
+            color: #93c5fd;
+        }
+
+        .thought-line.creative {
+            border-color: #a855f7;
+            color: #d8b4fe;
+        }
+
+        .thought-line.memory {
+            border-color: #10b981;
+            color: #86efac;
+        }
+
+        /* 3D Container (hidden by default) */
+        #three-container {
+            display: none;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Loading Animation */
+        .loading-brain {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: none;
+        }
+
+        .loading-brain.active {
+            display: block;
+        }
+
+        .neural-loader {
+            width: 80px;
+            height: 80px;
+            border: 3px solid rgba(99, 179, 237, 0.2);
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="title">
+            <div class="status-indicator"></div>
+            ECHO BRAIN - COGNITIVE INTERFACE
+        </div>
+        <div style="display: flex; gap: 20px; align-items: center;">
+            <span id="model-display" style="color: #94a3b8;">Model: Auto</span>
+            <span id="response-time" style="color: #94a3b8;">Response: --ms</span>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <!-- Input Panel -->
+        <div class="input-panel">
+            <h3 style="font-weight: 300; letter-spacing: 1px;">QUERY INPUT</h3>
+            <div class="input-area">
+                <textarea class="chat-input" id="query-input" placeholder="Enter your query... Try 'think harder about consciousness' for deep analysis"></textarea>
+                <button class="send-btn" onclick="processQuery()">ENGAGE COGNITIVE PROCESSING</button>
+            </div>
+            <div style="padding: 15px; background: rgba(30, 41, 59, 0.3); border-radius: 8px;">
+                <div style="font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;">Quick Actions</div>
+                <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+                    <button class="mode-btn" onclick="setQuery('Hi')">Quick</button>
+                    <button class="mode-btn" onclick="setQuery('think harder about AI')">Deep Think</button>
+                    <button class="mode-btn" onclick="setQuery('implement binary search')">Code</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Brain Visualization -->
+        <div class="brain-container">
+            <div class="visualization-mode">
+                <button class="mode-btn active" onclick="switchMode('2d')">2D BRAIN</button>
+                <button class="mode-btn" onclick="switchMode('3d')">3D BRAIN</button>
+                <button class="mode-btn" onclick="switchMode('neural')">NEURAL MAP</button>
+            </div>
+
+            <div id="brain-canvas">
+                <!-- 2D Brain SVG -->
+                <svg class="brain-svg" viewBox="0 0 400 300" id="brain-2d">
+                    <!-- Left Hemisphere -->
+                    <ellipse class="hemisphere" id="left-hemisphere" cx="140" cy="150" rx="120" ry="140" />
+                    <!-- Right Hemisphere -->
+                    <ellipse class="hemisphere" id="right-hemisphere" cx="260" cy="150" rx="120" ry="140" />
+
+                    <!-- Neural Pathways -->
+                    <path class="neuron-path" d="M140,80 Q200,100 260,80" style="animation-delay: 0s;" />
+                    <path class="neuron-path" d="M140,150 Q200,150 260,150" style="animation-delay: 0.5s;" />
+                    <path class="neuron-path" d="M140,220 Q200,200 260,220" style="animation-delay: 1s;" />
+
+                    <!-- Brain Regions -->
+                    <circle cx="140" cy="80" r="20" fill="rgba(59, 130, 246, 0.3)" stroke="none" id="frontal-left" />
+                    <circle cx="260" cy="80" r="20" fill="rgba(168, 85, 247, 0.3)" stroke="none" id="frontal-right" />
+                    <circle cx="140" cy="150" r="20" fill="rgba(34, 197, 94, 0.3)" stroke="none" id="parietal-left" />
+                    <circle cx="260" cy="150" r="20" fill="rgba(251, 146, 60, 0.3)" stroke="none" id="parietal-right" />
+
+                    <!-- Labels -->
+                    <text x="140" y="250" text-anchor="middle" fill="#64748b" font-size="12">ANALYTICAL</text>
+                    <text x="260" y="250" text-anchor="middle" fill="#64748b" font-size="12">CREATIVE</text>
+                </svg>
+
+                <!-- 3D Container -->
+                <div id="three-container"></div>
+
+                <!-- Loading Animation -->
+                <div class="loading-brain" id="loading">
+                    <div class="neural-loader"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cognitive State Panel -->
+        <div class="cognitive-panel">
+            <h3 style="font-weight: 300; letter-spacing: 1px;">COGNITIVE STATE</h3>
+
+            <div class="cognitive-metric">
+                <div class="metric-label">Processing Power</div>
+                <div class="metric-value" id="processing-power">0%</div>
+                <div class="metric-bar">
+                    <div class="metric-fill" id="processing-bar" style="width: 0%;"></div>
+                </div>
+            </div>
+
+            <div class="cognitive-metric">
+                <div class="metric-label">Memory Utilization</div>
+                <div class="metric-value" id="memory-util">0%</div>
+                <div class="metric-bar">
+                    <div class="metric-fill" id="memory-bar" style="width: 0%;"></div>
+                </div>
+            </div>
+
+            <div class="cognitive-metric">
+                <div class="metric-label">Creative Synthesis</div>
+                <div class="metric-value" id="creative-level">0%</div>
+                <div class="metric-bar">
+                    <div class="metric-fill" id="creative-bar" style="width: 0%;"></div>
+                </div>
+            </div>
+
+            <div style="flex: 1; display: flex; flex-direction: column;">
+                <div class="metric-label">Thought Process Stream</div>
+                <div class="thought-stream" id="thought-stream"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/three@0.150.0/build/three.min.js"></script>
+    <script>
+        // State management
+        let currentMode = '2d';
+        let isProcessing = false;
+        let echoSocket = null;
+
+        // Initialize WebSocket connection
+        function initWebSocket() {
+            // Dynamic hostname detection for FQDN support
+            const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${wsProtocol}//${window.location.hostname}:8309/ws`;
+            try {
+                echoSocket = new WebSocket(wsUrl);
+
+                echoSocket.onopen = () => {
+                    console.log('Connected to Echo Brain');
+                    document.querySelector('.status-indicator').style.background = '#4ade80';
+                };
+
+                echoSocket.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    handleEchoResponse(data);
+                };
+
+                echoSocket.onclose = () => {
+                    console.log('Disconnected from Echo Brain');
+                    document.querySelector('.status-indicator').style.background = '#ef4444';
+                    setTimeout(initWebSocket, 5000); // Reconnect
+                };
+            } catch (error) {
+                console.error('WebSocket error:', error);
+            }
+        }
+
+        // Process query
+        async function processQuery() {
+            const input = document.getElementById('query-input').value;
+            if (!input.trim() || isProcessing) return;
+
+            isProcessing = true;
+            document.getElementById('loading').classList.add('active');
+
+            // Update UI
+            addThought('analyzing', `Analyzing query: "${input}"`);
+
+            // Simulate cognitive activity
+            animateBrainActivity(input);
+
+            const startTime = Date.now();
+
+            try {
+                const response = await fetch(`${window.location.protocol}//${window.location.hostname}:8309/chat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: input, model: 'auto' })
+                });
+
+                const data = await response.json();
+                const responseTime = Date.now() - startTime;
+
+                document.getElementById('response-time').textContent = `Response: ${responseTime}ms`;
+                document.getElementById('model-display').textContent = `Model: ${data.model_used}`;
+
+                handleEchoResponse(data);
+            } catch (error) {
+                console.error('Error:', error);
+                addThought('error', `Connection error: ${error.message}`);
+            } finally {
+                isProcessing = false;
+                document.getElementById('loading').classList.remove('active');
+            }
+        }
+
+        // Handle Echo response
+        function handleEchoResponse(data) {
+            // Update cognitive metrics based on model used
+            if (data.model_used) {
+                if (data.model_used.includes('tinyllama')) {
+                    updateMetrics(30, 20, 10);
+                    addThought('memory', 'Quick response mode activated');
+                } else if (data.model_used.includes('llama3.1:70b')) {
+                    updateMetrics(95, 80, 85);
+                    addThought('analyzing', 'Deep cognitive processing engaged');
+                    addThought('creative', 'Synthesizing complex patterns');
+                } else if (data.model_used.includes('qwen')) {
+                    updateMetrics(85, 70, 60);
+                    addThought('analyzing', 'Technical expertise mode');
+                }
+            }
+
+            // Display response
+            if (data.response) {
+                addThought('creative', `Response generated: ${data.response.substring(0, 100)}...`);
+            }
+        }
+
+        // Animate brain activity
+        function animateBrainActivity(query) {
+            const leftHemi = document.getElementById('left-hemisphere');
+            const rightHemi = document.getElementById('right-hemisphere');
+
+            // Reset
+            leftHemi.classList.remove('active');
+            rightHemi.classList.remove('active');
+
+            // Activate based on query type
+            setTimeout(() => {
+                if (query.toLowerCase().includes('think harder') || query.toLowerCase().includes('analyze')) {
+                    leftHemi.classList.add('active');
+                    addThought('analyzing', 'Left hemisphere: Logical processing');
+                } else if (query.toLowerCase().includes('create') || query.toLowerCase().includes('imagine')) {
+                    rightHemi.classList.add('active');
+                    addThought('creative', 'Right hemisphere: Creative synthesis');
+                } else {
+                    leftHemi.classList.add('active');
+                    rightHemi.classList.add('active');
+                    addThought('memory', 'Bilateral processing: Integrated cognition');
+                }
+            }, 100);
+
+            // Animate neural pathways
+            const paths = document.querySelectorAll('.neuron-path');
+            paths.forEach((path, index) => {
+                path.style.animationDelay = `${index * 0.2}s`;
+                path.style.opacity = '1';
+            });
+
+            setTimeout(() => {
+                paths.forEach(path => path.style.opacity = '0');
+            }, 3000);
+        }
+
+        // Update cognitive metrics
+        function updateMetrics(processing, memory, creative) {
+            // Animate values
+            animateValue('processing-power', processing, '%');
+            animateValue('memory-util', memory, '%');
+            animateValue('creative-level', creative, '%');
+
+            // Update bars
+            document.getElementById('processing-bar').style.width = `${processing}%`;
+            document.getElementById('memory-bar').style.width = `${memory}%`;
+            document.getElementById('creative-bar').style.width = `${creative}%`;
+        }
+
+        // Animate numeric values
+        function animateValue(id, target, suffix = '') {
+            const element = document.getElementById(id);
+            const current = parseInt(element.textContent) || 0;
+            const increment = (target - current) / 20;
+            let value = current;
+
+            const timer = setInterval(() => {
+                value += increment;
+                if ((increment > 0 && value >= target) || (increment < 0 && value <= target)) {
+                    value = target;
+                    clearInterval(timer);
+                }
+                element.textContent = Math.round(value) + suffix;
+            }, 50);
+        }
+
+        // Add thought to stream
+        function addThought(type, text) {
+            const stream = document.getElementById('thought-stream');
+            const thought = document.createElement('div');
+            thought.className = `thought-line ${type}`;
+            thought.textContent = `[${new Date().toLocaleTimeString()}] ${text}`;
+            stream.appendChild(thought);
+            stream.scrollTop = stream.scrollHeight;
+
+            // Remove old thoughts if too many
+            if (stream.children.length > 50) {
+                stream.removeChild(stream.firstChild);
+            }
+        }
+
+        // Switch visualization mode
+        function switchMode(mode) {
+            currentMode = mode;
+
+            // Update buttons
+            document.querySelectorAll('.visualization-mode .mode-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Toggle displays
+            document.getElementById('brain-2d').style.display = mode === '2d' ? 'block' : 'none';
+            document.getElementById('three-container').style.display = mode === '3d' ? 'block' : 'none';
+
+            if (mode === '3d') {
+                init3DBrain();
+            } else if (mode === 'neural') {
+                initNeuralMap();
+            }
+        }
+
+        // Initialize 3D brain
+        function init3DBrain() {
+            const container = document.getElementById('three-container');
+
+            // Clear existing
+            container.innerHTML = '';
+
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, container.offsetWidth / container.offsetHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+
+            renderer.setSize(container.offsetWidth, container.offsetHeight);
+            container.appendChild(renderer.domElement);
+
+            // Create brain hemispheres
+            const leftGeometry = new THREE.SphereGeometry(2, 32, 32);
+            const rightGeometry = new THREE.SphereGeometry(2, 32, 32);
+
+            const brainMaterial = new THREE.MeshPhongMaterial({
+                color: 0x667eea,
+                transparent: true,
+                opacity: 0.3,
+                wireframe: true
+            });
+
+            const leftHemisphere = new THREE.Mesh(leftGeometry, brainMaterial);
+            leftHemisphere.position.x = -1;
+
+            const rightHemisphere = new THREE.Mesh(rightGeometry, brainMaterial.clone());
+            rightHemisphere.position.x = 1;
+            rightHemisphere.material.color.set(0x764ba2);
+
+            scene.add(leftHemisphere);
+            scene.add(rightHemisphere);
+
+            // Add lights
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+
+            const pointLight = new THREE.PointLight(0x667eea, 1);
+            pointLight.position.set(5, 5, 5);
+            scene.add(pointLight);
+
+            camera.position.z = 8;
+
+            // Animation loop
+            function animate() {
+                requestAnimationFrame(animate);
+
+                leftHemisphere.rotation.y += 0.005;
+                rightHemisphere.rotation.y -= 0.005;
+
+                // Simulate electrical activity
+                if (isProcessing) {
+                    leftHemisphere.material.opacity = 0.3 + Math.sin(Date.now() * 0.001) * 0.2;
+                    rightHemisphere.material.opacity = 0.3 + Math.cos(Date.now() * 0.001) * 0.2;
+                }
+
+                renderer.render(scene, camera);
+            }
+
+            animate();
+        }
+
+        // Initialize neural map
+        function initNeuralMap() {
+            const canvas = document.getElementById('brain-canvas');
+            canvas.innerHTML = `
+                <div style="color: #64748b; text-align: center;">
+                    <p>Neural Map Visualization</p>
+                    <p style="font-size: 12px; margin-top: 10px;">Advanced neural pathway mapping coming soon...</p>
+                </div>
+            `;
+        }
+
+        // Set query helper
+        function setQuery(text) {
+            document.getElementById('query-input').value = text;
+        }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', () => {
+            // Try to connect to WebSocket
+            // initWebSocket(); // Commented out for now since WebSocket endpoint might not exist
+
+            // Add some initial thoughts
+            addThought('memory', 'Echo Brain initialized');
+            addThought('analyzing', 'Ready for cognitive processing');
+        });
+
+        // Handle Enter key in input
+        document.getElementById('query-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                processQuery();
+            }
+        });
+    </script>
+</body>
+</html>

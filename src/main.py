@@ -809,15 +809,12 @@ async def remove_model(
         logger.error(f"Failed to remove model: {e}")
         return {"error": str(e)}
 
-# Add route to serve the dashboard
-@app.get("/dashboard", response_class=HTMLResponse)
+# Redirect to Vue app
+@app.get("/dashboard")
 async def serve_dashboard():
-    """Serve the Echo dashboard"""
-    dashboard_path = "/opt/tower-echo-brain/static/echo_dashboard.html"
-    if os.path.exists(dashboard_path):
-        with open(dashboard_path, 'r') as f:
-            return HTMLResponse(content=f.read())
-    return HTMLResponse(content="Dashboard not found", status_code=404)
+    """Redirect to Vue app"""
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/static/dist/", status_code=302)
 
 @app.get("/brain-visual", response_class=HTMLResponse)
 async def serve_brain_visual():

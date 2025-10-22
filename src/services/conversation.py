@@ -20,25 +20,13 @@ class ConversationManager:
         # Rest of the initialization (intent patterns, etc.)
         self.intent_patterns = {
             "service_testing": [
-                r"test\s+(\w+)",
-                r"run.*test.*on\s+(\w+)",
-                r"check\s+(\w+).*working",
-                r"verify\s+(\w+).*status",
-                r"test.*(comfyui|anime|dashboard|auth|echo|deepseek|kb|voice)"
+                r"test.*(comfyui|anime|dashboard|auth|echo|deepseek|kb|voice|knowledge).*(service|api)"
             ],
             "service_debugging": [
-                r"debug\s+(\w+)",
-                r"troubleshoot\s+(\w+)",
-                r"diagnose\s+(\w+).*problem",
-                r"analyze\s+(\w+).*issue",
-                r"debug.*(comfyui|anime|dashboard|auth|echo|deepseek|kb|voice)"
+                r"debug.*(comfyui|anime|dashboard|auth|echo|deepseek|kb|voice|knowledge).*(service|api)"
             ],
             "service_monitoring": [
-                r"status\s+(\w+)",
-                r"health\s+(\w+)",
-                r"check\s+(\w+).*health",
-                r"monitor\s+(\w+)",
-                r"get.*stats|statistics"
+                r"(comfyui|anime|dashboard|auth|echo|deepseek|kb|voice|knowledge).*(status|health)"
             ],
             "agent_delegation": [
                 r"delegate.*to\s+(\w+)",
@@ -91,6 +79,10 @@ class ConversationManager:
                 r"image.*of|picture.*of|visual.*of",
                 r"paint|sketch|render|visualize",
                 r"comfyui.*generate|use.*comfyui"
+            ],
+            "anime_generation": [
+                r"(generate|create|make).*(anime|animation|animated).*(video|scene|clip)",
+                r"anime.*(video|generation)"
             ],
             "voice_generation": [
                 r"generate.*voice|create.*voice|make.*voice",

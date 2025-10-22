@@ -152,6 +152,53 @@ async def handle_capability_intent(intent: str, params: Dict, request: QueryRequ
                     status_icon = "✅" if status.get('active') else "❌"
                     response_text += f"  {status_icon} {service}: {status.get('status', 'unknown')}\n"
 
+        elif intent == "anime_generation":
+            logger.info(f"🎬 AUTO-ANIME: Generating anime with params: {params}")
+            try:
+                import aiohttp
+                prompt_text = params.get('prompt', request.query)
+                prompt_text = prompt_text.replace('generate anime', '').replace('create anime', '').strip()
+                if not prompt_text:
+                    prompt_text = "anime magical girl"
+                
+                async with aiohttp.ClientSession() as session:
+                    payload = {"prompt": prompt_text}
+                    async with session.post(
+                        "http://localhost:8328/api/generate",
+                        json=payload,
+                        timeout=aiohttp.ClientTimeout(total=300)
+                    ) as resp:
+                        result = await resp.json()
+                        if resp.status == 200:
+                            response_text = (
+                                f"✅ Anime generation started!\n"
+                                f"Generation ID: {result.get('generation_id')}\n"
+                                f"Status: {result.get('status')}\n"
+                                f"Check at: /api/status/{result.get('generation_id')}"
+                            )
+                        else:
+                            error_msg = result.get('detail', {}).get('message', 'Unknown error')
+                            response_text = f"❌ Anime generation failed: {error_msg}"
+                        
+                        return QueryResponse(
+                            response=response_text,
+                            model_used="anime_service_8328",
+                            intelligence_level="capability",
+                            processing_time=time.time() - start_time,
+                            escalation_path=["anime_generation_capability"],
+                            conversation_id=request.conversation_id
+                        )
+            except Exception as e:
+                logger.error(f"Anime generation error: {e}")
+                return QueryResponse(
+                    response=f"❌ Anime generation error: {str(e)}",
+                    model_used="anime_service_error",
+                    intelligence_level="capability",
+                    processing_time=time.time() - start_time,
+                    escalation_path=["anime_error"],
+                    conversation_id=request.conversation_id
+                )
+
         elif intent == "image_generation":
             logger.info(f"🎨 AUTO-IMAGE: Generating image with params: {params}")
             try:
@@ -316,16 +363,8 @@ async def query_echo(request: QueryRequest):
             return response
 
         # Handle capability intents automatically
-        capability_intents = ['service_testing', 'service_debugging', 'service_monitoring', 'agent_delegation', 'inter_service_communication', 'image_generation', 'voice_generation', 'music_generation']
-        # Skip service operations for regular Telegram conversation
-        is_telegram_chat = request.context and request.context.get("source") == "telegram_conversation"
-        is_explicit_command = request.context and request.context.get("command") is not None
-        service_intents = ["service_testing", "service_debugging", "service_monitoring"]
-        
-        # Only route to capability if: (1) explicit command OR (2) not telegram chat OR (3) not a service intent
-        should_route_capability = (is_explicit_command or not is_telegram_chat or intent not in service_intents)
-        
-        if intent in capability_intents and should_route_capability:
+        capability_intents = ['anime_generation', 'service_testing', 'service_debugging', 'service_monitoring', 'agent_delegation', 'inter_service_communication', 'image_generation', 'voice_generation', 'music_generation']
+        if intent in capability_intents:
             response = await handle_capability_intent(intent, intent_params, request, request.conversation_id, start_time)
 
             # Update conversation

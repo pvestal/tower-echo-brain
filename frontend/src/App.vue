@@ -23,7 +23,7 @@
     <main class="max-w-7xl mx-auto px-4 py-8">
       <ChatInterface v-if="currentTab === 'chat'" />
       <VoiceInterface v-if="currentTab === 'voice'" />
-      <Dashboard v-if="currentTab === 'dashboard'" />
+      <EchoMetrics v-if="currentTab === 'metrics'" />
       <PlaidAuth v-if="currentTab === 'plaid'" />
     </main>
   </div>
@@ -34,7 +34,7 @@ import { ref, computed } from 'vue'
 import { TowerNavbar, TowerWebSocketStatus } from '@tower/ui-components'
 import ChatInterface from './views/ChatInterface.vue'
 import VoiceInterface from './views/VoiceInterface.vue'
-import Dashboard from './views/Dashboard.vue'
+import EchoMetrics from './views/EchoMetrics.vue'
 import PlaidAuth from './views/PlaidAuth.vue'
 
 const currentTab = ref('chat')
@@ -43,7 +43,7 @@ const wsConnected = ref(false)
 const tabs = [
   { id: 'chat', label: 'Chat' },
   { id: 'voice', label: 'Voice' },
-  { id: 'dashboard', label: 'Dashboard' },
+  { id: 'metrics', label: 'Metrics' },
   { id: 'plaid', label: 'Financial' }
 ]
 </script>
