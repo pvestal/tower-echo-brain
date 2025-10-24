@@ -8,6 +8,7 @@ import asyncio
 from src.tasks.autonomous_repair_executor import repair_executor
 import logging
 import time
+from src.tasks.task_implementation_executor import get_task_implementation_executor
 import traceback
 import signal
 import sys
@@ -321,10 +322,30 @@ class BackgroundWorker:
             return await self._perform_analysis(task.payload)
             
         # Register all handlers
-        self.register_handler(TaskType.MONITORING, handle_monitoring_task)
-        self.register_handler(TaskType.OPTIMIZATION, handle_optimization_task)
-        self.register_handler(TaskType.LEARNING, handle_learning_task)
-        self.register_handler(TaskType.MAINTENANCE, handle_maintenance_task)
+        async def handle_code_refactor_task(task: Task) -> Dict[str, Any]:
+            """Handle autonomous code refactoring/implementation tasks"""
+            try:
+                task_description = task.payload.get("task")
+                service = task.payload.get("service")
+                test = task.payload.get("test", True)
+                
+                logger.info(f"🔧 Starting CODE_REFACTOR task: {task_description[:100]}")
+                logger.info(f"   Service: {service}")
+                logger.info(f"   Test mode: {test}")
+                
+                # TODO: Implement full autonomous code implementation
+                # For now, log that we received the task
+                
+                return {
+                    "success": True,
+                    "message": "CODE_REFACTOR handler executed (simplified version)",
+                    "task_description": task_description,
+                    "service": service,
+                    "status": "Handler needs full implementation"
+                }
+            except Exception as e:
+                logger.error(f"Code refactor task failed: {e}", exc_info=True)
+                raise
         self.register_handler(TaskType.ANALYSIS, handle_analysis_task)
         
         logger.info("✅ Built-in task handlers registered")
