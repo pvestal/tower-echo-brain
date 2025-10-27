@@ -19,7 +19,7 @@ class CharacterEvolutionTester:
         self.base_url = "http://localhost:8350"
         self.db_config = {
             "host": "localhost",
-            "database": "tower_consolidated",
+            "database": "echo_brain",
             "user": "patrick",
             "password": "admin123"
         }

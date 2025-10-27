@@ -16,6 +16,7 @@ from typing import Dict, List, Optional, Any, Tuple
 import psutil
 import schedule
 
+from src.db.database import database
 from .task_queue import (
     TaskQueue, Task, TaskType, TaskPriority, TaskStatus,
     create_monitoring_task, create_optimization_task,
@@ -26,6 +27,7 @@ from .task_queue import (
 # Import repair executor for daily digest
 from .autonomous_repair_executor import repair_executor
 from .code_refactor_executor import code_refactor_executor
+from .security_monitoring import SecurityConfigMonitor, SecurityIssue
 
 logger = logging.getLogger(__name__)
 
@@ -63,17 +65,20 @@ class AutonomousBehaviors:
             'system_issues_detected': 0
         }
         
+        # Database for persistent state
+        self.db = database
+        
         # Tower service endpoints for monitoring
         self.tower_services = {
-            'echo': 'http://localhost:8309',
-            'anime': 'http://localhost:8328',
-            'knowledge_base': 'http://localhost:8307',
-            'comfyui': 'http://localhost:8188',
+            'echo': 'http://localhost:8309/api/echo/health',
+            'anime': 'http://localhost:8328/api/health',
+            'knowledge_base': 'http://localhost:8307/api/health',
+            # 'comfyui': 'http://localhost:8188/api/health',  # Removed: No health endpoint available
             'auth': 'http://localhost:8088/api/auth/health',
-            'apple_music': 'http://localhost:8315',
-            'vault': 'http://localhost:8200',
-            'notifications': 'http://localhost:8350',
-            'telegram_bot': 'http://localhost:8309/api/telegram/health',
+            'apple_music': 'http://localhost:8315/api/music/health',
+            # 'vault': 'http://localhost:8200/v1/sys/health',  # Removed: Vault is sealed
+            # 'notifications': 'http://localhost:8350/api/notifications/health',  # Removed: Service not running
+            # 'telegram_bot': 'http://localhost:8309/api/telegram/health',  # Removed: Service not needed
         }
         
         # Thresholds for proactive detection
@@ -93,6 +98,9 @@ class AutonomousBehaviors:
             'error', 'warning', 'failed', 'timeout', 'connection',
             'memory', 'cpu', 'disk', 'permission', 'authentication'
         ]
+
+        # Security monitoring
+        self.security_monitor = SecurityConfigMonitor()
         
     async def start(self):
         """Start autonomous behaviors"""
@@ -116,7 +124,8 @@ class AutonomousBehaviors:
         asyncio.create_task(self._daily_digest_loop())
         asyncio.create_task(self._scheduled_task_processor())
         asyncio.create_task(self._code_quality_loop())
-        
+        asyncio.create_task(self._security_configuration_loop())
+
         logger.info("✅ Echo autonomous behaviors active")
         
     async def stop(self):
@@ -211,6 +220,72 @@ class AutonomousBehaviors:
                 logger.error(f"❌ Error in proactive monitoring: {e}")
                 await asyncio.sleep(60)
                 
+
+    async def _check_restart_cooldown(self, service_name: str):
+        """Check if service can be restarted (persists across Echo restarts)"""
+        try:
+            import psycopg2
+            conn = psycopg2.connect(**self.db.db_config)
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT last_restart_time, restart_count FROM restart_cooldowns WHERE service_name = %s",
+                (service_name,)
+            )
+            result = cursor.fetchone()
+            cursor.close()
+            conn.close()
+            
+            if result:
+                last_restart, restart_count = result
+                minutes_since = (datetime.now() - last_restart).total_seconds() / 60
+                if restart_count >= 3:
+                    required_cooldown = self.RESTART_COOLDOWN_MINUTES * 3
+                    logger.warning(f"⚠️ Restart loop detected for {service_name}: {restart_count} restarts")
+                    self.behavior_stats['restart_loops_prevented'] += 1
+                    return (minutes_since >= required_cooldown, minutes_since)
+                return (minutes_since >= self.RESTART_COOLDOWN_MINUTES, minutes_since)
+            return (True, 999.0)
+        except Exception as e:
+            logger.error(f"Error checking cooldown: {e}")
+            return (True, 999.0)
+
+    async def _record_restart(self, service_name: str):
+        """Record service restart in database"""
+        try:
+            import psycopg2
+            conn = psycopg2.connect(**self.db.db_config)
+            cursor = conn.cursor()
+            cursor.execute(
+                """INSERT INTO restart_cooldowns (service_name, last_restart_time, restart_count, updated_at)
+                   VALUES (%s, NOW(), 1, NOW())
+                   ON CONFLICT (service_name) DO UPDATE SET
+                   last_restart_time = NOW(), restart_count = restart_cooldowns.restart_count + 1, updated_at = NOW()""",
+                (service_name,)
+            )
+            conn.commit()
+            cursor.close()
+            conn.close()
+            logger.info(f"✅ Recorded restart for {service_name} in database")
+        except Exception as e:
+            logger.error(f"Error recording restart: {e}")
+
+    async def _log_self_awareness_issue(self, issue_type: str, details: str):
+        """Log when Echo detects an issue with itself"""
+        try:
+            import json
+            logger.error(f"🧠 SELF-AWARENESS: {issue_type} - {details}")
+            await self.db.execute(
+                """INSERT INTO autonomous_tasks (task_id, name, description, priority, status, created_at, result)
+                   VALUES ($1, $2, $3, $4, $5, NOW(), $6::jsonb) ON CONFLICT (task_id) DO NOTHING""",
+                f"self-awareness-{datetime.now().timestamp()}",
+                "Echo Self-Awareness Alert",
+                f"{issue_type}: {details}",
+                10, "pending",
+                json.dumps({"type": issue_type, "details": details, "requires_human_intervention": True})
+            )
+        except Exception as e:
+            logger.error(f"Error logging self-awareness: {e}")
+
     async def _monitor_tower_services(self):
         """Monitor all Tower services and create tasks for issues"""
         for service_name, service_url in self.tower_services.items():
@@ -218,7 +293,7 @@ class AutonomousBehaviors:
                 start_time = time.time()
                 
                 async with aiohttp.ClientSession() as session:
-                    async with session.get(f"{service_url}/api/health", timeout=5) as response:
+                    async with session.get(service_url, timeout=5) as response:
                         response_time = time.time() - start_time
                         
                         if response.status != 200:
@@ -227,17 +302,20 @@ class AutonomousBehaviors:
                             actual_service_name = self.service_name_map.get(service_name, service_name)
                             logger.info(f"🔍 Service mapping: {service_name} → {actual_service_name}")
                             
-                            # Check cooldown - do not restart if recently restarted
-                            last_restart = self.last_restart_times.get(actual_service_name)
+                            # SELF-EXCLUSION: Never restart Echo itself
+                            if actual_service_name == 'tower-echo-brain.service':
+                                logger.warning(f"🛑 SELF-EXCLUSION: Refusing to restart myself")
+                                await self._log_self_awareness_issue("Attempted self-restart", f"HTTP {response.status}")
+                                continue
                             
-                            if last_restart:
-                                minutes_since_restart = (datetime.now() - last_restart).total_seconds() / 60
-                                if minutes_since_restart < self.RESTART_COOLDOWN_MINUTES:
-                                    logger.info(f"Skipping restart of {actual_service_name} - cooldown active ({minutes_since_restart:.1f}m / {self.RESTART_COOLDOWN_MINUTES}m)")
-                                    continue
+                            # Check cooldown from database (persistent)
+                            can_restart, minutes_since = await self._check_restart_cooldown(actual_service_name)
+                            if not can_restart:
+                                logger.info(f"⏱️ Skipping restart of {actual_service_name} - cooldown active ({minutes_since:.1f}m)")
+                                continue
                             
-                            # Track this restart
-                            self.last_restart_times[actual_service_name] = datetime.now()
+                            # Record this restart in database
+                            await self._record_restart(actual_service_name)
                             
                             # Create maintenance task to ACTUALLY RESTART THE SERVICE
                             repair_task = create_maintenance_task(
@@ -666,13 +744,55 @@ class AutonomousBehaviors:
                         elif pylint_score is not None:
                             logger.info(f"✅ {Path(service_path).name} code quality OK (score: {pylint_score:.1f}/10)")
                 
-                # Check daily (86400 seconds)
-                await asyncio.sleep(86400)
+                # Check every hour (3600 seconds) for more proactive monitoring
+                await asyncio.sleep(3600)
                 
             except Exception as e:
                 logger.error(f"Code quality monitoring error: {e}")
                 await asyncio.sleep(3600)  # Retry in 1 hour on error
-    
+
+    async def _security_configuration_loop(self):
+        """Monitor security configurations and create alerts"""
+        logger.info("🔒 Security configuration monitoring started")
+
+        while self.running:
+            try:
+                # Run security checks
+                issues = await self.security_monitor.run_all_checks()
+
+                # Generate tasks for each critical/high issue
+                for issue in issues:
+                    if issue.severity in ['CRITICAL', 'HIGH']:
+                        # Create security breach task
+                        task = create_monitoring_task(
+                            f"Security Issue: {issue.title}",
+                            "system",
+                            f"security_{issue.category}",
+                            TaskPriority.URGENT if issue.severity == 'CRITICAL' else TaskPriority.HIGH
+                        )
+                        task.payload.update({
+                            'severity': issue.severity,
+                            'category': issue.category,
+                            'description': issue.description,
+                            'remediation': issue.remediation,
+                            'detected_at': issue.detected_at.isoformat(),
+                            'details': issue.details
+                        })
+                        await self.task_queue.add_task(task)
+
+                        # Log the security issue
+                        logger.critical(f"🚨 {issue.severity}: {issue.title}")
+
+                # Update stats
+                self.behavior_stats['system_issues_detected'] += len([i for i in issues if i.severity in ['CRITICAL', 'HIGH']])
+
+                # Wait 1 hour before next security check
+                await asyncio.sleep(3600)
+
+            except Exception as e:
+                logger.error(f"❌ Error in security configuration loop: {e}")
+                await asyncio.sleep(3600)
+
     def get_behavior_stats(self) -> Dict[str, Any]:
         """Get autonomous behavior statistics"""
         return {

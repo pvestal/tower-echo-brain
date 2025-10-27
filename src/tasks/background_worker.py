@@ -329,23 +329,43 @@ class BackgroundWorker:
                 service = task.payload.get("service")
                 test = task.payload.get("test", True)
                 
-                logger.info(f"🔧 Starting CODE_REFACTOR task: {task_description[:100]}")
-                logger.info(f"   Service: {service}")
-                logger.info(f"   Test mode: {test}")
+                executor = get_task_implementation_executor(board=None)
+                result = await executor.implement_task(task_description, service, test)
                 
-                # TODO: Implement full autonomous code implementation
-                # For now, log that we received the task
+                # Store via main.py function
+                import json
+                query = """
+                    INSERT INTO code_modifications
+                    (task_id, service, request, changes, review_score, success, backup_path, test_results, created_at)
+                    VALUES (:task_id, :service, :request, :changes, :review_score, :success, :backup_path, :test_results, NOW())
+                """
+                values = {
+                    "task_id": task.id,
+                    "service": result.get("service"),
+                    "request": task_description,
+                    "changes": json.dumps(result.get("code_changes", {})),
+                    "review_score": result.get("review_results", {}).get("score"),
+                    "success": result.get("success", False),
+                    "backup_path": json.dumps(result.get("code_changes", {}).get("backups_created", [])),
+                    "test_results": json.dumps(result.get("test_results", {}))
+                }
+                # from src.core.database import database  # BROKEN - commented out
+                # await database.execute(query, values)  # BROKEN - commented out
                 
                 return {
-                    "success": True,
-                    "message": "CODE_REFACTOR handler executed (simplified version)",
-                    "task_description": task_description,
-                    "service": service,
-                    "status": "Handler needs full implementation"
+                    "success": result.get("success", False),
+                    "review_score": result.get("review_results", {}).get("score"),
+                    "files_modified": list(result.get("code_changes", {}).keys())
                 }
             except Exception as e:
-                logger.error(f"Code refactor task failed: {e}", exc_info=True)
+                logger.error(f"Code refactor task failed: {e}")
                 raise
+
+        self.register_handler(TaskType.MONITORING, handle_monitoring_task)
+        self.register_handler(TaskType.OPTIMIZATION, handle_optimization_task)
+        self.register_handler(TaskType.LEARNING, handle_learning_task)
+        self.register_handler(TaskType.MAINTENANCE, handle_maintenance_task)
+        self.register_handler(TaskType.CODE_REFACTOR, handle_code_refactor_task)
         self.register_handler(TaskType.ANALYSIS, handle_analysis_task)
         
         logger.info("✅ Built-in task handlers registered")

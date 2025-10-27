@@ -63,7 +63,7 @@ class VoiceStatusRequest(BaseModel):
 class DatabaseConfig:
     def __init__(self):
         self.host = "localhost"
-        self.database = "tower_consolidated"
+        self.database = "echo_brain"
         self.user = "patrick"
         self.password = None  # No password for local connections
         self.port = 5432

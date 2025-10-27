@@ -911,7 +911,7 @@ if __name__ == "__main__":
             import psycopg2
             db_config = {
                 'host': 'localhost',
-                'database': 'tower_consolidated',
+                'database': 'echo_brain',
                 'user': 'patrick',
                 'password': 'Beau40818'
             }
@@ -1001,7 +1001,7 @@ if __name__ == "__main__":
             import psycopg2
             db_config = {
                 'host': 'localhost',
-                'database': 'tower_consolidated',
+                'database': 'echo_brain',
                 'user': 'patrick',
                 'password': 'Beau40818'
             }

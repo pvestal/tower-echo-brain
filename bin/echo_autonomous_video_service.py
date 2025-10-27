@@ -34,7 +34,7 @@ TEMP_DIR = Path("/opt/tower-anime/data/temp")
 
 DB_CONFIG = {
     'host': 'localhost',
-    'database': 'tower_consolidated',
+    'database': 'echo_brain',
     'user': 'patrick',
     'password': os.getenv('DB_PASSWORD', '')
 }

@@ -222,7 +222,7 @@ class ConversationManager:
         if len(self.conversations[conversation_id]["history"]) > 10:
             self.conversations[conversation_id]["history"] =                 self.conversations[conversation_id]["history"][-10:]
 
-    def get_conversation_context(self, conversation_id: str) -> Dict:
+    async def get_conversation_context(self, conversation_id: str) -> Dict:
         """Get conversation context from memory or database"""
         # Check memory cache first
         if conversation_id in self.conversations:
@@ -237,13 +237,8 @@ class ConversationManager:
         # Try loading from database
         if self.database:
             try:
-                import asyncio
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                history = loop.run_until_complete(
-                    self.database.get_conversation_history(conversation_id)
-                )
-                loop.close()
+                # Direct async call - no event loop needed
+                history = await self.database.get_conversation_history(conversation_id)
 
                 if history:
                     # Convert database records to conversation format

@@ -309,11 +309,13 @@ async def query_echo(request: QueryRequest):
 
     # Cognitive model selection if available
     selected_model = None
+    complexity_score = None
+    tier = None
     selection_reason = "default"
     try:
         from fixed_model_selector import ModelSelector
         selector = ModelSelector()
-        selected_model, intelligence_level, selection_reason = selector.select_model(
+        selected_model, intelligence_level, selection_reason, complexity_score, tier = selector.select_model(
             request.query,
             request.intelligence_level if request.intelligence_level != "auto" else None
         )
@@ -325,7 +327,7 @@ async def query_echo(request: QueryRequest):
 
     try:
         # Get conversation context
-        conversation_context = conversation_manager.get_conversation_context(request.conversation_id)
+        conversation_context = await conversation_manager.get_conversation_context(request.conversation_id)
 
         # Classify intent and extract parameters
         intent, confidence, intent_params = conversation_manager.classify_intent(
@@ -379,7 +381,8 @@ async def query_echo(request: QueryRequest):
                 await database.log_interaction(
                     request.query, response.response, response.model_used,
                     response.processing_time, response.escalation_path,
-                    request.conversation_id, request.user_id, intent, confidence
+                    request.conversation_id, request.user_id, intent, confidence,
+                    complexity_score, tier
                 )
                 logger.info(f"✅ DEBUG: log_interaction SUCCESS for conv_id={request.conversation_id}")
             except Exception as e:
@@ -441,7 +444,8 @@ async def query_echo(request: QueryRequest):
                 await database.log_interaction(
                     request.query, response.response, response.model_used,
                     response.processing_time, response.escalation_path,
-                    request.conversation_id, request.user_id, intent, confidence
+                    request.conversation_id, request.user_id, intent, confidence,
+                    complexity_score, tier
                 )
                 logger.info(f"✅ DEBUG: log_interaction SUCCESS for conv_id={request.conversation_id}")
             except Exception as e:
@@ -571,7 +575,7 @@ async def get_conversation(conversation_id: str):
     """Get conversation history"""
     try:
         history = await database.get_conversation_history(conversation_id)
-        context = conversation_manager.get_conversation_context(conversation_id)
+        context = await conversation_manager.get_conversation_context(conversation_id)
 
         return {
             "conversation_id": conversation_id,

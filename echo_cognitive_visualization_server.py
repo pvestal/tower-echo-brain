@@ -1091,7 +1091,7 @@ class EchoDatabase:
 
         self.db_config = {
             "host": os.environ.get("DB_HOST", "localhost"),
-            "database": os.environ.get("DB_NAME", "tower_consolidated"),
+            "database": os.environ.get("DB_NAME", "echo_brain"),
             "user": os.environ.get("DB_USER", "patrick")
         }
 

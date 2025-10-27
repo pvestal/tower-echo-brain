@@ -31,25 +31,26 @@ class QueryComplexity:
 
     def __init__(self, db_config: Dict):
         self.db_config = db_config
-        self.load_weights()
+        self.weights = self.default_weights()  # Load defaults, no blocking DB call
 
-    def load_weights(self):
-        """Load learned weights from database"""
-        try:
-            conn = psycopg2.connect(**self.db_config)
-            cursor = conn.cursor()
-
-            cursor.execute("""
-                SELECT feature, weight FROM model_decision_weights
-                WHERE active = true
-            """)
-
-            self.weights = dict(cursor.fetchall()) if cursor.rowcount > 0 else self.default_weights()
-            conn.close()
-
-        except Exception as e:
-            logger.warning(f"Using default weights: {e}")
-            self.weights = self.default_weights()
+    async def load_weights(self):
+        """Load learned weights from database (async with thread wrapper)"""
+        def _load():
+            try:
+                conn = psycopg2.connect(**self.db_config)
+                cursor = conn.cursor()
+                cursor.execute("""
+                    SELECT feature, weight FROM model_decision_weights
+                    WHERE active = true
+                """)
+                weights = dict(cursor.fetchall()) if cursor.rowcount > 0 else self.default_weights()
+                conn.close()
+                return weights
+            except Exception as e:
+                logger.warning(f"Using default weights: {e}")
+                return self.default_weights()
+        
+        self.weights = await asyncio.to_thread(_load)
 
     def default_weights(self) -> Dict[str, float]:
         return {
@@ -350,7 +351,7 @@ class ModelDecisionEngine:
         model = await self._select_best_model(selected_tier, features, context)
 
         # Record decision
-        self._record_decision(query, complexity_score, features, model, selected_tier)
+        await self._record_decision(query, complexity_score, features, model, selected_tier)
 
         return {
             "model": model["name"],
@@ -428,36 +429,34 @@ class ModelDecisionEngine:
                 return tier
         return ModelTier.CLOUD
 
-    def _record_decision(self, query: str, score: float, features: Dict,
+    async def _record_decision(self, query: str, score: float, features: Dict,
                         model: Dict, tier: ModelTier):
-        """Record decision for learning"""
-        try:
-            conn = psycopg2.connect(**self.db_config)
-            cursor = conn.cursor()
-
-            import hashlib
-            query_hash = hashlib.sha256(query.encode()).hexdigest()
-
-            cursor.execute("""
-                INSERT INTO model_decisions
-                (query_hash, query_text, complexity_score, features,
-                 selected_model, model_tier, created_at)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
-                RETURNING decision_id
-            """, (
-                query_hash, query[:1000], score, json.dumps(features),
-                model.get('name', 'unknown'), tier.value, datetime.now()
-            ))
-
-            decision_id = cursor.fetchone()[0]
-            conn.commit()
-            conn.close()
-
-            return decision_id
-
-        except Exception as e:
-            logger.error(f"Failed to record decision: {e}")
-            return None
+        """Record decision for learning (async with thread wrapper)"""
+        def _record():
+            try:
+                conn = psycopg2.connect(**self.db_config)
+                cursor = conn.cursor()
+                import hashlib
+                query_hash = hashlib.sha256(query.encode()).hexdigest()
+                cursor.execute("""
+                    INSERT INTO model_decisions
+                    (query_hash, query_text, complexity_score, features,
+                     selected_model, model_tier, created_at)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    RETURNING decision_id
+                """, (
+                    query_hash, query[:1000], score, json.dumps(features),
+                    model.get('name', 'unknown'), tier.value, datetime.now()
+                ))
+                decision_id = cursor.fetchone()[0]
+                conn.commit()
+                conn.close()
+                return decision_id
+            except Exception as e:
+                logger.error(f"Failed to record decision: {e}")
+                return None
+        
+        return await asyncio.to_thread(_record)
 
     async def record_performance(self, decision_id: int, response_time: float,
                                 token_count: int, success: bool):

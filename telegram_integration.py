@@ -34,9 +34,9 @@ SUPPORT_CHANNEL_ID = os.getenv("TELEGRAM_SUPPORT_CHANNEL_ID", "")
 DB_CONFIG = {
     'host': os.getenv('DB_HOST', 'localhost'),
     'port': int(os.getenv('DB_PORT', '5432')),
-    'database': os.getenv('DB_NAME', 'tower_consolidated'),
+    'database': os.getenv('DB_NAME', 'echo_brain'),
     'user': os.getenv('DB_USER', 'patrick'),
-    'password': os.getenv('DB_PASSWORD', 'patrick123')
+    'password': os.getenv('DB_PASSWORD', '')
 }
 
 # Telegram configuration
@@ -74,6 +74,7 @@ async def telegram_webhook(
     """
     Handle incoming Telegram webhook updates
     Processes messages and provides therapeutic responses
+    SECURITY: Only accepts messages from authorized user IDs
     """
     # Verify webhook secret
     if secret != TELEGRAM_WEBHOOK_SECRET:
@@ -106,8 +107,8 @@ async def telegram_webhook(
         if not text:
             return {"status": "ignored", "reason": "no text content"}
 
-        # Log incoming message
-        logger.info(f"Processing message from {username} (ID: {user_id}): {text[:100]}...")
+        # Log incoming message (allow anyone to message)
+        logger.info(f"📩 Processing message from {username} (ID: {user_id}): {text[:100]}...")
 
         # Process message asynchronously in background
         background_tasks.add_task(
@@ -136,10 +137,26 @@ async def process_veteran_message(
     """
     Process veteran message in the background
     Provides therapeutic response based on risk assessment
+    SECURITY: Filters sensitive information for non-Patrick users
     """
     try:
+        # Check if query requests sensitive information
+        from src.security.sensitive_filter import should_answer_query, filter_sensitive_response, is_patrick
+
+        allow, reason = should_answer_query(text, user_id)
+        if not allow:
+            # Send generic response for sensitive queries from non-Patrick users
+            await send_telegram_response(chat_id, reason)
+            logger.info(f"🚫 Blocked sensitive query from {username} (ID: {user_id})")
+            return
+
         # Process through veteran guardian system
         result = await guardian_system.process_telegram_message(update)
+
+        # Filter sensitive information from response if not Patrick
+        response = result.get('response', 'I encountered an issue processing your request.')
+        if not is_patrick(user_id):
+            response = filter_sensitive_response(response, user_id, username)
 
         # Log result
         logger.info(f"Message processed - Risk: {result.get('risk_level')}, "

@@ -131,9 +131,9 @@ async def get_echo_status():
 
         # Get recent conversation messages
         cursor.execute("""
-            SELECT created_at, user_message, assistant_response
-            FROM conversations
-            ORDER BY created_at DESC
+            SELECT timestamp, query, response
+            FROM echo_unified_interactions
+            ORDER BY timestamp DESC
             LIMIT 5;
         """)
         messages = []
@@ -149,16 +149,19 @@ async def get_echo_status():
                     "text": f"Echo: {assistant_msg[:100]}..." if len(assistant_msg) > 100 else f"Echo: {assistant_msg}"
                 })
 
-        # Get current agentic persona (from latest model decision or default)
+        # Get current agentic persona (simplified - use latest model tier)
         cursor.execute("""
-            SELECT persona, created_at
+            SELECT model_tier, selected_model
             FROM model_decisions
-            WHERE persona IS NOT NULL
             ORDER BY created_at DESC
             LIMIT 1;
         """)
         persona_row = cursor.fetchone()
-        agentic_persona = persona_row[0] if persona_row else "Analytical cognitive mode"
+        if persona_row:
+            tier, model = persona_row
+            agentic_persona = f"Active - {model} ({tier} tier)"
+        else:
+            agentic_persona = "Analytical cognitive mode"
 
         cursor.close()
         conn.close()
@@ -196,7 +199,7 @@ async def get_system_goals():
         # Get active tasks from task queue
         cursor.execute("""
             SELECT task_type, status, created_at
-            FROM task_queue
+            FROM echo_tasks
             WHERE status IN ('pending', 'in_progress')
             ORDER BY priority DESC, created_at ASC
             LIMIT 5;

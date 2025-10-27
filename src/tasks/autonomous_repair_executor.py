@@ -1,20 +1,18 @@
 #!/usr/bin/env python3
 """
-Autonomous Repair Executor with Telegram Support
-Sends daily digest via email, Telegram, or both
+Autonomous Repair Executor
+Executes actual repairs with email notifications and detailed logging
 """
 
 import asyncio
 import logging
 from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import json
-import os
-import aiohttp
 
 logger = logging.getLogger(__name__)
 
@@ -24,24 +22,12 @@ class RepairExecutor:
     def __init__(self):
         self.repair_log_path = Path("/opt/tower-echo-brain/logs/autonomous_repairs.log")
         self.repair_history: List[Dict[str, Any]] = []
-        self.pending_repairs: List[Dict[str, Any]] = []  # Queue for daily digest
-        
-        # Email configuration
         self.smtp_config = {
             'server': 'smtp.gmail.com',
             'port': 587,
             'from_email': 'patrick.vestal.digital@gmail.com',
             'to_email': 'patrick.vestal@gmail.com'
         }
-        
-        # Telegram configuration
-        self.telegram_config = {
-            'bot_token': os.getenv('TELEGRAM_BOT_TOKEN', '8166692798:AAG1Oa8QLzkbqtK2IbaGoXXPTalrVRnGVNk'),
-            'admin_chat_id': os.getenv('TELEGRAM_ADMIN_CHAT_ID', ''),  # Patrick's chat ID
-        }
-        
-        # Notification preferences: 'email', 'telegram', 'both'
-        self.notification_method = os.getenv('DIGEST_NOTIFICATION_METHOD', 'telegram')
 
         # Load Gmail app password from vault or environment
         self.app_password = self._load_smtp_credentials()
@@ -50,7 +36,9 @@ class RepairExecutor:
         """Load SMTP credentials from Vault"""
         try:
             import hvac
+            import os
             client = hvac.Client(url='http://127.0.0.1:8200', token=os.environ.get('VAULT_TOKEN'))
+            # Try to get from vault
             response = client.secrets.kv.v2.read_secret_version(path='tower/gmail')
             return response['data']['data'].get('app_password')
         except Exception as e:
@@ -84,15 +72,18 @@ class RepairExecutor:
                 result = await self._repair_process_kill(target, issue, **kwargs)
             elif repair_type == 'log_rotation':
                 result = await self._repair_log_rotation(target, issue, **kwargs)
+            elif repair_type == "code_modification":
+                result = await self._repair_code_modification(target, issue, **kwargs)
+            elif repair_type == "style_update":
+                result = await self._repair_style_update(target, issue, **kwargs)
             else:
                 result['error'] = f"Unknown repair type: {repair_type}"
 
             # Log the repair
             await self._log_repair(result)
 
-            # Queue for daily digest instead of sending immediately
-            self.pending_repairs.append(result)
-            logger.info(f"📋 Repair queued for daily digest ({len(self.pending_repairs)} pending)")
+            # Send email notification
+# DISABLED by Patrick -             await self._send_repair_notification(result)
 
             # Store in history
             self.repair_history.append(result)
@@ -103,149 +94,12 @@ class RepairExecutor:
             logger.error(f"❌ Repair failed: {e}")
             result['error'] = str(e)
             await self._log_repair(result)
-            self.pending_repairs.append(result)
+# DISABLED by Patrick -             await self._send_repair_notification(result)
             return result
 
-    async def send_daily_digest(self) -> Dict[str, Any]:
-        """Send daily digest via configured notification method"""
-        
-        if not self.pending_repairs:
-            logger.info("📧 No repairs to report in daily digest")
-            return {'sent': False, 'reason': 'no_repairs'}
-
-        try:
-            # Count successes and failures
-            total = len(self.pending_repairs)
-            successes = sum(1 for r in self.pending_repairs if r.get('success'))
-            failures = total - successes
-
-            # Create summary
-            status_emoji = "✅" if failures == 0 else "⚠️"
-            
-            # Build repair list
-            repair_entries = []
-            for i, repair in enumerate(self.pending_repairs, 1):
-                success = repair.get('success', False)
-                repair_emoji = "✅" if success else "❌"
-                repair_type = repair.get('repair_type', 'unknown')
-                target = repair.get('target', 'unknown')
-                timestamp = repair.get('timestamp', 'unknown')
-                actions = repair.get('actions_taken', [])
-                error = repair.get('error')
-
-                entry = f"""{i}. {repair_emoji} {repair_type.upper()}
-   Target: {target}
-   Time: {timestamp}
-   Actions: {', '.join(actions) if actions else 'None'}"""
-                
-                if error:
-                    entry += f"\n   Error: {error}"
-                
-                repair_entries.append(entry)
-
-            repair_text = '\n'.join(repair_entries)
-
-            # Send via configured method
-            results = {}
-            if self.notification_method in ('email', 'both'):
-                email_result = await self._send_email_digest(total, successes, failures, repair_text)
-                results['email'] = email_result
-            
-            if self.notification_method in ('telegram', 'both'):
-                telegram_result = await self._send_telegram_digest(total, successes, failures, repair_text)
-                results['telegram'] = telegram_result
-            
-            # Clear pending repairs after sending
-            repair_count = len(self.pending_repairs)
-            self.pending_repairs.clear()
-            
-            logger.info(f"✅ Daily digest sent via {self.notification_method} with {repair_count} repairs")
-            
-            return {'sent': True, 'repairs_count': repair_count, 'methods': results}
-
-        except Exception as e:
-            logger.error(f"Failed to send daily digest: {e}")
-            return {'sent': False, 'error': str(e)}
-
-    async def _send_email_digest(self, total: int, successes: int, failures: int, repair_text: str) -> Dict[str, Any]:
-        """Send daily digest via email"""
-        subject = f"🔧 Echo Daily Repair Report: {total} repairs ({successes} ✅, {failures} ❌)"
-        
-        body = f"""Echo Brain Daily Autonomous Repair Report
-==========================================
-
-Period: Last 24 hours
-Total Repairs: {total}
-Successful: {successes} ✅
-Failed: {failures} ❌
-
-REPAIR DETAILS:
-{repair_text}
-
----
-Full repair log: /opt/tower-echo-brain/logs/autonomous_repairs.log
-This is a daily digest sent at 9:00 AM
-"""
-        
-        try:
-            await self._send_email(subject, body)
-            return {'success': True, 'method': 'email'}
-        except Exception as e:
-            logger.error(f"Email send failed: {e}")
-            return {'success': False, 'error': str(e)}
-
-    async def _send_telegram_digest(self, total: int, successes: int, failures: int, repair_text: str) -> Dict[str, Any]:
-        """Send daily digest via Telegram"""
-        
-        if not self.telegram_config['admin_chat_id']:
-            logger.warning("⚠️ TELEGRAM_ADMIN_CHAT_ID not configured - skipping Telegram notification")
-            return {'success': False, 'error': 'No admin_chat_id configured'}
-        
-        # Format for Telegram (HTML supported)
-        status_emoji = "✅" if failures == 0 else "⚠️"
-        message = f"""<b>🔧 Echo Daily Repair Report</b> {status_emoji}
-
-<b>Period:</b> Last 24 hours
-<b>Total Repairs:</b> {total}
-<b>Successful:</b> {successes} ✅
-<b>Failed:</b> {failures} ❌
-
-<b>REPAIR DETAILS:</b>
-{repair_text}
-
----
-Full log: /opt/tower-echo-brain/logs/autonomous_repairs.log
-"""
-        
-        try:
-            await self._send_telegram_message(self.telegram_config['admin_chat_id'], message)
-            return {'success': True, 'method': 'telegram'}
-        except Exception as e:
-            logger.error(f"Telegram send failed: {e}")
-            return {'success': False, 'error': str(e)}
-
-    async def _send_telegram_message(self, chat_id: str, text: str):
-        """Send message via Telegram Bot API"""
-        url = f"https://api.telegram.org/bot{self.telegram_config['bot_token']}/sendMessage"
-        
-        payload = {
-            'chat_id': chat_id,
-            'text': text,
-            'parse_mode': 'HTML'
-        }
-        
-        async with aiohttp.ClientSession() as session:
-            async with session.post(url, json=payload) as response:
-                result = await response.json()
-                if not result.get('ok'):
-                    logger.error(f"Failed to send Telegram message: {result}")
-                    raise Exception(f"Telegram API error: {result.get('description')}")
-                logger.info("✅ Telegram message sent successfully")
-                return result
-
-    # ... (rest of the repair methods remain the same)
     async def _repair_service_restart(self, service: str, issue: str, **kwargs) -> Dict[str, Any]:
         """Restart a systemd service"""
+
         result = {
             'success': False,
             'repair_type': 'service_restart',
@@ -257,6 +111,7 @@ Full log: /opt/tower-echo-brain/logs/autonomous_repairs.log
         }
 
         try:
+            # Check if service exists
             check_cmd = f"systemctl list-unit-files | grep {service}"
             proc = await asyncio.create_subprocess_shell(
                 check_cmd,
@@ -271,6 +126,7 @@ Full log: /opt/tower-echo-brain/logs/autonomous_repairs.log
 
             result['actions_taken'].append(f"Verified service {service} exists")
 
+            # Restart the service
             restart_cmd = f"sudo systemctl restart {service}"
             proc = await asyncio.create_subprocess_shell(
                 restart_cmd,
@@ -285,8 +141,10 @@ Full log: /opt/tower-echo-brain/logs/autonomous_repairs.log
             else:
                 result['error'] = f"Failed to restart: {stderr.decode()}"
 
+            # Wait a moment for service to start
             await asyncio.sleep(3)
 
+            # Check status
             status_cmd = f"systemctl is-active {service}"
             proc = await asyncio.create_subprocess_shell(
                 status_cmd,
@@ -308,6 +166,7 @@ Full log: /opt/tower-echo-brain/logs/autonomous_repairs.log
             return result
 
     async def _repair_systemd_config(self, service: str, issue: str, **kwargs) -> Dict[str, Any]:
+        """Fix systemd service configuration - stub for now"""
         return {
             'success': False,
             'repair_type': 'systemd_config_fix',
@@ -315,10 +174,11 @@ Full log: /opt/tower-echo-brain/logs/autonomous_repairs.log
             'issue': issue,
             'timestamp': datetime.now().isoformat(),
             'actions_taken': ['Not yet implemented'],
-            'error': 'systemd_config_fix not yet implemented'
+            'error': 'systemd_config_fix not yet implemented - requires manual intervention'
         }
 
     async def _repair_disk_cleanup(self, target: str, issue: str, **kwargs) -> Dict[str, Any]:
+        """Clean up disk space - stub for now"""
         return {
             'success': False,
             'repair_type': 'disk_cleanup',
@@ -326,10 +186,12 @@ Full log: /opt/tower-echo-brain/logs/autonomous_repairs.log
             'issue': issue,
             'timestamp': datetime.now().isoformat(),
             'actions_taken': ['Not yet implemented'],
-            'error': 'disk_cleanup not yet implemented'
+            'error': 'disk_cleanup not yet implemented - requires manual intervention'
         }
 
     async def _repair_process_kill(self, target: str, issue: str, **kwargs) -> Dict[str, Any]:
+        """Kill a stuck process"""
+
         result = {
             'success': False,
             'repair_type': 'process_kill',
@@ -346,6 +208,7 @@ Full log: /opt/tower-echo-brain/logs/autonomous_repairs.log
                 result['error'] = "No PID provided"
                 return result
 
+            # Try graceful kill first
             kill_cmd = f"kill {pid}"
             proc = await asyncio.create_subprocess_shell(
                 kill_cmd,
@@ -355,8 +218,10 @@ Full log: /opt/tower-echo-brain/logs/autonomous_repairs.log
             await proc.communicate()
             result['actions_taken'].append(f"Sent SIGTERM to PID {pid}")
 
+            # Wait a moment
             await asyncio.sleep(3)
 
+            # Check if process is still running
             check_cmd = f"ps -p {pid}"
             proc = await asyncio.create_subprocess_shell(
                 check_cmd,
@@ -366,9 +231,11 @@ Full log: /opt/tower-echo-brain/logs/autonomous_repairs.log
             stdout, stderr = await proc.communicate()
 
             if proc.returncode != 0:
+                # Process is gone
                 result['actions_taken'].append(f"Process {pid} terminated successfully")
                 result['success'] = True
             else:
+                # Force kill
                 force_kill_cmd = f"kill -9 {pid}"
                 proc = await asyncio.create_subprocess_shell(
                     force_kill_cmd,
@@ -386,6 +253,7 @@ Full log: /opt/tower-echo-brain/logs/autonomous_repairs.log
             return result
 
     async def _repair_log_rotation(self, target: str, issue: str, **kwargs) -> Dict[str, Any]:
+        """Rotate large log files - stub for now"""
         return {
             'success': False,
             'repair_type': 'log_rotation',
@@ -393,11 +261,12 @@ Full log: /opt/tower-echo-brain/logs/autonomous_repairs.log
             'issue': issue,
             'timestamp': datetime.now().isoformat(),
             'actions_taken': ['Not yet implemented'],
-            'error': 'log_rotation not yet implemented'
+            'error': 'log_rotation not yet implemented - requires manual intervention'
         }
 
     async def _log_repair(self, result: Dict[str, Any]):
         """Log repair action to file"""
+
         try:
             log_entry = {
                 'timestamp': result.get('timestamp'),
@@ -409,8 +278,10 @@ Full log: /opt/tower-echo-brain/logs/autonomous_repairs.log
                 'error': result.get('error')
             }
 
+            # Ensure log directory exists
             self.repair_log_path.parent.mkdir(parents=True, exist_ok=True)
 
+            # Append to log file
             with open(self.repair_log_path, 'a') as f:
                 f.write(json.dumps(log_entry) + '\n')
 
@@ -421,11 +292,61 @@ Full log: /opt/tower-echo-brain/logs/autonomous_repairs.log
         except Exception as e:
             logger.error(f"Failed to log repair: {e}")
 
+    async def _send_repair_notification(self, result: Dict[str, Any]):
+        """Send email notification about repair"""
+
+        try:
+            # Create email content
+            success = result.get('success', False)
+            status_emoji = "✅" if success else "❌"
+            status_text = "Success" if success else "Failed"
+
+            repair_type = result.get('repair_type', 'unknown')
+            subject = f"🔧 Echo Autonomous Repair: {repair_type} - {status_emoji} {status_text}"
+
+            actions_taken = result.get('actions_taken', [])
+            actions_text = '\n'.join(f"  - {action}" for action in actions_taken)
+
+            error = result.get('error')
+            error_text = f"\n\nError: {error}" if error else ""
+
+            timestamp = result.get('timestamp', 'unknown')
+            target = result.get('target', 'unknown')
+            issue = result.get('issue', 'unknown')
+
+            body = f"""Echo Brain Autonomous Repair Report
+===================================
+
+Timestamp: {timestamp}
+Repair Type: {repair_type}
+Target: {target}
+Issue: {issue}
+Status: {status_emoji} {status_text.upper()}
+
+Actions Taken:
+{actions_text}{error_text}
+
+---
+This repair was executed autonomously by Echo Brain.
+Review the full repair log at: /opt/tower-echo-brain/logs/autonomous_repairs.log
+"""
+
+            # Send email
+            await self._send_email(subject, body)
+
+            logger.info("📧 Sent repair notification email")
+
+        except Exception as e:
+            logger.error(f"Failed to send repair notification: {e}")
+
     async def _send_email(self, subject: str, body: str):
         """Send email via Gmail SMTP"""
-        try:
-            logger.info(f"📧 Email Notification:\nSubject: {subject}\n{body[:200]}...")
 
+        try:
+            # For now, log the email content
+            logger.info(f"📧 Email Notification:\nSubject: {subject}\n{body}")
+
+            # Try to send if credentials are available
             if self.app_password:
                 msg = MIMEMultipart()
                 msg['From'] = self.smtp_config['from_email']
@@ -434,6 +355,7 @@ Full log: /opt/tower-echo-brain/logs/autonomous_repairs.log
                 msg.attach(MIMEText(body, 'plain'))
 
                 with smtplib.SMTP('localhost', 25) as server:
+                    # Local Postfix relay - no auth needed
                     server.send_message(msg)
 
                 logger.info("✅ Email sent successfully")

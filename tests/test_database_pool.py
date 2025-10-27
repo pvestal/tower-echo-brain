@@ -465,7 +465,7 @@ class TestDatabasePoolConfiguration:
 
         args, kwargs = mock_psycopg2.pool.ThreadedConnectionPool.call_args
         assert kwargs['host'] == 'localhost'  # default
-        assert kwargs['database'] == 'tower_consolidated'  # default
+        assert kwargs['database'] == 'echo_brain'  # default
         assert kwargs['user'] == 'patrick'  # default
         assert kwargs['port'] == 5432  # default
 
