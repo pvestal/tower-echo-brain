@@ -35,7 +35,7 @@ VETERAN_ALERT_CHANNEL_ID = os.getenv("VETERAN_ALERT_CHANNEL_ID", "")
 DB_CONFIG = {
     'host': os.getenv('DB_HOST', 'localhost'),
     'port': int(os.getenv('DB_PORT', '5432')),
-    'database': os.getenv('DB_NAME', 'tower_consolidated'),
+    'database': os.getenv('DB_NAME', 'echo_brain'),
     'user': os.getenv('DB_USER', 'patrick'),
     'password': os.getenv('DB_PASSWORD', 'patrick123')
 }

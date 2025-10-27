@@ -86,7 +86,7 @@ class ComplexityAnalyzer:
             {'word_count': 1.2, 'generation': 8, 'media': 10, 'duration': 5, ...}
         """
         score, breakdown = ComplexityAnalyzer._calculate_score(message, context)
-        tier = ComplexityAnalyzer._score_to_tier(score)
+        tier = ComplexityAnalyzer._score_to_tier(score, breakdown)
         model = ComplexityAnalyzer.TIER_TO_MODEL[tier]
         confidence = min(score / 100, 1.0)
 
@@ -185,24 +185,33 @@ class ComplexityAnalyzer:
         return min(score, 100.0), breakdown
 
     @staticmethod
-    def _score_to_tier(score: float) -> str:
+    def _score_to_tier(score: float, breakdown: dict = None) -> str:
         """
-        Convert numerical score to tier name
-
+        Convert numerical score to tier name with media-aware routing
+        
+        Media tasks (anime/video) get lower cloud threshold (35 vs 50)
+        to ensure they use llama70b general model instead of qwen32b code model
+        
         Thresholds:
         - tiny: 0-5
         - small: 5-15
         - medium: 15-30
-        - large: 30-50
-        - cloud: 50+
+        - large: 30-50 (or 30-35 for media tasks)
+        - cloud: 50+ (or 35+ for media tasks)
         """
+        breakdown = breakdown or {}
+        
+        # Media tasks get lower cloud threshold (Qwen recommendation)
+        has_media = breakdown.get("media", 0) >= 20  # 2+ media keywords
+        cloud_threshold = 35 if has_media else 50
+        
         if score < 5:
             return "tiny"
         elif score < 15:
             return "small"
         elif score < 30:
             return "medium"
-        elif score < 50:
+        elif score < cloud_threshold:
             return "large"
         else:
             return "cloud"

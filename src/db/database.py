@@ -28,21 +28,31 @@ class EchoDatabase:
                             conversation_id: Optional[str] = None, user_id: str = "default",
                             intent: Optional[str] = None, confidence: float = 0.0,
                             requires_clarification: bool = False,
-                            clarifying_questions: Optional[List[str]] = None):
+                            clarifying_questions: Optional[List[str]] = None,
+                            complexity_score: Optional[float] = None,
+                            tier: Optional[str] = None):
         """Log interaction for learning improvement"""
         try:
             conn = psycopg2.connect(**self.db_config)
             cursor = conn.cursor()
 
+            # Build metadata with complexity info
+            metadata = {}
+            if complexity_score is not None:
+                metadata["complexity_score"] = complexity_score
+            if tier is not None:
+                metadata["tier"] = tier
+            
             cursor.execute("""
                 INSERT INTO echo_unified_interactions
                 (query, response, model_used, processing_time, escalation_path,
                  conversation_id, user_id, intent, confidence, requires_clarification,
-                 clarifying_questions)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                 clarifying_questions, metadata)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (query, response, model_used, processing_time,
                   json.dumps(escalation_path), conversation_id or "", user_id, intent or "",
-                  confidence, requires_clarification, json.dumps(clarifying_questions or [])))
+                  confidence, requires_clarification, json.dumps(clarifying_questions or []),
+                  json.dumps(metadata)))
 
             conn.commit()
             cursor.close()

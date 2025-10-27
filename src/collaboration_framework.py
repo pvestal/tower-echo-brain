@@ -75,7 +75,7 @@ class MultiLLMCollaborator:
         # Database connection for persistence
         self.db_config = {
             'host': '192.168.50.135',
-            'database': 'tower_consolidated',
+            'database': 'echo_brain',
             'user': 'patrick',
             'password': 'tower_echo_brain_secret_key_2025'
         }
@@ -439,7 +439,7 @@ Please assess:
                 try:
                     conn = psycopg2.connect(
                         host='192.168.50.135',
-                        database='tower_consolidated',
+                        database='echo_brain',
                         user='patrick',
                         password=password
                     )

@@ -614,7 +614,7 @@ class EchoAutonomousEvolution:
             
             db_config = {
                 'host': 'localhost',
-                'database': 'tower_consolidated',
+                'database': 'echo_brain',
                 'user': 'patrick',
                 'password': 'Beau40818'
             }

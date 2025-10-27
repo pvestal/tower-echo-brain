@@ -214,9 +214,9 @@ async def get_collaboration_history(limit: int = 10):
 
         conn = psycopg2.connect(
             host='192.168.50.135',
-            database='tower_consolidated',
+            database='echo_brain',
             user='patrick',
-            password='tower_echo_brain_secret_key_2025'
+            password=os.getenv('DB_PASSWORD', 'tower_echo_brain_secret_key_2025')
         )
 
         cursor = conn.cursor(cursor_factory=RealDictCursor)

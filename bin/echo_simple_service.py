@@ -25,7 +25,7 @@ class EchoSimpleService:
     def __init__(self):
         self.db_config = {
             "host": "localhost",
-            "database": "tower_consolidated", 
+            "database": "echo_brain", 
             "user": "patrick",
             "password": "password"
         }

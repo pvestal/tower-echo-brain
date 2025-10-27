@@ -33,7 +33,7 @@ class EchoMediaScanner:
         self.db_config = {
             'host': 'localhost',
             'user': 'patrick',
-            'database': 'tower_consolidated',
+            'database': 'echo_brain',
             'port': 5432
         }
         self.ollama_url = "http://localhost:11434/api/generate"

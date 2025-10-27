@@ -1,0 +1,14 @@
+{
+  "apple_music": {
+    "search": true,
+    "playlists": true,
+    "library": false,
+    "recommendations": true
+  },
+  "google": {
+    "calendar_read": true,
+    "calendar_write": true,
+    "gmail_read": true,
+    "drive_files": true
+  }
+}
