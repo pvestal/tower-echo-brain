@@ -361,6 +361,7 @@ class ProactiveCodeQuality:
                 # Process files that need fixing
                 fixes_attempted = 0
                 fixes_successful = 0
+                successful_fixes = []
 
                 for project, files in scan_results.items():
                     for file_info in files:
@@ -370,6 +371,23 @@ class ProactiveCodeQuality:
                             result = await self.create_and_test_fix(file_info)
                             if result.get("success"):
                                 fixes_successful += 1
+                                # Track successful fixes for PR creation
+                                successful_fixes.append({
+                                    "file": file_info["file"],
+                                    "before": file_info["score"],
+                                    "after": result.get("new_score", file_info["score"]),
+                                    "improvement": result.get("improvement", 0)
+                                })
+
+                # Create GitHub PR if we have successful fixes
+                if successful_fixes:
+                    try:
+                        from src.tasks.github_integration import github_integration
+                        pr_url = await github_integration.create_quality_improvement_pr(successful_fixes)
+                        if pr_url:
+                            logger.info(f"🎉 Created PR with {len(successful_fixes)} improvements: {pr_url}")
+                    except Exception as e:
+                        logger.error(f"Failed to create PR: {e}")
 
                 # Generate daily report
                 await self.generate_daily_report(scan_results, fixes_attempted, fixes_successful)
