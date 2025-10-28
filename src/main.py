@@ -347,6 +347,14 @@ async def startup_event():
         if auth_manager:
             logger.info("✅ Authentication manager loaded")
 
+        # Start Proactive Code Quality System
+        try:
+            from src.tasks.proactive_code_quality import proactive_quality
+            asyncio.create_task(proactive_quality.daily_quality_loop())
+            logger.info("✅ Proactive Code Quality System started - daily scanning enabled")
+        except Exception as e:
+            logger.warning(f"Could not start code quality system: {e}")
+
     except Exception as e:
         logger.error(f"❌ Failed to initialize autonomous task system: {e}")
         import traceback
