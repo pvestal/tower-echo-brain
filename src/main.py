@@ -355,6 +355,18 @@ async def startup_event():
         except Exception as e:
             logger.warning(f"Could not start code quality system: {e}")
 
+        # Initialize GitHub Integration
+        try:
+            from src.tasks.github_integration import github_integration
+            if await github_integration.check_auth():
+                logger.info("✅ GitHub integration authenticated and ready")
+                # Optionally set up branch protection (requires admin)
+                # await github_integration.setup_branch_protection()
+            else:
+                logger.warning("⚠️ GitHub CLI not authenticated - PR creation disabled")
+        except Exception as e:
+            logger.warning(f"Could not initialize GitHub integration: {e}")
+
     except Exception as e:
         logger.error(f"❌ Failed to initialize autonomous task system: {e}")
         import traceback
