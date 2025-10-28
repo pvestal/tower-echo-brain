@@ -4,13 +4,14 @@ Autonomous Execution Routes for Echo Brain
 Provides real autonomous capabilities with proof and verification
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Dict, List, Any, Optional
 import subprocess
 import psycopg2
 import json
 from datetime import datetime
+from src.security.auth_middleware import get_current_user, require_admin_user, get_auth_status
 
 router = APIRouter(prefix="/api/autonomous", tags=["autonomous"])
 
@@ -79,10 +80,11 @@ class SafeExecutor:
             }
 
 @router.post("/execute", response_model=AutonomousResponse)
-async def autonomous_execute(request: AutonomousRequest):
+async def autonomous_execute(request: AutonomousRequest, user: Dict[str, Any] = Depends(require_admin_user)):
     """
-    Execute autonomous actions with proof and verification
+    🔒 SECURED: Execute autonomous actions with proof and verification (Admin Only)
     Available actions: learn_preference, health_check, optimize_database
+    Requires: Valid JWT token with admin privileges
     """
     executor = SafeExecutor()
     start_time = datetime.now()
@@ -186,8 +188,8 @@ async def autonomous_execute(request: AutonomousRequest):
         )
 
 @router.get("/capabilities")
-async def get_autonomous_capabilities():
-    """Get list of available autonomous capabilities"""
+async def get_autonomous_capabilities(user: Dict[str, Any] = Depends(get_current_user)):
+    """🔒 SECURED: Get list of available autonomous capabilities (Authenticated Users)"""
     return {
         "capabilities": [
             {
@@ -211,5 +213,19 @@ async def get_autonomous_capabilities():
         ],
         "executor_version": "1.0",
         "safety_features": ["transaction_rollback", "query_validation", "proof_generation", "error_recovery"],
+        "timestamp": datetime.now().isoformat()
+    }
+
+@router.get("/auth/status")
+async def get_auth_status_endpoint():
+    """🔒 Check authentication system status (Public endpoint for debugging)"""
+    status = await get_auth_status()
+    return {
+        "authentication_status": status,
+        "secured_endpoints": [
+            "/api/autonomous/execute (Admin required)",
+            "/api/autonomous/capabilities (Authentication required)"
+        ],
+        "emergency_access": "Contact admin for token generation",
         "timestamp": datetime.now().isoformat()
     }
