@@ -25,28 +25,21 @@ class EchoIntelligenceRouter:
         # Initialize decision engine for intelligent model selection
         self.decision_engine = get_decision_engine(database.db_config)
 
-        # FIXED hierarchy - no more jumping to 70B
+        # Legacy hierarchy for backward compatibility
         self.model_hierarchy = {
             "quick": "tinyllama:latest",        # 1B parameters
             "standard": "llama3.2:3b",          # 3B parameters
             "professional": "mistral:7b",       # 7B parameters
-            "expert": "codellama:13b",          # 13B parameters (was 32B)
-            "genius": "qwen2.5-coder:32b",      # 32B parameters (was 70B)
+            "expert": "qwen2.5-coder:32b",     # 32B parameters
+            "genius": "llama3.1:70b",          # 70B parameters
         }
         self.specialized_models = {
-            "coding": "codellama:7b",           # Fast code generation
-            "creative": "mistral:7b",           # Creative tasks
-            "analysis": "codellama:13b"         # Code analysis (was 70B)
+            "coding": "deepseek-coder:latest",  # Updated to use new lightweight version
+            "creative": "mixtral:8x7b",
+            "analysis": "codellama:70b"
         }
         self.escalation_history = []
         self.decision_history = []  # Track decisions for learning
-
-        # Import fixed model selector
-        try:
-            from .model_selector_fix import model_selector
-            self.model_selector = model_selector
-        except ImportError:
-            self.model_selector = None
 
     def analyze_complexity(self, query: str, context: Dict) -> str:
         """

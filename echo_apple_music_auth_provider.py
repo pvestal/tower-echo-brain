@@ -17,13 +17,14 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class AppleMusicAuthProvider:
     """Apple Music authentication provider for AI Assist"""
 
     def __init__(self):
         # Apple credentials from existing setup
         self.team_id = "CNXX42ZGF8"  # From apple_music_config.env
-        self.key_id = "9M85DX285V"   # From apple_music_config.env
+        self.key_id = "9M85DX285V"  # From apple_music_config.env
         self.private_key_path = Path("/opt/tower-apple-music/config/AuthKey.p8")
         self.apple_music_api_base = "https://api.music.apple.com/v1"
         self.storefront = "us"
@@ -62,28 +63,27 @@ class AppleMusicAuthProvider:
                 logger.error(f"Private key not found at {key_path}")
                 return None
 
-            with open(key_path, 'rb') as f:
+            with open(key_path, "rb") as f:
                 private_key = f.read()
 
             # Generate JWT token
             now = datetime.utcnow()
-            headers = {
-                'alg': 'ES256',
-                'kid': key_id
-            }
+            headers = {"alg": "ES256", "kid": key_id}
 
             payload = {
-                'iss': team_id,
-                'iat': int(now.timestamp()),
-                'exp': int((now + timedelta(hours=12)).timestamp()),
-                'aud': 'appstoreconnect-v1'
+                "iss": team_id,
+                "iat": int(now.timestamp()),
+                "exp": int((now + timedelta(hours=12)).timestamp()),
+                "aud": "appstoreconnect-v1",
             }
 
-            token = jwt.encode(payload, private_key, algorithm='ES256', headers=headers)
+            token = jwt.encode(payload, private_key, algorithm="ES256", headers=headers)
 
             # Cache the token
             self.developer_token = token
-            self.token_expiry = now + timedelta(hours=11)  # Refresh 1 hour before expiry
+            self.token_expiry = now + timedelta(
+                hours=11
+            )  # Refresh 1 hour before expiry
 
             logger.info(f"✅ Generated Apple Music JWT token (Team: {team_id})")
             return token
@@ -104,27 +104,23 @@ class AppleMusicAuthProvider:
         try:
             headers = {
                 "Authorization": f"Bearer {token}",
-                "Music-User-Token": ""  # Would need user token for personal library
+                "Music-User-Token": "",  # Would need user token for personal library
             }
 
-            params = {
-                "term": query,
-                "types": ",".join(types),
-                "limit": 25
-            }
+            params = {"term": query, "types": ",".join(types), "limit": 25}
 
             async with aiohttp.ClientSession() as session:
                 async with session.get(
                     f"{self.apple_music_api_base}/catalog/{self.storefront}/search",
                     headers=headers,
-                    params=params
+                    params=params,
                 ) as response:
                     if response.status == 200:
                         data = await response.json()
                         return {
                             "results": data.get("results", {}),
                             "query": query,
-                            "status": "success"
+                            "status": "success",
                         }
                     else:
                         return {"error": f"Search failed: {response.status}"}
@@ -146,14 +142,11 @@ class AppleMusicAuthProvider:
                 async with session.get(
                     f"{self.apple_music_api_base}/catalog/{self.storefront}/charts",
                     headers=headers,
-                    params={"types": chart_type, "limit": 50}
+                    params={"types": chart_type, "limit": 50},
                 ) as response:
                     if response.status == 200:
                         data = await response.json()
-                        return {
-                            "charts": data.get("results", {}),
-                            "status": "success"
-                        }
+                        return {"charts": data.get("results", {}), "status": "success"}
                     else:
                         return {"error": f"Charts request failed: {response.status}"}
 
@@ -166,24 +159,24 @@ class AppleMusicAuthProvider:
         try:
             async with aiohttp.ClientSession() as session:
                 # Get playlists
-                async with session.get(f"{self.local_service_url}/api/playlists") as response:
+                async with session.get(
+                    f"{self.local_service_url}/api/playlists"
+                ) as response:
                     if response.status == 200:
                         playlists = await response.json()
                     else:
                         playlists = []
 
                 # Get library songs
-                async with session.get(f"{self.local_service_url}/api/library") as response:
+                async with session.get(
+                    f"{self.local_service_url}/api/library"
+                ) as response:
                     if response.status == 200:
                         library = await response.json()
                     else:
                         library = {"songs": []}
 
-                return {
-                    "playlists": playlists,
-                    "library": library,
-                    "status": "success"
-                }
+                return {"playlists": playlists, "library": library, "status": "success"}
 
         except Exception as e:
             logger.error(f"❌ Failed to get local library: {e}")
@@ -216,7 +209,7 @@ class AppleMusicAuthProvider:
         training_data = {
             "service": "apple_music",
             "has_valid_token": bool(token),
-            "collected_at": datetime.utcnow().isoformat()
+            "collected_at": datetime.utcnow().isoformat(),
         }
 
         # Collect various data types
@@ -224,7 +217,7 @@ class AppleMusicAuthProvider:
             ("search_results", self.search_music("popular songs 2025")),
             ("charts", self.get_charts()),
             ("local_library", self.get_local_library()),
-            ("recommendations", self.get_recommendations())
+            ("recommendations", self.get_recommendations()),
         ]
 
         for name, task in tasks:
@@ -235,15 +228,18 @@ class AppleMusicAuthProvider:
                 training_data[name] = {"error": str(e)}
 
         # Calculate success metrics
-        successful = sum(1 for k, v in training_data.items()
-                        if isinstance(v, dict) and v.get("status") == "success")
+        successful = sum(
+            1
+            for k, v in training_data.items()
+            if isinstance(v, dict) and v.get("status") == "success"
+        )
 
         training_data["summary"] = {
             "successful_calls": successful,
             "total_calls": len(tasks),
             "token_generated": bool(token),
             "team_id": self.team_id,
-            "key_id": self.key_id
+            "key_id": self.key_id,
         }
 
         return training_data
@@ -260,8 +256,11 @@ class AppleMusicAuthProvider:
             "alt_key_exists": self.alt_key_path.exists(),
             "local_service_url": self.local_service_url,
             "token_cached": bool(self.developer_token),
-            "token_expiry": self.token_expiry.isoformat() if self.token_expiry else None
+            "token_expiry": (
+                self.token_expiry.isoformat() if self.token_expiry else None
+            ),
         }
+
 
 # Test the provider
 async def test_apple_music_provider():
@@ -291,7 +290,9 @@ async def test_apple_music_provider():
         songs = search_results.get("results", {}).get("songs", {}).get("data", [])
         print(f"✅ Found {len(songs)} songs")
         if songs:
-            print(f"   First result: {songs[0].get('attributes', {}).get('name', 'Unknown')}")
+            print(
+                f"   First result: {songs[0].get('attributes', {}).get('name', 'Unknown')}"
+            )
     else:
         print(f"❌ Search failed: {search_results.get('error')}")
 
@@ -309,7 +310,9 @@ async def test_apple_music_provider():
     library = await provider.get_local_library()
     if library.get("status") == "success":
         print(f"✅ Got {len(library.get('playlists', []))} playlists")
-        print(f"✅ Got {len(library.get('library', {}).get('songs', []))} library songs")
+        print(
+            f"✅ Got {len(library.get('library', {}).get('songs', []))} library songs"
+        )
     else:
         print(f"❌ Library access failed: {library.get('error')}")
 
@@ -318,9 +321,12 @@ async def test_apple_music_provider():
     training_data = await provider.collect_training_data_for_echo()
     summary = training_data.get("summary", {})
     print(f"📈 Collection Summary:")
-    print(f"   • Success rate: {summary.get('successful_calls', 0)}/{summary.get('total_calls', 0)}")
+    print(
+        f"   • Success rate: {summary.get('successful_calls', 0)}/{summary.get('total_calls', 0)}"
+    )
     print(f"   • Token generated: {summary.get('token_generated', False)}")
     print(f"   • Team ID: {summary.get('team_id', 'Unknown')}")
+
 
 if __name__ == "__main__":
     asyncio.run(test_apple_music_provider())

@@ -3,11 +3,12 @@
 Echo Brain Unified Service - Refactored Main Entry Point with Autonomous Task System
 """
 
-from modules.video_generator import VideoGenerator
+from src.modules.video_generator import VideoGenerator
 from src.vision_capabilities import EchoVision
 from src.api.resilient_routes import resilient_router
 from src.api.system_metrics import router as system_metrics_router
 from src.api.routes import router as api_router
+from src.api.learning_routes import router as learning_router
 from src.photo_comparison import router as photo_router
 import requests
 from agent_development_endpoints import agent_dev_router
@@ -59,6 +60,7 @@ try:
     from src.tasks.proactive_improvements import proactive_engine
     from src.tasks.git_manager import git_manager
     from src.tasks.persona_trainer import persona_trainer
+    from src.learning.learning_system import learning_system
     from src.integrations.auth_manager import auth_manager
 
     logger.info("✅ Enhanced modules loaded")
@@ -67,6 +69,7 @@ except ImportError as e:
     proactive_engine = None
     git_manager = None
     persona_trainer = None
+    learning_system = None
     auth_manager = None
 
 # CRITICAL FIX: Import ALL capabilities so Echo can actually use them
@@ -158,6 +161,9 @@ except Exception as e:
 # Include modular API routes
 
 app.include_router(api_router)
+# Include learning routes
+app.include_router(learning_router)
+logger.info("🧠 Learning system API routes loaded")
 # Include system metrics routes
 
 app.include_router(system_metrics_router)
@@ -323,6 +329,14 @@ async def startup_event():
             asyncio.create_task(persona_trainer.autonomous_self_improvement())
             logger.info("✅ Persona training system started")
 
+        # Start learning system
+        if learning_system:
+            await learning_system.initialize()
+            asyncio.create_task(learning_system.continuous_learning_loop())
+            logger.info(
+                "✅ Learning system started - processing photos, conversations, and behavior"
+            )
+
         if git_manager:
             await git_manager.initialize_all_repos()
             git_manager.enable_auto_commit(
@@ -350,20 +364,25 @@ async def startup_event():
         # Start Proactive Code Quality System
         try:
             from src.tasks.proactive_code_quality import proactive_quality
+
             asyncio.create_task(proactive_quality.daily_quality_loop())
-            logger.info("✅ Proactive Code Quality System started - daily scanning enabled")
+            logger.info(
+                "✅ Proactive Code Quality System started - daily scanning enabled"
+            )
         except Exception as e:
             logger.warning(f"Could not start code quality system: {e}")
 
         # Initialize GitHub Integration
         try:
             from src.tasks.github_integration import github_integration
+
             if await github_integration.check_auth():
                 logger.info("✅ GitHub integration authenticated and ready")
                 # Optionally set up branch protection (requires admin)
                 # await github_integration.setup_branch_protection()
             else:
-                logger.warning("⚠️ GitHub CLI not authenticated - PR creation disabled")
+                logger.warning(
+                    "⚠️ GitHub CLI not authenticated - PR creation disabled")
         except Exception as e:
             logger.warning(f"Could not initialize GitHub integration: {e}")
 
@@ -800,7 +819,9 @@ async def get_all_service_status():
             status[name] = {
                 "port": port,
                 "status": (
-                    "healthy" if resp.status_code == 200 else f"http_{
+                    "healthy"
+                    if resp.status_code == 200
+                    else f"http_{
                         resp.status_code}"
                 ),
                 "response_time": resp.elapsed.total_seconds(),
