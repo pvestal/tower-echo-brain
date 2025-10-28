@@ -5,13 +5,3563 @@
       "file": "/opt/tower-echo-brain/src/commands/command_handler.py",
       "strategy": "black_format",
       "timestamp": "2025-10-28T00:20:47.696597"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T00:46:16.941320"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T00:46:19.343911"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T00:46:20.358013"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T00:46:22.179303"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T00:46:23.857847"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T00:46:29.600701"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T00:46:31.976990"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T00:46:35.718837"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T00:46:38.157071"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T00:46:39.994053"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T01:04:08.206609"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T01:04:10.794549"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T01:04:11.931845"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T01:04:13.870139"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T01:04:15.724419"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T01:04:40.347951"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T01:04:52.289402"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T01:05:10.717859"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T01:05:22.827621"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T01:05:32.510294"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T01:20:37.638693"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T01:20:40.081758"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T01:20:41.229118"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T01:20:43.117810"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T01:20:44.956485"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T01:20:50.821574"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T01:20:53.188181"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T01:20:57.149595"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T01:20:59.458878"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T01:21:01.280447"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T02:07:42.930617"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T02:44:12.752218"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T02:44:15.162795"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T02:44:16.529444"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T02:44:18.555629"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T02:44:20.413334"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T02:44:26.656763"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T02:44:29.249305"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T02:44:33.266251"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T02:44:35.694032"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T02:44:37.869891"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T02:57:22.537271"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T02:57:24.692489"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T02:57:25.783522"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T02:57:27.763706"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T02:57:29.957618"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T02:57:36.138379"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T02:57:38.489129"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T02:57:42.243935"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T02:57:44.404336"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T02:57:46.353568"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T03:10:36.135363"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T03:10:38.196140"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T03:10:39.383346"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T03:10:41.416365"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T03:10:43.266558"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T03:10:48.969672"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T03:10:51.134785"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T03:10:54.870562"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T03:10:56.896698"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T03:10:58.534808"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T03:25:06.930169"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T03:25:09.140916"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T03:25:10.407627"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T03:25:12.361937"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T03:25:14.262856"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T03:25:20.333018"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T03:25:22.608755"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T03:25:26.321081"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T03:25:28.563067"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T03:25:30.525624"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T03:38:30.967624"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T03:38:33.136282"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T03:38:34.292259"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T03:38:36.165479"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T03:38:38.096180"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T03:38:44.157601"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T03:38:46.464819"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T03:38:50.194765"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T03:38:52.242320"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T03:38:54.010805"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T03:51:37.209776"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T03:51:39.265527"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T03:51:40.267104"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T03:51:42.101135"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T03:51:43.779019"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T03:51:49.701487"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T03:51:51.925886"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T03:51:55.514061"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T03:51:57.756450"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T03:51:59.584506"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:04:31.502767"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:04:33.614924"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:04:34.810961"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:04:36.666929"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:04:38.496239"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:04:44.341753"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:04:46.521718"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:04:50.384399"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:04:52.512006"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:04:54.297121"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:17:37.979046"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:17:40.018502"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:17:41.094821"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:17:42.941764"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:17:44.644746"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:17:50.343925"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:17:52.837911"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:17:56.392935"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:17:58.459518"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:18:00.175879"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:30:27.424692"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:30:29.338054"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:30:30.378225"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:30:32.332416"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:30:34.344747"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:30:40.116359"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:30:42.644560"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:30:46.480458"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:30:48.679278"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:30:50.393974"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:43:44.666866"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:43:46.606519"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:43:47.713167"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:43:49.587057"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:43:51.345504"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:43:57.018443"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:43:59.492335"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:44:03.255973"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:44:05.493065"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:44:07.185254"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:56:37.678598"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:56:39.804609"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:56:41.037488"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:56:43.072695"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:56:44.787577"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:56:50.437381"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:56:52.709178"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:56:56.299588"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:56:58.413897"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T04:57:00.141597"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T05:09:34.894579"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T05:09:36.961291"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T05:09:38.075675"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T05:09:39.852529"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T05:09:41.542509"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T05:09:47.455368"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T05:09:49.735746"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T05:09:53.206353"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T05:09:55.420302"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T05:09:57.159627"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T05:22:29.731907"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T05:22:31.593245"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T05:22:32.661349"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T05:22:34.546902"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T05:22:36.281750"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T05:22:41.912740"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T05:22:44.245758"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T05:22:48.110053"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T05:22:50.314943"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T05:22:51.951794"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T05:44:35.448399"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T05:44:37.648393"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T05:44:38.784777"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T05:44:40.712518"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T05:44:42.462735"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T05:44:48.239142"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T05:44:50.454392"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T05:44:54.014301"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T05:44:56.155568"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T05:44:58.216303"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T05:57:24.500764"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T05:57:26.380279"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T05:57:27.362902"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T05:57:29.195096"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T05:57:30.863331"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T05:57:36.647271"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T05:57:39.145917"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T05:57:42.571182"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T05:57:44.652821"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T05:57:46.275131"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T06:09:59.073076"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T06:10:00.998560"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T06:10:02.062183"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T06:10:03.760848"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T06:10:05.556746"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T06:10:11.138025"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T06:10:13.295926"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T06:10:17.081421"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T06:10:19.272737"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T06:10:20.900798"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T06:22:27.896224"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T06:22:30.070316"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T06:22:31.130023"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T06:22:32.915236"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T06:22:34.643719"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T06:22:40.254078"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T06:22:42.397744"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T06:22:45.994250"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T06:22:47.980082"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T06:22:49.635069"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T06:34:59.101906"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T06:35:00.955427"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T06:35:02.055591"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T06:35:03.806928"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T06:35:05.524815"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T06:35:11.187633"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T06:35:13.378836"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T06:35:16.880161"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T06:35:18.980286"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T06:35:20.685421"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T06:47:27.715269"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T06:47:29.575890"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T06:47:30.673115"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T06:47:32.380448"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T06:47:34.201811"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T06:47:39.746393"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T06:47:41.949005"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T06:47:45.589950"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T06:47:47.953159"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T06:47:49.582479"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T06:59:54.862654"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T06:59:56.711681"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T06:59:57.754526"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T06:59:59.832150"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T07:00:01.652203"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T07:00:07.133286"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T07:00:09.275407"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T07:00:12.749464"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T07:00:14.967639"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T07:00:16.567833"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T07:12:24.532631"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T07:12:26.495438"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T07:12:27.479551"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T07:12:29.257053"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T07:12:30.941823"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T07:12:36.668295"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T07:12:39.127463"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T07:12:42.569799"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T07:12:44.572905"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T07:12:46.219321"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T07:24:56.530895"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T07:24:58.465905"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T07:24:59.449375"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T07:25:01.449826"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T07:25:03.068506"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T07:25:08.682391"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T07:25:10.888183"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T07:25:14.562437"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T07:25:16.899343"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T07:25:18.593736"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T07:37:30.412579"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T07:37:32.422608"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T07:37:33.467451"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T07:37:35.220575"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T07:37:36.897389"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T07:37:42.507927"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T07:37:44.600211"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T07:37:48.047426"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T07:37:50.091110"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T07:37:51.848912"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T07:49:59.623942"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T07:50:01.519825"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T07:50:02.529953"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T07:50:04.294070"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T07:50:05.947438"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T07:50:11.755708"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T07:50:13.897175"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T07:50:17.453142"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T07:50:19.455089"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T07:50:21.045943"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:02:30.900508"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:02:32.907482"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:02:33.937997"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:02:35.658614"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:02:37.323715"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:02:42.909045"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:02:45.283808"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:02:49.011839"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:02:51.130354"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:02:52.895995"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:15:07.257030"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:15:09.268423"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:15:10.248238"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:15:11.952017"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:15:13.588763"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:15:19.200513"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:15:21.426936"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:15:25.175798"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:15:27.191379"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:15:29.005088"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:27:36.931445"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:27:38.914012"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:27:39.901734"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:27:41.642831"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:27:43.359023"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:27:48.821419"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:27:50.970579"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:27:54.615079"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:27:56.694393"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:27:58.320919"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:40:09.902516"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:40:11.835317"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:40:12.968758"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:40:15.147582"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:40:17.011153"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:40:22.536243"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:40:24.814491"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:40:28.289103"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:40:30.462212"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:40:32.137393"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:52:44.318776"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:52:46.209404"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:52:47.207104"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:52:49.068720"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:52:50.968149"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:52:56.792057"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:52:59.087961"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:53:02.650323"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:53:04.653232"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T08:53:06.452246"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:05:18.618637"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:05:20.625657"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:05:21.680190"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:05:23.410832"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:05:25.213094"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:05:30.956628"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:05:33.176843"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:05:36.636863"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:05:38.856103"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:05:40.535822"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:17:53.153110"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:17:55.132329"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:17:56.184146"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:17:57.997677"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:17:59.688578"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:18:05.217474"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:18:07.627040"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:18:11.321170"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:18:13.258671"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:18:14.885009"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:30:22.432106"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:30:24.526893"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:30:25.530133"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:30:27.421162"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:30:29.119892"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:30:34.782943"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:30:36.905756"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:30:40.494013"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:30:42.464328"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:30:44.307639"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:42:59.058431"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:43:01.205169"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:43:02.234011"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:43:03.915344"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:43:05.647169"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:43:11.206888"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:43:13.372741"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:43:16.779278"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:43:18.927040"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:43:20.553831"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:55:32.001637"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:55:33.914046"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:55:35.229041"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:55:37.338188"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:55:39.085870"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:55:44.609490"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:55:46.942850"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:55:50.422801"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:55:52.382773"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T09:55:54.078126"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T10:08:02.912989"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T10:08:04.813960"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T10:08:05.860277"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T10:08:07.593523"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T10:08:09.237151"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T10:08:15.121230"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T10:08:17.245501"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T10:08:20.858676"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T10:08:22.933803"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T10:08:24.855935"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T10:20:35.503786"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T10:20:37.414905"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T10:20:38.477930"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T10:20:40.173833"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T10:20:41.905581"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T10:20:47.601831"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T10:20:49.957612"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T10:20:53.603051"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T10:20:55.642418"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T10:20:57.432577"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T10:33:09.765431"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T10:33:11.662337"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T10:33:12.786251"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T10:33:14.512703"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T10:33:16.298935"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T10:33:21.825748"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T10:33:23.964243"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T10:33:27.703578"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T10:33:30.079006"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T10:45:28.616687"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T10:45:30.541602"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T10:45:31.645474"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T10:45:33.351883"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T10:45:35.160460"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T10:45:40.686356"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T10:45:43.074962"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T10:45:46.655972"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T10:45:48.732086"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T10:45:50.235519"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T10:58:02.354220"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T10:58:04.565626"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T10:58:05.634698"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T10:58:07.384034"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T10:58:09.063140"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T10:58:14.651658"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T10:58:16.779006"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T10:58:20.492354"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T10:58:22.727003"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T10:58:24.451275"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T11:10:31.864597"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T11:10:34.037392"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T11:10:35.295558"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T11:10:37.099015"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T11:10:38.739355"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T11:10:44.205658"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T11:10:46.354714"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T11:10:49.932327"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T11:10:51.974716"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T11:10:53.500691"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T11:23:02.616953"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T11:23:04.592317"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T11:23:05.677400"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T11:23:07.412683"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T11:23:09.182999"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T11:23:14.854320"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T11:23:17.002887"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T11:23:20.551979"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T11:23:22.515625"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T11:23:24.100520"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T11:45:57.883343"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T11:45:59.766613"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T11:46:00.828576"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T11:46:02.765694"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T11:46:04.699908"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T11:46:10.293964"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T11:46:12.454322"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T11:46:15.921112"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T11:46:18.035506"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T11:46:19.544098"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T11:58:30.721849"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T11:58:32.621952"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T11:58:33.608306"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T11:58:35.441584"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T11:58:37.118306"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T11:58:42.999137"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T11:58:45.199147"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T11:58:48.664777"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T11:58:50.696095"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T11:58:52.198000"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T12:11:01.230467"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T12:11:03.096472"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T12:11:04.238484"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T12:11:05.971146"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T12:11:07.715917"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T12:11:13.243398"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T12:11:15.513654"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T12:11:19.211624"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T12:11:21.489516"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T12:11:23.114338"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T12:23:30.833798"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T12:23:32.989261"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T12:23:34.329305"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T12:23:36.032782"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T12:23:37.905380"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T12:23:43.375962"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T12:23:45.534249"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T12:23:49.057574"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T12:23:51.173974"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T12:23:52.731417"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T12:36:08.546002"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T12:36:10.700071"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T12:36:11.785783"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T12:36:13.660525"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T12:36:15.314663"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T12:36:20.852652"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T12:36:23.052588"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T12:36:26.843826"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T12:36:28.983546"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T12:36:30.561915"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T12:48:41.068009"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T12:48:42.932374"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T12:48:44.129064"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T12:48:45.891755"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T12:48:47.775810"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T12:48:53.501672"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T12:48:55.668074"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T12:48:59.154233"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T12:49:01.304476"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T12:49:02.813358"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:01:12.178744"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:01:14.110455"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:01:15.232744"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:01:17.218499"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:01:19.020258"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:01:24.608331"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:01:27.029063"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:01:30.704792"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:01:32.710635"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:01:34.232940"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:13:47.878894"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:13:49.831726"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:13:50.930456"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:13:52.733344"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:13:54.357186"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:13:59.917499"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:14:02.150556"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:14:06.002009"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:14:08.035899"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:14:09.624632"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:26:21.870812"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:26:23.746656"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:26:24.790199"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:26:26.547344"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:26:28.212411"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:26:33.692884"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:26:35.775987"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:26:39.330049"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:26:41.589619"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:26:43.435244"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:38:58.040552"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:38:59.946086"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:39:00.935155"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:39:02.790702"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:39:04.427320"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:39:09.987795"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:39:12.099685"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:39:15.639302"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:39:17.676692"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:39:19.608204"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:51:32.757159"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:51:34.898998"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:51:36.236701"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:51:38.010821"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:51:39.730098"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:51:45.243952"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:51:47.387621"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:51:50.884952"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:51:52.833872"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T13:51:54.418253"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:04:10.781263"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:04:12.900292"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:04:14.153607"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:04:16.017058"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:04:17.769863"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:04:23.519866"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:04:25.912504"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:04:29.404974"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:04:31.424677"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:04:32.948457"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:17:12.598579"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:17:14.832827"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:17:16.123433"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:17:17.958747"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:17:19.729993"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:17:25.303895"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:17:27.627459"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:17:31.460015"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:17:33.597889"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:17:35.236389"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:30:30.889326"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:30:32.822076"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:30:33.876000"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:30:35.755907"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:30:37.629483"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:30:43.728475"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:30:45.991750"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:30:49.662154"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:30:51.826922"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:30:53.527126"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:43:34.784764"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:43:36.712093"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:43:37.815827"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:43:39.623997"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:43:41.307861"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:43:47.300169"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:43:49.603391"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:43:53.223754"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:43:55.300172"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:43:56.943928"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:57:38.987129"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:57:41.002739"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:57:42.220178"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:57:44.062549"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:57:45.904273"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:57:51.843528"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:57:54.154164"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:57:57.721363"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:57:59.953572"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T14:58:01.627009"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T15:10:41.656667"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T15:10:43.635713"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T15:10:44.639908"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T15:10:46.598896"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T15:10:48.285395"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T15:10:54.067624"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T15:10:56.394261"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T15:11:00.026644"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T15:11:02.071355"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T15:11:03.764876"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T15:23:39.902985"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T15:23:41.918558"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T15:23:43.071080"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T15:23:44.952647"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T15:23:46.811406"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T15:23:52.479155"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T15:23:54.833842"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T15:23:58.787735"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T15:24:00.867090"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T15:24:02.560602"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T15:36:29.826192"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T15:36:31.793195"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T15:36:33.021573"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T15:36:34.940508"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T15:36:37.093825"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T15:36:42.819384"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T15:36:44.997049"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T15:36:48.590244"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T15:36:50.711382"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T15:36:52.316572"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T15:49:21.377160"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T15:49:23.356311"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T15:49:24.406221"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T15:49:26.305512"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T15:49:28.096993"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T15:49:33.822714"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T15:49:36.133080"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T15:49:40.115118"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T15:49:42.230563"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T15:49:43.871826"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:02:16.891711"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:02:19.265018"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:02:20.319831"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:02:22.171624"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:02:23.978258"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:02:29.818470"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:02:32.036482"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:02:35.745420"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:02:37.952121"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:02:39.778240"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:15:13.424877"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:15:15.515174"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:15:16.639762"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:15:18.617287"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:15:20.465905"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:15:26.233433"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:15:28.397557"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:15:31.850893"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:15:34.008745"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:15:35.580723"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:28:02.941970"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:28:05.002572"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:28:06.026454"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:28:07.861368"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:28:09.700948"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:28:15.470663"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:28:17.746982"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:28:21.461587"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:28:23.830116"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:28:25.675594"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:42:30.669895"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:42:32.890504"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:42:34.115186"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:42:36.252126"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:42:38.177570"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:42:43.877587"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:42:46.229529"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:42:50.221642"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:42:52.470121"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:42:54.081402"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:55:54.908206"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:55:57.332506"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:55:58.861874"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:56:01.103181"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:56:02.886049"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:56:08.611540"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:56:11.006609"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:56:14.714390"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:56:16.992602"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T16:56:18.948163"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T17:09:04.752375"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T17:09:06.945316"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T17:09:07.994390"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T17:09:09.990215"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T17:09:11.723879"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T17:09:17.542000"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T17:09:19.908929"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T17:09:23.722023"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T17:09:25.822976"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T17:09:27.516710"
+    },
+    {
+      "file": "/opt/tower-echo-brain/test_cicd_pipeline.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T17:22:26.708585"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_task_decomposer.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T17:22:28.842073"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_integrations.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T17:22:30.126470"
+    },
+    {
+      "file": "/opt/tower-echo-brain/websocket_diagnostic.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T17:22:32.060555"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_agent_development.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T17:22:33.796811"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T17:22:39.583513"
+    },
+    {
+      "file": "/opt/tower-echo-brain/agent_development_endpoints.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T17:22:41.816412"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_cicd_learning_integration.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T17:22:45.578252"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_self_awareness.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T17:22:47.867123"
+    },
+    {
+      "file": "/opt/tower-echo-brain/echo_apple_music_auth_provider.py",
+      "strategy": "black_format",
+      "timestamp": "2025-10-28T17:22:49.763478"
     }
   ],
   "improvement_patterns": {},
   "daily_scores": {
     "2025-10-28": {
-      "total_files": 1,
-      "below_threshold": 1,
+      "total_files": 514,
+      "below_threshold": 514,
       "average_health": 0.0
     }
   }

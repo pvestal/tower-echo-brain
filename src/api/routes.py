@@ -29,6 +29,12 @@ from src.utils.helpers import safe_executor, tower_orchestrator
 from echo_brain_thoughts import echo_brain
 from model_manager import get_model_manager, ModelManagementRequest, ModelManagementResponse
 
+# Import agentic persona for collaborative interaction
+try:
+    from src.core.agentic_persona import agentic_persona
+except ImportError:
+    agentic_persona = None
+
 logger = logging.getLogger(__name__)
 
 # Create router
@@ -455,15 +461,34 @@ async def query_echo(request: QueryRequest):
 
         logger.info(f"🎯 Intent: {intent} (confidence: {confidence:.2f}) params: {intent_params}")
 
-        # Check if clarification is needed
-        needs_clarification = conversation_manager.needs_clarification(intent, confidence, request.query)
+        # Check with agentic persona if we should ask questions
+        should_ask_user = False
+        contextual_question = None
+        if agentic_persona:
+            should_ask_user = agentic_persona.should_ask_question(
+                request.query, intent, confidence
+            )
+            if should_ask_user:
+                contextual_question = agentic_persona.get_contextual_question(
+                    request.query, intent, conversation_context.get("history", [])
+                )
+
+        # Check if clarification is needed (original or persona-driven)
+        needs_clarification = should_ask_user or conversation_manager.needs_clarification(intent, confidence, request.query)
 
         if needs_clarification:
-            clarifying_questions = conversation_manager.get_clarifying_questions(intent, request.query)
+            # Use contextual question from persona if available
+            if contextual_question:
+                clarifying_questions = [contextual_question]
+                response_text = contextual_question
+            else:
+                clarifying_questions = conversation_manager.get_clarifying_questions(intent, request.query)
+                response_text = "I'd like to better understand your request. Could you help clarify?"
+
             processing_time = time.time() - start_time
 
             response = QueryResponse(
-                response="I'd like to better understand your request. Could you help clarify?",
+                response=response_text,
                 model_used="conversation_manager",
                 intelligence_level="clarification",
                 processing_time=processing_time,

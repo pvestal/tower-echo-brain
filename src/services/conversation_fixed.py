@@ -55,12 +55,12 @@ class ConversationManager:
                 r"performance|profile"
             ],
 
-            # Code modification - VERY SPECIFIC (must mention FILES)
+            # Code modification - VERY SPECIFIC
             "code_modification": [
-                r"modify.*\.py|edit.*\.py|change.*\.py",
-                r"update.*\.py|refactor.*\.py",
-                r"fix.*bug.*in.*\.py",
-                r"modify the file|edit the file|change the file"
+                r"modify.*file|edit.*file|change.*file",
+                r"update.*file|refactor.*code",
+                r"fix.*bug.*in.*file",
+                r"add.*to.*existing"
             ],
 
             # Service-specific intents (keep existing)
