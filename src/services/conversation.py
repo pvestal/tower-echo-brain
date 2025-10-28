@@ -43,15 +43,30 @@ class ConversationManager:
                 r"talk.*to\s+(\w+)",
                 r"interface.*with\s+(\w+)"
             ],
+            "code_review": [
+                r"review.*code",
+                r"code.*review",
+                r"analyze.*code",
+                r"check.*quality",
+                r"pylint",
+                r"code.*score",
+                r"review.*/[^\s]+\.py"
+            ],
+            "code_refactor": [
+                r"refactor",
+                r"fix.*code",
+                r"improve.*code",
+                r"clean.*code",
+                r"rewrite"
+            ],
             "code_modification": [
                 r"write.*script.*at",
                 r"create.*file.*at",
                 r"write.*file",
                 r"save.*content.*to",
                 r"write.*to.*file",
-                r"modify|change|update|edit|fix.*code|file",
-                r"add.*function|method|class",
-                r"refactor|rewrite"
+                r"modify|change|update|edit.*code|file",
+                r"add.*function|method|class"
             ],
             "debugging": [
                 r"error|bug|issue|problem|fail|crash",
