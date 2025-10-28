@@ -9,6 +9,9 @@ from src.api.resilient_routes import resilient_router
 from src.api.system_metrics import router as system_metrics_router
 from src.api.routes import router as api_router
 from src.api.learning_routes import router as learning_router
+from src.api.director_routes import router as director_router
+from src.api.soundtrack_routes import router as soundtrack_router
+from src.api.autonomous_routes import router as autonomous_router
 from src.photo_comparison import router as photo_router
 import requests
 from agent_development_endpoints import agent_dev_router
@@ -164,6 +167,15 @@ app.include_router(api_router)
 # Include learning routes
 app.include_router(learning_router)
 logger.info("🧠 Learning system API routes loaded")
+# Include director workflow routes
+app.include_router(director_router)
+logger.info("🎬 Director workflow API routes loaded")
+# Include soundtrack BPM analysis routes
+app.include_router(soundtrack_router)
+logger.info("🎵 Soundtrack BPM analysis API routes loaded")
+# Include autonomous execution routes
+app.include_router(autonomous_router)
+logger.info("🤖 Autonomous execution API routes loaded")
 # Include system metrics routes
 
 app.include_router(system_metrics_router)
