@@ -263,6 +263,97 @@ async def handle_capability_intent(intent: str, params: Dict, request: QueryRequ
                     response_text = f"❌ Music generation failed: {result.get('error', 'Unknown error')}"
             except Exception as e:
                 response_text = f"❌ Music generation error: {str(e)}"
+
+        elif intent == "code_review":
+            logger.info(f"🔍 AUTO-CODE-REVIEW: Reviewing code with params: {params}")
+            try:
+                # Get the file path from params or query
+                filepath = params.get('filepath', '')
+                if not filepath and 'review' in request.query.lower():
+                    # Extract path from query like "review /opt/tower-auth/auth_service.py"
+                    import re
+                    path_match = re.search(r'/[^\s]+\.py', request.query)
+                    if path_match:
+                        filepath = path_match.group(0)
+
+                if not filepath:
+                    response_text = "❌ Please specify a file path to review. Example: 'review /opt/tower-auth/auth_service.py'"
+                else:
+                    # Import and use the code reviewer
+                    import sys
+                    if '/opt/tower-echo-brain' not in sys.path:
+                        sys.path.insert(0, '/opt/tower-echo-brain')
+                    from src.tasks.code_reviewer import CodeReviewer
+                    code_reviewer = CodeReviewer()
+                    if code_reviewer:
+                        result = await code_reviewer.analyze_file(filepath)
+                        score = result.get('score', 0)
+                        issues = result.get('issues', [])
+
+                        response_text = f"📝 Code Review for {filepath}\n\n"
+                        response_text += f"Quality Score: {score:.1f}/10\n\n"
+
+                        if issues:
+                            response_text += "Issues Found:\n"
+                            for idx, issue in enumerate(issues[:5], 1):
+                                response_text += f"{idx}. Line {issue.get('line', '?')}: {issue.get('message', 'Unknown issue')}\n"
+                        else:
+                            response_text += "✅ No issues found!"
+
+                        if score < 7.0:
+                            response_text += f"\n⚠️ This file needs refactoring (score < 7.0)"
+                            response_text += f"\n💡 Use 'refactor {filepath}' to fix issues automatically"
+                    else:
+                        response_text = "❌ Code reviewer not initialized. Restarting Echo may fix this."
+            except Exception as e:
+                response_text = f"❌ Code review error: {str(e)}"
+
+        elif intent == "code_refactor" or intent == "code_modification":
+            logger.info(f"🔧 AUTO-CODE-REFACTOR: Refactoring code with params: {params}")
+            try:
+                filepath = params.get('filepath', '')
+                if not filepath and ('refactor' in request.query.lower() or 'fix' in request.query.lower()):
+                    import re
+                    path_match = re.search(r'/[^\s]+\.py', request.query)
+                    if path_match:
+                        filepath = path_match.group(0)
+
+                if not filepath:
+                    response_text = "❌ Please specify a file path to refactor. Example: 'refactor /opt/tower-auth/auth_service.py'"
+                else:
+                    if '/opt/tower-echo-brain' not in sys.path:
+                        sys.path.insert(0, '/opt/tower-echo-brain')
+                    from src.tasks.code_refactor_executor import CodeRefactorExecutor
+                    code_refactor_executor = CodeRefactorExecutor()
+                    if code_refactor_executor:
+                        # First analyze the file
+                        analysis = await code_refactor_executor.analyze_file(filepath)
+
+                        if analysis['needs_refactor']:
+                            # Execute refactoring
+                            refactor_result = await code_refactor_executor.execute_refactor({
+                                'file': filepath,
+                                'score': analysis['score'],
+                                'issues': analysis['issues']
+                            })
+
+                            if refactor_result['success']:
+                                response_text = f"✅ Refactored {filepath}\n\n"
+                                response_text += f"Previous score: {analysis['score']:.1f}/10\n"
+                                response_text += f"Issues fixed: {len(analysis['issues'])}\n"
+                                response_text += f"New score: {refactor_result.get('new_score', 'N/A')}/10\n\n"
+                                response_text += "Changes applied:\n"
+                                for change in refactor_result.get('changes', [])[:5]:
+                                    response_text += f"  • {change}\n"
+                            else:
+                                response_text = f"❌ Refactoring failed: {refactor_result.get('error', 'Unknown error')}"
+                        else:
+                            response_text = f"✅ {filepath} doesn't need refactoring (score: {analysis['score']:.1f}/10)"
+                    else:
+                        response_text = "❌ Code refactor executor not initialized. Restarting Echo may fix this."
+            except Exception as e:
+                response_text = f"❌ Code refactor error: {str(e)}"
+
         else:
             # Fallback for other capability intents
             response_text = f"🤖 Echo capability '{intent}' executed with parameters: {params}"
@@ -306,6 +397,33 @@ async def query_echo(request: QueryRequest):
         request.conversation_id = str(uuid.uuid4())
 
     logger.info(f"🧠 Query received: {request.query[:100]}...")
+
+    # CHECK FOR SLASH COMMANDS FIRST
+    if request.query.strip().startswith('/'):
+        try:
+            from src.commands.command_handler import CommandHandler
+            cmd_handler = CommandHandler()
+            command, params = cmd_handler.parse_command(request.query)
+
+            if command:
+                logger.info(f"🔧 Executing command: {command}")
+                response_text = await cmd_handler.execute_command(command, params)
+
+                processing_time = time.time() - start_time
+                return QueryResponse(
+                    response=response_text,
+                    model_used="command_system",
+                    intelligence_level="command",
+                    processing_time=processing_time,
+                    escalation_path=["direct_command"],
+                    conversation_id=request.conversation_id,
+                    intent="command",
+                    confidence=1.0,
+                    requires_clarification=False,
+                    clarifying_questions=[]
+                )
+        except Exception as e:
+            logger.error(f"Command execution failed: {e}")
 
     # Cognitive model selection if available
     selected_model = None
@@ -365,7 +483,7 @@ async def query_echo(request: QueryRequest):
             return response
 
         # Handle capability intents automatically
-        capability_intents = ['anime_generation', 'service_testing', 'service_debugging', 'service_monitoring', 'agent_delegation', 'inter_service_communication', 'image_generation', 'voice_generation', 'music_generation']
+        capability_intents = ['anime_generation', 'service_testing', 'service_debugging', 'service_monitoring', 'agent_delegation', 'inter_service_communication', 'image_generation', 'voice_generation', 'music_generation', 'code_review', 'code_refactor', 'code_modification']
         if intent in capability_intents:
             response = await handle_capability_intent(intent, intent_params, request, request.conversation_id, start_time)
 
