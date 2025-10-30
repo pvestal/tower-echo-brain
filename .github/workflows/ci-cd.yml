@@ -2,11 +2,9 @@ name: Echo Brain CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, develop, feature/* ]
+    branches: [ main, feature/board-of-directors ]
   pull_request:
     branches: [ main ]
-  schedule:
-    - cron: '0 */6 * * *'  # Run every 6 hours for autonomous improvements
 
 jobs:
   code-quality:
@@ -119,81 +117,26 @@ jobs:
       with:
         sarif_file: 'trivy-results.sarif'
 
-  autonomous-improvements:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'schedule'
 
-    steps:
-    - uses: actions/checkout@v3
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Set up Python 3.12
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.12'
-
-    - name: Install tools
-      run: |
-        python -m pip install --upgrade pip
-        pip install black autopep8 pylint
-
-    - name: Auto-format code
-      run: |
-        black src/ --exclude venv
-        autopep8 --in-place --recursive src/
-
-    - name: Commit improvements
-      run: |
-        git config --global user.name "Echo Brain Bot"
-        git config --global user.email "echo@tower.local"
-        git add -A
-        if git diff --staged --quiet; then
-          echo "No changes to commit"
-        else
-          git commit -m "[Echo Auto-Improve] Code formatting and quality improvements"
-          git push
-        fi
-
-  deploy-to-tower:
+  deploy-notification:
     needs: [test, security-scan]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
-    - uses: actions/checkout@v3
-
-    - name: Deploy to Tower
-      env:
-        TOWER_HOST: ${{ secrets.TOWER_HOST }}
-        TOWER_USER: ${{ secrets.TOWER_USER }}
-        TOWER_KEY: ${{ secrets.TOWER_SSH_KEY }}
+    - name: Deployment notification
       run: |
-        echo "$TOWER_KEY" > tower_key
-        chmod 600 tower_key
-
-        # Pull latest changes on Tower
-        ssh -i tower_key -o StrictHostKeyChecking=no $TOWER_USER@$TOWER_HOST << 'EOF'
-          cd /opt/tower-echo-brain
-          git pull origin main
-          source venv/bin/activate
-          pip install -r requirements.txt --upgrade
-
-          # Restart service
-          sudo systemctl restart tower-echo-brain
-
-          # Check health
-          sleep 5
-          curl -s http://127.0.0.1:8309/api/echo/health | grep healthy
-        EOF
+        echo "✅ Tests passed for main branch"
+        echo "Production deployment should be done manually on Tower"
+        echo "Run: cd /opt/tower-echo-brain && git pull && sudo systemctl restart tower-echo-brain"
 
   notify:
-    needs: [deploy-to-tower]
+    needs: [deploy-notification]
     runs-on: ubuntu-latest
     if: always()
 
     steps:
     - name: Send notification
       run: |
-        echo "Deployment status: ${{ job.status }}"
-        # Add Telegram/Email notification here
+        echo "Build status: ${{ job.status }}"
+        echo "Manual deployment may be required"
