@@ -123,7 +123,7 @@ class AutonomousBehaviors:
         asyncio.create_task(self._maintenance_loop())
         asyncio.create_task(self._daily_digest_loop())
         asyncio.create_task(self._scheduled_task_processor())
-        asyncio.create_task(self._code_quality_loop())
+        # asyncio.create_task(self._code_quality_loop())  # Temporarily disabled - causing startup delays
         asyncio.create_task(self._security_configuration_loop())
 
         logger.info("✅ Echo autonomous behaviors active")

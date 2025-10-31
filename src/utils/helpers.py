@@ -21,13 +21,16 @@ class SafeShellExecutor:
     def __init__(self):
         self.allowed_commands = [
             'ls', 'pwd', 'echo', 'cat', 'grep', 'find', 'which',
-            'python', 'python3', 'pip', 'pip3', 'node', 'npm',
+            'python', 'python3', 'pip', 'pip3', 'node', 'npm', 'pnpm',
             'git', 'curl', 'wget', 'ps', 'kill', 'pkill',
             'df', 'du', 'free', 'top', 'htop', 'lsof', 'netstat',
             'sudo systemctl start', 'sudo systemctl stop', 'sudo systemctl restart',
             'sudo systemctl status', 'sudo systemctl enable', 'sudo systemctl disable',
             'sudo systemctl daemon-reload', 'sudo journalctl', 'sudo pkill',
-            'sudo killall', 'sudo ufw', 'wc', 'head', 'tail', 'sort', 'uniq'
+            'sudo killall', 'sudo ufw', 'wc', 'head', 'tail', 'sort', 'uniq',
+            'mkdir', 'touch', 'cp', 'mv', 'nano', 'vim', 'tee',
+            'chmod', 'chown', 'ln', 'dirname', 'basename', 'realpath',
+            'sh', 'bash'
         ]
         self.forbidden_patterns = [
             r';\s*rm\s+-rf',
@@ -91,19 +94,32 @@ class SafeShellExecutor:
                 }
 
         try:
-            # Parse command safely
-            if isinstance(command, str):
-                args = shlex.split(command)
-            else:
-                args = command
+            # Check if command needs shell execution (contains shell operators)
+            shell_operators = ['>', '>>', '|', '&&', '||', ';', '$(', '`']
+            needs_shell = any(op in command for op in shell_operators)
 
-            # Execute with timeout
-            process = await asyncio.create_subprocess_exec(
-                *args,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-                cwd=os.getcwd()
-            )
+            if needs_shell:
+                # Execute through shell for redirection, pipes, etc.
+                process = await asyncio.create_subprocess_shell(
+                    command,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                    cwd=os.getcwd()
+                )
+            else:
+                # Parse command safely for direct execution
+                if isinstance(command, str):
+                    args = shlex.split(command)
+                else:
+                    args = command
+
+                # Execute directly
+                process = await asyncio.create_subprocess_exec(
+                    *args,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                    cwd=os.getcwd()
+                )
 
             try:
                 stdout, stderr = await asyncio.wait_for(

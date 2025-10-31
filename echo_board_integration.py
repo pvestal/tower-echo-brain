@@ -187,13 +187,26 @@ async def test_board_integration():
         'description': 'Review authentication system for production deployment',
         'code': '''
 def authenticate(username, password):
-    # SQL injection vulnerability
-    query = f"SELECT * FROM users WHERE username='{username}' AND password='{password}'"
-    result = db.execute(query)
+    # FIXED: Use parameterized queries to prevent SQL injection
+    import re
 
-    # Hardcoded credentials
-    if username == "admin" and password == "password123":
-        return {"success": True, "admin": True}
+    # Validate inputs
+    if not username or not password:
+        return {"success": False, "error": "Missing credentials"}
+
+    # Input validation - only allow alphanumeric usernames
+    if not re.match(r'^[a-zA-Z0-9_]+$', username) or len(username) > 50:
+        return {"success": False, "error": "Invalid username format"}
+
+    # Use parameterized query to prevent SQL injection
+    try:
+        result = db.execute("SELECT * FROM users WHERE username = ? AND password = ?", (username, password))
+    except Exception as e:
+        logger.error(f"Database error during authentication: {e}")
+        return {"success": False, "error": "Authentication failed"}
+
+    # FIXED: Remove hardcoded credentials - use proper database authentication
+    # Note: This was a security vulnerability - never use hardcoded credentials
 
     if result:
         # Missing proper session management

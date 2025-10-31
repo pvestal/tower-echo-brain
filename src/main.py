@@ -9,6 +9,8 @@ from src.api.resilient_routes import resilient_router
 from src.api.system_metrics import router as system_metrics_router
 from src.api.routes import router as api_router
 from src.photo_comparison import router as photo_router
+from src.api.anime_orchestrator import router as anime_orchestrator_router
+from src.api.anime_coordination_routes import router as anime_coordination_router
 import requests
 from agent_development_endpoints import agent_dev_router
 from veteran_guardian_endpoints import veteran_router
@@ -161,6 +163,32 @@ logger.info("🎖️ Veteran Guardian Bot integration enabled")
 
 app.include_router(agent_dev_router)
 logger.info("🤖 Agent Development System enabled")
+
+app.include_router(anime_orchestrator_router)
+logger.info("🎬 Anime Production Orchestrator enabled")
+
+app.include_router(anime_coordination_router)
+logger.info("🎭 Echo Anime Coordination System enabled")
+
+# Include the new Anime Production Director routes
+try:
+    from src.api.anime_production_director import router as anime_director_router
+
+    app.include_router(anime_director_router)
+    logger.info(
+        "🎬 Echo Anime Production Director enabled (Advanced orchestration)")
+except Exception as e:
+    logger.warning(f"⚠️ Could not load Anime Production Director: {e}")
+
+# Include the Unified Anime Interface endpoints
+try:
+    from src.api.unified_anime_endpoints import router as unified_anime_router
+
+    app.include_router(unified_anime_router)
+    logger.info(
+        "🌐 Unified Anime Interface enabled (Cross-platform coordination)")
+except Exception as e:
+    logger.warning(f"⚠️ Could not load Unified Anime Interface: {e}")
 
 # Include control endpoints
 try:

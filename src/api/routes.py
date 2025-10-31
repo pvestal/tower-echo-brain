@@ -29,6 +29,8 @@ from src.core.intelligence import intelligence_router
 from src.services.conversation import conversation_manager
 from src.services.testing import testing_framework
 from src.utils.helpers import safe_executor, tower_orchestrator
+from src.tasks.comfyui_tools import ComfyUITools
+from src.tasks.storyline_context_manager import StorylineContextManager
 
 # Import external modules
 from echo_brain_thoughts import echo_brain
@@ -44,6 +46,9 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 # Use tower_orchestrator from helpers (which is now ResilientOrchestrator)
+# Initialize ComfyUI tools and storyline manager
+comfyui_tools = ComfyUITools()
+storyline_manager = StorylineContextManager()
 
 
 @router.get("/api/echo/health")
@@ -1011,6 +1016,76 @@ async def get_testing_capabilities():
 # Model management endpoints
 # Commented out - using individual endpoints instead
 # @router.post("/api/echo/models/manage", response_model=ModelManagementResponse)
+
+
+@router.post("/api/echo/comfyui/generate")
+async def comfyui_generate_image(request: Dict):
+    """Generate image using ComfyUI"""
+    try:
+        prompt = request.get("prompt", "")
+        negative_prompt = request.get("negative_prompt", "")
+        width = request.get("width", 1024)
+        height = request.get("height", 1024)
+        prefix = request.get("prefix", "echo_generated")
+
+        result = await comfyui_tools.generate_image(
+            prompt=prompt,
+            negative_prompt=negative_prompt,
+            width=width,
+            height=height,
+            prefix=prefix,
+        )
+
+        return result
+
+    except Exception as e:
+        logger.error(f"ComfyUI generation error: {e}")
+        return {"success": False, "error": str(e)}
+
+
+@router.post("/api/echo/comfyui/character")
+async def comfyui_generate_character(request: Dict):
+    """Generate anime character using ComfyUI"""
+    try:
+        character_name = request.get("character_name", "unnamed")
+        description = request.get("description", "anime character")
+        style = request.get("style", "anime")
+
+        result = await comfyui_tools.generate_anime_character(
+            character_name=character_name, description=description, style=style
+        )
+
+        return result
+
+    except Exception as e:
+        logger.error(f"ComfyUI character generation error: {e}")
+        return {"success": False, "error": str(e)}
+
+
+@router.get("/api/echo/comfyui/health")
+async def comfyui_health():
+    """Check ComfyUI health"""
+    try:
+        result = await comfyui_tools.health_check()
+        return result
+
+    except Exception as e:
+        logger.error(f"ComfyUI health check error: {e}")
+        return {"success": False, "error": str(e)}
+
+
+@router.get("/api/echo/comfyui/models")
+async def comfyui_list_models():
+    """List available ComfyUI models"""
+    try:
+        models = await comfyui_tools.list_models()
+        return {"success": True, "models": models}
+
+    except Exception as e:
+        logger.error(f"ComfyUI models list error: {e}")
+        return {"success": False, "error": str(e)}
+
+
 async def manage_model_disabled(
     request: ModelManagementRequest, background_tasks: BackgroundTasks
 ):
@@ -1327,4 +1402,76 @@ async def get_multimedia_services_status():
         }
     except Exception as e:
         logger.error(f"Service status check failed: {e}")
+        return {"success": False, "error": str(e)}
+
+
+@router.get("/api/echo/storyline/{project_id}")
+async def get_project_storyline(project_id: int):
+    """Get comprehensive storyline context for a project"""
+    try:
+        storyline = storyline_manager.get_project_storyline(project_id)
+        return {"success": True, "storyline": storyline}
+    except Exception as e:
+        logger.error(f"Error getting storyline: {e}")
+        return {"success": False, "error": str(e)}
+
+
+@router.get("/api/echo/storyline/{project_id}/gaps")
+async def analyze_storyline_gaps(project_id: int):
+    """Analyze what's missing from project storyline"""
+    try:
+        gaps = storyline_manager.analyze_storyline_gaps(project_id)
+        return {"success": True, "gaps": gaps}
+    except Exception as e:
+        logger.error(f"Error analyzing gaps: {e}")
+        return {"success": False, "error": str(e)}
+
+
+@router.get("/api/echo/storyline/{project_id}/questions")
+async def get_context_questions(project_id: int):
+    """Get targeted questions to help build storyline context"""
+    try:
+        questions = storyline_manager.generate_context_questions(project_id)
+        return {"success": True, "questions": questions}
+    except Exception as e:
+        logger.error(f"Error generating questions: {e}")
+        return {"success": False, "error": str(e)}
+
+
+@router.post("/api/echo/storyline/{project_id}/context")
+async def save_storyline_context(project_id: int, request: Dict):
+    """Save user-provided storyline context"""
+    try:
+        context_type = request.get("context_type", "")
+        content = request.get("content", "")
+        character = request.get("character")
+
+        if not context_type or not content:
+            return {"success": False,
+                    "error": "context_type and content are required"}
+
+        success = storyline_manager.save_user_context(
+            project_id, context_type, content, character
+        )
+
+        return {
+            "success": success,
+            "message": (
+                "Context saved successfully" if success else "Failed to save context"
+            ),
+        }
+
+    except Exception as e:
+        logger.error(f"Error saving context: {e}")
+        return {"success": False, "error": str(e)}
+
+
+@router.get("/api/echo/storyline/{project_id}/summary")
+async def get_storyline_summary(project_id: int):
+    """Generate comprehensive storyline summary"""
+    try:
+        summary = storyline_manager.generate_storyline_summary(project_id)
+        return {"success": True, "summary": summary}
+    except Exception as e:
+        logger.error(f"Error generating summary: {e}")
         return {"success": False, "error": str(e)}

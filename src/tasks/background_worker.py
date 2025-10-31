@@ -5,10 +5,10 @@ Continuous task processor that runs autonomously in background
 """
 
 import asyncio
-from src.tasks.autonomous_repair_executor import repair_executor
+from .autonomous_repair_executor import repair_executor
 import logging
 import time
-from src.tasks.task_implementation_executor import get_task_implementation_executor
+from .task_implementation_executor import get_task_implementation_executor
 import traceback
 import signal
 import sys

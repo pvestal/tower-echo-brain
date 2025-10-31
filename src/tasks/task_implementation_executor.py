@@ -15,6 +15,7 @@ import json
 from .code_writer import get_code_writer
 from .code_reviewer import get_code_reviewer
 from .service_tester import get_service_tester
+from .video_generation_tasks import VideoGenerationExecutor, VideoTaskType
 
 logger = logging.getLogger(__name__)
 
@@ -28,8 +29,9 @@ class TaskImplementationExecutor:
         self.code_writer = get_code_writer()
         self.code_reviewer = get_code_reviewer()
         self.service_tester = get_service_tester()
+        self.video_executor = VideoGenerationExecutor()
         self.board = board_integration
-        logger.info("TaskImplementationExecutor initialized")
+        logger.info("TaskImplementationExecutor initialized with video generation support")
     
     async def implement_task(self, task: str, service: str, test: bool = True) -> Dict[str, Any]:
         """
@@ -151,7 +153,40 @@ class TaskImplementationExecutor:
             logger.error(f"Error implementing task {task_id}: {e}")
         
         return result
-    
+
+    async def execute_video_task(self, task) -> Dict[str, Any]:
+        """Execute video generation tasks autonomously"""
+        try:
+            video_task_type = task.payload.get('video_task_type')
+
+            if video_task_type == VideoTaskType.CHARACTER_TO_VIDEO.value:
+                return await self.video_executor.execute_character_to_video(task)
+            elif video_task_type == VideoTaskType.BATCH_GENERATION.value:
+                return await self.video_executor.execute_batch_generation(task)
+            elif video_task_type == VideoTaskType.QUALITY_CHECK.value:
+                video_path = task.payload.get('video_path')
+                min_quality = task.payload.get('min_quality', 0.7)
+                quality_score = await self.video_executor._assess_video_quality(video_path)
+
+                return {
+                    'status': 'completed',
+                    'video_path': video_path,
+                    'quality_score': quality_score,
+                    'passes_threshold': quality_score >= min_quality
+                }
+            else:
+                return {
+                    'status': 'failed',
+                    'error': f"Unknown video task type: {video_task_type}"
+                }
+
+        except Exception as e:
+            logger.error(f"Video task execution failed: {e}")
+            return {
+                'status': 'failed',
+                'error': str(e)
+            }
+
     async def _analyze_task(self, task: str, service: str) -> Dict[str, Any]:
         """Analyze task and determine what needs to be done"""
         analysis = {
