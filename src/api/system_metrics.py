@@ -71,6 +71,41 @@ async def get_system_metrics():
         except Exception as e:
             logger.warning(f"Failed to get NVIDIA VRAM stats: {e}")
 
+        # AMD GPU VRAM via rocm-smi
+        amd_vram_used_gb = 0
+        amd_vram_total_gb = 0
+        amd_gpu_percent = 0
+        try:
+            # Get AMD GPU usage percentage
+            result = subprocess.run(
+                ['rocm-smi', '--showuse'],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+            if result.returncode == 0:
+                for line in result.stdout.split('\n'):
+                    if 'GPU[0]' in line and 'GPU use (%)' in line:
+                        amd_gpu_percent = float(line.split(':')[-1].strip())
+                        break
+
+            # Get AMD GPU VRAM usage
+            result = subprocess.run(
+                ['rocm-smi', '--showmeminfo', 'vram'],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+            if result.returncode == 0:
+                for line in result.stdout.split('\n'):
+                    if 'GPU[0]' in line:
+                        if 'VRAM Total Memory (B)' in line:
+                            amd_vram_total_gb = float(line.split(':')[-1].strip()) / (1024**3)
+                        elif 'VRAM Total Used Memory (B)' in line:
+                            amd_vram_used_gb = float(line.split(':')[-1].strip()) / (1024**3)
+        except Exception as e:
+            logger.warning(f"Failed to get AMD GPU stats: {e}")
+
         return {
             "cpu_percent": round(cpu_percent, 1),
             "memory_percent": round(memory_percent, 1),
@@ -78,6 +113,9 @@ async def get_system_metrics():
             "memory_total_gb": round(memory_total_gb, 2),
             "vram_used_gb": round(vram_used_gb, 2),
             "vram_total_gb": round(vram_total_gb, 2),
+            "amd_gpu_percent": round(amd_gpu_percent, 1),
+            "amd_vram_used_gb": round(amd_vram_used_gb, 2),
+            "amd_vram_total_gb": round(amd_vram_total_gb, 2),
             "uptime": uptime_str,
             "load_average": load_avg,
             "disk_usage": disk_usage_str,
