@@ -21,7 +21,7 @@ router = APIRouter()
 @router.get("/api/echo/system/metrics")
 async def get_system_metrics():
     """
-    Get system resource metrics: CPU, Memory, VRAM
+    Get system resource metrics: CPU, Memory, VRAM, System Info
     """
     try:
         # CPU and Memory from psutil
@@ -30,6 +30,29 @@ async def get_system_metrics():
         memory_percent = memory.percent
         memory_used_gb = memory.used / (1024**3)
         memory_total_gb = memory.total / (1024**3)
+
+        # System uptime
+        uptime_seconds = psutil.boot_time()
+        uptime_duration = datetime.now().timestamp() - uptime_seconds
+        days = int(uptime_duration // 86400)
+        hours = int((uptime_duration % 86400) // 3600)
+        uptime_str = f"{days}d {hours}h"
+
+        # Load average (Linux/Unix only)
+        load_avg = "N/A"
+        try:
+            load_1, load_5, load_15 = psutil.getloadavg()
+            load_avg = f"{load_1:.1f}, {load_5:.1f}, {load_15:.1f}"
+        except AttributeError:
+            # Windows doesn't have load average
+            load_avg = f"{cpu_percent:.1f}% CPU"
+
+        # Disk usage for root filesystem
+        disk = psutil.disk_usage('/')
+        disk_percent = (disk.used / disk.total) * 100
+        disk_used_gb = disk.used / (1024**3)
+        disk_total_gb = disk.total / (1024**3)
+        disk_usage_str = f"{disk_percent:.1f}% ({disk_used_gb:.0f}/{disk_total_gb:.0f} GB)"
 
         # NVIDIA GPU VRAM via nvidia-smi
         vram_used_gb = 0
@@ -55,6 +78,9 @@ async def get_system_metrics():
             "memory_total_gb": round(memory_total_gb, 2),
             "vram_used_gb": round(vram_used_gb, 2),
             "vram_total_gb": round(vram_total_gb, 2),
+            "uptime": uptime_str,
+            "load_average": load_avg,
+            "disk_usage": disk_usage_str,
             "timestamp": datetime.now().isoformat()
         }
     except Exception as e:
