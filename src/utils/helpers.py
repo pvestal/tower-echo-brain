@@ -22,7 +22,12 @@ class SafeShellExecutor:
         self.allowed_commands = [
             'ls', 'pwd', 'echo', 'cat', 'grep', 'find', 'which',
             'python', 'python3', 'pip', 'pip3', 'node', 'npm',
-            'git', 'curl', 'wget', 'ps', 'kill', 'pkill'
+            'git', 'curl', 'wget', 'ps', 'kill', 'pkill',
+            'df', 'du', 'free', 'top', 'htop', 'lsof', 'netstat',
+            'sudo systemctl start', 'sudo systemctl stop', 'sudo systemctl restart',
+            'sudo systemctl status', 'sudo systemctl enable', 'sudo systemctl disable',
+            'sudo systemctl daemon-reload', 'sudo journalctl', 'sudo pkill',
+            'sudo killall', 'sudo ufw', 'wc', 'head', 'tail', 'sort', 'uniq'
         ]
         self.forbidden_patterns = [
             r';\s*rm\s+-rf',
@@ -55,10 +60,15 @@ class SafeShellExecutor:
         }
 
         if not allow_all:
-            # Check if base command is allowed
-            base_command = command.split()[0] if command else ''
-            if base_command not in self.allowed_commands:
-                logger.warning(f"Command '{base_command}' not in allowed list")
+            # Check if command or command prefix is allowed
+            command_allowed = False
+            for allowed_cmd in self.allowed_commands:
+                if command.startswith(allowed_cmd + ' ') or command == allowed_cmd:
+                    command_allowed = True
+                    break
+
+            if not command_allowed:
+                logger.warning(f"Command '{command}' not in allowed list")
                 safety_checks['command_allowed'] = False
 
             # Check for forbidden patterns
