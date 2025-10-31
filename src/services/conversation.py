@@ -97,6 +97,14 @@ class ConversationManager:
                 r"generate.*song|create.*song|make.*song",
                 r"soundtrack|background.*music|ambient.*music",
                 r"musical.*piece|audio.*track"
+            ],
+            "image_analysis": [
+                r"analyze.*image|analyze.*frame|check.*image|check.*frame",
+                r"look.*at.*image|look.*at.*frame|see.*image|see.*frame",
+                r"quality.*check|quality.*control|image.*quality|frame.*quality",
+                r"describe.*image|what.*in.*image|visual.*analysis",
+                r"anime.*quality|character.*quality|art.*quality",
+                r"review.*image|assess.*image|evaluate.*image"
             ]
         }
 

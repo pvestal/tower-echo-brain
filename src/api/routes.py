@@ -349,6 +349,51 @@ async def handle_capability_intent(
                             'error', 'Unknown error')}"
             except Exception as e:
                 response_text = f"❌ Music generation error: {str(e)}"
+        elif intent == "image_analysis":
+            logger.info(
+                f"👁️ AUTO-VISION: Analyzing image with params: {params}")
+            try:
+                # Import vision capabilities
+                from src.vision_capabilities import EchoVision
+                from src.modules.vision_quality_checker import VisionQualityChecker
+
+                # Extract image path from params or query
+                image_path = params.get("image_path", "")
+                if not image_path:
+                    # Try to extract from query
+                    import re
+                    path_match = re.search(r'[/\w.-]+\.(?:png|jpg|jpeg|gif|bmp)', request.query)
+                    if path_match:
+                        image_path = path_match.group(0)
+
+                if not image_path:
+                    response_text = "❌ No image path found. Please provide a path to an image file."
+                else:
+                    # Check if file exists
+                    import os
+                    if not os.path.exists(image_path):
+                        response_text = f"❌ Image file not found: {image_path}"
+                    else:
+                        # Use quality checker for anime frames, general vision for other images
+                        if "anime" in request.query.lower() or "frame" in request.query.lower():
+                            quality_checker = VisionQualityChecker()
+                            result = await quality_checker.check_frame_quality(image_path)
+                            response_text = f"🎭 Anime Quality Analysis:\n\n"
+                            response_text += f"Score: {result['score']}/10\n"
+                            response_text += f"Quality Check: {'✅ PASSED' if result['passed'] else '❌ FAILED'}\n"
+                            if result['issues']:
+                                response_text += f"Issues Found: {', '.join(result['issues'])}\n"
+                            response_text += f"Regenerate Recommended: {'Yes' if result['regenerate'] else 'No'}\n"
+                            response_text += f"\nImage: {image_path}"
+                        else:
+                            # General image analysis
+                            echo_vision = EchoVision()
+                            analysis_prompt = params.get("prompt", "Describe this image in detail")
+                            result = await echo_vision.analyze_image(image_path, analysis_prompt)
+                            response_text = f"👁️ Image Analysis:\n\n{result}\n\nImage: {image_path}"
+
+            except Exception as e:
+                response_text = f"❌ Image analysis error: {str(e)}"
         else:
             # Fallback for other capability intents
             response_text = (
@@ -396,6 +441,24 @@ async def query_echo(request: QueryRequest):
         request.conversation_id = str(uuid.uuid4())
 
     logger.info(f"🧠 Query received: {request.query[:100]}...")
+    print(f"🔍 DEBUG: About to try anime integration...")
+
+    # Add anime memory context if relevant
+    anime_context = {}
+    try:
+        print(f"🔍 DEBUG: Importing anime integration...")
+        import sys
+        sys.path.append('/opt/tower-echo-brain')
+        from anime_memory_integration import get_anime_context
+        print(f"🔍 DEBUG: Import successful, calling get_anime_context...")
+
+        anime_context = get_anime_context(request.query)
+        print(f"🔍 DEBUG: Got context: {anime_context}")
+        if anime_context.get("characters") or anime_context.get("preferences"):
+            logger.info(f"🎭 Anime context loaded: {len(anime_context.get('characters', []))} characters, {len(anime_context.get('preferences', []))} preferences")
+    except Exception as e:
+        print(f"🔍 DEBUG: Exception occurred: {e}")
+        logger.debug(f"Anime memory integration not available: {e}")
 
     # Cognitive model selection if available
     selected_model = None
@@ -554,8 +617,18 @@ async def query_echo(request: QueryRequest):
             logger.info(
                 f"🧠 Using cognitively selected model: {selected_model} - {selection_reason}"
             )
+            # Enhance query with anime context if available
+            enhanced_query = request.query
+            if anime_context.get("characters"):
+                for char in anime_context["characters"]:
+                    enhanced_query += f"\n\nCHARACTER MEMORY: {char['name']} - {char['description']}"
+            if anime_context.get("preferences"):
+                prefs = [f"{p['type']}: {p['value']}" for p in anime_context["preferences"] if p['confidence'] > 0.7]
+                if prefs:
+                    enhanced_query += f"\n\nUSER PREFERENCES: {'; '.join(prefs[:5])}"
+
             result = await intelligence_router.query_model(
-                selected_model, request.query
+                selected_model, enhanced_query
             )
             if result["success"]:
                 result["intelligence_level"] = intelligence_level
