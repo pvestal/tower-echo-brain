@@ -1,0 +1,433 @@
+{
+  "original_1sec.mp4": {
+    "video_path": "/mnt/1TB-storage/ComfyUI/output/rife_scaling_tests/cyberpunk_goblin/original_1sec.mp4",
+    "filename": "original_1sec.mp4",
+    "metadata": {
+      "duration": 1.0,
+      "frame_rate": 24.0,
+      "resolution": [
+        512,
+        512
+      ],
+      "frame_count": 24,
+      "bitrate": 3631088,
+      "codec": "h264"
+    },
+    "visual_analysis": {
+      "average_brightness": 120.46714146931966,
+      "average_contrast": 23.652591539768522,
+      "color_variance": 9155.64453125,
+      "motion_intensity": 387.4990234375,
+      "action_intensity": 0.7182629576988425,
+      "visual_style": "atmospheric_soft",
+      "frames_analyzed": 24,
+      "dominant_colors": [
+        "red"
+      ]
+    },
+    "project_context": {
+      "project": "Generic Anime",
+      "genre": "anime_general",
+      "mood": "dynamic",
+      "target_audience": "general",
+      "cultural_context": "japanese",
+      "typical_themes": [
+        "adventure",
+        "friendship",
+        "growth"
+      ]
+    },
+    "pacing_analysis": {
+      "scene_changes": [],
+      "scene_count": 1,
+      "average_scene_length": 1.0,
+      "pacing_type": "fast",
+      "estimated_bpm": 140,
+      "rhythm_consistency": 1.0,
+      "peak_moments": [
+        0.75
+      ]
+    },
+    "music_characteristics": {
+      "energy_level": 0.6573051830795371,
+      "mood": "balanced_engaging",
+      "instrumentation": [
+        "orchestral",
+        "piano",
+        "strings",
+        "percussion"
+      ],
+      "dynamics": {
+        "build_points": [],
+        "climax_points": [
+          0.75
+        ],
+        "fade_points": [],
+        "overall_arc": "build_climax_resolve"
+      },
+      "harmonic_style": "japanese_scales_modern",
+      "production_style": "balanced_modern"
+    },
+    "recommended_bpm_range": [
+      125,
+      155
+    ],
+    "genre_recommendations": [
+      {
+        "genre": "anime_soundtrack",
+        "priority": 1.0,
+        "tags": [
+          "japanese",
+          "orchestral"
+        ]
+      },
+      {
+        "genre": "j_pop_instrumental",
+        "priority": 0.8,
+        "tags": [
+          "energetic",
+          "melodic"
+        ]
+      },
+      {
+        "genre": "orchestral_epic",
+        "priority": 0.7,
+        "tags": [
+          "cinematic",
+          "dramatic"
+        ]
+      }
+    ],
+    "sync_difficulty": 0.4866666666666667
+  },
+  "cyberpunk_goblin_5sec_rife_00001.mp4": {
+    "video_path": "/mnt/1TB-storage/ComfyUI/output/rife_scaling_tests/cyberpunk_goblin/cyberpunk_goblin_5sec_rife_00001.mp4",
+    "filename": "cyberpunk_goblin_5sec_rife_00001.mp4",
+    "metadata": {
+      "duration": 4.833333,
+      "frame_rate": 24.0,
+      "resolution": [
+        512,
+        512
+      ],
+      "frame_count": 116,
+      "bitrate": 1478295,
+      "codec": "h264"
+    },
+    "visual_analysis": {
+      "average_brightness": 118.97953685124715,
+      "average_contrast": 23.55214005191468,
+      "color_variance": 9035.84375,
+      "motion_intensity": 387.1836853027344,
+      "action_intensity": 0.7177607002595734,
+      "visual_style": "atmospheric_soft",
+      "frames_analyzed": 24,
+      "dominant_colors": [
+        "red"
+      ]
+    },
+    "project_context": {
+      "project": "Cyberpunk Goblin Slayer",
+      "genre": "cyberpunk_action",
+      "mood": "futuristic_intense",
+      "target_audience": "adult",
+      "cultural_context": "japanese_cyberpunk",
+      "typical_themes": [
+        "technology",
+        "urban",
+        "conflict",
+        "supernatural"
+      ]
+    },
+    "pacing_analysis": {
+      "scene_changes": [],
+      "scene_count": 1,
+      "average_scene_length": 4.833333333333333,
+      "pacing_type": "slow",
+      "estimated_bpm": 100,
+      "rhythm_consistency": 1.0,
+      "peak_moments": [
+        3.625
+      ]
+    },
+    "music_characteristics": {
+      "energy_level": 0.5571042801038294,
+      "mood": "futuristic_energetic",
+      "instrumentation": [
+        "synthesizer",
+        "electronic_drums",
+        "bass_synth",
+        "electric_guitar"
+      ],
+      "dynamics": {
+        "build_points": [],
+        "climax_points": [
+          3.625
+        ],
+        "fade_points": [],
+        "overall_arc": "build_climax_resolve"
+      },
+      "harmonic_style": "minor_pentatonic_electronic",
+      "production_style": "balanced_modern"
+    },
+    "recommended_bpm_range": [
+      90,
+      105
+    ],
+    "genre_recommendations": [
+      {
+        "genre": "synthwave",
+        "priority": 1.0,
+        "tags": [
+          "cyberpunk",
+          "retro-futuristic"
+        ]
+      },
+      {
+        "genre": "electronic",
+        "priority": 0.9,
+        "tags": [
+          "techno",
+          "industrial"
+        ]
+      },
+      {
+        "genre": "dark_synthpop",
+        "priority": 0.8,
+        "tags": [
+          "dark",
+          "atmospheric"
+        ]
+      },
+      {
+        "genre": "cyberpunk_metal",
+        "priority": 0.7,
+        "tags": [
+          "metal",
+          "electronic"
+        ]
+      }
+    ],
+    "sync_difficulty": 0.33666666666666667
+  },
+  "cyberpunk_goblin_8sec_scripted.mp4": {
+    "video_path": "/mnt/1TB-storage/ComfyUI/output/rife_scaling_tests/cyberpunk_goblin/cyberpunk_goblin_8sec_scripted.mp4",
+    "filename": "cyberpunk_goblin_8sec_scripted.mp4",
+    "metadata": {
+      "duration": 7.708333,
+      "frame_rate": 24.0,
+      "resolution": [
+        512,
+        512
+      ],
+      "frame_count": 185,
+      "bitrate": 1062566,
+      "codec": "h264"
+    },
+    "visual_analysis": {
+      "average_brightness": 118.94611812773205,
+      "average_contrast": 23.545204916018594,
+      "color_variance": 9299.5009765625,
+      "motion_intensity": 386.7255859375,
+      "action_intensity": 0.7177260245800929,
+      "visual_style": "atmospheric_soft",
+      "frames_analyzed": 21,
+      "dominant_colors": [
+        "red"
+      ]
+    },
+    "project_context": {
+      "project": "Cyberpunk Goblin Slayer",
+      "genre": "cyberpunk_action",
+      "mood": "futuristic_intense",
+      "target_audience": "adult",
+      "cultural_context": "japanese_cyberpunk",
+      "typical_themes": [
+        "technology",
+        "urban",
+        "conflict",
+        "supernatural"
+      ]
+    },
+    "pacing_analysis": {
+      "scene_changes": [],
+      "scene_count": 1,
+      "average_scene_length": 7.708333333333333,
+      "pacing_type": "very_slow",
+      "estimated_bpm": 80,
+      "rhythm_consistency": 1.0,
+      "peak_moments": [
+        5.78125
+      ]
+    },
+    "music_characteristics": {
+      "energy_level": 0.5070904098320372,
+      "mood": "futuristic_energetic",
+      "instrumentation": [
+        "synthesizer",
+        "electronic_drums",
+        "bass_synth",
+        "electric_guitar"
+      ],
+      "dynamics": {
+        "build_points": [],
+        "climax_points": [
+          5.78125
+        ],
+        "fade_points": [],
+        "overall_arc": "build_climax_resolve"
+      },
+      "harmonic_style": "minor_pentatonic_electronic",
+      "production_style": "balanced_modern"
+    },
+    "recommended_bpm_range": [
+      70,
+      85
+    ],
+    "genre_recommendations": [
+      {
+        "genre": "synthwave",
+        "priority": 1.0,
+        "tags": [
+          "cyberpunk",
+          "retro-futuristic"
+        ]
+      },
+      {
+        "genre": "electronic",
+        "priority": 0.9,
+        "tags": [
+          "techno",
+          "industrial"
+        ]
+      },
+      {
+        "genre": "dark_synthpop",
+        "priority": 0.8,
+        "tags": [
+          "dark",
+          "atmospheric"
+        ]
+      },
+      {
+        "genre": "cyberpunk_metal",
+        "priority": 0.7,
+        "tags": [
+          "metal",
+          "electronic"
+        ]
+      }
+    ],
+    "sync_difficulty": 0.43666666666666665
+  },
+  "cyberpunk_goblin_10sec_rife_00001.mp4": {
+    "video_path": "/mnt/1TB-storage/ComfyUI/output/rife_scaling_tests/cyberpunk_goblin/cyberpunk_goblin_10sec_rife_00001.mp4",
+    "filename": "cyberpunk_goblin_10sec_rife_00001.mp4",
+    "metadata": {
+      "duration": 9.625,
+      "frame_rate": 24.0,
+      "resolution": [
+        512,
+        512
+      ],
+      "frame_count": 231,
+      "bitrate": 1027266,
+      "codec": "h264"
+    },
+    "visual_analysis": {
+      "average_brightness": 118.91660563151042,
+      "average_contrast": 23.491411497660398,
+      "color_variance": 9270.548828125,
+      "motion_intensity": 385.6913757324219,
+      "action_intensity": 0.7174570574883019,
+      "visual_style": "atmospheric_soft",
+      "frames_analyzed": 21,
+      "dominant_colors": [
+        "red"
+      ]
+    },
+    "project_context": {
+      "project": "Cyberpunk Goblin Slayer",
+      "genre": "cyberpunk_action",
+      "mood": "futuristic_intense",
+      "target_audience": "adult",
+      "cultural_context": "japanese_cyberpunk",
+      "typical_themes": [
+        "technology",
+        "urban",
+        "conflict",
+        "supernatural"
+      ]
+    },
+    "pacing_analysis": {
+      "scene_changes": [],
+      "scene_count": 1,
+      "average_scene_length": 9.625,
+      "pacing_type": "very_slow",
+      "estimated_bpm": 80,
+      "rhythm_consistency": 1.0,
+      "peak_moments": [
+        7.21875
+      ]
+    },
+    "music_characteristics": {
+      "energy_level": 0.5069828229953208,
+      "mood": "futuristic_energetic",
+      "instrumentation": [
+        "synthesizer",
+        "electronic_drums",
+        "bass_synth",
+        "electric_guitar"
+      ],
+      "dynamics": {
+        "build_points": [],
+        "climax_points": [
+          7.21875
+        ],
+        "fade_points": [],
+        "overall_arc": "build_climax_resolve"
+      },
+      "harmonic_style": "minor_pentatonic_electronic",
+      "production_style": "balanced_modern"
+    },
+    "recommended_bpm_range": [
+      70,
+      85
+    ],
+    "genre_recommendations": [
+      {
+        "genre": "synthwave",
+        "priority": 1.0,
+        "tags": [
+          "cyberpunk",
+          "retro-futuristic"
+        ]
+      },
+      {
+        "genre": "electronic",
+        "priority": 0.9,
+        "tags": [
+          "techno",
+          "industrial"
+        ]
+      },
+      {
+        "genre": "dark_synthpop",
+        "priority": 0.8,
+        "tags": [
+          "dark",
+          "atmospheric"
+        ]
+      },
+      {
+        "genre": "cyberpunk_metal",
+        "priority": 0.7,
+        "tags": [
+          "metal",
+          "electronic"
+        ]
+      }
+    ],
+    "sync_difficulty": 0.43666666666666665
+  }
+}
