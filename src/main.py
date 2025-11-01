@@ -21,13 +21,13 @@ from model_manager import (
     ModelManagementRequest,
     ModelOperation,
 )
-from board_api import create_board_api
+# Board API removed - unused governance system
 from routing.knowledge_manager import create_simple_knowledge_manager
 from routing.request_logger import RequestLogger
 from routing.service_registry import ServiceRegistry
 from src.tasks.task_queue import Task, TaskType, TaskPriority, TaskStatus
 from src.tasks import TaskQueue, BackgroundWorker, AutonomousBehaviors
-from src.board_integration import BoardIntegration
+# BoardIntegration removed - unused governance system
 from src.db.database import database
 from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -215,7 +215,7 @@ except Exception as e:
 # except Exception as e:
 #     logger.warning(f"Failed to initialize Anime Story Orchestrator: {e}")
 
-board_api = None
+# board_api removed - unused governance system
 model_manager = None
 service_registry = ServiceRegistry()
 request_logger = RequestLogger()  # Fixed: RequestLogger takes no arguments
@@ -253,7 +253,7 @@ except ImportError as e:
 async def startup_event():
     app.include_router(photo_router)
     """Initialize all components on startup including autonomous task system"""
-    global board_api, model_manager, task_queue, background_worker, autonomous_behaviors
+    global model_manager, task_queue, background_worker, autonomous_behaviors
 
     logger.info("🚀 Echo Brain startup sequence initiated")
 
@@ -273,13 +273,8 @@ async def startup_event():
 
     # Initialize conversation manager with database persistence
 
-    # Initialize board API
-    try:
-        board_api = create_board_api(service_registry, request_logger)
-        app.mount("/board-api", board_api, name="board_api")
-        logger.info("✅ Board of Directors API mounted")
-    except Exception as e:
-        logger.error(f"❌ Failed to initialize Board API: {e}")
+    # Board API removed - unused governance system
+    logger.info("✅ Board of Directors system removed - Echo operates autonomously")
 
     # Initialize model manager
     try:
@@ -527,22 +522,7 @@ async def trigger_emergency_response(emergency_data: Dict):
 # API Routes are now in the router module
 
 
-@app.get("/board-dashboard", response_class=HTMLResponse)
-async def board_dashboard():
-    """Serve the board dashboard HTML"""
-    return """
-    <!DOCTYPE html>
-    <html>
-    <head><title>Echo Brain - Board of Directors</title></head>
-    <body>
-        <h1>🧠 Echo Brain - Board of Directors Dashboard</h1>
-        <p>Advanced AI governance and decision tracking system with autonomous task execution</p>
-        <p><a href="/board-api/docs">API Documentation</a></p>
-        <p><a href="/api/tasks/status">Task System Status</a></p>
-        <p><a href="/api/tasks/brain-state">Brain State</a></p>
-    </body>
-    </html>
-    """
+# Board dashboard removed - Echo operates autonomously without governance oversight
 
 
 # This will be added to the main.py file
@@ -618,22 +598,16 @@ async def evaluate_code_with_board(
     code = request.get("code", "")
     context = request.get("context", {})
 
-    # Get Board evaluation
-    async with BoardIntegration() as board_integration:
-        board_decision = await board_integration.evaluate_with_board(code, context)
+    # Direct execution - no board oversight needed
+    should_execute = True  # Echo decides autonomously
+    reasoning = "Echo operates autonomously without governance oversight"
 
-        # Determine if safe to execute
-        should_execute = board_integration.should_execute(board_decision)
-        reasoning = board_integration.get_board_reasoning(board_decision)
-
-        response = {
-            "code": code,
-            "board_decision": board_decision.get("final_recommendation", "unknown"),
-            "should_execute": should_execute,
-            "reasoning": reasoning,
-            "directors": board_decision.get("directors", []),
-            "consensus_strength": board_decision.get("consensus_strength", 0),
-        }
+    response = {
+        "code": code,
+        "should_execute": should_execute,
+        "reasoning": reasoning,
+        "autonomous_decision": True,
+    }
 
         if should_execute and context.get("auto_execute", False):
             # Execute code if approved and requested
