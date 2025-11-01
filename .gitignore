@@ -32,3 +32,9 @@ logs/
 .env
 node_modules/
 venv/
+
+# Backup files
+*.backup*
+*.bak
+*.old
+backups/
