@@ -65,7 +65,7 @@ class EchoAnimeCoordinator:
     """Central orchestrator making Echo the intelligent anime coordinator"""
 
     def __init__(self):
-        self.anime_service_url = "http://127.0.0.1:8328"
+        self.anime_service_url = "http://192.168.50.135:8328"
         self.comfyui_url = "http://127.0.0.1:8188"
         self.character_system_path = "/opt/tower-anime-production/characters"
 
@@ -661,7 +661,7 @@ class EchoAnimeCoordinator:
                 "prompt": character_data.get("enhanced_prompt", request.prompt),
                 "character": request.character_name or "original",  # Pass character name correctly
                 "scene_type": "dialogue",
-                "duration": 3,
+                "generation_type": request.generation_type,  # Pass video/image type
                 "style": request.style_preference or "anime",
                 "type": "professional",
                 # Echo metadata
@@ -682,7 +682,7 @@ class EchoAnimeCoordinator:
             logger.info(f"🚀 Sending to anime service: {self.anime_service_url}")
 
             response = requests.post(
-                f"{self.anime_service_url}/generate/professional",
+                f"{self.anime_service_url}/api/anime/generate",
                 json=generation_params,
                 timeout=300
             )
