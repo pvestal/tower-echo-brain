@@ -21,12 +21,14 @@ from model_manager import (
     ModelManagementRequest,
     ModelOperation,
 )
+
 # Board API removed - unused governance system
 from routing.knowledge_manager import create_simple_knowledge_manager
 from routing.request_logger import RequestLogger
 from routing.service_registry import ServiceRegistry
 from src.tasks.task_queue import Task, TaskType, TaskPriority, TaskStatus
 from src.tasks import TaskQueue, BackgroundWorker, AutonomousBehaviors
+
 # BoardIntegration removed - unused governance system
 from src.db.database import database
 from fastapi.responses import HTMLResponse, FileResponse
@@ -274,7 +276,8 @@ async def startup_event():
     # Initialize conversation manager with database persistence
 
     # Board API removed - unused governance system
-    logger.info("✅ Board of Directors system removed - Echo operates autonomously")
+    logger.info(
+        "✅ Board of Directors system removed - Echo operates autonomously")
 
     # Initialize model manager
     try:
@@ -522,7 +525,8 @@ async def trigger_emergency_response(emergency_data: Dict):
 # API Routes are now in the router module
 
 
-# Board dashboard removed - Echo operates autonomously without governance oversight
+# Board dashboard removed - Echo operates autonomously without governance
+# oversight
 
 
 # This will be added to the main.py file
@@ -609,16 +613,16 @@ async def evaluate_code_with_board(
         "autonomous_decision": True,
     }
 
-        if should_execute and context.get("auto_execute", False):
-            # Execute code if approved and requested
-            try:
-                exec_globals = {}
-                exec(code, exec_globals)
-                response["execution_result"] = "Success"
-            except Exception as e:
-                response["execution_result"] = f"Error: {str(e)}"
+    if should_execute and context.get("auto_execute", False):
+        # Execute code if approved and requested
+        try:
+            exec_globals = {}
+            exec(code, exec_globals)
+            response["execution_result"] = "Success"
+        except Exception as e:
+            response["execution_result"] = f"Error: {str(e)}"
 
-        return response
+    return response
 
 
 logger.info("Board integration endpoint added at /api/evaluate")

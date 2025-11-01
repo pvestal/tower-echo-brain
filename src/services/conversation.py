@@ -105,6 +105,12 @@ class ConversationManager:
                 r"describe.*image|what.*in.*image|visual.*analysis",
                 r"anime.*quality|character.*quality|art.*quality",
                 r"review.*image|assess.*image|evaluate.*image"
+            ],
+            "self_diagnosis": [
+                r"self.*diagnos|run.*diagnos|check.*yourself|self.*aware",
+                r"what.*capabilities|your.*status|system.*check|health.*check",
+                r"diagnose.*yourself|self.*test|capability.*check",
+                r"what.*can.*you.*do|your.*features|your.*interfaces"
             ]
         }
 

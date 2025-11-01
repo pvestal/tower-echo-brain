@@ -32,6 +32,11 @@ from src.utils.helpers import safe_executor, tower_orchestrator
 from src.tasks.comfyui_tools import ComfyUITools
 from src.tasks.storyline_context_manager import StorylineContextManager
 
+# Import self-awareness system
+import sys
+sys.path.append('/opt/tower-echo-brain')
+from self_awareness import get_self_diagnosis
+
 # Import external modules
 from echo_brain_thoughts import echo_brain
 from model_manager import (
@@ -77,6 +82,22 @@ async def health_check():
             "safe_executor": safe_executor is not None,
         },
     }
+
+
+@router.get("/api/echo/self-diagnosis")
+async def self_diagnosis():
+    """Echo's comprehensive self-awareness and diagnostic check"""
+    try:
+        diagnosis = await get_self_diagnosis()
+        return diagnosis
+    except Exception as e:
+        logger.error(f"Self-diagnosis failed: {e}")
+        return {
+            "timestamp": datetime.now().isoformat(),
+            "overall_status": "error",
+            "error": str(e),
+            "message": "Self-diagnosis system unavailable"
+        }
 
 
 # Capability handler function
@@ -394,6 +415,43 @@ async def handle_capability_intent(
 
             except Exception as e:
                 response_text = f"❌ Image analysis error: {str(e)}"
+        elif intent == "self_diagnosis":
+            logger.info(f"🔍 AUTO-DIAGNOSIS: Running comprehensive self-check")
+            try:
+                # Run comprehensive self-diagnosis
+                diagnosis = await get_self_diagnosis()
+
+                status_emoji = "✅" if diagnosis["overall_status"] == "healthy" else "⚠️"
+                response_text = f"{status_emoji} Self-Diagnosis Complete\n\n"
+                response_text += f"Overall Status: {diagnosis['overall_status'].upper()}\n"
+                response_text += f"Timestamp: {diagnosis['timestamp']}\n\n"
+
+                for system, details in diagnosis["capabilities"].items():
+                    system_emoji = "✅" if details.get("healthy", False) else "❌"
+                    response_text += f"{system_emoji} {system.title()}: "
+
+                    if system == "vision":
+                        response_text += f"LLaVA {details.get('llava_model', 'unknown')}, "
+                        response_text += f"Photos: {details.get('scan_progress', 'unknown')}\n"
+                    elif system == "frontend":
+                        response_text += f"Vue: {'Built' if details.get('vue_built') else 'Missing'}, "
+                        response_text += f"Live: {'Yes' if details.get('interface_live') else 'No'}\n"
+                    elif system == "comfyui":
+                        response_text += f"API: {'Available' if details.get('api_available') else 'Offline'}, "
+                        response_text += f"Workflows: {details.get('workflows_found', 0)}\n"
+                    elif system == "autonomous":
+                        response_text += f"Worker: {'Running' if details.get('background_worker') else 'Stopped'}\n"
+                    elif system == "memory":
+                        response_text += f"DB: {details.get('database_size', '0MB')}, "
+                        response_text += f"Conversations: {details.get('recent_conversations', 0)}\n"
+
+                if "improvement_plan" in diagnosis:
+                    response_text += f"\n🔧 Improvement Plan:\n"
+                    for improvement in diagnosis["improvement_plan"]:
+                        response_text += f"• {improvement}\n"
+
+            except Exception as e:
+                response_text = f"❌ Self-diagnosis error: {str(e)}"
         else:
             # Fallback for other capability intents
             response_text = (
