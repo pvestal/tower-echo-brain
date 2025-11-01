@@ -105,12 +105,13 @@ class EchoSelfAwareness:
             built_interface = vue_dist.exists()
             source_interface = vue_source.exists()
 
-            # Check if interface is served
+            # Check if interface is served on Echo's port
             interface_live = False
             try:
-                response = requests.get("http://localhost:8309/echo-brain/", timeout=3)
+                response = requests.get("http://127.0.0.1:8309/echo-brain/", timeout=3)
                 interface_live = response.status_code == 200
-            except:
+            except Exception as e:
+                logger.warning(f"Frontend check failed: {e}")
                 interface_live = False
 
             return {
@@ -166,18 +167,20 @@ class EchoSelfAwareness:
     async def _check_autonomous_system(self):
         """Check autonomous task system and background workers"""
         try:
-            # Check if background worker is running
-            result = subprocess.run(["pgrep", "-f", "background.*worker"], capture_output=True)
+            # Check if background worker is running (part of main Echo process)
+            result = subprocess.run(["pgrep", "-f", "tower-echo-brain.*src.main"], capture_output=True)
             worker_running = result.returncode == 0
 
-            # Check task queue status via API
-            task_status = {}
+            # Check task queue status - look for Redis connection
+            task_status = {"redis_available": False}
             try:
-                response = requests.get("http://localhost:8309/api/echo/tasks/status", timeout=3)
-                if response.status_code == 200:
-                    task_status = response.json()
+                # Check if Redis is running (task queue backend)
+                import redis
+                r = redis.Redis(host='localhost', port=6379, db=0)
+                r.ping()
+                task_status = {"redis_available": True, "task_queue_ready": True}
             except:
-                pass
+                task_status = {"redis_available": False, "task_queue_ready": False}
 
             # Check for autonomous behaviors
             autonomous_files = [
@@ -206,20 +209,22 @@ class EchoSelfAwareness:
             conversation_count = 0
 
             try:
-                response = requests.get("http://localhost:8309/api/echo/db/stats", timeout=3)
+                response = requests.get("http://127.0.0.1:8309/api/echo/db/stats", timeout=3)
                 if response.status_code == 200:
                     db_stats = response.json()
                     db_size = db_stats.get("echo_brain", "0MB")
-            except:
+            except Exception as e:
+                logger.warning(f"Failed to get db stats: {e}")
                 pass
 
             # Check conversation history
             try:
-                response = requests.get("http://localhost:8309/api/echo/status", timeout=3)
+                response = requests.get("http://127.0.0.1:8309/api/echo/status", timeout=3)
                 if response.status_code == 200:
                     status = response.json()
                     conversation_count = len(status.get("recent_messages", []))
-            except:
+            except Exception as e:
+                logger.warning(f"Failed to get status: {e}")
                 pass
 
             # Check learning components
@@ -232,7 +237,7 @@ class EchoSelfAwareness:
             learning_available = sum(1 for f in learning_files if (self.base_path / f).exists())
 
             return {
-                "healthy": db_size != "0MB" and conversation_count > 0,
+                "healthy": db_size not in ["0MB", ""] and conversation_count > 0,
                 "database_size": db_size,
                 "recent_conversations": conversation_count,
                 "learning_modules": f"{learning_available}/{len(learning_files)}",
