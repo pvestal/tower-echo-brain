@@ -14,6 +14,7 @@ class QueryRequest(BaseModel):
     intelligence_level: Optional[str] = "auto"
     user_id: Optional[str] = "default"  # For conversation tracking
     conversation_id: Optional[str] = None
+    request_type: Optional[str] = "conversation"  # "conversation", "system_command", "collaboration"
 
 class QueryResponse(BaseModel):
     response: str
