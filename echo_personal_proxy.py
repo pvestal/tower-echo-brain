@@ -3,6 +3,7 @@
 Echo Personal Context Proxy
 Intercepts requests to Echo and adds Patrick's personal context
 """
+import os
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import requests
@@ -47,7 +48,7 @@ def enhance_query_with_personal_context(query: str) -> str:
     
     # Detect Patrick-specific queries
     patrick_indicators = [
-        "patrick", "my", "i am", "help me", "what should i", "based on my",
+        os.getenv("TOWER_USER", "patrick"), "my", "i am", "help me", "what should i", "based on my",
         "recommend", "suggest", "what would you", "how should i"
     ]
     

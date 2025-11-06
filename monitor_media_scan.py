@@ -4,6 +4,7 @@ AI Assist Media Scanner Progress Monitor
 Monitors the progress of local media file analysis
 """
 
+import os
 import psycopg2
 import time
 from datetime import datetime
@@ -13,7 +14,7 @@ class MediaScanMonitor:
     def __init__(self):
         self.db_config = {
             'host': 'localhost',
-            'user': 'patrick',
+            'user': os.getenv('TOWER_USER', os.getenv("TOWER_USER", "patrick")),
             'database': 'tower_consolidated',
             'port': 5432
         }
@@ -31,8 +32,8 @@ class MediaScanMonitor:
                     COUNT(*) as total_analyzed,
                     COUNT(*) FILTER (WHERE is_video = true) as videos,
                     COUNT(*) FILTER (WHERE is_video = false) as images,
-                    COUNT(*) FILTER (WHERE file_path LIKE '***REMOVED***%') as local_videos,
-                    COUNT(*) FILTER (WHERE file_path LIKE '/home/patrick/Pictures%') as local_images
+                    COUNT(*) FILTER (WHERE file_path LIKE '/home/{os.getenv("TOWER_USER", "patrick")}/Videos%') as local_videos,
+                    COUNT(*) FILTER (WHERE file_path LIKE '/home/{os.getenv("TOWER_USER", "patrick")}/Pictures%') as local_images
                 FROM echo_media_insights 
                 WHERE learned_by_echo = true;
             """)
@@ -53,7 +54,7 @@ class MediaScanMonitor:
             cur.execute("""
                 SELECT source_path, files_processed, insights_extracted, status, last_processed
                 FROM echo_learning_schedule 
-                WHERE source_path IN ('***REMOVED***', '/home/patrick/Pictures')
+                WHERE source_path IN ('/home/{os.getenv("TOWER_USER", "patrick")}/Videos', '/home/{os.getenv("TOWER_USER", "patrick")}/Pictures')
                 ORDER BY source_path;
             """)
             

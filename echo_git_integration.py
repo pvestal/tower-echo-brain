@@ -20,12 +20,12 @@ class EchoGitManager:
     def __init__(self, repo_path: str = "/opt/tower-echo-brain"):
         self.repo_path = Path(repo_path)
         self.repo_path_str = str(self.repo_path)
-        self.source_repo_path = Path("/home/patrick/Documents/Tower/services/echo-brain")
+        self.source_repo_path = Path("/home/{os.getenv("TOWER_USER", "patrick")}/Documents/Tower/services/echo-brain")
         
         # Deployment configuration
         self.deployment_config = {
             "production_path": "/opt/tower-echo-brain",
-            "source_path": "/home/patrick/Documents/Tower/services/echo-brain",
+            "source_path": "/home/{os.getenv("TOWER_USER", "patrick")}/Documents/Tower/services/echo-brain",
             "service_name": "tower-echo-brain",
             "backup_path": "/opt/tower-echo-brain/backups",
             "test_timeout": 30,  # seconds
@@ -912,7 +912,7 @@ if __name__ == "__main__":
             db_config = {
                 'host': 'localhost',
                 'database': 'echo_brain',
-                'user': 'patrick',
+                'user': os.getenv('TOWER_USER', os.getenv("TOWER_USER", "patrick")),
                 'password': 'Beau40818'
             }
             
@@ -1002,7 +1002,7 @@ if __name__ == "__main__":
             db_config = {
                 'host': 'localhost',
                 'database': 'echo_brain',
-                'user': 'patrick',
+                'user': os.getenv('TOWER_USER', os.getenv("TOWER_USER", "patrick")),
                 'password': 'Beau40818'
             }
             

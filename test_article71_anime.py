@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 import json
 import requests
 import time
@@ -69,7 +70,7 @@ for test in test_prompts[:1]:  # Test first one
                 for node_outputs in outputs.values():
                     if 'images' in node_outputs:
                         for img in node_outputs['images']:
-                            output_path = f"***REMOVED***/ComfyUI-Working/output/{img['filename']}"
+                            output_path = f"/home/{os.getenv("TOWER_USER", "patrick")}/Projects/ComfyUI-Working/output/{img['filename']}"
                             elapsed = time.time() - start
                             print(f"  ✅ Generated in {elapsed:.1f} seconds")
                             print(f"  Output: {output_path}")

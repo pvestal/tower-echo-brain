@@ -18,8 +18,8 @@ class EchoVideoGenerator:
     
     def __init__(self, comfyui_url="http://localhost:8188"):
         self.comfyui_url = comfyui_url
-        self.output_dir = "***REMOVED***"
-        self.comfyui_output = "/home/patrick/ComfyUI/output"
+        self.output_dir = "/home/{os.getenv("TOWER_USER", "patrick")}/Videos"
+        self.comfyui_output = "/home/{os.getenv("TOWER_USER", "patrick")}/ComfyUI/output"
         
     def generate_video_from_prompt(self, prompt: str, character: str = None, duration: int = 30) -> Dict:
         """

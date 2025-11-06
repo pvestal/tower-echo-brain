@@ -28,13 +28,7 @@ import networkx as nx
 from pathlib import Path
 
 # Import learning and board management systems
-from echo_learning_system import (
-    get_learning_system,
-    LearningDomain,
-    DecisionOutcome,
-    record_decision,
-    record_outcome,
-)
+from echo_learning_system import get_learning_system, LearningDomain, DecisionOutcome, record_decision, record_outcome
 from echo_board_manager import get_board_manager, BoardDecisionType, consult_board
 
 # Configuration
@@ -43,7 +37,6 @@ MAX_TASK_DEPTH = 5
 MIN_TASK_COMPLEXITY = 0.3
 MAX_PARALLEL_TASKS = 5
 TASK_TIMEOUT_HOURS = 24
-
 
 class TaskStatus(Enum):
     PENDING = "pending"
@@ -55,7 +48,6 @@ class TaskStatus(Enum):
     CANCELLED = "cancelled"
     BLOCKED = "blocked"
 
-
 class TaskType(Enum):
     ANALYSIS = "analysis"
     IMPLEMENTATION = "implementation"
@@ -65,7 +57,6 @@ class TaskType(Enum):
     VALIDATION = "validation"
     ORCHESTRATION = "orchestration"
 
-
 class TaskPriority(Enum):
     LOW = 1
     MEDIUM = 2
@@ -73,11 +64,9 @@ class TaskPriority(Enum):
     CRITICAL = 4
     EMERGENCY = 5
 
-
 @dataclass
 class Task:
     """Individual task within a larger workflow"""
-
     task_id: str
     parent_request_id: str
     title: str
@@ -100,11 +89,9 @@ class Task:
     progress_notes: List[Dict[str, Any]]
     learning_insights: List[str]
 
-
 @dataclass
 class TaskWorkflow:
     """Complete workflow containing multiple related tasks"""
-
     workflow_id: str
     original_request: str
     user_context: Dict[str, Any]
@@ -121,11 +108,9 @@ class TaskWorkflow:
     final_result: Optional[Dict[str, Any]]
     learning_summary: Dict[str, Any]
 
-
 @dataclass
 class DecompositionPattern:
     """Learned pattern for task decomposition"""
-
     pattern_id: str
     request_type: str
     context_indicators: List[str]
@@ -136,7 +121,6 @@ class DecompositionPattern:
     optimization_suggestions: List[str]
     usage_count: int
     last_updated: datetime
-
 
 class EchoTaskDecomposer:
     """
@@ -159,9 +143,7 @@ class EchoTaskDecomposer:
 
         # Decomposition patterns and learning
         self.decomposition_patterns: Dict[str, DecompositionPattern] = {}
-        self.execution_executor = concurrent.futures.ThreadPoolExecutor(
-            max_workers=MAX_PARALLEL_TASKS
-        )
+        self.execution_executor = concurrent.futures.ThreadPoolExecutor(max_workers=MAX_PARALLEL_TASKS)
 
         # Integration with other systems
         self.learning_system = get_learning_system()
@@ -177,8 +159,7 @@ class EchoTaskDecomposer:
     def _init_database(self):
         """Initialize task decomposer database schema"""
         with sqlite3.connect(self.db_path) as conn:
-            conn.execute(
-                """
+            conn.execute("""
                 CREATE TABLE IF NOT EXISTS tasks (
                     task_id TEXT PRIMARY KEY,
                     parent_request_id TEXT NOT NULL,
@@ -202,11 +183,9 @@ class EchoTaskDecomposer:
                     progress_notes TEXT,
                     learning_insights TEXT
                 )
-            """
-            )
+            """)
 
-            conn.execute(
-                """
+            conn.execute("""
                 CREATE TABLE IF NOT EXISTS workflows (
                     workflow_id TEXT PRIMARY KEY,
                     original_request TEXT NOT NULL,
@@ -224,11 +203,9 @@ class EchoTaskDecomposer:
                     final_result TEXT,
                     learning_summary TEXT
                 )
-            """
-            )
+            """)
 
-            conn.execute(
-                """
+            conn.execute("""
                 CREATE TABLE IF NOT EXISTS decomposition_patterns (
                     pattern_id TEXT PRIMARY KEY,
                     request_type TEXT NOT NULL,
@@ -241,11 +218,9 @@ class EchoTaskDecomposer:
                     usage_count INTEGER NOT NULL,
                     last_updated TEXT NOT NULL
                 )
-            """
-            )
+            """)
 
-            conn.execute(
-                """
+            conn.execute("""
                 CREATE TABLE IF NOT EXISTS execution_logs (
                     log_id TEXT PRIMARY KEY,
                     workflow_id TEXT NOT NULL,
@@ -255,18 +230,15 @@ class EchoTaskDecomposer:
                     details TEXT,
                     performance_metrics TEXT
                 )
-            """
-            )
+            """)
 
             conn.commit()
 
-    async def decompose_request(
-        self,
-        request: str,
-        user_context: Dict[str, Any],
-        priority: TaskPriority = TaskPriority.MEDIUM,
-        deadline: Optional[datetime] = None,
-    ) -> str:
+    async def decompose_request(self,
+                              request: str,
+                              user_context: Dict[str, Any],
+                              priority: TaskPriority = TaskPriority.MEDIUM,
+                              deadline: Optional[datetime] = None) -> str:
         """
         Decompose a complex request into manageable tasks
 
@@ -279,9 +251,7 @@ class EchoTaskDecomposer:
         Returns:
             workflow_id: Unique identifier for the workflow
         """
-        workflow_id = (
-            f"wf_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
-        )
+        workflow_id = f"wf_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
 
         self.logger.info(f"Decomposing request: {workflow_id}")
 
@@ -292,19 +262,17 @@ class EchoTaskDecomposer:
                 "request": request,
                 "user_context": user_context,
                 "priority": priority.value,
-                "has_deadline": deadline is not None,
+                "has_deadline": deadline is not None
             },
             decision_factors={
-                "request_complexity": self._analyze_request_complexity(
-                    request, user_context
-                ),
+                "request_complexity": self._analyze_request_complexity(request, user_context),
                 "context_richness": len(user_context) / 10,
                 "priority_level": priority.value / 5,
-                "time_pressure": 1.0 if deadline else 0.5,
+                "time_pressure": 1.0 if deadline else 0.5
             },
             decision_made="request_decomposition",
             confidence=0.8,
-            meta_data={"workflow_id": workflow_id},
+            meta_data={"workflow_id": workflow_id}
         )
 
         try:
@@ -340,7 +308,7 @@ class EchoTaskDecomposer:
                 resource_allocation=optimized_plan["resource_allocation"],
                 progress_history=[],
                 final_result=None,
-                learning_summary={},
+                learning_summary={}
             )
 
             # Store workflow and tasks
@@ -355,13 +323,8 @@ class EchoTaskDecomposer:
 
             # Log decomposition
             await self._log_execution_event(
-                workflow_id,
-                None,
-                "decomposition_complete",
-                {
-                    "total_tasks": len(tasks),
-                    "strategy": decomposition_analysis["strategy"],
-                },
+                workflow_id, None, "decomposition_complete",
+                {"total_tasks": len(tasks), "strategy": decomposition_analysis["strategy"]}
             )
 
             # Record successful decomposition
@@ -371,14 +334,12 @@ class EchoTaskDecomposer:
                 {
                     "tasks_generated": len(tasks),
                     "complexity_handled": decomposition_analysis["complexity"],
-                    "strategy_used": decomposition_analysis["strategy"],
+                    "strategy_used": decomposition_analysis["strategy"]
                 },
-                f"Successfully decomposed into {len(tasks)} tasks",
+                f"Successfully decomposed into {len(tasks)} tasks"
             )
 
-            self.logger.info(
-                f"Request decomposed into {len(tasks)} tasks: {workflow_id}"
-            )
+            self.logger.info(f"Request decomposed into {len(tasks)} tasks: {workflow_id}")
             return workflow_id
 
         except Exception as e:
@@ -389,18 +350,16 @@ class EchoTaskDecomposer:
                 learning_decision_id,
                 DecisionOutcome.FAILURE,
                 {"error": str(e), "decomposition_attempted": True},
-                f"Decomposition failed: {e}",
+                f"Decomposition failed: {e}"
             )
 
             raise
 
-    async def _analyze_decomposition_requirements(
-        self,
-        request: str,
-        user_context: Dict[str, Any],
-        priority: TaskPriority,
-        deadline: Optional[datetime],
-    ) -> Dict[str, Any]:
+    async def _analyze_decomposition_requirements(self,
+                                                request: str,
+                                                user_context: Dict[str, Any],
+                                                priority: TaskPriority,
+                                                deadline: Optional[datetime]) -> Dict[str, Any]:
         """Analyze what type of decomposition is needed"""
         # Analyze request complexity
         complexity = self._analyze_request_complexity(request, user_context)
@@ -416,15 +375,13 @@ class EchoTaskDecomposer:
                     "user_context": user_context,
                     "complexity": complexity,
                     "priority": priority.value,
-                    "deadline": deadline.isoformat() if deadline else None,
+                    "deadline": deadline.isoformat() if deadline else None
                 },
                 decision_type=BoardDecisionType.EXPERT_REVIEW,
-                domain="task_planning",
+                domain="task_planning"
             )
 
-            strategy = (
-                "board_guided" if board_result["consensus_reached"] else "ai_autonomous"
-            )
+            strategy = "board_guided" if board_result["consensus_reached"] else "ai_autonomous"
             board_insights = board_result.get("individual_insights", [])
         else:
             strategy = "pattern_based"
@@ -437,14 +394,10 @@ class EchoTaskDecomposer:
             "estimated_task_count": max(2, int(complexity * 10)),
             "board_insights": board_insights,
             "risk_factors": self._identify_risk_factors(request, user_context),
-            "resource_requirements": self._analyze_resource_requirements(
-                request, user_context
-            ),
+            "resource_requirements": self._analyze_resource_requirements(request, user_context)
         }
 
-    def _analyze_request_complexity(
-        self, request: str, user_context: Dict[str, Any]
-    ) -> float:
+    def _analyze_request_complexity(self, request: str, user_context: Dict[str, Any]) -> float:
         """Analyze the complexity of a request (0.0 to 1.0)"""
         complexity_indicators = [
             len(request.split()) / 100,  # Length factor
@@ -457,23 +410,13 @@ class EchoTaskDecomposer:
         ]
 
         # Check for complexity keywords
-        complex_keywords = [
-            "optimize",
-            "comprehensive",
-            "systematic",
-            "automated",
-            "intelligent",
-        ]
-        keyword_factor = sum(
-            1 for keyword in complex_keywords if keyword in request.lower()
-        ) / len(complex_keywords)
+        complex_keywords = ["optimize", "comprehensive", "systematic", "automated", "intelligent"]
+        keyword_factor = sum(1 for keyword in complex_keywords if keyword in request.lower()) / len(complex_keywords)
 
         raw_complexity = sum(complexity_indicators) + keyword_factor
         return min(1.0, raw_complexity)
 
-    def _identify_risk_factors(
-        self, request: str, user_context: Dict[str, Any]
-    ) -> List[str]:
+    def _identify_risk_factors(self, request: str, user_context: Dict[str, Any]) -> List[str]:
         """Identify potential risk factors in the request"""
         risks = []
 
@@ -499,16 +442,14 @@ class EchoTaskDecomposer:
 
         return risks
 
-    def _analyze_resource_requirements(
-        self, request: str, user_context: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _analyze_resource_requirements(self, request: str, user_context: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze what resources will be needed"""
         resources = {
             "computational": 0.5,
             "storage": 0.3,
             "network": 0.3,
             "human_oversight": 0.4,
-            "external_services": [],
+            "external_services": []
         }
 
         # Adjust based on request content
@@ -530,7 +471,7 @@ class EchoTaskDecomposer:
             "comfyui": "comfyui",
             "anime": "anime_service",
             "music": "apple_music",
-            "notification": "notification_service",
+            "notification": "notification_service"
         }
 
         for keyword, service in service_keywords.items():
@@ -539,9 +480,9 @@ class EchoTaskDecomposer:
 
         return resources
 
-    async def _find_matching_pattern(
-        self, request: str, user_context: Dict[str, Any]
-    ) -> Optional[DecompositionPattern]:
+    async def _find_matching_pattern(self,
+                                   request: str,
+                                   user_context: Dict[str, Any]) -> Optional[DecompositionPattern]:
         """Find matching decomposition pattern from history"""
         # Analyze request characteristics
         request_type = self._classify_request_type(request)
@@ -554,31 +495,19 @@ class EchoTaskDecomposer:
         for pattern in self.decomposition_patterns.values():
             if pattern.request_type == request_type:
                 # Calculate similarity score
-                indicator_overlap = len(
-                    set(pattern.context_indicators) & set(context_indicators)
-                )
-                max_indicators = max(
-                    len(pattern.context_indicators), len(context_indicators)
-                )
-                similarity = (
-                    indicator_overlap / max_indicators if max_indicators > 0 else 0.0
-                )
+                indicator_overlap = len(set(pattern.context_indicators) & set(context_indicators))
+                max_indicators = max(len(pattern.context_indicators), len(context_indicators))
+                similarity = indicator_overlap / max_indicators if max_indicators > 0 else 0.0
 
                 # Weight by success rate and usage count
-                score = (
-                    similarity
-                    * pattern.success_rate
-                    * min(1.0, pattern.usage_count / 10)
-                )
+                score = similarity * pattern.success_rate * min(1.0, pattern.usage_count / 10)
 
                 if score > best_score and score > 0.5:  # Minimum similarity threshold
                     best_score = score
                     best_match = pattern
 
         if best_match:
-            self.logger.info(
-                f"Found matching pattern: {best_match.pattern_id} (score: {best_score:.2f})"
-            )
+            self.logger.info(f"Found matching pattern: {best_match.pattern_id} (score: {best_score:.2f})")
 
         return best_match
 
@@ -593,7 +522,7 @@ class EchoTaskDecomposer:
             "optimization": ["optimize", "improve", "enhance", "tune"],
             "integration": ["integrate", "connect", "combine", "merge"],
             "maintenance": ["fix", "repair", "update", "maintain"],
-            "research": ["research", "investigate", "explore", "study"],
+            "research": ["research", "investigate", "explore", "study"]
         }
 
         # Find best match
@@ -631,13 +560,11 @@ class EchoTaskDecomposer:
 
         return indicators
 
-    async def _generate_task_breakdown(
-        self,
-        request: str,
-        user_context: Dict[str, Any],
-        analysis: Dict[str, Any],
-        pattern: Optional[DecompositionPattern],
-    ) -> List[Task]:
+    async def _generate_task_breakdown(self,
+                                     request: str,
+                                     user_context: Dict[str, Any],
+                                     analysis: Dict[str, Any],
+                                     pattern: Optional[DecompositionPattern]) -> List[Task]:
         """Generate the actual task breakdown"""
         tasks = []
 
@@ -663,13 +590,11 @@ class EchoTaskDecomposer:
 
         return tasks
 
-    async def _generate_tasks_from_pattern(
-        self,
-        request: str,
-        user_context: Dict[str, Any],
-        pattern: DecompositionPattern,
-        analysis: Dict[str, Any],
-    ) -> List[Task]:
+    async def _generate_tasks_from_pattern(self,
+                                         request: str,
+                                         user_context: Dict[str, Any],
+                                         pattern: DecompositionPattern,
+                                         analysis: Dict[str, Any]) -> List[Task]:
         """Generate tasks based on a successful pattern"""
         tasks = []
 
@@ -696,7 +621,7 @@ class EchoTaskDecomposer:
                 result=None,
                 error_info=None,
                 progress_notes=[],
-                learning_insights=[],
+                learning_insights=[]
             )
             tasks.append(task)
 
@@ -707,32 +632,30 @@ class EchoTaskDecomposer:
 
         return tasks
 
-    async def _generate_tasks_from_analysis(
-        self, request: str, user_context: Dict[str, Any], analysis: Dict[str, Any]
-    ) -> List[Task]:
+    async def _generate_tasks_from_analysis(self,
+                                          request: str,
+                                          user_context: Dict[str, Any],
+                                          analysis: Dict[str, Any]) -> List[Task]:
         """Generate tasks based on analysis when no pattern exists"""
         tasks = []
         strategy = analysis["strategy"]
 
         if strategy == "board_guided":
             # Use board insights to generate tasks
-            tasks = await self._generate_board_guided_tasks(
-                request, user_context, analysis
-            )
+            tasks = await self._generate_board_guided_tasks(request, user_context, analysis)
         elif strategy == "ai_autonomous":
             # Use AI reasoning for complex decomposition
-            tasks = await self._generate_ai_autonomous_tasks(
-                request, user_context, analysis
-            )
+            tasks = await self._generate_ai_autonomous_tasks(request, user_context, analysis)
         else:
             # Use standard pattern-based approach
             tasks = await self._generate_standard_tasks(request, user_context, analysis)
 
         return tasks
 
-    async def _generate_board_guided_tasks(
-        self, request: str, user_context: Dict[str, Any], analysis: Dict[str, Any]
-    ) -> List[Task]:
+    async def _generate_board_guided_tasks(self,
+                                         request: str,
+                                         user_context: Dict[str, Any],
+                                         analysis: Dict[str, Any]) -> List[Task]:
         """Generate tasks using board guidance"""
         tasks = []
 
@@ -748,13 +671,9 @@ class EchoTaskDecomposer:
                 if "analyze" in insight_text.lower():
                     tasks.append(self._create_analysis_task(insight_text, user_context))
                 elif "implement" in insight_text.lower():
-                    tasks.append(
-                        self._create_implementation_task(insight_text, user_context)
-                    )
+                    tasks.append(self._create_implementation_task(insight_text, user_context))
                 elif "validate" in insight_text.lower():
-                    tasks.append(
-                        self._create_validation_task(insight_text, user_context)
-                    )
+                    tasks.append(self._create_validation_task(insight_text, user_context))
 
         # Ensure we have at least basic tasks
         if not tasks:
@@ -762,9 +681,10 @@ class EchoTaskDecomposer:
 
         return tasks
 
-    async def _generate_ai_autonomous_tasks(
-        self, request: str, user_context: Dict[str, Any], analysis: Dict[str, Any]
-    ) -> List[Task]:
+    async def _generate_ai_autonomous_tasks(self,
+                                          request: str,
+                                          user_context: Dict[str, Any],
+                                          analysis: Dict[str, Any]) -> List[Task]:
         """Generate tasks using autonomous AI reasoning"""
         tasks = []
 
@@ -775,125 +695,116 @@ class EchoTaskDecomposer:
         # Create phases
         if complexity > 0.8:
             # High complexity - create phases
-            tasks.extend(
-                [
-                    self._create_task(
-                        "Research and Analysis",
-                        "Conduct thorough research and analysis of requirements",
-                        TaskType.RESEARCH,
-                        TaskPriority.HIGH,
-                        complexity * 0.3,
-                        2.0,
-                    ),
-                    self._create_task(
-                        "Planning and Design",
-                        "Create detailed implementation plan and design",
-                        TaskType.ANALYSIS,
-                        TaskPriority.HIGH,
-                        complexity * 0.4,
-                        3.0,
-                    ),
-                    self._create_task(
-                        "Implementation",
-                        "Execute the planned implementation",
-                        TaskType.IMPLEMENTATION,
-                        TaskPriority.MEDIUM,
-                        complexity * 0.6,
-                        5.0,
-                    ),
-                    self._create_task(
-                        "Validation and Testing",
-                        "Validate implementation and test functionality",
-                        TaskType.VALIDATION,
-                        TaskPriority.HIGH,
-                        complexity * 0.4,
-                        2.0,
-                    ),
-                ]
-            )
+            tasks.extend([
+                self._create_task(
+                    "Research and Analysis",
+                    "Conduct thorough research and analysis of requirements",
+                    TaskType.RESEARCH,
+                    TaskPriority.HIGH,
+                    complexity * 0.3,
+                    2.0
+                ),
+                self._create_task(
+                    "Planning and Design",
+                    "Create detailed implementation plan and design",
+                    TaskType.ANALYSIS,
+                    TaskPriority.HIGH,
+                    complexity * 0.4,
+                    3.0
+                ),
+                self._create_task(
+                    "Implementation",
+                    "Execute the planned implementation",
+                    TaskType.IMPLEMENTATION,
+                    TaskPriority.MEDIUM,
+                    complexity * 0.6,
+                    5.0
+                ),
+                self._create_task(
+                    "Validation and Testing",
+                    "Validate implementation and test functionality",
+                    TaskType.VALIDATION,
+                    TaskPriority.HIGH,
+                    complexity * 0.4,
+                    2.0
+                )
+            ])
         else:
             # Moderate complexity - create direct tasks
             if "analyze" in request.lower():
-                tasks.append(
-                    self._create_task(
-                        "Analysis Task",
-                        f"Analyze: {request}",
-                        TaskType.ANALYSIS,
-                        TaskPriority.MEDIUM,
-                        complexity,
-                        2.0,
-                    )
-                )
+                tasks.append(self._create_task(
+                    "Analysis Task",
+                    f"Analyze: {request}",
+                    TaskType.ANALYSIS,
+                    TaskPriority.MEDIUM,
+                    complexity,
+                    2.0
+                ))
 
             if "implement" in request.lower():
-                tasks.append(
-                    self._create_task(
-                        "Implementation Task",
-                        f"Implement: {request}",
-                        TaskType.IMPLEMENTATION,
-                        TaskPriority.MEDIUM,
-                        complexity,
-                        4.0,
-                    )
-                )
+                tasks.append(self._create_task(
+                    "Implementation Task",
+                    f"Implement: {request}",
+                    TaskType.IMPLEMENTATION,
+                    TaskPriority.MEDIUM,
+                    complexity,
+                    4.0
+                ))
 
         return tasks
 
-    async def _generate_standard_tasks(
-        self, request: str, user_context: Dict[str, Any], analysis: Dict[str, Any]
-    ) -> List[Task]:
+    async def _generate_standard_tasks(self,
+                                     request: str,
+                                     user_context: Dict[str, Any],
+                                     analysis: Dict[str, Any]) -> List[Task]:
         """Generate standard task breakdown"""
         tasks = []
 
         # Basic task structure
-        tasks.extend(
-            [
-                self._create_task(
-                    "Initial Analysis",
-                    f"Analyze requirements for: {request}",
-                    TaskType.ANALYSIS,
-                    TaskPriority.MEDIUM,
-                    0.4,
-                    1.0,
-                ),
-                self._create_task(
-                    "Planning",
-                    "Create implementation plan",
-                    TaskType.ANALYSIS,
-                    TaskPriority.MEDIUM,
-                    0.5,
-                    1.5,
-                ),
-                self._create_task(
-                    "Execution",
-                    "Execute the planned actions",
-                    TaskType.IMPLEMENTATION,
-                    TaskPriority.MEDIUM,
-                    0.7,
-                    3.0,
-                ),
-                self._create_task(
-                    "Verification",
-                    "Verify results and completion",
-                    TaskType.VALIDATION,
-                    TaskPriority.HIGH,
-                    0.3,
-                    0.5,
-                ),
-            ]
-        )
+        tasks.extend([
+            self._create_task(
+                "Initial Analysis",
+                f"Analyze requirements for: {request}",
+                TaskType.ANALYSIS,
+                TaskPriority.MEDIUM,
+                0.4,
+                1.0
+            ),
+            self._create_task(
+                "Planning",
+                "Create implementation plan",
+                TaskType.ANALYSIS,
+                TaskPriority.MEDIUM,
+                0.5,
+                1.5
+            ),
+            self._create_task(
+                "Execution",
+                "Execute the planned actions",
+                TaskType.IMPLEMENTATION,
+                TaskPriority.MEDIUM,
+                0.7,
+                3.0
+            ),
+            self._create_task(
+                "Verification",
+                "Verify results and completion",
+                TaskType.VALIDATION,
+                TaskPriority.HIGH,
+                0.3,
+                0.5
+            )
+        ])
 
         return tasks
 
-    def _create_task(
-        self,
-        title: str,
-        description: str,
-        task_type: TaskType,
-        priority: TaskPriority,
-        complexity: float,
-        duration: float,
-    ) -> Task:
+    def _create_task(self,
+                    title: str,
+                    description: str,
+                    task_type: TaskType,
+                    priority: TaskPriority,
+                    complexity: float,
+                    duration: float) -> Task:
         """Create a task with standard parameters"""
         return Task(
             task_id="",  # Will be assigned later
@@ -916,7 +827,7 @@ class EchoTaskDecomposer:
             result=None,
             error_info=None,
             progress_notes=[],
-            learning_insights=[],
+            learning_insights=[]
         )
 
     def _create_analysis_task(self, insight: str, context: Dict[str, Any]) -> Task:
@@ -927,12 +838,10 @@ class EchoTaskDecomposer:
             TaskType.ANALYSIS,
             TaskPriority.HIGH,
             0.6,
-            2.0,
+            2.0
         )
 
-    def _create_implementation_task(
-        self, insight: str, context: Dict[str, Any]
-    ) -> Task:
+    def _create_implementation_task(self, insight: str, context: Dict[str, Any]) -> Task:
         """Create an implementation task from board insight"""
         return self._create_task(
             "Board-Guided Implementation",
@@ -940,7 +849,7 @@ class EchoTaskDecomposer:
             TaskType.IMPLEMENTATION,
             TaskPriority.MEDIUM,
             0.7,
-            4.0,
+            4.0
         )
 
     def _create_validation_task(self, insight: str, context: Dict[str, Any]) -> Task:
@@ -951,44 +860,41 @@ class EchoTaskDecomposer:
             TaskType.VALIDATION,
             TaskPriority.HIGH,
             0.4,
-            1.0,
+            1.0
         )
 
-    async def _add_universal_tasks(
-        self, request: str, user_context: Dict[str, Any], analysis: Dict[str, Any]
-    ) -> List[Task]:
+    async def _add_universal_tasks(self,
+                                 request: str,
+                                 user_context: Dict[str, Any],
+                                 analysis: Dict[str, Any]) -> List[Task]:
         """Add universal tasks that apply to most workflows"""
         universal_tasks = []
 
         # Add final reporting task
-        universal_tasks.append(
-            self._create_task(
-                "Final Report",
-                "Generate final report and summary",
-                TaskType.COMMUNICATION,
-                TaskPriority.LOW,
-                0.2,
-                0.5,
-            )
-        )
+        universal_tasks.append(self._create_task(
+            "Final Report",
+            "Generate final report and summary",
+            TaskType.COMMUNICATION,
+            TaskPriority.LOW,
+            0.2,
+            0.5
+        ))
 
         # Add learning task
-        universal_tasks.append(
-            self._create_task(
-                "Learning Integration",
-                "Integrate lessons learned from this workflow",
-                TaskType.ANALYSIS,
-                TaskPriority.LOW,
-                0.3,
-                0.5,
-            )
-        )
+        universal_tasks.append(self._create_task(
+            "Learning Integration",
+            "Integrate lessons learned from this workflow",
+            TaskType.ANALYSIS,
+            TaskPriority.LOW,
+            0.3,
+            0.5
+        ))
 
         return universal_tasks
 
-    async def _optimize_execution_plan(
-        self, tasks: List[Task], deadline: Optional[datetime]
-    ) -> Dict[str, Any]:
+    async def _optimize_execution_plan(self,
+                                     tasks: List[Task],
+                                     deadline: Optional[datetime]) -> Dict[str, Any]:
         """Optimize task execution order and dependencies"""
         # Set up dependency relationships
         for i, task in enumerate(tasks):
@@ -996,13 +902,11 @@ class EchoTaskDecomposer:
 
             # Set basic dependencies (each task depends on previous for now)
             if i > 0:
-                task.dependencies = [tasks[i - 1].task_id]
-                tasks[i - 1].blockers = [task.task_id]
+                task.dependencies = [tasks[i-1].task_id]
+                tasks[i-1].blockers = [task.task_id]
 
         # Calculate resource allocation
-        total_computational = sum(
-            0.5 for task in tasks if task.task_type == TaskType.IMPLEMENTATION
-        )
+        total_computational = sum(0.5 for task in tasks if task.task_type == TaskType.IMPLEMENTATION)
         total_duration = sum(task.estimated_duration for task in tasks)
 
         # Estimate completion time
@@ -1021,10 +925,8 @@ class EchoTaskDecomposer:
                 "computational_load": min(1.0, total_computational),
                 "storage_requirements": 0.5,  # Default estimate
                 "network_usage": 0.3,  # Default estimate
-                "human_oversight_needed": any(
-                    task.task_type == TaskType.DECISION for task in tasks
-                ),
-            },
+                "human_oversight_needed": any(task.task_type == TaskType.DECISION for task in tasks)
+            }
         }
 
         return execution_plan
@@ -1043,9 +945,7 @@ class EchoTaskDecomposer:
     def _calculate_critical_path(self, tasks: List[Task]) -> List[str]:
         """Calculate the critical path through the tasks"""
         # Simple implementation - return linear path for now
-        return [
-            task.task_id for task in sorted(tasks, key=lambda t: len(t.dependencies))
-        ]
+        return [task.task_id for task in sorted(tasks, key=lambda t: len(t.dependencies))]
 
     def _add_task_to_dependency_graph(self, task: Task):
         """Add task to the dependency graph"""
@@ -1088,17 +988,11 @@ class EchoTaskDecomposer:
                         await self._update_workflow_progress(workflow)
 
             # Complete workflow
-            workflow.overall_status = (
-                TaskStatus.COMPLETED
-                if workflow.failed_tasks == 0
-                else TaskStatus.FAILED
-            )
+            workflow.overall_status = TaskStatus.COMPLETED if workflow.failed_tasks == 0 else TaskStatus.FAILED
             workflow.actual_completion = datetime.now()
 
             # Generate learning summary
-            workflow.learning_summary = await self._generate_workflow_learning_summary(
-                workflow
-            )
+            workflow.learning_summary = await self._generate_workflow_learning_summary(workflow)
 
             await self._store_workflow(workflow)
 
@@ -1109,16 +1003,8 @@ class EchoTaskDecomposer:
                 "status": workflow.overall_status.value,
                 "completed_tasks": workflow.completed_tasks,
                 "failed_tasks": workflow.failed_tasks,
-                "total_duration": (
-                    (
-                        workflow.actual_completion
-                        - workflow.progress_history[0]["timestamp"]
-                    ).total_seconds()
-                    / 3600
-                    if workflow.progress_history
-                    else 0
-                ),
-                "learning_summary": workflow.learning_summary,
+                "total_duration": (workflow.actual_completion - workflow.progress_history[0]["timestamp"]).total_seconds() / 3600 if workflow.progress_history else 0,
+                "learning_summary": workflow.learning_summary
             }
 
         except Exception as e:
@@ -1189,20 +1075,20 @@ class EchoTaskDecomposer:
             "findings": [
                 f"Analysis completed for: {task.description}",
                 "Key insights identified",
-                "Recommendations generated",
+                "Recommendations generated"
             ],
             "confidence": 0.8,
             "recommendations": [
                 "Proceed with implementation",
-                "Monitor progress closely",
-            ],
+                "Monitor progress closely"
+            ]
         }
 
         return {
             "success": True,
             "result_type": "analysis",
             "data": analysis_result,
-            "task_id": task.task_id,
+            "task_id": task.task_id
         }
 
     async def _execute_implementation_task(self, task: Task) -> Dict[str, Any]:
@@ -1215,20 +1101,20 @@ class EchoTaskDecomposer:
             "actions_taken": [
                 f"Implemented: {task.description}",
                 "Configuration updated",
-                "System integration completed",
+                "System integration completed"
             ],
             "success_metrics": {
                 "completion_rate": 0.95,
                 "performance_impact": 0.1,
-                "error_rate": 0.02,
-            },
+                "error_rate": 0.02
+            }
         }
 
         return {
             "success": True,
             "result_type": "implementation",
             "data": implementation_result,
-            "task_id": task.task_id,
+            "task_id": task.task_id
         }
 
     async def _execute_research_task(self, task: Task) -> Dict[str, Any]:
@@ -1241,21 +1127,21 @@ class EchoTaskDecomposer:
             "sources_consulted": [
                 "Internal knowledge base",
                 "System documentation",
-                "Best practices database",
+                "Best practices database"
             ],
             "findings": [
                 f"Research completed for: {task.description}",
                 "Multiple approaches identified",
-                "Best practices determined",
+                "Best practices determined"
             ],
-            "confidence": 0.85,
+            "confidence": 0.85
         }
 
         return {
             "success": True,
             "result_type": "research",
             "data": research_result,
-            "task_id": task.task_id,
+            "task_id": task.task_id
         }
 
     async def _execute_decision_task(self, task: Task) -> Dict[str, Any]:
@@ -1265,7 +1151,7 @@ class EchoTaskDecomposer:
             f"Decision needed for task: {task.description}",
             {"task_context": task.context, "task_type": task.task_type.value},
             decision_type=BoardDecisionType.CONSULTATION,
-            domain="task_execution",
+            domain="task_execution"
         )
 
         decision_result = {
@@ -1273,14 +1159,14 @@ class EchoTaskDecomposer:
             "recommendation": board_result["recommendation"],
             "confidence": board_result["confidence"],
             "consensus": board_result["consensus_reached"],
-            "contributing_directors": board_result.get("contributing_directors", []),
+            "contributing_directors": board_result.get("contributing_directors", [])
         }
 
         return {
             "success": board_result["confidence"] > 0.5,
             "result_type": "decision",
             "data": decision_result,
-            "task_id": task.task_id,
+            "task_id": task.task_id
         }
 
     async def _execute_validation_task(self, task: Task) -> Dict[str, Any]:
@@ -1293,21 +1179,21 @@ class EchoTaskDecomposer:
             "checks_performed": [
                 "Functional validation",
                 "Performance validation",
-                "Integration validation",
+                "Integration validation"
             ],
             "results": {
                 "functional_pass": True,
                 "performance_acceptable": True,
-                "integration_successful": True,
+                "integration_successful": True
             },
-            "overall_status": "passed",
+            "overall_status": "passed"
         }
 
         return {
             "success": True,
             "result_type": "validation",
             "data": validation_result,
-            "task_id": task.task_id,
+            "task_id": task.task_id
         }
 
     async def _execute_generic_task(self, task: Task) -> Dict[str, Any]:
@@ -1320,16 +1206,16 @@ class EchoTaskDecomposer:
             "description": task.description,
             "execution_notes": [
                 "Task executed successfully",
-                "Standard procedures followed",
+                "Standard procedures followed"
             ],
-            "completion_status": "success",
+            "completion_status": "success"
         }
 
         return {
             "success": True,
             "result_type": "generic",
             "data": generic_result,
-            "task_id": task.task_id,
+            "task_id": task.task_id
         }
 
     async def _update_workflow_progress(self, workflow: TaskWorkflow):
@@ -1338,20 +1224,17 @@ class EchoTaskDecomposer:
             "timestamp": datetime.now(),
             "completed_tasks": workflow.completed_tasks,
             "failed_tasks": workflow.failed_tasks,
-            "progress_percentage": workflow.completed_tasks
-            / workflow.total_tasks
-            * 100,
-            "estimated_remaining": workflow.estimated_completion - datetime.now(),
+            "progress_percentage": workflow.completed_tasks / workflow.total_tasks * 100,
+            "estimated_remaining": workflow.estimated_completion - datetime.now()
         }
 
         workflow.progress_history.append(progress_entry)
         await self._log_execution_event(
-            workflow.workflow_id, None, "progress_update", {"progress": progress_entry}
+            workflow.workflow_id, None, "progress_update",
+            {"progress": progress_entry}
         )
 
-    async def _generate_workflow_learning_summary(
-        self, workflow: TaskWorkflow
-    ) -> Dict[str, Any]:
+    async def _generate_workflow_learning_summary(self, workflow: TaskWorkflow) -> Dict[str, Any]:
         """Generate learning summary from completed workflow"""
         summary = {
             "workflow_id": workflow.workflow_id,
@@ -1360,27 +1243,20 @@ class EchoTaskDecomposer:
             "strategy_effectiveness": workflow.decomposition_strategy,
             "key_insights": [],
             "improvement_opportunities": [],
-            "pattern_candidates": [],
+            "pattern_candidates": []
         }
 
         # Calculate time efficiency
         if workflow.actual_completion and workflow.progress_history:
-            actual_duration = (
-                workflow.actual_completion - workflow.progress_history[0]["timestamp"]
-            ).total_seconds() / 3600
-            estimated_duration = sum(
-                task.estimated_duration
-                for task in self.active_tasks.values()
-                if task.parent_request_id == workflow.workflow_id
-            )
+            actual_duration = (workflow.actual_completion - workflow.progress_history[0]["timestamp"]).total_seconds() / 3600
+            estimated_duration = sum(task.estimated_duration for task in self.active_tasks.values()
+                                   if task.parent_request_id == workflow.workflow_id)
             if estimated_duration > 0:
                 summary["time_efficiency"] = estimated_duration / actual_duration
 
         # Generate insights
         if summary["completion_rate"] > 0.9:
-            summary["key_insights"].append(
-                "High completion rate indicates good task decomposition"
-            )
+            summary["key_insights"].append("High completion rate indicates good task decomposition")
         if summary["time_efficiency"] > 1.1:
             summary["key_insights"].append("Tasks completed faster than estimated")
         if workflow.failed_tasks == 0:
@@ -1388,23 +1264,17 @@ class EchoTaskDecomposer:
 
         # Generate improvement opportunities
         if summary["completion_rate"] < 0.8:
-            summary["improvement_opportunities"].append(
-                "Review task decomposition strategy"
-            )
+            summary["improvement_opportunities"].append("Review task decomposition strategy")
         if summary["time_efficiency"] < 0.8:
-            summary["improvement_opportunities"].append(
-                "Improve time estimation accuracy"
-            )
+            summary["improvement_opportunities"].append("Improve time estimation accuracy")
 
         # Check if this should become a pattern
         if summary["completion_rate"] > 0.8 and summary["time_efficiency"] > 0.8:
-            summary["pattern_candidates"].append(
-                {
-                    "pattern_type": workflow.decomposition_strategy,
-                    "success_metrics": summary,
-                    "should_create_pattern": True,
-                }
-            )
+            summary["pattern_candidates"].append({
+                "pattern_type": workflow.decomposition_strategy,
+                "success_metrics": summary,
+                "should_create_pattern": True
+            })
 
         return summary
 
@@ -1413,136 +1283,86 @@ class EchoTaskDecomposer:
     async def _store_workflow(self, workflow: TaskWorkflow):
         """Store workflow in database"""
         with sqlite3.connect(self.db_path) as conn:
-            conn.execute(
-                """
+            conn.execute("""
                 INSERT OR REPLACE INTO workflows
                 (workflow_id, original_request, user_context, total_tasks, completed_tasks,
                  failed_tasks, overall_status, estimated_completion, actual_completion,
                  decomposition_strategy, execution_plan, resource_allocation, progress_history,
                  final_result, learning_summary)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-                (
-                    workflow.workflow_id,
-                    workflow.original_request,
-                    json.dumps(workflow.user_context),
-                    workflow.total_tasks,
-                    workflow.completed_tasks,
-                    workflow.failed_tasks,
-                    workflow.overall_status.value,
-                    workflow.estimated_completion.isoformat(),
-                    (
-                        workflow.actual_completion.isoformat()
-                        if workflow.actual_completion
-                        else None
-                    ),
-                    workflow.decomposition_strategy,
-                    json.dumps(workflow.execution_plan),
-                    json.dumps(workflow.resource_allocation),
-                    json.dumps(workflow.progress_history, default=str),
-                    (
-                        json.dumps(workflow.final_result)
-                        if workflow.final_result
-                        else None
-                    ),
-                    json.dumps(workflow.learning_summary),
-                ),
-            )
+            """, (
+                workflow.workflow_id, workflow.original_request, json.dumps(workflow.user_context),
+                workflow.total_tasks, workflow.completed_tasks, workflow.failed_tasks,
+                workflow.overall_status.value, workflow.estimated_completion.isoformat(),
+                workflow.actual_completion.isoformat() if workflow.actual_completion else None,
+                workflow.decomposition_strategy, json.dumps(workflow.execution_plan),
+                json.dumps(workflow.resource_allocation), json.dumps(workflow.progress_history, default=str),
+                json.dumps(workflow.final_result) if workflow.final_result else None,
+                json.dumps(workflow.learning_summary)
+            ))
             conn.commit()
 
     async def _store_task(self, task: Task):
         """Store task in database"""
         with sqlite3.connect(self.db_path) as conn:
-            conn.execute(
-                """
+            conn.execute("""
                 INSERT OR REPLACE INTO tasks
                 (task_id, parent_request_id, title, description, task_type, priority, status,
                  complexity_score, estimated_duration, dependencies, blockers, required_resources,
                  assigned_tools, context, created_at, started_at, completed_at, result,
                  error_info, progress_notes, learning_insights)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-                (
-                    task.task_id,
-                    task.parent_request_id,
-                    task.title,
-                    task.description,
-                    task.task_type.value,
-                    task.priority.value,
-                    task.status.value,
-                    task.complexity_score,
-                    task.estimated_duration,
-                    json.dumps(task.dependencies),
-                    json.dumps(task.blockers),
-                    json.dumps(task.required_resources),
-                    json.dumps(task.assigned_tools),
-                    json.dumps(task.context),
-                    task.created_at.isoformat(),
-                    task.started_at.isoformat() if task.started_at else None,
-                    task.completed_at.isoformat() if task.completed_at else None,
-                    json.dumps(task.result) if task.result else None,
-                    json.dumps(task.error_info) if task.error_info else None,
-                    json.dumps(task.progress_notes, default=str),
-                    json.dumps(task.learning_insights),
-                ),
-            )
+            """, (
+                task.task_id, task.parent_request_id, task.title, task.description,
+                task.task_type.value, task.priority.value, task.status.value,
+                task.complexity_score, task.estimated_duration,
+                json.dumps(task.dependencies), json.dumps(task.blockers),
+                json.dumps(task.required_resources), json.dumps(task.assigned_tools),
+                json.dumps(task.context), task.created_at.isoformat(),
+                task.started_at.isoformat() if task.started_at else None,
+                task.completed_at.isoformat() if task.completed_at else None,
+                json.dumps(task.result) if task.result else None,
+                json.dumps(task.error_info) if task.error_info else None,
+                json.dumps(task.progress_notes, default=str),
+                json.dumps(task.learning_insights)
+            ))
             conn.commit()
 
     async def _store_decomposition_pattern(self, pattern: DecompositionPattern):
         """Store decomposition pattern in database"""
         with sqlite3.connect(self.db_path) as conn:
-            conn.execute(
-                """
+            conn.execute("""
                 INSERT OR REPLACE INTO decomposition_patterns
                 (pattern_id, request_type, context_indicators, typical_breakdown,
                  success_rate, average_completion_time, common_bottlenecks,
                  optimization_suggestions, usage_count, last_updated)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-                (
-                    pattern.pattern_id,
-                    pattern.request_type,
-                    json.dumps(pattern.context_indicators),
-                    json.dumps(pattern.typical_breakdown),
-                    pattern.success_rate,
-                    pattern.average_completion_time,
-                    json.dumps(pattern.common_bottlenecks),
-                    json.dumps(pattern.optimization_suggestions),
-                    pattern.usage_count,
-                    pattern.last_updated.isoformat(),
-                ),
-            )
+            """, (
+                pattern.pattern_id, pattern.request_type,
+                json.dumps(pattern.context_indicators), json.dumps(pattern.typical_breakdown),
+                pattern.success_rate, pattern.average_completion_time,
+                json.dumps(pattern.common_bottlenecks), json.dumps(pattern.optimization_suggestions),
+                pattern.usage_count, pattern.last_updated.isoformat()
+            ))
             conn.commit()
 
-    async def _log_execution_event(
-        self,
-        workflow_id: str,
-        task_id: Optional[str],
-        event_type: str,
-        details: Dict[str, Any],
-    ):
+    async def _log_execution_event(self,
+                                 workflow_id: str,
+                                 task_id: Optional[str],
+                                 event_type: str,
+                                 details: Dict[str, Any]):
         """Log execution event"""
-        log_id = (
-            f"log_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
-        )
+        log_id = f"log_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
 
         with sqlite3.connect(self.db_path) as conn:
-            conn.execute(
-                """
+            conn.execute("""
                 INSERT INTO execution_logs
                 (log_id, workflow_id, task_id, event_type, timestamp, details, performance_metrics)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
-            """,
-                (
-                    log_id,
-                    workflow_id,
-                    task_id,
-                    event_type,
-                    datetime.now().isoformat(),
-                    json.dumps(details),
-                    json.dumps({}),  # Performance metrics placeholder
-                ),
-            )
+            """, (
+                log_id, workflow_id, task_id, event_type, datetime.now().isoformat(),
+                json.dumps(details), json.dumps({})  # Performance metrics placeholder
+            ))
             conn.commit()
 
     # Public API methods
@@ -1561,22 +1381,14 @@ class EchoTaskDecomposer:
                 "total_tasks": workflow.total_tasks,
                 "completed_tasks": workflow.completed_tasks,
                 "failed_tasks": workflow.failed_tasks,
-                "progress_percentage": workflow.completed_tasks
-                / workflow.total_tasks
-                * 100,
+                "progress_percentage": workflow.completed_tasks / workflow.total_tasks * 100
             },
             "timing": {
                 "estimated_completion": workflow.estimated_completion.isoformat(),
-                "actual_completion": (
-                    workflow.actual_completion.isoformat()
-                    if workflow.actual_completion
-                    else None
-                ),
+                "actual_completion": workflow.actual_completion.isoformat() if workflow.actual_completion else None
             },
             "strategy": workflow.decomposition_strategy,
-            "recent_progress": (
-                workflow.progress_history[-3:] if workflow.progress_history else []
-            ),
+            "recent_progress": workflow.progress_history[-3:] if workflow.progress_history else []
         }
 
     async def get_task_status(self, task_id: str) -> Dict[str, Any]:
@@ -1595,14 +1407,12 @@ class EchoTaskDecomposer:
             "complexity": task.complexity_score,
             "progress": {
                 "started_at": task.started_at.isoformat() if task.started_at else None,
-                "completed_at": (
-                    task.completed_at.isoformat() if task.completed_at else None
-                ),
-                "estimated_duration": task.estimated_duration,
+                "completed_at": task.completed_at.isoformat() if task.completed_at else None,
+                "estimated_duration": task.estimated_duration
             },
             "dependencies": task.dependencies,
             "result": task.result,
-            "error_info": task.error_info,
+            "error_info": task.error_info
         }
 
     async def get_decomposer_status(self) -> Dict[str, Any]:
@@ -1611,13 +1421,11 @@ class EchoTaskDecomposer:
             "active_workflows": len(self.active_workflows),
             "active_tasks": len(self.active_tasks),
             "learned_patterns": len(self.decomposition_patterns),
-            "system_health": "operational",
+            "system_health": "operational"
         }
-
 
 # Global instance
 _task_decomposer = None
-
 
 def get_task_decomposer() -> EchoTaskDecomposer:
     """Get global task decomposer instance"""
@@ -1626,30 +1434,24 @@ def get_task_decomposer() -> EchoTaskDecomposer:
         _task_decomposer = EchoTaskDecomposer()
     return _task_decomposer
 
-
 # Convenience functions
-async def decompose_request(
-    request: str,
-    user_context: Dict[str, Any],
-    priority: TaskPriority = TaskPriority.MEDIUM,
-    deadline: Optional[datetime] = None,
-) -> str:
+async def decompose_request(request: str,
+                           user_context: Dict[str, Any],
+                           priority: TaskPriority = TaskPriority.MEDIUM,
+                           deadline: Optional[datetime] = None) -> str:
     """Convenience function to decompose a request"""
     decomposer = get_task_decomposer()
     return await decomposer.decompose_request(request, user_context, priority, deadline)
-
 
 async def execute_workflow(workflow_id: str) -> Dict[str, Any]:
     """Convenience function to execute a workflow"""
     decomposer = get_task_decomposer()
     return await decomposer.execute_workflow(workflow_id)
 
-
 async def get_workflow_status(workflow_id: str) -> Dict[str, Any]:
     """Convenience function to get workflow status"""
     decomposer = get_task_decomposer()
     return await decomposer.get_workflow_status(workflow_id)
-
 
 if __name__ == "__main__":
     # Example usage
@@ -1663,9 +1465,9 @@ if __name__ == "__main__":
                 "complexity_indicators": ["AI", "video", "content creation", "system"],
                 "priority": "high",
                 "resource_constraints": False,
-                "deadline": None,
+                "deadline": None
             },
-            priority=TaskPriority.HIGH,
+            priority=TaskPriority.HIGH
         )
 
         print(f"Workflow created: {workflow_id}")

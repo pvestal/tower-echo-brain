@@ -4,6 +4,7 @@ Test Framework for Model Decision Engine
 Part of CI/CD pipeline - validates decision quality
 """
 
+import os
 import asyncio
 import json
 import time
@@ -255,7 +256,7 @@ async def run_ci_tests():
     db_config = {
         "host": "localhost",
         "database": "echo_brain",
-        "user": "patrick"
+        "user": os.getenv("TOWER_USER", os.getenv("TOWER_USER", "patrick"))
     }
 
     print("Starting Model Decision Engine Tests...")

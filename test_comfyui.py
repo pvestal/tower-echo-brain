@@ -71,7 +71,7 @@ print(json.dumps(response.json(), indent=2))
 # Check if image was generated
 time.sleep(10)
 import os
-output_dir = "***REMOVED***/ComfyUI-Working/output"
+output_dir = "/home/{os.getenv("TOWER_USER", "patrick")}/Projects/ComfyUI-Working/output"
 files = sorted([f for f in os.listdir(output_dir) if "luna_test" in f])
 if files:
     print(f"\n✅ SUCCESS! Generated image: {files[-1]}")

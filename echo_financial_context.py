@@ -4,6 +4,7 @@ Echo Financial Context Provider
 Provides financial intelligence to Echo Brain responses
 """
 
+import os
 import psycopg2
 from datetime import datetime, timedelta
 from typing import Dict, Optional
@@ -14,7 +15,7 @@ class EchoFinancialContext:
             'host': 'localhost',
             'port': 5432,
             'database': 'echo_brain',
-            'user': 'patrick'
+            'user': os.getenv('TOWER_USER', os.getenv("TOWER_USER", "patrick"))
         }
     
     def get_connection(self):

@@ -1,0 +1,48 @@
+
+═══════════════════════════════════════════════════════════════════
+RV ELECTRICAL SYSTEM LAYOUT REPORT
+Patrick Vestal - 2021 Sundowner Trailblazer 2286TB
+═══════════════════════════════════════════════════════════════════
+
+FORWARD COMPARTMENT LAYOUT:
+- Compartment: 48" W × 24" D × 18" H
+- Battery 1 (Elefast 330Ah): 4" from front, 5" from side, 3" above floor
+- Battery 2 (Elefast 330Ah): 4" from front, 15.4" from side, 3" above floor
+- Battery spacing: 1" gap between batteries
+- MPPT 150/100: Mounted on side wall, 28" from front, 8" above floor
+- Lynx Distributor: 10" from front, 20" from side, 8" above floor
+
+CLEARANCES:
+- Batteries to ceiling: 6.3" (adequate for ventilation)
+- Batteries to door: 16" (good access for maintenance)
+- MPPT ventilation: Clear on all sides ✓
+- Lynx access: Front-facing, easy fuse access ✓
+
+CABLE RUNS (From 3D Model):
+
+1/0 AWG Positive:
+  Length: 15.1 inches (383mm)
+  From: (356, 241, 279)
+  To: (254, 610, 254)
+
+4 AWG Solar:
+  Length: 23.4 inches (595mm)
+  From: (711, 178, 254)
+  To: (254, 559, 254)
+
+═══════════════════════════════════════════════════════════════════
+RECOMMENDATIONS:
+1. Batteries: Use NOCO BT31S trays (x2) from Amazon (~$80 total)
+2. Cable lengths confirmed adequate with purchased wire
+3. Lynx placement allows easy fuse access from compartment door
+4. MPPT positioned for heat dissipation and cable routing
+5. All clearances meet or exceed manufacturer minimums
+
+NEXT STEPS:
+1. Dry-fit batteries in compartment (verify measurements)
+2. Mark mounting positions on compartment floor
+3. Install battery trays first
+4. Route cables before installing components
+5. Install components and secure with hardware
+
+═══════════════════════════════════════════════════════════════════

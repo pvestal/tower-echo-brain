@@ -21,7 +21,7 @@ class PhotoIndexer:
         self.pg_conn = psycopg2.connect(
             host='localhost',
             database='postgres',
-            user='patrick',
+            user=os.getenv("TOWER_USER", "patrick"),
             password='patrick123'
         )
         self.init_database()

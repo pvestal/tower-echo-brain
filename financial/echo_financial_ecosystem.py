@@ -4,6 +4,7 @@ AI Assist Financial Ecosystem
 Integrates individual, business, trust, and family financial management
 """
 
+import os
 from typing import Dict, List, Optional, Any
 from datetime import datetime, date
 from decimal import Decimal
@@ -48,7 +49,7 @@ class EchoFinancialEcosystem:
         """Initialize the financial ecosystem structure"""
 
         # Individual entities
-        self.entities['patrick'] = {
+        self.entities[os.getenv("TOWER_USER", "patrick")] = {
             'type': FinancialEntity.INDIVIDUAL,
             'name': 'Patrick Vestal',
             'role': 'trustee',
@@ -82,8 +83,8 @@ class EchoFinancialEcosystem:
             'type': FinancialEntity.TRUST,
             'name': 'Vestal Family Trust',
             'trust_id': 'VFT-2025',
-            'trustee': 'patrick',
-            'beneficiaries': ['patrick', 'partner', 'children'],
+            'trustee': os.getenv("TOWER_USER", "patrick"),
+            'beneficiaries': [os.getenv("TOWER_USER", "patrick"), 'partner', 'children'],
             'assets': [],
             'distributions': {},
             'rules': self._get_trust_rules()
@@ -93,7 +94,7 @@ class EchoFinancialEcosystem:
         self.entities['board'] = {
             'type': FinancialEntity.BOARD,
             'name': 'Vestal Family Board',
-            'members': ['patrick', 'partner', 'advisor1'],
+            'members': [os.getenv("TOWER_USER", "patrick"), 'partner', 'advisor1'],
             'voting_rules': {
                 'quorum': 2,  # Minimum members for decisions
                 'major_threshold': 0.75,  # 75% for major decisions
@@ -232,7 +233,7 @@ class EchoFinancialEcosystem:
         consolidated['total_business'] = str(business_total)
 
         # Trust assets
-        if requester_id in ['patrick'] or requester_id in self.entities['vestal_trust']['beneficiaries']:
+        if requester_id in [os.getenv("TOWER_USER", "patrick")] or requester_id in self.entities['vestal_trust']['beneficiaries']:
             trust_value = self._calculate_trust_value()
             consolidated['trust'] = {
                 'name': self.entities['vestal_trust']['name'],
@@ -678,12 +679,12 @@ if __name__ == "__main__":
 
         # Connect Plaid account
         print("\n1. Connecting bank accounts via Plaid...")
-        result = await echo.ecosystem.connect_plaid_account('patrick', 'plaid_token_123')
+        result = await echo.ecosystem.connect_plaid_account(os.getenv("TOWER_USER", "patrick"), 'plaid_token_123')
         print(f"   ✅ Connected {result['accounts_connected']} accounts from {result['institution']}")
 
         # Get consolidated view
         print("\n2. Getting consolidated financial view...")
-        consolidated = await echo.ecosystem.get_consolidated_view('patrick')
+        consolidated = await echo.ecosystem.get_consolidated_view(os.getenv("TOWER_USER", "patrick"))
         print(f"   Individual: ${consolidated.get('total_individual', '0')}")
         print(f"   Business: ${consolidated.get('total_business', '0')}")
         print(f"   Trust: ${consolidated.get('trust', {}).get('total_value', '0')}")
@@ -692,7 +693,7 @@ if __name__ == "__main__":
         # Test board decision
         print("\n3. Submitting board decision...")
         proposal = {
-            'submitted_by': 'patrick',
+            'submitted_by': os.getenv("TOWER_USER", "patrick"),
             'type': 'trust_distribution',
             'amount': 25000,
             'description': 'Education fund distribution',
@@ -705,7 +706,7 @@ if __name__ == "__main__":
 
         # Cast votes
         print("\n4. Board voting...")
-        vote1 = await echo.ecosystem.cast_board_vote('patrick', decision['decision_id'], 'yes')
+        vote1 = await echo.ecosystem.cast_board_vote(os.getenv("TOWER_USER", "patrick"), decision['decision_id'], 'yes')
         print(f"   Patrick votes: YES")
         vote2 = await echo.ecosystem.cast_board_vote('partner', decision['decision_id'], 'yes')
         print(f"   Partner votes: YES")
@@ -723,7 +724,7 @@ if __name__ == "__main__":
 
         for query in queries:
             print(f"\n   Q: {query}")
-            result = await echo.process_financial_query('patrick', query)
+            result = await echo.process_financial_query(os.getenv("TOWER_USER", "patrick"), query)
             print(f"   A: {result['response'][:200]}...")
 
         print("\n✅ Financial ecosystem ready!")

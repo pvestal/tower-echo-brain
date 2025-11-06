@@ -76,15 +76,15 @@ def create_animatediff_video(prompt, num_frames=96, fps=24):
             }
         },
         "8": {
-            "class_type": "ADE_AnimateDiffCombine",
+            "class_type": "VHS_VideoCombine",
             "inputs": {
                 "images": ["7", 0],
                 "frame_rate": fps,
                 "loop_count": 0,
                 "filename_prefix": "animatediff_video",
-                "format": "image/gif",
-                "pingpong": False,
-                "save_image": True
+                "format": "video/h264-mp4",
+                "save_output": True,
+                "pingpong": False
             }
         }
     }
@@ -131,9 +131,9 @@ if __name__ == "__main__":
     create_animatediff_video(prompt, num_frames=96, fps=24)
     
     # Option 2: FFmpeg zoom effect from existing image
-    goblin_image = "/home/patrick/ComfyUI/output/echo_goblin_slayer_cyberpunk_00001_.png"
+    goblin_image = "/home/{os.getenv("TOWER_USER", "patrick")}/ComfyUI/output/echo_goblin_slayer_cyberpunk_00001_.png"
     if os.path.exists(goblin_image):
         generate_30s_video_ffmpeg(
             goblin_image,
-            "***REMOVED***/goblin_slayer_30s.mp4"
+            "/home/{os.getenv("TOWER_USER", "patrick")}/Videos/goblin_slayer_30s.mp4"
         )

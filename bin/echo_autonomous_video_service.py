@@ -29,13 +29,13 @@ app = FastAPI(title="Echo Brain Autonomous Video Generation Service", version="1
 
 # Configuration
 COMFYUI_URL = "http://127.0.0.1:8188"
-OUTPUT_DIR = Path("***REMOVED***/Anime")
+OUTPUT_DIR = Path("/home/{os.getenv("TOWER_USER", "patrick")}/Videos/Anime")
 TEMP_DIR = Path("/opt/tower-anime/data/temp")
 
 DB_CONFIG = {
     'host': 'localhost',
     'database': 'echo_brain',
-    'user': 'patrick',
+    'user': os.getenv('TOWER_USER', os.getenv("TOWER_USER", "patrick")),
     'password': os.getenv('DB_PASSWORD', '')
 }
 

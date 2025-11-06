@@ -44,7 +44,7 @@ class EchoTowerServicesIntegration:
     def load_oauth_providers(self):
         """Load OAuth providers from Tower vault"""
         try:
-            with open('/home/patrick/.tower_credentials/vault.json', 'r') as f:
+            with open('/home/{os.getenv("TOWER_USER", "patrick")}/.tower_credentials/vault.json', 'r') as f:
                 vault_data = json.load(f)
             return vault_data.get('oauth_providers', {})
         except Exception as e:
@@ -70,7 +70,7 @@ class EchoTowerServicesIntegration:
     def get_patrick_comprehensive_profile(self):
         """Get Patrick's complete profile across all Tower services"""
         profile = {
-            "user_id": "patrick",
+            "user_id": os.getenv("TOWER_USER", "patrick"),
             "timestamp": "2025-09-12T23:53:00Z",
             "services": {}
         }

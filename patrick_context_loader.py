@@ -61,7 +61,7 @@ class PatrickPersonalContext:
     
     def is_patrick_query(self, query):
         """Detect if query is from Patrick"""
-        patrick_indicators = ["patrick", "my", "i am", "help me", "what should i"]
+        patrick_indicators = [os.getenv("TOWER_USER", "patrick"), "my", "i am", "help me", "what should i"]
         return any(indicator in query.lower() for indicator in patrick_indicators)
 
 # Global instance for Echo to use

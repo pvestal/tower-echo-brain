@@ -148,7 +148,7 @@ def create_extended_video(image_path, duration_seconds=30):
 
 if __name__ == "__main__":
     # Test with Goblin Slayer image
-    goblin_image = "/home/patrick/ComfyUI/output/echo_goblin_slayer_cyberpunk_00001_.png"
+    goblin_image = "/home/{os.getenv("TOWER_USER", "patrick")}/ComfyUI/output/echo_goblin_slayer_cyberpunk_00001_.png"
     
     if os.path.exists(goblin_image):
         # Generate single SVD clip

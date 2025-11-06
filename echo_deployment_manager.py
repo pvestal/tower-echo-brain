@@ -118,7 +118,7 @@ class ServiceManager:
     """Manages systemd services for deployments"""
     
     def __init__(self):
-        self.service_dir = Path("/home/patrick/.config/systemd/user")
+        self.service_dir = Path("/home/{os.getenv("TOWER_USER", "patrick")}/.config/systemd/user")
         self.service_dir.mkdir(parents=True, exist_ok=True)
     
     def create_service(self, deployment: Deployment) -> str:

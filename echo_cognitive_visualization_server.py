@@ -103,7 +103,7 @@ class TowerTestingFramework:
     """Tower Testing Framework Integration for Echo Brain"""
     
     def __init__(self):
-        self.framework_path = "/home/patrick/Documents"
+        self.framework_path = "/home/{os.getenv("TOWER_USER", "patrick")}/Documents"
         self.tower_script = os.path.join(self.framework_path, "tower")
         self.universal_test_script = os.path.join(self.framework_path, "tower_universal_test.sh")
         self.debug_tools_script = os.path.join(self.framework_path, "tower_debug_tools.sh")
@@ -1092,7 +1092,7 @@ class EchoDatabase:
         self.db_config = {
             "host": os.environ.get("DB_HOST", "localhost"),
             "database": os.environ.get("DB_NAME", "echo_brain"),
-            "user": os.environ.get("DB_USER", "patrick")
+            "user": os.environ.get("DB_USER", os.getenv("TOWER_USER", "patrick"))
         }
 
         # Note: No password required for local Tower database with user 'patrick'

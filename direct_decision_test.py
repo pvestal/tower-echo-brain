@@ -18,7 +18,7 @@ import json
 DB_CONFIG = {
     "host": "localhost",
     "database": "echo_brain",
-    "user": "patrick"
+    "user": os.getenv("TOWER_USER", os.getenv("TOWER_USER", "patrick"))
 }
 
 async def test_individual_queries():

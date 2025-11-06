@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 DB_CONFIG = {
     "host": "localhost",
     "database": "echo_brain",
-    "user": "patrick"
+    "user": os.getenv("TOWER_USER", os.getenv("TOWER_USER", "patrick"))
 }
 
 class ModelOperation(str, Enum):

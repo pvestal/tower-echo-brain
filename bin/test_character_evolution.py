@@ -4,6 +4,7 @@ Comprehensive test suite for Character Evolution System
 Tests database schema, API endpoints, and integration functionality
 """
 
+import os
 import json
 import requests
 import psycopg2
@@ -20,7 +21,7 @@ class CharacterEvolutionTester:
         self.db_config = {
             "host": "localhost",
             "database": "echo_brain",
-            "user": "patrick",
+            "user": os.getenv("TOWER_USER", os.getenv("TOWER_USER", "patrick")),
             "password": "admin123"
         }
         self.test_results = []

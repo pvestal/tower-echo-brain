@@ -15,12 +15,12 @@ try:
     status = requests.get("http://localhost:8188/system_stats")
     if status.status_code != 200:
         print("❌ ComfyUI not running, starting it...")
-        subprocess.Popen(["python3", "***REMOVED***/ComfyUI-Working/main.py", "--listen", "0.0.0.0"], 
+        subprocess.Popen(["python3", "/home/{os.getenv("TOWER_USER", "patrick")}/Projects/ComfyUI-Working/main.py", "--listen", "0.0.0.0"], 
                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         time.sleep(10)
 except:
     print("Starting ComfyUI...")
-    subprocess.Popen(["python3", "***REMOVED***/ComfyUI-Working/main.py", "--listen", "0.0.0.0"],
+    subprocess.Popen(["python3", "/home/{os.getenv("TOWER_USER", "patrick")}/Projects/ComfyUI-Working/main.py", "--listen", "0.0.0.0"],
                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     time.sleep(10)
 
@@ -34,7 +34,7 @@ existing_frames = subprocess.run(
 print(f"Found {existing_frames} existing Goblin Slayer frames")
 
 # 3. Generate video with quality checking
-output_video = "***REMOVED***/GOBLIN_SLAYER_ULTIMATE_WITH_PIPELINE.mp4"
+output_video = "/home/{os.getenv("TOWER_USER", "patrick")}/Videos/GOBLIN_SLAYER_ULTIMATE_WITH_PIPELINE.mp4"
 
 # Create video with FFmpeg using best frames
 cmd = f"""
@@ -78,7 +78,7 @@ if os.path.exists(output_video):
     
     # Copy to laptop
     print("📤 Copying to laptop...")
-    subprocess.run(f"scp {output_video} patrick@192.168.50.100:***REMOVED***/", shell=True)
+    subprocess.run(f"scp {output_video} patrick@192.168.50.100:/home/{os.getenv("TOWER_USER", "patrick")}/Videos/", shell=True)
     
 else:
     print("❌ Video generation failed!")

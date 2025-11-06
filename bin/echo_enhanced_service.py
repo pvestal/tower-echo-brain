@@ -177,7 +177,7 @@ class EnhancedEchoService:
         self.db_config = {
             "host": "localhost",
             "database": "echo_brain", 
-            "user": "patrick",
+            "user": os.getenv("TOWER_USER", os.getenv("TOWER_USER", "patrick")),
             "password": "password"
         }
         

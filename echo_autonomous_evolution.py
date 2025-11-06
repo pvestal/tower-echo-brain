@@ -4,6 +4,7 @@ Echo Autonomous Evolution Orchestrator
 Coordinates self-analysis, improvement generation, and safe deployment
 """
 
+import os
 import asyncio
 import logging
 import json
@@ -615,7 +616,7 @@ class EchoAutonomousEvolution:
             db_config = {
                 'host': 'localhost',
                 'database': 'echo_brain',
-                'user': 'patrick',
+                'user': os.getenv('TOWER_USER', os.getenv("TOWER_USER", "patrick")),
                 'password': 'Beau40818'
             }
             

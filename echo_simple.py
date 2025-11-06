@@ -21,10 +21,10 @@ async def generate_video(request: dict):
     duration = request.get("duration", 30)
     
     # Use existing Goblin Slayer image
-    base_image = "/home/patrick/ComfyUI/output/echo_goblin_slayer_cyberpunk_00001_.png"
+    base_image = "/home/{os.getenv("TOWER_USER", "patrick")}/ComfyUI/output/echo_goblin_slayer_cyberpunk_00001_.png"
     
     if os.path.exists(base_image):
-        output_path = f"***REMOVED***/echo_generated_{int(time.time())}.mp4"
+        output_path = f"/home/{os.getenv("TOWER_USER", "patrick")}/Videos/echo_generated_{int(time.time())}.mp4"
         
         cmd = f'''ffmpeg -loop 1 -i {base_image} -c:v libx264 -t {duration} \
         -pix_fmt yuv420p -vf "scale=1920:1080,zoompan=z='min(zoom+0.0015,1.5)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d={duration*24}:s=1920x1080:fps=24" \

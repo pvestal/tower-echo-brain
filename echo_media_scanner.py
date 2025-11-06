@@ -2,7 +2,7 @@
 """
 AI Assist Media Scanner - Local Media File Analysis
 Scans and analyzes local media files for AI Assist training
-Processes images and videos in ***REMOVED*** and /home/patrick/Pictures
+Processes images and videos in /home/{os.getenv("TOWER_USER", "patrick")}/Videos and /home/{os.getenv("TOWER_USER", "patrick")}/Pictures
 """
 
 import os
@@ -32,7 +32,7 @@ class EchoMediaScanner:
     def __init__(self):
         self.db_config = {
             'host': 'localhost',
-            'user': 'patrick',
+            'user': os.getenv('TOWER_USER', os.getenv("TOWER_USER", "patrick")),
             'database': 'echo_brain',
             'port': 5432
         }
@@ -448,8 +448,8 @@ async def main():
     
     # Directories to scan from learning schedule
     directories_to_scan = [
-        "***REMOVED***",
-        "/home/patrick/Pictures"
+        "/home/{os.getenv("TOWER_USER", "patrick")}/Videos",
+        "/home/{os.getenv("TOWER_USER", "patrick")}/Pictures"
     ]
     
     total_results = {

@@ -4,6 +4,7 @@ AI Assist Family Integration with Tower Services
 Multi-user, multi-device family ecosystem
 """
 
+import os
 from typing import Dict, List, Optional
 from datetime import datetime
 import json
@@ -64,7 +65,7 @@ class TowerFamilyIntegration:
         }
 
         # Private spaces per user
-        self.family_spaces["patrick"] = {
+        self.family_spaces[os.getenv("TOWER_USER", "patrick")] = {
             "projects": [],
             "work_notes": [],
             "api_keys": {},  # Admin only
@@ -112,8 +113,8 @@ class TowerFamilyIntegration:
 
         permissions = {
             "can_access_echo": True,
-            "can_modify_settings": user_id == device["primary_user"] or user_id == "patrick",
-            "can_install_apps": user_id == "patrick",
+            "can_modify_settings": user_id == device["primary_user"] or user_id == os.getenv("TOWER_USER", "patrick"),
+            "can_install_apps": user_id == os.getenv("TOWER_USER", "patrick"),
             "can_access_media": True,
             "restrictions": device.get("restrictions", [])
         }
@@ -296,8 +297,8 @@ class FamilyDeviceSetup:
             "patrick_laptop": {
                 "name": "Patrick's Laptop",
                 "type": "laptop",
-                "primary_user": "patrick",
-                "allowed_users": ["patrick"],
+                "primary_user": os.getenv("TOWER_USER", "patrick"),
+                "allowed_users": [os.getenv("TOWER_USER", "patrick")],
                 "restrictions": [],
                 "location": "office"
             },
@@ -307,7 +308,7 @@ class FamilyDeviceSetup:
                 "name": "Family iPad",
                 "type": "tablet",
                 "primary_user": "shared",
-                "allowed_users": ["patrick", "partner", "child1", "child2"],
+                "allowed_users": [os.getenv("TOWER_USER", "patrick"), "partner", "child1", "child2"],
                 "restrictions": ["no_adult_content", "parental_controls"],
                 "location": "living_room"
             },
@@ -317,7 +318,7 @@ class FamilyDeviceSetup:
                 "name": "Partner's iPhone",
                 "type": "phone",
                 "primary_user": "partner",
-                "allowed_users": ["partner", "patrick"],  # Patrick for tech support
+                "allowed_users": ["partner", os.getenv("TOWER_USER", "patrick")],  # Patrick for tech support
                 "restrictions": [],
                 "location": "mobile"
             },
@@ -327,7 +328,7 @@ class FamilyDeviceSetup:
                 "name": "Kids Fire Tablet",
                 "type": "tablet",
                 "primary_user": "kids",
-                "allowed_users": ["child1", "child2", "patrick", "partner"],
+                "allowed_users": ["child1", "child2", os.getenv("TOWER_USER", "patrick"), "partner"],
                 "restrictions": ["kids_mode", "time_limits", "content_filter"],
                 "location": "kids_room"
             },
@@ -337,7 +338,7 @@ class FamilyDeviceSetup:
                 "name": "Living Room TV",
                 "type": "tv",
                 "primary_user": "shared",
-                "allowed_users": ["patrick", "partner", "child1", "child2"],
+                "allowed_users": [os.getenv("TOWER_USER", "patrick"), "partner", "child1", "child2"],
                 "restrictions": ["rating_limits"],
                 "location": "living_room"
             }
@@ -387,7 +388,7 @@ if __name__ == "__main__":
     # 3. Patrick checking system status
     print("\n3. Patrick checking system:")
     result = tower.handle_family_query(
-        "patrick",
+        os.getenv("TOWER_USER", "patrick"),
         "System status",
         "patrick_laptop"
     )

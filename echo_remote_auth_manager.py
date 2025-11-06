@@ -175,7 +175,7 @@ class EchoRemoteAuthManager:
             else:
                 tower_ip = "***REMOVED***"
 
-            ssh.connect(tower_ip, username='patrick')
+            ssh.connect(tower_ip, username=os.getenv("TOWER_USER", "patrick"))
 
             # Get OAuth config
             sftp = ssh.open_sftp()

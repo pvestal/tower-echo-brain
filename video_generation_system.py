@@ -18,7 +18,7 @@ class VideoGenerationSystem:
     
     def __init__(self, comfyui_url="http://localhost:8188"):
         self.comfyui_url = comfyui_url
-        self.output_dir = Path("***REMOVED***")
+        self.output_dir = Path("/home/{os.getenv("TOWER_USER", "patrick")}/Videos")
         self.output_dir.mkdir(exist_ok=True)
         
         # Available generation methods
@@ -309,7 +309,7 @@ class VideoGenerationSystem:
         # Auto-select method based on available models
         if method == 'auto':
             # Check which models are available
-            if os.path.exists("***REMOVED***/ComfyUI-Working/custom_nodes/ComfyUI-AnimateDiff-Evolved/models/mm_sd_v15_v3.ckpt"):
+            if os.path.exists("/home/{os.getenv("TOWER_USER", "patrick")}/Projects/ComfyUI-Working/custom_nodes/ComfyUI-AnimateDiff-Evolved/models/mm_sd_v15_v3.ckpt"):
                 method = 'animatediff'
             else:
                 method = 'ffmpeg_effects'  # Fallback
@@ -382,7 +382,7 @@ if __name__ == "__main__":
     print("Testing quality assessment on existing video...")
     
     # Test with an existing video if available
-    test_video = "***REMOVED***/goblin_slayer_30s.mp4"
+    test_video = "/home/{os.getenv("TOWER_USER", "patrick")}/Videos/goblin_slayer_30s.mp4"
     if os.path.exists(test_video):
         quality = system.assess_quality(test_video)
         print(f"Quality Assessment: {quality}")

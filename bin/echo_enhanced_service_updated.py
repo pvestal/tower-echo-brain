@@ -4,6 +4,7 @@ Enhanced Echo Service with Tower System Management
 Extends the basic Echo service with service management capabilities
 """
 
+import os
 import logging
 import json
 import psycopg2
@@ -139,7 +140,7 @@ class EnhancedEchoService:
         self.db_config = {
             "host": "localhost",
             "database": "echo_brain", 
-            "user": "patrick",
+            "user": os.getenv("TOWER_USER", os.getenv("TOWER_USER", "patrick")),
             "password": "admin123"
         }
         

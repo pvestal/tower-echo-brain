@@ -3,6 +3,7 @@
 Plaid Authentication API for Tower
 FastAPI backend to support the auth UI with MFA
 """
+import os
 import asyncio
 import json
 from fastapi import FastAPI, HTTPException, Request
@@ -129,7 +130,7 @@ class PlaidAuth:
                             'access_token': access_token,
                             'item_id': item_id,
                             'session_id': request.session_id,
-                            'user_id': 'patrick',
+                            'user_id': os.getenv("TOWER_USER", "patrick"),
                             'accounts': request.metadata.get('accounts', []),
                             'institution': request.metadata.get('institution', {}),
                             'created_at': datetime.now().isoformat(),
@@ -242,7 +243,7 @@ async def plaid_auth_page():
     return await read_root()
 
 @app.post("/api/auth/plaid/create_session")
-async def create_plaid_session(user_id: str = "patrick"):
+async def create_plaid_session(user_id: str = os.getenv("TOWER_USER", os.getenv("TOWER_USER", "patrick"))):
     """Create new Plaid auth session"""
     try:
         result = await plaid_auth.create_session(user_id)

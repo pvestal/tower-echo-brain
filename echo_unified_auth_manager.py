@@ -126,7 +126,7 @@ class EchoUnifiedAuthManager:
             key_path = Path('/opt/tower-apple-music/config/AuthKey.p8')
             if not key_path.exists():
                 # Try alternative path
-                key_path = Path('/home/patrick/Downloads/AuthKey_9M85DX285V.p8')
+                key_path = Path('/home/{os.getenv("TOWER_USER", "patrick")}/Downloads/AuthKey_9M85DX285V.p8')
 
             if key_path.exists():
                 with open(key_path, 'rb') as f:
