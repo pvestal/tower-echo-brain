@@ -4,6 +4,7 @@ Timeline Management Integration Test
 Demonstrates full integration between timeline system and character evolution system
 """
 
+import os
 import requests
 import json
 import time
@@ -14,7 +15,7 @@ import psycopg2.extras
 DB_CONFIG = {
     "host": "localhost",
     "database": "echo_brain",
-    "user": "patrick",
+    "user": os.getenv("TOWER_USER", os.getenv("TOWER_USER", "patrick")),
     "password": "admin123"
 }
 

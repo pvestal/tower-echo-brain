@@ -4,6 +4,7 @@ Optimize Model Decision Engine
 Apply optimizations based on test results to improve decision accuracy
 """
 
+import os
 import asyncio
 import sys
 import psycopg2
@@ -15,7 +16,7 @@ sys.path.append('/opt/tower-echo-brain')
 DB_CONFIG = {
     "host": "localhost",
     "database": "tower_consolidated",
-    "user": "patrick"
+    "user": os.getenv("TOWER_USER", os.getenv("TOWER_USER", "patrick"))
 }
 
 def apply_optimizations():
@@ -134,7 +135,7 @@ import psycopg2
 DB_CONFIG = {
     "host": "localhost",
     "database": "tower_consolidated",
-    "user": "patrick"
+    "user": os.getenv("TOWER_USER", os.getenv("TOWER_USER", "patrick"))
 }
 
 def rollback():

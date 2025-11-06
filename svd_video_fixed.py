@@ -104,7 +104,7 @@ def generate_svd_frames(image_path):
         return None
 
 if __name__ == "__main__":
-    goblin_image = "/home/patrick/ComfyUI/output/echo_goblin_slayer_cyberpunk_00001_.png"
+    goblin_image = "/home/{os.getenv("TOWER_USER", "patrick")}/ComfyUI/output/echo_goblin_slayer_cyberpunk_00001_.png"
     if os.path.exists(goblin_image):
         generate_svd_frames(goblin_image)
     else:

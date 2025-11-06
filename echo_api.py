@@ -46,6 +46,11 @@ class CapabilityTest(BaseModel):
     test_type: str = 'self_identification'
     query: Optional[str] = None
 
+class QueryRequest(BaseModel):
+    query: str
+    context: Optional[Dict] = None
+    model: Optional[str] = None
+
 @app.on_event("startup")
 async def startup_event():
     """Initialize all modules on startup"""
@@ -200,16 +205,29 @@ async def process_message(message: ChatMessage):
             "response": "I can now handle temporal reasoning. Use /api/echo/temporal/query for specific temporal logic operations.",
             "temporal_capable": True
         }
-    
+
     # Check if this is a self-identification query
     if 'capabilities' in message.message.lower() or 'what can you do' in message.message.lower():
         test = CapabilityTest(test_type='self_identification', query=message.message)
         return await test_capabilities(test)
-    
+
     # Default response (integrate with actual Echo brain logic here)
     return {
         "response": f"Processing: {message.message}",
         "context": message.context,
+        "timestamp": datetime.now().isoformat()
+    }
+
+@app.post("/api/echo/query")
+async def process_query(request: QueryRequest):
+    """Programmatic query endpoint for anime production and other services"""
+    # This endpoint handles structured queries from other Tower services
+    return {
+        "response": f"Enhanced: {request.query}",
+        "model_used": request.model or "llama3.2:3b",
+        "intelligence_level": "professional",
+        "processing_time": 1.0,
+        "context": request.context,
         "timestamp": datetime.now().isoformat()
     }
 

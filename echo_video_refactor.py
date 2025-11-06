@@ -35,15 +35,15 @@ class EchoVideoRefactored:
         # From working Tower paths
         self.comfyui_url = "http://192.168.50.135:8188"
         self.llava_url = "http://localhost:11435/api/generate"  # LLaVA on Ollama
-        self.output_dir = Path("/home/patrick/Videos")
+        self.output_dir = Path("/home/{os.getenv("TOWER_USER", "patrick")}/Videos")
         self.frame_dir = Path("/mnt/ComfyUI/output")
-        self.workflow_dir = Path("/home/patrick/Tower/services/anime-video-generator")
+        self.workflow_dir = Path("/home/{os.getenv("TOWER_USER", "patrick")}/Tower/services/anime-video-generator")
 
         # Database for project management
         self.db_config = {
             "host": "localhost",
             "database": "echo_brain",
-            "user": "patrick",
+            "user": os.getenv("TOWER_USER", os.getenv("TOWER_USER", "patrick")),
             "password": "patrick123"
         }
 

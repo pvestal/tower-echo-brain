@@ -58,15 +58,15 @@ def create_quality_video_workflow(prompt, num_frames=48, fps=24):
             }
         },
         '8': {
-            'class_type': 'ADE_AnimateDiffCombine',
+            'class_type': 'VHS_VideoCombine',
             'inputs': {
                 'images': ['7', 0],
                 'frame_rate': fps,
                 'format': 'video/h264-mp4',
                 'filename_prefix': 'echo_quality_video',
-                'pingpong': False,  # Add required parameter
-                'save_image': True,  # Add required parameter
-                'loop_count': 1      # Add required parameter
+                'pingpong': False,
+                'save_output': True,
+                'loop_count': 1
             }
         }
     }

@@ -12,7 +12,7 @@ def fix_all_video_permissions():
     """Apply permission fixes to all videos and learn from it"""
     
     video_dirs = [
-        "/home/patrick/Videos/",
+        "/home/{os.getenv("TOWER_USER", "patrick")}/Videos/",
         "/mnt/10TB2/Anime/AI_Generated/",
         "/mnt/20TB/ComfyUI-Real/output/"
     ]

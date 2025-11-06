@@ -4,6 +4,7 @@ AI Assist Family Multi-User System
 Provides privacy between users while maintaining admin oversight
 """
 
+import os
 from enum import Enum
 from typing import Dict, List, Optional, Any
 from datetime import datetime, date
@@ -51,12 +52,12 @@ class EchoFamilySystem:
 
         # Patrick as admin
         patrick = FamilyMember(
-            user_id="patrick",
+            user_id = os.getenv("TOWER_USER", os.getenv("TOWER_USER", "patrick")),
             name="Patrick",
             role=UserRole.ADMIN
         )
-        self.family_members["patrick"] = patrick
-        self.admin_ids.append("patrick")
+        self.family_members[os.getenv("TOWER_USER", "patrick")] = patrick
+        self.admin_ids.append(os.getenv("TOWER_USER", "patrick"))
 
         # Example family members (customize as needed)
         # Wife/Partner
@@ -448,18 +449,18 @@ if __name__ == "__main__":
 
     # Patrick accessing family member data (allowed)
     print("\n1. Patrick helping partner:")
-    result = family.get_user_data("patrick", "partner", "settings")
+    result = family.get_user_data(os.getenv("TOWER_USER", "patrick"), "partner", "settings")
     print(f"   Result: {result}")
 
     # Partner accessing Patrick's data (denied)
     print("\n2. Partner accessing Patrick's data:")
-    result = family.get_user_data("partner", "patrick", "settings")
+    result = family.get_user_data("partner", os.getenv("TOWER_USER", "patrick"), "settings")
     print(f"   Result: {result}")
 
     # Family shopping list (shared)
     print("\n3. Adding to family shopping list:")
     family.share_with_family("partner", "shopping_item", "Milk")
-    family.share_with_family("patrick", "shopping_item", "Bread")
+    family.share_with_family(os.getenv("TOWER_USER", "patrick"), "shopping_item", "Bread")
     print(f"   Shopping list: {family.shopping_list}")
 
     print("\n✅ Family system configured!")

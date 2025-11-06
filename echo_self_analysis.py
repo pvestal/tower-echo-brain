@@ -4,6 +4,7 @@ Echo Self-Analysis Framework
 Enables Echo to conduct sophisticated introspection and self-repair analysis
 """
 
+import os
 import logging
 import json
 import asyncio
@@ -59,7 +60,7 @@ class EchoSelfAnalysis:
         self.db_config = {
             'host': 'localhost',
             'database': 'echo_brain',
-            'user': 'patrick',
+            'user': os.getenv('TOWER_USER', os.getenv("TOWER_USER", "patrick")),
             'password': 'Beau40818'
         }
         self.analysis_history = []

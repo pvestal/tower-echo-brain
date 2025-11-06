@@ -30,7 +30,7 @@ async def generate_video(request: VideoRequest):
         
         # Use FFmpeg method for now (it works)
         if request.character == "goblin slayer":
-            base_image = "/home/patrick/ComfyUI/output/echo_goblin_slayer_cyberpunk_00001_.png"
+            base_image = "/home/{os.getenv("TOWER_USER", "patrick")}/ComfyUI/output/echo_goblin_slayer_cyberpunk_00001_.png"
         else:
             # Generate new image first
             base_image = generator._generate_base_image(request.prompt, request.character)

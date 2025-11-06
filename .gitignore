@@ -32,3 +32,49 @@ logs/
 .env
 node_modules/
 venv/
+
+# Backup files
+*.backup*
+*.bak
+*.old
+backups/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Security sensitive files
+vault/
+vault_data/
+.encryption_key
+*_key
+*_secret
+
+# Runtime files
+*.pid
+*.lock
+
+# Test cache and artifacts
+.pytest_cache/
+.ruff_cache/
+.coverage
+
+# Version files with equals prefix
+=*
+
+# Service-specific logs
+echo_*.log
+cognitive_*.log
+websocket_*.log
+
+# Backup file patterns
+*_backup*
+*_backup.py
+*_old.py
+*_original.py
+*_fixed.py
+*_working.py
+*_test.py
+*_migrated.py
+archive/

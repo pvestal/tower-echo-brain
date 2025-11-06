@@ -4,6 +4,7 @@ Model Decision Engine for AI Assist
 Intelligent routing between local models and API with performance tracking
 """
 
+import os
 import time
 import json
 import psycopg2
@@ -133,7 +134,7 @@ class ModelDecisionEngine:
                 maxconn=20,
                 host=db_config.get('host', 'localhost'),
                 database=db_config.get('database', 'echo_brain'),
-                user=db_config.get('user', 'patrick'),
+                user=db_config.get('user', os.getenv("TOWER_USER", "patrick")),
                 password=db_config.get('password', 'patrick123')
             )
             logger.info("✅ Database connection pool initialized (20 connections)")

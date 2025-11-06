@@ -3,6 +3,7 @@
 Plaid Webhook Handlers with Tower MFA Authentication
 Handles transaction updates, income refreshes, and wallet events
 """
+import os
 import asyncio
 import json
 import hashlib
@@ -77,7 +78,7 @@ class TowerMFA:
                 self.totp_secrets = mfa_data['data']['data']
         except:
             # Generate new MFA secret for Patrick
-            self.create_mfa_user('patrick')
+            self.create_mfa_user(os.getenv("TOWER_USER", "patrick"))
 
     def create_mfa_user(self, user_id: str):
         """Create new MFA user"""

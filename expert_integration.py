@@ -28,7 +28,7 @@ class ExpertQuery(BaseModel):
     """Request model for expert queries"""
     query: str
     context: Optional[Dict[str, Any]] = None
-    user_id: Optional[str] = "patrick"
+    user_id: Optional[str] = os.getenv("TOWER_USER", os.getenv("TOWER_USER", "patrick"))
 
 class ExpertResponse(BaseModel):
     """Response model for expert analysis"""

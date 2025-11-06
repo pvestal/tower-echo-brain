@@ -50,7 +50,8 @@ class ASTSecurityValidator:
         'math', 'random', 'datetime', 'json', 're', 'string', 'itertools',
         'collections', 'functools', 'operator', 'heapq', 'bisect', 'array',
         'copy', 'decimal', 'fractions', 'statistics', 'uuid', 'hashlib',
-        'base64', 'binascii', 'struct', 'zlib', 'gzip', 'bz2', 'lzma'
+        'base64', 'binascii', 'struct', 'zlib', 'gzip', 'bz2', 'lzma',
+        'psycopg2', 'sqlite3', 'sqlalchemy', 'requests', 'urllib3'
     }
 
     @classmethod

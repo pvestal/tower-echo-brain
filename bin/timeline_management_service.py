@@ -5,6 +5,7 @@ Advanced storyline workflow system for Tower Anime Production Suite
 Integrates with existing character evolution system
 """
 
+import os
 import logging
 import json
 import asyncio
@@ -509,7 +510,7 @@ app = FastAPI(
 DB_CONFIG = {
     "host": "localhost",
     "database": "echo_brain",
-    "user": "patrick",
+    "user": os.getenv("TOWER_USER", os.getenv("TOWER_USER", "patrick")),
     "password": "admin123"
 }
 

@@ -1,3 +1,0 @@
-2025-10-28 21:34:26 [    INFO] auth_middleware.py:124 create_auth_token_for_patrick(): 🔑 Emergency admin token created for Patrick
-2025-10-28 21:34:26 [   DEBUG] selector_events.py:64 __init__(): Using selector: EpollSelector
-2025-10-28 21:34:26 [   DEBUG] selector_events.py:64 __init__(): Using selector: EpollSelector

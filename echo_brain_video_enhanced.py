@@ -98,9 +98,9 @@ async def get_generation_status():
     import os
     
     models_status = {
-        "animatediff": os.path.exists("/home/patrick/Projects/ComfyUI-Working/custom_nodes/ComfyUI-AnimateDiff-Evolved/models/mm_sd_v15_v3.ckpt"),
-        "svd": os.path.exists("/home/patrick/Projects/ComfyUI-Working/models/checkpoints/svd_xt.safetensors"),
-        "upscaling": os.path.exists("/home/patrick/Projects/ComfyUI-Working/models/upscale_models/4x-UltraSharp.pth"),
+        "animatediff": os.path.exists("/home/{os.getenv("TOWER_USER", "patrick")}/Projects/ComfyUI-Working/custom_nodes/ComfyUI-AnimateDiff-Evolved/models/mm_sd_v15_v3.ckpt"),
+        "svd": os.path.exists("/home/{os.getenv("TOWER_USER", "patrick")}/Projects/ComfyUI-Working/models/checkpoints/svd_xt.safetensors"),
+        "upscaling": os.path.exists("/home/{os.getenv("TOWER_USER", "patrick")}/Projects/ComfyUI-Working/models/upscale_models/4x-UltraSharp.pth"),
         "comfyui": True  # Assume ComfyUI is running
     }
     

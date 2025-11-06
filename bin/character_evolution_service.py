@@ -4,6 +4,7 @@ Character Evolution Service for Tower Anime Production Suite
 Provides FastAPI endpoints for character development tracking and timeline management
 """
 
+import os
 import logging
 import json
 import psycopg2
@@ -98,7 +99,7 @@ class CharacterEvolutionService:
         self.db_config = {
             "host": "localhost",
             "database": "echo_brain",
-            "user": "patrick", 
+            "user": os.getenv("TOWER_USER", os.getenv("TOWER_USER", "patrick")), 
             "password": "admin123"
         }
         

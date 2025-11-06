@@ -108,6 +108,71 @@ GET /api/echo/stream
 WS /api/echo/brain/ws
 ```
 
+#### agenticPersona Training System ✨ NEW
+The Echo Brain includes an advanced agenticPersona training system that learns from user interactions to optimize AI assistance.
+
+**Key Features:**
+- **Training weights optimized for your workflow** - Autonomy: 2.5x, Proactiveness: 2.0x, Technical accuracy: 1.5x
+- **Personal data integration strategy** - Secure learning from conversation patterns and preferences
+- **30-minute self-improvement cycles** - Autonomous learning loops for continuous optimization
+- **Model selection intelligence** - Dynamic model selection based on complexity analysis (1B-70B parameters)
+- **Security & consent management** - All personal training data secured in HashiCorp Vault
+
+```bash
+# Current training status
+GET /api/echo/status
+{
+  "agentic_persona": "Active - llama3.2:3b (standard tier)",
+  "recent_messages": [...],
+  "timestamp": "2025-10-31T00:21:52Z"
+}
+
+# Training interaction (automatically logs for learning)
+POST /api/echo/chat
+{
+  "query": "Your message here",
+  "context": "persona_training_context"
+}
+```
+
+#### Enhanced System Metrics ✨ NEW
+Real-time system monitoring with comprehensive Tower server metrics.
+
+```bash
+# Complete system metrics
+GET /api/echo/system/metrics
+{
+  "cpu_percent": 3.2,
+  "memory_percent": 14.9,
+  "memory_used_gb": 13.96,
+  "memory_total_gb": 93.39,
+  "vram_used_gb": 6.68,
+  "vram_total_gb": 12.0,
+  "uptime": "2d 23h",           # ✨ NEW - Real system uptime
+  "load_average": "1.8, 2.8, 3.8", # ✨ NEW - CPU load average
+  "disk_usage": "38.0% (697/1832 GB)", # ✨ NEW - Filesystem usage
+  "timestamp": "2025-10-31T00:21:18Z"
+}
+
+# Database statistics
+GET /api/echo/db/stats
+{
+  "echo_brain": "251 MB",
+  "knowledge_base": "18 MB",
+  "active_connections": 5,
+  "echo_brain_tables": 44,
+  "timestamp": "2025-10-31T00:21:18Z"
+}
+
+# Current system goals
+GET /api/echo/goals
+{
+  "goals": [
+    {"title": "Maintain system stability", "status": "Active", "active": true}
+  ]
+}
+```
+
 ### Board of Directors API
 
 #### Decision Management

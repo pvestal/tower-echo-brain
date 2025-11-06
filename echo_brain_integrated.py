@@ -11,7 +11,7 @@ from fastapi.responses import JSONResponse
 import uvicorn
 
 # Add the modules to path
-sys.path.insert(0, '/home/patrick/Documents')
+sys.path.insert(0, '/home/{os.getenv("TOWER_USER", "patrick")}/Documents')
 
 app = FastAPI()
 

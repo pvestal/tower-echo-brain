@@ -4,6 +4,7 @@ Echo Brain Quality Integration System
 Connects Echo Brain with quality assessment pipeline and multimedia orchestration
 """
 
+import os
 import asyncio
 import json
 import logging
@@ -366,7 +367,7 @@ class EchoQualityIntegration:
                                 if "images" in node_outputs:
                                     for img_info in node_outputs["images"]:
                                         # Fixed path
-                                        image_path = f"/home/patrick/Projects/ComfyUI-Working/output/{img_info['filename']}"
+                                        image_path = f"/home/{os.getenv("TOWER_USER", "patrick")}/Projects/ComfyUI-Working/output/{img_info['filename']}"
                                         if Path(image_path).exists():
                                             return image_path
 

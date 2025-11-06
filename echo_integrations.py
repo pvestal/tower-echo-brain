@@ -4,13 +4,14 @@ AI Assist extension to handle integration queries
 Add this to the chat endpoint in echo_working.py
 """
 
+import os
 import asyncio
 from src.integrations.manager import IntegrationManager
 
 # Initialize the integration manager globally
 integration_manager = IntegrationManager()
 
-async def handle_integration_query(message: str, user_id: str = 'patrick'):
+async def handle_integration_query(message: str, user_id: str = os.getenv("TOWER_USER", os.getenv("TOWER_USER", "patrick"))):
     """Check if message is an integration query and handle it"""
 
     msg_lower = message.lower()

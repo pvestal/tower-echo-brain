@@ -26,7 +26,7 @@ def get_db_config():
                 return {
                     "host": data.get('host', 'localhost'),
                     "database": data.get('database', 'echo_brain'),
-                    "user": data.get('user', 'patrick'),
+                    "user": data.get('user', os.getenv("TOWER_USER", "patrick")),
                     "password": data.get('password')
                 }
     except Exception as e:
@@ -37,7 +37,7 @@ def get_db_config():
     return {
         "host": os.environ.get("DB_HOST", "localhost"),
         "database": os.environ.get("DB_NAME", "echo_brain"),
-        "user": os.environ.get("DB_USER", "patrick"),
+        "user": os.environ.get("DB_USER", os.getenv("TOWER_USER", "patrick")),
         "password": os.environ.get("DB_PASSWORD")
     }
 

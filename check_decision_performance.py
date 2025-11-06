@@ -3,6 +3,7 @@
 Check Decision Engine Performance Summary
 """
 
+import os
 import sys
 sys.path.append('/opt/tower-echo-brain')
 
@@ -12,7 +13,7 @@ from model_decision_engine import get_decision_engine
 DB_CONFIG = {
     "host": "localhost",
     "database": "tower_consolidated",
-    "user": "patrick"
+    "user": os.getenv("TOWER_USER", os.getenv("TOWER_USER", "patrick"))
 }
 
 def main():

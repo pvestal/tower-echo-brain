@@ -18,7 +18,7 @@ DB_CONFIG = {
     'host': 'localhost',
     'port': 5432,
     'database': 'tower_consolidated',
-    'user': 'patrick',
+    'user': os.getenv('TOWER_USER', os.getenv("TOWER_USER", "patrick")),
     'password': 'patrick123'  # Default password
 }
 

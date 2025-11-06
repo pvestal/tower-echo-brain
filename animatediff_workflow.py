@@ -4,7 +4,7 @@ def create_animatediff_workflow(prompt, num_frames=120, fps=24):
     return {
         '1': {
             'class_type': 'CheckpointLoaderSimple',
-            'inputs': {'ckpt_name': 'dreamshaper_8LCM.safetensors'}
+            'inputs': {'ckpt_name': 'Counterfeit-V2.5.safetensors'}
         },
         '2': {
             'class_type': 'CLIPTextEncode',
@@ -31,7 +31,8 @@ def create_animatediff_workflow(prompt, num_frames=120, fps=24):
         '5': {
             'class_type': 'ADE_AnimateDiffLoaderGen1',
             'inputs': {
-                'model_name': 'mm_sd_v15_v2.ckpt',
+                'model_name': 'mm-Stabilized_high.pth',
+                'beta_schedule': 'sqrt_linear (AnimateDiff)',
                 'model': ['1', 0]
             }
         },
@@ -58,12 +59,18 @@ def create_animatediff_workflow(prompt, num_frames=120, fps=24):
             }
         },
         '8': {
-            'class_type': 'ADE_AnimateDiffCombine',
+            'class_type': 'VHS_VideoCombine',
             'inputs': {
                 'images': ['7', 0],
                 'frame_rate': fps,
+                'loop_count': 0,
+                'filename_prefix': 'echo_animatediff',
                 'format': 'video/h264-mp4',
-                'filename_prefix': 'echo_animatediff'
+                'pix_fmt': 'yuv420p',
+                'crf': 18,
+                'save_metadata': True,
+                'pingpong': False,
+                'save_output': True
             }
         }
     }

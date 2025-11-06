@@ -3,12 +3,13 @@
 Rollback script for model decision engine optimizations
 '''
 
+import os
 import psycopg2
 
 DB_CONFIG = {
     "host": "localhost",
     "database": "tower_consolidated",
-    "user": "patrick"
+    "user": os.getenv("TOWER_USER", os.getenv("TOWER_USER", "patrick"))
 }
 
 def rollback():
