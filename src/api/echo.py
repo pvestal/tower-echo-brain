@@ -252,9 +252,58 @@ async def query_echo(request: QueryRequest):
 
             return response
 
-        # Handle capability intents automatically
-        capability_intents = ['anime_generation', 'service_testing', 'service_debugging', 'service_monitoring', 'agent_delegation', 'inter_service_communication', 'image_generation', 'voice_generation', 'music_generation', 'code_review', 'code_refactor', 'code_modification']
-        if intent in capability_intents:
+        # Handle anime generation specifically
+        if intent == "anime_generation":
+            logger.info(f"🎬 AUTO-ANIME: Generating anime with params: {intent_params}")
+            try:
+                import aiohttp
+                prompt_text = intent_params.get('prompt', request.query)
+                prompt_text = prompt_text.replace('generate anime', '').replace('create anime', '').strip()
+                if not prompt_text:
+                    prompt_text = "anime magical girl"
+
+                async with aiohttp.ClientSession() as session:
+                    payload = {"prompt": prompt_text}
+                    async with session.post("http://localhost:8328/api/anime/generate",
+                                           json=payload, timeout=60) as resp:
+                        if resp.status == 200:
+                            result = await resp.json()
+                            job_id = result.get("job_id", "unknown")
+                            response_text = (
+                                f"✅ Anime generation started!\n"
+                                f"🎬 Job ID: {job_id}\n"
+                                f"🎭 Prompt: {prompt_text}\n"
+                                f"📊 Monitor: http://localhost:8328/api/anime/jobs/{job_id}"
+                            )
+                        else:
+                            error_msg = await resp.text()
+                            response_text = f"❌ Anime generation failed: {error_msg}"
+
+                        response = QueryResponse(
+                            response=response_text,
+                            model_used="anime_service_8328",
+                            intelligence_level="capability",
+                            processing_time=time.time() - start_time,
+                            escalation_path=["anime_generation_capability"],
+                            conversation_id=request.conversation_id,
+                            intent=intent,
+                            confidence=confidence
+                        )
+            except Exception as e:
+                logger.error(f"Anime generation error: {e}")
+                response = QueryResponse(
+                    response=f"❌ Anime generation error: {str(e)}",
+                    model_used="anime_service_error",
+                    intelligence_level="capability",
+                    processing_time=time.time() - start_time,
+                    escalation_path=["anime_error"],
+                    conversation_id=request.conversation_id,
+                    intent=intent,
+                    confidence=confidence
+                )
+
+        # Handle other capability intents automatically
+        elif intent in ['service_testing', 'service_debugging', 'service_monitoring', 'agent_delegation', 'inter_service_communication', 'image_generation', 'voice_generation', 'music_generation', 'code_review', 'code_refactor', 'code_modification']:
             response = await handle_capability_intent(intent, intent_params, request, request.conversation_id, start_time)
 
             conversation_manager.update_conversation(
@@ -417,7 +466,7 @@ async def get_conversations():
 
 async def handle_capability_intent(intent: str, intent_params: dict, request: QueryRequest, conversation_id: str, start_time: float):
     """Handle capability-based intents"""
-    from src.services.safe_executor import safe_executor
+    from src.utils.helpers import safe_executor
 
     try:
         result = await safe_executor.execute_capability(intent, intent_params, request.query)
