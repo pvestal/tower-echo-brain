@@ -178,11 +178,11 @@ class EchoIntelligenceRouter:
             f"Selected {model} based on complexity {decision['complexity_score']:.1f}"
         )
 
-        # Check if we need to use API
+        # Check if we need to use larger model
         if decision.get("use_api"):
-            # Use DeepSeek API for extreme complexity
-            result = await self._query_deepseek_api(query)
-            escalation_path.append("api_fallback")
+            # Use larger local model for extreme complexity
+            result = await self._query_ollama_model("deepseek-coder-v2:16b", query)
+            escalation_path.append("large_model")
         else:
             # 🧠 GENERATE RESPONSE
             await echo_brain.generate_response(thought_id, f"{decision['tier']} response")
@@ -211,15 +211,15 @@ class EchoIntelligenceRouter:
             # 🧠 ESCALATION NEEDED
             await echo_brain.emotional_response(thought_id, "concern", "Initial model failed")
 
-            # Try API fallback for failed queries
+            # Try local model escalation for failed queries
             if decision["tier"] != "cloud":
-                logger.info(f"Escalating to DeepSeek API after {model} failure")
-                escalation_path.append("api_fallback")
+                logger.info(f"Escalating to larger local model after {model} failure")
+                escalation_path.append("model_escalation")
 
                 # 🧠 ESCALATION DECISION
-                await echo_brain.make_decision(thought_id, "api_escalation", "Escalating to cloud API")
+                await echo_brain.make_decision(thought_id, "model_escalation", "Escalating to larger local model")
 
-                fallback_result = await self._query_deepseek_api(query)
+                fallback_result = await self._query_ollama_model("deepseek-coder-v2:16b", query)
                 await echo_brain.finish_thinking(thought_id)
 
                 return {

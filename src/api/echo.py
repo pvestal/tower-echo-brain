@@ -266,7 +266,7 @@ async def query_echo(request: QueryRequest):
                     request.query, response.response, response.model_used,
                     response.processing_time, response.escalation_path,
                     request.conversation_id, request.user_id, intent, confidence,
-                    complexity_score, tier
+                    False, None, complexity_score, tier
                 )
             except Exception as e:
                 logger.error(f"❌ log_interaction FAILED: {e}")
@@ -322,7 +322,7 @@ async def query_echo(request: QueryRequest):
                     request.query, response.response, response.model_used,
                     response.processing_time, response.escalation_path,
                     request.conversation_id, request.user_id, intent, confidence,
-                    complexity_score, tier
+                    False, None, complexity_score, tier
                 )
             except Exception as e:
                 logger.error(f"❌ log_interaction FAILED: {e}")
