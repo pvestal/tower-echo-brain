@@ -40,6 +40,43 @@ async def query_echo(request: QueryRequest):
         request.conversation_id = str(uuid.uuid4())
 
     logger.info(f"🧠 Query received: {request.query[:100]}...")
+    logger.info(f"🔧 Request type: {request.request_type}")
+
+    # CHECK REQUEST TYPE FIRST - Route to appropriate handler
+    if request.request_type == 'system_command':
+        logger.info("🚨 ROUTING TO SYSTEM COMMAND EXECUTION")
+        from src.utils.helpers import safe_executor
+        try:
+            result = await safe_executor.execute(request.query, allow_all=False)
+            processing_time = time.time() - start_time
+
+            return QueryResponse(
+                response=result["output"] if result["success"] else f"Command failed: {result.get('error', 'Unknown error')}",
+                model_used="safe_executor",
+                intelligence_level="system_command",
+                processing_time=processing_time,
+                escalation_path=[f"system_command:{request.query[:20]}"],
+                conversation_id=request.conversation_id,
+                intent="system_command",
+                confidence=1.0,
+                requires_clarification=False,
+                clarifying_questions=[]
+            )
+        except Exception as e:
+            logger.error(f"System command execution failed: {e}")
+            processing_time = time.time() - start_time
+            return QueryResponse(
+                response=f"System command failed: {str(e)}",
+                model_used="safe_executor",
+                intelligence_level="error",
+                processing_time=processing_time,
+                escalation_path=["system_command_error"],
+                conversation_id=request.conversation_id,
+                intent="system_command",
+                confidence=0.0,
+                requires_clarification=False,
+                clarifying_questions=[]
+            )
 
     # CHECK FOR SLASH COMMANDS FIRST
     if request.query.strip().startswith('/'):

@@ -16,6 +16,15 @@
             <div class="message-content">
               {{ msg.content }}
             </div>
+            <div v-if="msg.requestType" class="request-type-indicator">
+              {{ getRequestTypeLabel(msg.requestType) }}
+            </div>
+            <div v-if="msg.metadata" class="message-metadata">
+              <div v-for="(value, key) in msg.metadata" :key="key" class="metadata-item">
+                <span class="metadata-key">{{ key }}:</span>
+                <span class="metadata-value">{{ value }}</span>
+              </div>
+            </div>
             <div v-if="msg.retry" class="message-meta">
               <button @click="retryMessage(msg)" class="retry-button">
                 Retry
@@ -28,16 +37,64 @@
           ⚠️ Connection issues detected. Messages will auto-retry.
         </div>
 
+        <!-- Request Type Selector -->
+        <div class="request-type-selector mb-4">
+          <div class="flex gap-4 items-center">
+            <span class="text-sm font-medium text-tower-text-secondary">Request Type:</span>
+            <label class="flex items-center gap-2">
+              <input type="radio" v-model="requestType" value="conversation" class="text-tower-accent-primary">
+              <span class="text-sm">💬 Conversation</span>
+            </label>
+            <label class="flex items-center gap-2">
+              <input type="radio" v-model="requestType" value="system_command" class="text-tower-accent-primary">
+              <span class="text-sm">🔧 System Command</span>
+            </label>
+            <label class="flex items-center gap-2">
+              <input type="radio" v-model="requestType" value="collaboration" class="text-tower-accent-primary">
+              <span class="text-sm">🤝 Collaboration</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Command Options (show when system_command selected) -->
+        <div v-if="requestType === 'system_command'" class="command-options mb-4 p-3 bg-tower-bg-elevated rounded-lg">
+          <div class="flex gap-4 items-center">
+            <label class="flex items-center gap-2">
+              <input type="checkbox" v-model="safeMode" class="text-tower-accent-primary">
+              <span class="text-sm">Safe Mode</span>
+            </label>
+            <div class="flex items-center gap-2">
+              <span class="text-sm">Timeout:</span>
+              <input type="number" v-model="timeout" min="1" max="300" class="w-16 px-2 py-1 text-sm border rounded bg-tower-bg-card text-tower-text-primary">
+              <span class="text-sm">sec</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Collaboration Options (show when collaboration selected) -->
+        <div v-if="requestType === 'collaboration'" class="collab-options mb-4 p-3 bg-tower-bg-elevated rounded-lg">
+          <div class="flex gap-4 items-center">
+            <div class="flex items-center gap-2">
+              <span class="text-sm">Workflow:</span>
+              <select v-model="workflowType" class="px-2 py-1 text-sm border rounded bg-tower-bg-card text-tower-text-primary">
+                <option value="sequential">Sequential</option>
+                <option value="parallel">Parallel</option>
+                <option value="consensus">Consensus</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
         <div class="flex gap-3">
           <TowerInput
             v-model="userMessage"
-            placeholder="Type your message..."
+            :placeholder="getPlaceholderText()"
             @keyup.enter="sendMessage"
             :disabled="loading"
             class="flex-1"
           />
           <TowerButton @click="sendMessage" :loading="loading">
-            Send
+            {{ getButtonText() }}
           </TowerButton>
         </div>
       </div>
@@ -55,6 +112,12 @@ const userMessage = ref('')
 const loading = ref(false)
 const connectionError = ref(false)
 
+// Request type controls
+const requestType = ref('conversation')
+const safeMode = ref(true)
+const timeout = ref(30)
+const workflowType = ref('sequential')
+
 // Retry configuration
 const MAX_RETRIES = 3
 const RETRY_DELAY = 1000 // Start with 1 second
@@ -62,17 +125,133 @@ const RETRY_DELAY = 1000 // Start with 1 second
 // Helper function to sleep
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
 
+// Extract response content based on request type
+const getResponseContent = (data) => {
+  switch (requestType.value) {
+    case 'system_command':
+      if (data.success === false) {
+        return `❌ Command failed (exit code: ${data.exit_code})\n${data.error || data.output}`;
+      }
+      return `✅ Command executed (exit code: ${data.exit_code})\n${data.output}`;
+    case 'collaboration':
+      return data.response || data.result || JSON.stringify(data, null, 2);
+    default:
+      return data.response || data.output || 'No response received';
+  }
+}
+
+// Extract response metadata
+const getResponseMetadata = (data) => {
+  const metadata = {
+    processing_time: data.processing_time ? `${(data.processing_time * 1000).toFixed(0)}ms` : 'N/A'
+  }
+
+  switch (requestType.value) {
+    case 'system_command':
+      metadata.exit_code = data.exit_code || 'N/A'
+      metadata.safety_checks = data.safety_checks ? 'Passed' : 'N/A'
+      break;
+    case 'collaboration':
+      metadata.workflow_type = workflowType.value
+      metadata.models_used = data.models_used || 'N/A'
+      break;
+    default:
+      metadata.model_used = data.model_used || 'N/A'
+      metadata.intelligence_level = data.intelligence_level || 'N/A'
+      break;
+  }
+
+  return metadata
+}
+
+// Get dynamic placeholder text
+const getPlaceholderText = () => {
+  switch (requestType.value) {
+    case 'system_command':
+      return 'Enter system command (e.g., systemctl status, ps aux, curl...)';
+    case 'collaboration':
+      return 'Describe workflow for multi-LLM collaboration...';
+    default:
+      return 'Type your message...';
+  }
+}
+
+// Get dynamic button text
+const getButtonText = () => {
+  switch (requestType.value) {
+    case 'system_command':
+      return 'Execute';
+    case 'collaboration':
+      return 'Collaborate';
+    default:
+      return 'Send';
+  }
+}
+
+// Get request type label for display
+const getRequestTypeLabel = (type) => {
+  switch (type) {
+    case 'system_command':
+      return '🔧 System Command';
+    case 'collaboration':
+      return '🤝 Collaboration';
+    default:
+      return '💬 Conversation';
+  }
+}
+
+// Get API endpoint based on request type
+const getApiEndpoint = () => {
+  switch (requestType.value) {
+    case 'system_command':
+      return 'http://192.168.50.135:8309/api/echo/execute';
+    case 'collaboration':
+      return 'http://192.168.50.135:8309/api/echo/collaborate';
+    default:
+      return 'http://192.168.50.135:8309/api/echo/query';
+  }
+}
+
+// Build payload based on request type
+const buildRequestPayload = (msg) => {
+  const basePayload = {
+    user_id: 'web_user',
+    conversation_id: `web_${requestType.value}_${Date.now()}`
+  }
+
+  switch (requestType.value) {
+    case 'system_command':
+      return {
+        ...basePayload,
+        command: msg,
+        safe_mode: safeMode.value,
+        timeout: timeout.value
+      };
+    case 'collaboration':
+      return {
+        ...basePayload,
+        workflow: msg,
+        workflow_type: workflowType.value,
+        models: ['llama3.1:8b', 'qwen2.5-coder:32b'] // Default models
+      };
+    default:
+      return {
+        ...basePayload,
+        query: msg,
+        intelligence_level: 'auto',
+        request_type: 'conversation'
+      };
+  }
+}
+
 // Send message with retry logic
 const sendMessageWithRetry = async (msg, retryCount = 0) => {
   try {
-    const response = await axios.post('http://192.168.50.135:8309/api/echo/chat', {
-      query: msg,
-      user_id: 'web_user',
-      conversation_id: 'web_chat_' + Date.now(),
-      intelligence_level: 'auto',
-      context: {}
-    }, {
-      timeout: 30000, // 30 second timeout
+    const endpoint = getApiEndpoint()
+    const payload = buildRequestPayload(msg)
+
+    const response = await axios.post(endpoint, payload, {
+      timeout: (requestType.value === 'system_command' ? timeout.value * 1000 : 30000),
       headers: {
         'Content-Type': 'application/json'
       }
@@ -113,23 +292,27 @@ const sendMessage = async () => {
   if (!userMessage.value.trim()) return
 
   const msg = userMessage.value
-  messages.value.push({ role: 'user', content: msg })
+  messages.value.push({ role: 'user', content: msg, requestType: requestType.value })
   userMessage.value = ''
   loading.value = true
 
   const result = await sendMessageWithRetry(msg)
 
   if (result.success) {
+    const responseContent = getResponseContent(result.data)
     messages.value.push({
       role: 'assistant',
-      content: result.data.response
+      content: responseContent,
+      metadata: getResponseMetadata(result.data),
+      requestType: requestType.value
     })
   } else {
     const errorMessage = {
       role: 'error',
       content: `Error: ${result.error}${result.statusCode ? ` (${result.statusCode})` : ''}`,
       retry: result.retryable,
-      originalMessage: msg
+      originalMessage: msg,
+      requestType: requestType.value
     }
     messages.value.push(errorMessage)
   }
@@ -146,21 +329,30 @@ const retryMessage = async (errorMsg) => {
     messages.value.splice(index, 1)
   }
 
+  // Set request type for retry
+  if (errorMsg.requestType) {
+    requestType.value = errorMsg.requestType
+  }
+
   // Retry sending
   loading.value = true
   const result = await sendMessageWithRetry(errorMsg.originalMessage)
 
   if (result.success) {
+    const responseContent = getResponseContent(result.data)
     messages.value.push({
       role: 'assistant',
-      content: result.data.response
+      content: responseContent,
+      metadata: getResponseMetadata(result.data),
+      requestType: requestType.value
     })
   } else {
     messages.value.push({
       role: 'error',
       content: `Error: ${result.error}${result.statusCode ? ` (${result.statusCode})` : ''}`,
       retry: result.retryable,
-      originalMessage: errorMsg.originalMessage
+      originalMessage: errorMsg.originalMessage,
+      requestType: requestType.value
     })
   }
 
@@ -223,5 +415,59 @@ const retryMessage = async (errorMsg) => {
   padding: 0.75rem 1rem;
   border-radius: 0.5rem;
   font-size: 0.875rem;
+}
+
+/* Request type controls */
+.request-type-selector {
+  border-bottom: 1px solid var(--tower-border);
+  padding-bottom: 1rem;
+}
+
+.command-options,
+.collab-options {
+  border: 1px solid var(--tower-border);
+  background-color: var(--tower-bg-elevated);
+}
+
+/* Message metadata */
+.request-type-indicator {
+  font-size: 0.75rem;
+  color: var(--tower-text-secondary);
+  margin-top: 0.25rem;
+  padding: 0.125rem 0.5rem;
+  background-color: rgba(47, 129, 247, 0.1);
+  border-radius: 0.25rem;
+  display: inline-block;
+}
+
+.message-metadata {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+}
+
+.metadata-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.25rem;
+}
+
+.metadata-key {
+  color: var(--tower-text-secondary);
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.metadata-value {
+  color: var(--tower-text-primary);
+  font-family: monospace;
+}
+
+/* System command styling */
+.message.assistant .message-content {
+  font-family: monospace;
+  white-space: pre-wrap;
 }
 </style>
