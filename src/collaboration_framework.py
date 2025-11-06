@@ -60,15 +60,14 @@ class MultiLLMCollaborator:
                 "name": "qwen2.5-coder:7b",
                 "role": "technical_implementation",
                 "expertise": ["coding", "implementation", "architecture"],
-                "timeout": 45
+                "timeout": 30
             },
             "deepseek-coder": {
-                "name": "deepseek-coder",
+                "name": "deepseek-coder:latest",
                 "role": "code_review_optimization",
                 "expertise": ["debugging", "optimization", "best_practices"],
-                "timeout": 45,
-                "api_endpoint": "https://api.deepseek.com/v1/chat/completions",
-                "requires_api": True
+                "timeout": 30,
+                "requires_api": False
             }
         }
 

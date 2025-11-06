@@ -232,6 +232,11 @@ def sanitize_filename(filename: str) -> str:
 
 # Global utility instances
 safe_executor = SafeShellExecutor()
+
+# Async wrapper for backward compatibility
+async def execute_command(command: str, safe_mode: bool = True) -> dict:
+    """Execute command with backward compatibility wrapper"""
+    return await safe_executor.execute(command, allow_all=not safe_mode)
 # Import the actual ResilientOrchestrator that has ComfyUI integration
 from src.orchestrators.resilient_orchestrator import ResilientOrchestrator
 

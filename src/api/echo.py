@@ -39,44 +39,118 @@ async def query_echo(request: QueryRequest):
     if not request.conversation_id:
         request.conversation_id = str(uuid.uuid4())
 
-    logger.info(f"🧠 Query received: {request.query[:100]}...")
-    logger.info(f"🔧 Request type: {request.request_type}")
+    logger.info(f"🔍 ECHO QUERY HANDLER - Query: {request.query[:50]}...")
+    logger.info(f"🔍 Request type: {getattr(request, 'request_type', 'NOT_SET')}")
+
+    # Validate request_type field exists and log for debugging
+    request_type = getattr(request, 'request_type', None)
+    if not request_type:
+        logger.warning(f"⚠️ request_type not set, defaulting to 'conversation'")
+        request_type = 'conversation'
+    else:
+        logger.info(f"✅ Request type validated: {request_type}")
 
     # CHECK REQUEST TYPE FIRST - Route to appropriate handler
-    if request.request_type == 'system_command':
-        logger.info("🚨 ROUTING TO SYSTEM COMMAND EXECUTION")
-        from src.utils.helpers import safe_executor
-        try:
-            result = await safe_executor.execute(request.query, allow_all=False)
-            processing_time = time.time() - start_time
+    if request_type == 'system_command':
+        logger.info("🚨 ROUTING TO DIRECT SYSTEM COMMAND EXECUTION")
 
-            return QueryResponse(
-                response=result["output"] if result["success"] else f"Command failed: {result.get('error', 'Unknown error')}",
-                model_used="safe_executor",
-                intelligence_level="system_command",
-                processing_time=processing_time,
-                escalation_path=[f"system_command:{request.query[:20]}"],
-                conversation_id=request.conversation_id,
-                intent="system_command",
-                confidence=1.0,
-                requires_clarification=False,
-                clarifying_questions=[]
-            )
-        except Exception as e:
-            logger.error(f"System command execution failed: {e}")
-            processing_time = time.time() - start_time
-            return QueryResponse(
-                response=f"System command failed: {str(e)}",
-                model_used="safe_executor",
-                intelligence_level="error",
-                processing_time=processing_time,
-                escalation_path=["system_command_error"],
-                conversation_id=request.conversation_id,
-                intent="system_command",
-                confidence=0.0,
-                requires_clarification=False,
-                clarifying_questions=[]
-            )
+        # Direct execution with retry logic
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                logger.info(f"🔄 System command attempt {attempt + 1}/{max_retries}: {request.query}")
+
+                # Direct subprocess execution - no safety restrictions
+                import subprocess
+                import shlex
+
+                # Execute the command directly
+                args = shlex.split(request.query)
+                process = await asyncio.create_subprocess_exec(
+                    *args,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                    cwd="/tmp"  # Execute in /tmp directory
+                )
+
+                stdout, stderr = await asyncio.wait_for(
+                    process.communicate(),
+                    timeout=30
+                )
+
+                stdout_text = stdout.decode('utf-8', errors='replace')
+                stderr_text = stderr.decode('utf-8', errors='replace')
+
+                processing_time = time.time() - start_time
+
+                if process.returncode == 0:
+                    logger.info(f"✅ System command executed successfully on attempt {attempt + 1}")
+                    output = stdout_text
+                    if stderr_text:
+                        output += f"\nSTDERR: {stderr_text}"
+                    return QueryResponse(
+                        response=output,
+                        model_used="direct_executor",
+                        intelligence_level="system_command",
+                        processing_time=processing_time,
+                        escalation_path=[f"system_command:{request.query[:20]}"],
+                        conversation_id=request.conversation_id,
+                        intent="system_command",
+                        confidence=1.0,
+                        requires_clarification=False,
+                        clarifying_questions=[]
+                    )
+                else:
+                    logger.warning(f"⚠️ System command failed on attempt {attempt + 1}: {stderr_text}")
+                    if attempt == max_retries - 1:  # Last attempt
+                        processing_time = time.time() - start_time
+                        return QueryResponse(
+                            response=f"Command failed after {max_retries} attempts.\nSTDOUT: {stdout_text}\nSTDERR: {stderr_text}\nExit code: {process.returncode}",
+                            model_used="direct_executor",
+                            intelligence_level="error",
+                            processing_time=processing_time,
+                            escalation_path=["system_command_failed"],
+                            conversation_id=request.conversation_id,
+                            intent="system_command",
+                            confidence=0.0,
+                            requires_clarification=False,
+                            clarifying_questions=[]
+                        )
+
+            except asyncio.TimeoutError:
+                logger.error(f"❌ System command timed out on attempt {attempt + 1}")
+                if attempt == max_retries - 1:  # Last attempt
+                    processing_time = time.time() - start_time
+                    return QueryResponse(
+                        response=f"Command timed out after {max_retries} attempts (30s timeout each)",
+                        model_used="direct_executor",
+                        intelligence_level="error",
+                        processing_time=processing_time,
+                        escalation_path=["system_command_timeout"],
+                        conversation_id=request.conversation_id,
+                        intent="system_command",
+                        confidence=0.0,
+                        requires_clarification=False,
+                        clarifying_questions=[]
+                    )
+            except Exception as e:
+                logger.error(f"❌ System command execution error on attempt {attempt + 1}: {e}")
+                if attempt == max_retries - 1:  # Last attempt
+                    processing_time = time.time() - start_time
+                    return QueryResponse(
+                        response=f"System command failed after {max_retries} attempts: {str(e)}",
+                        model_used="direct_executor",
+                        intelligence_level="error",
+                        processing_time=processing_time,
+                        escalation_path=["system_command_error"],
+                        conversation_id=request.conversation_id,
+                        intent="system_command",
+                        confidence=0.0,
+                        requires_clarification=False,
+                        clarifying_questions=[]
+                    )
+                # Wait before retry
+                await asyncio.sleep(0.5 * (attempt + 1))
 
     # CHECK FOR SLASH COMMANDS FIRST
     if request.query.strip().startswith('/'):

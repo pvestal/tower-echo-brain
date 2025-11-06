@@ -30,7 +30,7 @@ class EchoBrainStartup:
         """Initialize all Echo Brain services"""
         try:
             # Initialize database
-            await database.initialize()
+            await database.create_tables_if_needed()
             logger.info("✅ Database initialized")
 
             # Initialize service registry
@@ -42,7 +42,7 @@ class EchoBrainStartup:
             logger.info("✅ Request logger initialized")
 
             # Initialize knowledge manager
-            self.knowledge_manager = create_simple_knowledge_manager()
+            self.knowledge_manager = create_simple_knowledge_manager(database.db_config)
             logger.info("✅ Knowledge manager initialized")
 
             # Initialize task queue
@@ -58,10 +58,7 @@ class EchoBrainStartup:
             logger.info("✅ Autonomous behaviors initialized")
 
             # Initialize board integration
-            self.board_integration = BoardIntegration(
-                self.service_registry,
-                self.request_logger
-            )
+            self.board_integration = BoardIntegration()
             logger.info("✅ Board integration initialized")
 
             # Start background services

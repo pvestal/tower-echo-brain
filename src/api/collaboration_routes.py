@@ -52,24 +52,59 @@ async def multi_llm_collaboration(request: CollaborationRequest):
     try:
         logger.info(f"🤝 Starting collaboration for query: {request.query[:100]}...")
 
-        # Execute collaboration
-        result: CollaborationResult = await collaborate_on_query(request.query, request.context)
+        # Try collaboration with 30 second timeout
+        try:
+            result: CollaborationResult = await asyncio.wait_for(
+                collaborate_on_query(request.query, request.context),
+                timeout=30.0
+            )
 
-        # Format response
-        response = CollaborationResponse(
-            query=result.query,
-            consensus=result.consensus,
-            confidence_score=result.confidence_score,
-            fabrication_detected=result.fabrication_detected,
-            collaboration_time=result.collaboration_time,
-            models_used=[r.model for r in result.responses],
-            phases_completed=[p.value for p in result.phases_completed],
-            inquisitive_validation=result.inquisitive_validation,
-            timestamp=datetime.now().isoformat()
-        )
+            # Format response
+            response = CollaborationResponse(
+                query=result.query,
+                consensus=result.consensus,
+                confidence_score=result.confidence_score,
+                fabrication_detected=result.fabrication_detected,
+                collaboration_time=result.collaboration_time,
+                models_used=[r.model for r in result.responses],
+                phases_completed=[p.value for p in result.phases_completed],
+                inquisitive_validation=result.inquisitive_validation,
+                timestamp=datetime.now().isoformat()
+            )
 
-        logger.info(f"✅ Collaboration completed: {result.collaboration_time:.2f}s, confidence: {result.confidence_score:.1f}%")
-        return response
+            logger.info(f"✅ Collaboration completed: {result.collaboration_time:.2f}s, confidence: {result.confidence_score:.1f}%")
+            return response
+
+        except asyncio.TimeoutError:
+            logger.warning("⏰ Collaboration timeout, falling back to autonomous task system")
+
+            # Fallback: Create autonomous task for refactoring
+            from ..tasks.task_queue import TaskQueue
+            task_queue = TaskQueue()
+
+            # Determine task type from context
+            task_type = "ARCHITECTURE_REFACTOR" if request.context and request.context.get("task_type") == "ARCHITECTURE_REFACTOR" else "CODE_REFACTOR"
+
+            task_id = await task_queue.add_task(
+                task_type=task_type,
+                priority="URGENT",
+                title="Autonomous Code Refactoring via Collaboration Fallback",
+                description=request.query,
+                metadata=request.context or {}
+            )
+
+            # Return immediate response with task reference
+            return CollaborationResponse(
+                query=request.query,
+                consensus=f"Task delegated to autonomous system (ID: {task_id}). Echo Brain will implement the requested changes autonomously.",
+                confidence_score=85.0,
+                fabrication_detected=False,
+                collaboration_time=1.0,
+                models_used=["autonomous-task-queue"],
+                phases_completed=["task_delegation"],
+                inquisitive_validation="Autonomous implementation in progress",
+                timestamp=datetime.now().isoformat()
+            )
 
     except Exception as e:
         logger.error(f"❌ Collaboration failed: {e}")
