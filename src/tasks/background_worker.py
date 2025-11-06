@@ -243,6 +243,10 @@ class BackgroundWorker:
                 return await self._check_disk_usage()
             elif check_type == 'process_health':
                 return await self._check_process_health(target)
+            elif check_type == 'security_service_binding':
+                return await self._check_security_service_binding(target)
+            elif check_type == 'security_port_exposure':
+                return await self._check_security_port_exposure(target)
             else:
                 raise ValueError(f"Unknown monitoring check type: {check_type}")
                 
@@ -448,7 +452,78 @@ class BackgroundWorker:
             }
         except Exception as e:
             return {'error': str(e)}
-            
+
+    async def _check_security_service_binding(self, target: str = None) -> Dict[str, Any]:
+        """Check for security issues with service bindings"""
+        try:
+            import socket
+            import subprocess
+
+            # Check for services bound to 0.0.0.0 (potential security risk)
+            result = subprocess.run(['netstat', '-tlnp'], capture_output=True, text=True)
+            lines = result.stdout.split('\n')
+
+            risky_bindings = []
+            secure_bindings = []
+
+            for line in lines:
+                if '0.0.0.0:' in line:
+                    risky_bindings.append(line.strip())
+                elif '127.0.0.1:' in line or 'localhost:' in line:
+                    secure_bindings.append(line.strip())
+
+            security_score = len(secure_bindings) / max(len(risky_bindings) + len(secure_bindings), 1)
+
+            return {
+                'check_type': 'security_service_binding',
+                'target': target or 'all_services',
+                'security_score': round(security_score, 2),
+                'risky_bindings': len(risky_bindings),
+                'secure_bindings': len(secure_bindings),
+                'status': 'secure' if security_score > 0.8 else 'warning' if security_score > 0.5 else 'critical',
+                'timestamp': datetime.now().isoformat()
+            }
+        except Exception as e:
+            return {'error': str(e), 'check_type': 'security_service_binding'}
+
+    async def _check_security_port_exposure(self, target: str = None) -> Dict[str, Any]:
+        """Check for security issues with port exposure"""
+        try:
+            import subprocess
+
+            # Check for open ports and their exposure
+            result = subprocess.run(['ss', '-tulnp'], capture_output=True, text=True)
+            lines = result.stdout.split('\n')
+
+            exposed_ports = []
+            internal_ports = []
+            tower_ports = [8080, 8088, 8188, 8200, 8301, 8302, 8303, 8307, 8308, 8309, 8315, 8323, 8328, 8329]
+
+            for line in lines:
+                for port in tower_ports:
+                    if f':{port}' in line:
+                        if '0.0.0.0' in line or '*:' in line:
+                            exposed_ports.append({'port': port, 'binding': 'external', 'line': line.strip()})
+                        elif '127.0.0.1' in line:
+                            internal_ports.append({'port': port, 'binding': 'internal', 'line': line.strip()})
+
+            # Calculate exposure risk
+            total_ports = len(exposed_ports) + len(internal_ports)
+            exposure_ratio = len(exposed_ports) / max(total_ports, 1)
+
+            return {
+                'check_type': 'security_port_exposure',
+                'target': target or 'tower_services',
+                'exposed_ports': len(exposed_ports),
+                'internal_ports': len(internal_ports),
+                'exposure_ratio': round(exposure_ratio, 2),
+                'status': 'secure' if exposure_ratio < 0.3 else 'warning' if exposure_ratio < 0.6 else 'critical',
+                'port_details': exposed_ports + internal_ports,
+                'timestamp': datetime.now().isoformat()
+            }
+        except Exception as e:
+            return {'error': str(e), 'check_type': 'security_port_exposure'}
+
     async def _optimize_memory(self) -> Dict[str, Any]:
         """Optimize system memory usage"""
         try:
