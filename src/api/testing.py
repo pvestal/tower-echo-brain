@@ -30,7 +30,7 @@ async def execute_command(request: ExecuteRequest):
     logger.info(f"🔧 Execute command: {request.command}")
 
     try:
-        result = await safe_executor.execute_command(request.command, request.safe_mode)
+        result = await safe_executor.execute(request.command, allow_all=not request.safe_mode)
 
         response = ExecuteResponse(
             command=request.command,
