@@ -47,3 +47,44 @@ class BehaviorScheduler:
         await self.schedule_behavior("system_monitoring", 60)
         await self.schedule_behavior("service_health_check", 30)
         await self.schedule_behavior("code_quality_check", 1440)  # Daily
+
+    async def process_schedules(self):
+        """Process scheduled behaviors and create tasks as needed"""
+        try:
+            behaviors_to_run = []
+
+            for behavior_name, schedule in self.scheduled_behaviors.items():
+                if await self.should_run_behavior(behavior_name):
+                    if behavior_name not in self.running_behaviors:
+                        behaviors_to_run.append(behavior_name)
+                        self.running_behaviors.add(behavior_name)
+
+            # Create tasks for behaviors that should run
+            for behavior_name in behaviors_to_run:
+                if self.task_queue:
+                    from .task_queue import Task, TaskType, TaskPriority
+
+                    # Map behavior names to task types
+                    task_type_map = {
+                        "system_monitoring": TaskType.MONITORING,
+                        "service_health_check": TaskType.MONITORING,
+                        "code_quality_check": TaskType.CODE_REFACTOR
+                    }
+
+                    task_type = task_type_map.get(behavior_name, TaskType.MAINTENANCE)
+                    task = Task(
+                        type=task_type,
+                        priority=TaskPriority.NORMAL,
+                        description=f"Scheduled behavior: {behavior_name}",
+                        payload={"behavior": behavior_name, "scheduled": True}
+                    )
+                    await self.task_queue.add_task(task)
+
+            return {
+                "processed": len(self.scheduled_behaviors),
+                "queued": len(behaviors_to_run),
+                "running": len(self.running_behaviors)
+            }
+
+        except Exception as e:
+            return {"error": f"Schedule processing failed: {str(e)}"}

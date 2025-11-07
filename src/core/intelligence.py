@@ -13,6 +13,7 @@ from typing import Dict, List, Optional
 from echo_brain_thoughts import echo_brain
 from model_decision_engine import get_decision_engine
 from src.db.database import database
+from src.core.resilient_context import get_resilient_omniscient_context
 
 logger = logging.getLogger(__name__)
 
@@ -78,14 +79,43 @@ class EchoIntelligenceRouter:
         return result.score  # Returns: 0-100
 
     
-    async def query_model(self, model: str, prompt: str, max_tokens: int = 2048, validate_code: bool = True) -> Dict:
-        """Query specific Ollama model with automatic validation and reloading for code generation"""
+    async def query_model(self, model: str, prompt: str, context: Dict = None, max_tokens: int = 2048, validate_code: bool = True) -> Dict:
+        """Query specific Ollama model with conversation context and automatic validation"""
         try:
-            # Construct full prompt with Echo system prompt
+            # Construct full prompt with Echo system prompt and conversation history
             system_prompt = get_echo_system_prompt()
+
+            # Add conversation history if available
+            conversation_context = ""
+            if context and context.get("conversation_history"):
+                logger.info(f"🧠 CONTEXT: Found {len(context['conversation_history'])} previous messages")
+                conversation_context = "\n\nPREVIOUS CONVERSATION:\n"
+                for i, msg in enumerate(context["conversation_history"][-5:]):  # Last 5 messages for context
+                    logger.info(f"🧠 MESSAGE {i}: {msg.get('user_query', '')[:50]}...")
+                    conversation_context += f"User: {msg.get('user_query', '')}\nEcho: {msg.get('response', '')}\n"
+                conversation_context += "\nCURRENT CONVERSATION:"
+            else:
+                logger.warning("🧠 NO CONTEXT: conversation_history not found in context")
+
+            # 🛡️ RESILIENT OMNISCIENT CONTEXT INTEGRATION
+            omniscient_context = ""
+            try:
+                context_manager = get_resilient_omniscient_context()
+                if not context_manager.connection:
+                    await context_manager.connect()
+
+                conversation_id = context.get("conversation_id") if context else None
+                omniscient_summary = await context_manager.build_context_summary_resilient(prompt, conversation_id)
+                omniscient_context = f"\n\n{omniscient_summary}\n"
+                logger.info(f"🛡️ RESILIENT OMNISCIENT CONTEXT: Error-resistant context integration")
+            except Exception as e:
+                logger.warning(f"🛡️ RESILIENT OMNISCIENT CONTEXT: Gracefully handled context failure - {e}")
+                # Context system will provide fallback results automatically
+                omniscient_context = "\n\n📋 BASIC CONTEXT: System working with fallback data\n"
+
             user_prefix = "\n\nUser: "
             echo_suffix = "\n\nEcho:"
-            full_prompt = system_prompt + user_prefix + prompt + echo_suffix
+            full_prompt = system_prompt + conversation_context + omniscient_context + user_prefix + prompt + echo_suffix
 
             async with aiohttp.ClientSession() as session:
                 payload = {
@@ -187,8 +217,8 @@ class EchoIntelligenceRouter:
             # 🧠 GENERATE RESPONSE
             await echo_brain.generate_response(thought_id, f"{decision['tier']} response")
 
-            # Attempt query with selected model
-            result = await self.query_model(model, query)
+            # Attempt query with selected model and conversation context
+            result = await self.query_model(model, query, context)
 
         if result["success"]:
             # 🧠 SUCCESS - Complete thinking

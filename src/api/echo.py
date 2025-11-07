@@ -199,6 +199,7 @@ async def query_echo(request: QueryRequest):
     try:
         # Get conversation context
         conversation_context = await conversation_manager.get_conversation_context(request.conversation_id)
+        logger.info(f"🔍 CONVERSATION CONTEXT: {len(conversation_context.get('history', []))} messages retrieved")
 
         # Classify intent and extract parameters
         intent, confidence, intent_params = conversation_manager.classify_intent(
@@ -249,6 +250,17 @@ async def query_echo(request: QueryRequest):
             conversation_manager.update_conversation(
                 request.conversation_id, request.query, intent, response.response, True
             )
+
+            # Log to database for learning
+            try:
+                await database.log_interaction(
+                    request.query, response.response, response.model_used,
+                    response.processing_time, response.escalation_path,
+                    request.conversation_id, request.user_id, intent, confidence,
+                    True, clarifying_questions, complexity_score, tier
+                )
+            except Exception as e:
+                logger.error(f"❌ Clarification log_interaction FAILED: {e}")
 
             return response
 

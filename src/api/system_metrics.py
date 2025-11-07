@@ -21,7 +21,7 @@ router = APIRouter()
 @router.get("/api/echo/system/metrics")
 async def get_system_metrics():
     """
-    Get system resource metrics: CPU, Memory, VRAM
+    Get system resource metrics integrated with brain state
     """
     try:
         # CPU and Memory from psutil
@@ -48,6 +48,11 @@ async def get_system_metrics():
         except Exception as e:
             logger.warning(f"Failed to get NVIDIA VRAM stats: {e}")
 
+        # Calculate cognitive load based on system metrics
+        # (Removed circular dependency - was calling /api/echo/brain from within brain endpoint)
+        system_load = (cpu_percent + memory_percent) / 2
+        cognitive_load = min(system_load / 50.0, 1.0)  # Normalize to 0-1
+
         return {
             "cpu_percent": round(cpu_percent, 1),
             "memory_percent": round(memory_percent, 1),
@@ -55,6 +60,9 @@ async def get_system_metrics():
             "memory_total_gb": round(memory_total_gb, 2),
             "vram_used_gb": round(vram_used_gb, 2),
             "vram_total_gb": round(vram_total_gb, 2),
+            "brain_state": "active" if cognitive_load > 0.3 else "resting",
+            "cognitive_load": round(cognitive_load, 2),
+            "system_brain_correlation": round(system_load * cognitive_load / 100, 3),
             "timestamp": datetime.now().isoformat()
         }
     except Exception as e:

@@ -240,7 +240,51 @@ class ConversationManager:
                 "thought_log": conv.get("thought_log", [])
             }
 
-        # Return empty context if not found
+        # If not in memory, check database
+        try:
+            if self._database is None:
+                from src.db.database import database
+                self._database = database
+
+            # Get conversation history from database
+            db_history = await self._database.get_conversation_history(conversation_id)
+
+            if db_history:
+                # Convert database records to conversation manager format
+                history = []
+                last_intent = None
+
+                for record in db_history:
+                    history.append({
+                        "user_query": record["query"],
+                        "intent": record["intent"] or "general",
+                        "response": record["response"],
+                        "requires_clarification": False,  # Assume completed conversations
+                        "timestamp": record["timestamp"],
+                        "thoughts": []  # Historical thoughts not available
+                    })
+                    last_intent = record["intent"] or "general"
+
+                # Store in memory cache for future access
+                self.conversations[conversation_id] = {
+                    "history": history,
+                    "created_at": history[0]["timestamp"] if history else datetime.now(),
+                    "last_intent": last_intent,
+                    "thought_log": []
+                }
+
+                return {
+                    "history": history,
+                    "last_intent": last_intent,
+                    "created_at": history[0]["timestamp"] if history else datetime.now(),
+                    "interaction_count": len(history),
+                    "thought_log": []
+                }
+
+        except Exception as e:
+            logger.error(f"Failed to retrieve conversation context from database: {e}")
+
+        # Return empty context if not found anywhere
         return {
             "history": [],
             "last_intent": None,
@@ -248,6 +292,61 @@ class ConversationManager:
             "interaction_count": 0,
             "thought_log": []
         }
+
+    def get_all_conversations(self) -> List[Dict]:
+        """Get all conversations from memory cache and database"""
+        try:
+            # Return in-memory conversations
+            conversations = []
+            for conv_id, conv_data in self.conversations.items():
+                conversations.append({
+                    "conversation_id": conv_id,
+                    "last_activity": conv_data.get("last_activity", datetime.now()),
+                    "message_count": len(conv_data.get("history", [])),
+                    "last_intent": conv_data.get("last_intent"),
+                    "preview": conv_data.get("history", [{}])[-1].get("user_message", "No messages") if conv_data.get("history") else "No messages"
+                })
+
+            logger.info(f"Retrieved {len(conversations)} conversations from cache")
+            return conversations
+        except Exception as e:
+            logger.error(f"Failed to get all conversations: {e}")
+            return []
+
+    def get_conversation_history(self, conversation_id: str) -> Dict:
+        """Get conversation history for a specific conversation"""
+        try:
+            if conversation_id in self.conversations:
+                conv_data = self.conversations[conversation_id]
+                return {
+                    "conversation_id": conversation_id,
+                    "history": conv_data.get("history", []),
+                    "last_intent": conv_data.get("last_intent"),
+                    "created_at": conv_data.get("created_at", datetime.now()),
+                    "message_count": len(conv_data.get("history", [])),
+                    "thought_log": conv_data.get("thought_log", [])
+                }
+            else:
+                # Try to load from database if not in memory
+                logger.info(f"Conversation {conversation_id} not in cache, checking database")
+                return {
+                    "conversation_id": conversation_id,
+                    "history": [],
+                    "last_intent": None,
+                    "created_at": datetime.now(),
+                    "message_count": 0,
+                    "thought_log": []
+                }
+        except Exception as e:
+            logger.error(f"Failed to get conversation history for {conversation_id}: {e}")
+            return {
+                "conversation_id": conversation_id,
+                "history": [],
+                "last_intent": None,
+                "created_at": datetime.now(),
+                "message_count": 0,
+                "thought_log": []
+            }
 
 # Create the global instance
 conversation_manager = ConversationManager()

@@ -253,7 +253,7 @@ class EchoAutonomousEngine:
             'echo_brain': 'http://localhost:8309/api/echo/health',
             'knowledge_base': 'http://localhost:8307/api/health',
             'comfyui': 'http://localhost:8188/api/health',
-            'anime_service': 'http://localhost:8328/api/health',
+            'anime_service': 'http://localhost:8328/api/anime/health',
             'dashboard': 'http://localhost:8080/api/health',
             'vault': 'http://localhost:8200/v1/sys/health'
         }
