@@ -15,16 +15,16 @@ app = create_app()
 @app.on_event("startup")
 async def startup_event():
     """Initialize services on startup"""
-    logger.info("🚀 Echo Brain starting up...")
+    logger.info("Echo Brain starting up...")
     await startup.initialize_services()
-    logger.info("✅ Echo Brain startup complete")
+    logger.info("Echo Brain startup complete")
 
 @app.on_event("shutdown")
 async def shutdown_event():
     """Cleanup on shutdown"""
-    logger.info("🛑 Echo Brain shutting down...")
+    logger.info("Echo Brain shutting down...")
     await startup.shutdown()
-    logger.info("✅ Echo Brain shutdown complete")
+    logger.info("Echo Brain shutdown complete")
 
 if __name__ == "__main__":
     uvicorn.run(

@@ -101,19 +101,55 @@ class Task:
 class TaskQueue:
     """AsyncIO-based task queue with Redis and PostgreSQL persistence"""
     
-    def __init__(self, 
+    def __init__(self,
                  redis_url: str = "redis://localhost:6379/0",
                  db_config: Optional[Dict[str, str]] = None):
         self.redis_url = redis_url
-        self.db_config = db_config or {
-            'host': 'localhost',
-            'database': 'echo_brain',
-            'user': 'patrick',
-            'password': os.getenv('DB_PASSWORD', '')
-        }
+        self.db_config = db_config or self._get_db_config_from_vault()
         self.redis_client: Optional[redis.Redis] = None
         self.running = False
         self.task_handlers: Dict[TaskType, Callable] = {}
+
+    def _get_db_config_from_vault(self):
+        """Get database configuration from HashiCorp Vault or fallback to env"""
+        if os.environ.get("USE_VAULT", "false").lower() == "true":
+            try:
+                import hvac
+                vault_addr = os.environ.get("VAULT_ADDR", "http://127.0.0.1:8200")
+
+                # Try to get vault token from file
+                token_file = os.environ.get("VAULT_TOKEN_FILE", "/opt/tower-echo-brain/.vault-token")
+                if os.path.exists(token_file):
+                    with open(token_file, 'r') as f:
+                        vault_token = f.read().strip()
+                else:
+                    vault_token = os.environ.get("VAULT_TOKEN")
+
+                if vault_token:
+                    client = hvac.Client(url=vault_addr, token=vault_token)
+
+                    # Get database credentials from vault
+                    db_secrets = client.secrets.kv.v2.read_secret_version(path='tower/database')
+                    db_data = db_secrets['data']['data']
+
+                    return {
+                        "database": db_data.get("database", "echo_brain"),
+                        "user": db_data.get("user", "patrick"),
+                        "host": db_data.get("host", "192.168.50.135"),
+                        "password": db_data.get("password"),
+                        "port": int(db_data.get("port", 5432))
+                    }
+            except Exception as e:
+                logger.warning(f"Failed to get credentials from Vault: {e}, falling back to env vars")
+
+        # Fallback to environment variables
+        return {
+            "database": os.environ.get("DB_NAME", "echo_brain"),
+            "user": os.environ.get("DB_USER", "patrick"),
+            "host": os.environ.get("DB_HOST", "192.168.50.135"),
+            "password": os.environ.get("DB_PASSWORD", "tower_echo_brain_secret_key_2025"),
+            "port": int(os.environ.get("DB_PORT", 5432))
+        }
         
     async def initialize(self):
         """Initialize Redis connection and database"""

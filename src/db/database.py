@@ -68,35 +68,72 @@ class EchoDatabase:
                             clarifying_questions: Optional[List[str]] = None,
                             complexity_score: Optional[float] = None,
                             tier: Optional[str] = None):
-        """Log interaction for learning improvement"""
-        try:
-            conn = psycopg2.connect(**self.db_config)
-            cursor = conn.cursor()
+        """Log interaction for learning improvement with robust error handling and retry"""
+        max_retries = 3
+        retry_delay = 1.0
 
-            # Build metadata with complexity info
-            metadata = {}
-            if complexity_score is not None:
-                metadata["complexity_score"] = complexity_score
-            if tier is not None:
-                metadata["tier"] = tier
-            
-            cursor.execute("""
-                INSERT INTO echo_unified_interactions
-                (query, response, model_used, processing_time, escalation_path,
-                 conversation_id, user_id, intent, confidence, requires_clarification,
-                 clarifying_questions, metadata)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """, (query, response, model_used, processing_time,
-                  json.dumps(escalation_path), conversation_id or "", user_id, intent or "",
-                  confidence, requires_clarification, json.dumps(clarifying_questions or []),
-                  json.dumps(metadata)))
+        for attempt in range(max_retries):
+            try:
+                conn = psycopg2.connect(**self.db_config)
+                cursor = conn.cursor()
 
-            conn.commit()
-            cursor.close()
-            conn.close()
+                # Build metadata with complexity info
+                metadata = {}
+                if complexity_score is not None:
+                    metadata["complexity_score"] = complexity_score
+                if tier is not None:
+                    metadata["tier"] = tier
 
-        except Exception as e:
-            logger.error(f"Database logging failed: {e}")
+                cursor.execute("""
+                    INSERT INTO echo_unified_interactions
+                    (query, response, model_used, processing_time, escalation_path,
+                     conversation_id, user_id, intent, confidence, requires_clarification,
+                     clarifying_questions, metadata)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, (query, response, model_used, processing_time,
+                      json.dumps(escalation_path), conversation_id or "", user_id, intent or "",
+                      confidence, requires_clarification, json.dumps(clarifying_questions or []),
+                      json.dumps(metadata)))
+
+                conn.commit()
+                cursor.close()
+                conn.close()
+
+                # Success - log interaction saved
+                logger.info(f"✅ Interaction logged: conversation_id={conversation_id}, intent={intent}")
+                return True
+
+            except psycopg2.OperationalError as e:
+                logger.warning(f"⚠️ Database connection error (attempt {attempt + 1}/{max_retries}): {e}")
+                if attempt < max_retries - 1:
+                    import asyncio
+                    await asyncio.sleep(retry_delay * (attempt + 1))
+                    continue
+                else:
+                    logger.error(f"❌ CRITICAL: Database logging FAILED after {max_retries} attempts. Conversation lost: {conversation_id}")
+                    return False
+
+            except psycopg2.DatabaseError as e:
+                logger.error(f"❌ Database error on attempt {attempt + 1}: {e}")
+                if attempt < max_retries - 1:
+                    import asyncio
+                    await asyncio.sleep(retry_delay * (attempt + 1))
+                    continue
+                else:
+                    logger.error(f"❌ CRITICAL: Database schema error. Conversation lost: {conversation_id}")
+                    return False
+
+            except Exception as e:
+                logger.error(f"❌ Unexpected database error (attempt {attempt + 1}): {e}")
+                if attempt < max_retries - 1:
+                    import asyncio
+                    await asyncio.sleep(retry_delay * (attempt + 1))
+                    continue
+                else:
+                    logger.error(f"❌ CRITICAL: Unknown database error. Conversation lost: {conversation_id}")
+                    return False
+
+        return False
 
     async def create_tables_if_needed(self):
         """Create unified Echo tables"""

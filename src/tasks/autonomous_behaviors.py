@@ -93,7 +93,7 @@ class AutonomousBehaviors:
         """Code quality monitoring behavior loop"""
         while self.running:
             try:
-                await self.code_quality_monitor.analyze_code_quality()
+                await self.code_quality_monitor.analyze_code_quality("/opt/tower-echo-brain/src")
                 await asyncio.sleep(self.intervals['code_quality'])
             except Exception as e:
                 logger.error(f"Code quality loop error: {e}")
@@ -131,7 +131,7 @@ class AutonomousBehaviors:
             elif issue_type == "resource_critical":
                 await self.system_monitor.monitor_resources()
             elif issue_type == "code_critical":
-                await self.code_quality_monitor.analyze_code_quality()
+                await self.code_quality_monitor.analyze_code_quality("/opt/tower-echo-brain/src")
 
         except Exception as e:
             logger.error(f"Emergency behavior failed: {e}")
