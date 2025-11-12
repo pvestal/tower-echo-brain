@@ -1,0 +1,36 @@
+name: Production Deployment Pipeline
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+        - staging
+        - production
+
+env:
+  TOWER_HOST: '192.168.50.135'
+  SERVICE_NAME: 'tower-echo-brain'
+  SERVICE_PATH: '/opt/tower-echo-brain'
+
+jobs:
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+    - name: Deployment instructions
+      run: |
+        echo "Production deployment ready"
+        echo "Manual deployment required on Tower server:"
+        echo "cd /opt/tower-echo-brain"
+        echo "git pull origin main"
+        echo "sudo systemctl restart tower-echo-brain"
