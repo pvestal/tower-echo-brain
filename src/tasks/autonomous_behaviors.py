@@ -10,8 +10,10 @@ from src.tasks.task_queue import TaskQueue
 
 # Import behavior modules
 from .service_monitor import ServiceMonitor
-from .system_monitor import SystemMonitor
+from src.behaviors.system_monitor import SystemMonitor
 from .code_quality_monitor import CodeQualityMonitor
+from .code_refactor_executor import CodeRefactorExecutor
+from .multi_language_linter import MultiLanguageLinter
 from .scheduler import BehaviorScheduler
 
 logger = logging.getLogger(__name__)
@@ -27,6 +29,8 @@ class AutonomousBehaviors:
         self.service_monitor = ServiceMonitor(task_queue)
         self.system_monitor = SystemMonitor(task_queue)
         self.code_quality_monitor = CodeQualityMonitor(task_queue)
+        self.code_refactor_executor = CodeRefactorExecutor()
+        self.multi_language_linter = MultiLanguageLinter()
         self.scheduler = BehaviorScheduler(task_queue)
 
         # Behavior loop intervals (seconds)
@@ -50,14 +54,11 @@ class AutonomousBehaviors:
             # Setup scheduled tasks
             await self.scheduler.setup_schedules()
 
-            # Start behavior loops
-            await asyncio.gather(
-                self._service_monitoring_loop(),
-                self._system_monitoring_loop(),
-                self._code_quality_loop(),
-                self._scheduled_task_loop(),
-                return_exceptions=True
-            )
+            # Start behavior loops (non-blocking)
+            asyncio.create_task(self._service_monitoring_loop())
+            asyncio.create_task(self._system_monitoring_loop())
+            asyncio.create_task(self._code_quality_loop())
+            asyncio.create_task(self._scheduled_task_loop())
 
         except Exception as e:
             logger.error(f"❌ Autonomous behaviors startup failed: {e}")
@@ -90,10 +91,41 @@ class AutonomousBehaviors:
                 await asyncio.sleep(300)  # Error recovery delay
 
     async def _code_quality_loop(self):
-        """Code quality monitoring behavior loop"""
+        """Code quality monitoring and refactoring behavior loop - Multi-language support"""
         while self.running:
             try:
-                await self.code_quality_monitor.analyze_code_quality("/opt/tower-echo-brain/src")
+                # Tower projects to analyze (including frontend code)
+                tower_projects = [
+                    "/opt/tower-echo-brain",
+                    "/opt/tower-anime-production",
+                    "/opt/tower-auth",
+                    "/opt/tower-kb",
+                    "/opt/tower-apple-music",
+                    "/opt/tower-dashboard",  # HTML/CSS/JS
+                    "/opt/tower-crypto-trader",
+                    "/opt/tower-personal-media"
+                ]
+
+                for project in tower_projects:
+                    try:
+                        # Multi-language analysis (Python, JS, TS, HTML, CSS, SQL, etc.)
+                        analysis = await self.multi_language_linter.analyze_project(project)
+
+                        logger.info(f"📊 {project}: Score {analysis['average_score']:.1f}/10, "
+                                  f"{analysis['total_issues']} issues in {analysis['total_files']} files")
+
+                        # Auto-fix files with low scores
+                        for filepath in analysis['fixable_files'][:10]:  # Limit to 10 files per run
+                            if await self.multi_language_linter.fix_file(filepath):
+                                logger.info(f"✅ Auto-fixed: {filepath}")
+
+                        # Also run Python-specific deep analysis
+                        if any('.py' in str(f) for f in analysis.get('languages', {}).get('python', {}).get('files', [])):
+                            await self.code_quality_monitor.analyze_code_quality(project)
+
+                    except Exception as e:
+                        logger.warning(f"Failed to analyze {project}: {e}")
+
                 await asyncio.sleep(self.intervals['code_quality'])
             except Exception as e:
                 logger.error(f"Code quality loop error: {e}")
@@ -117,6 +149,7 @@ class AutonomousBehaviors:
             'service_monitor': self.service_monitor.get_monitor_stats(),
             'system_monitor': self.system_monitor.get_resource_stats(),
             'code_quality': self.code_quality_monitor.get_quality_stats(),
+            'code_refactor_tools': self.code_refactor_executor.tools_available,
             'scheduler': self.scheduler.get_schedule_info(),
             'timestamp': datetime.now().isoformat()
         }
@@ -132,6 +165,8 @@ class AutonomousBehaviors:
                 await self.system_monitor.monitor_resources()
             elif issue_type == "code_critical":
                 await self.code_quality_monitor.analyze_code_quality("/opt/tower-echo-brain/src")
+                # Also trigger immediate refactoring if needed
+                await self.code_quality_monitor.trigger_emergency_refactoring(details.get('file_path'))
 
         except Exception as e:
             logger.error(f"Emergency behavior failed: {e}")
