@@ -1,0 +1,63 @@
+name: Release Automation
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version_type:
+        description: 'Version bump type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+        - patch
+        - minor
+        - major
+
+jobs:
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Generate changelog
+      run: |
+        echo "## Changelog" > CHANGELOG.md
+        git log --pretty=format:"- %s (%h)" --since="$(git describe --tags --abbrev=0 2>/dev/null || echo '1 month ago')" >> CHANGELOG.md
+
+    - name: Create GitHub Release
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          const changelog = fs.readFileSync('CHANGELOG.md', 'utf8');
+          
+          const tagName = context.ref.replace('refs/tags/', '');
+          
+          github.rest.repos.createRelease({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            tag_name: tagName,
+            name: `Echo Brain ${tagName}`,
+            body: changelog,
+            draft: false,
+            prerelease: false
+          });
+
+    - name: Deployment notification
+      run: |
+        echo "Release created successfully"
+        echo "Manual deployment to production required"
+        echo "Run deployment workflow or deploy manually on Tower"
