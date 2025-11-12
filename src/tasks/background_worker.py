@@ -14,6 +14,7 @@ import signal
 import sys
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Callable, Any
+from pathlib import Path
 import aiohttp
 import subprocess
 import psutil
@@ -313,7 +314,15 @@ class BackgroundWorker:
                     issue=issue
                 )
                 return result
-                
+
+            elif action == 'vault_unseal':
+                result = await repair_executor.execute_repair(
+                    repair_type='vault_unseal',
+                    target=target,
+                    issue=issue
+                )
+                return result
+
             else:
                 return {
                     'status': 'unknown_action',
@@ -327,40 +336,70 @@ class BackgroundWorker:
             
         # Register all handlers
         async def handle_code_refactor_task(task: Task) -> Dict[str, Any]:
-            """Handle autonomous code refactoring/implementation tasks"""
+            """Handle autonomous code refactoring tasks"""
             try:
-                task_description = task.payload.get("task")
-                service = task.payload.get("service")
-                test = task.payload.get("test", True)
-                
-                executor = get_task_implementation_executor(board=None)
-                result = await executor.implement_task(task_description, service, test)
-                
-                # Store via main.py function
-                import json
-                query = """
-                    INSERT INTO code_modifications
-                    (task_id, service, request, changes, review_score, success, backup_path, test_results, created_at)
-                    VALUES (:task_id, :service, :request, :changes, :review_score, :success, :backup_path, :test_results, NOW())
-                """
-                values = {
-                    "task_id": task.id,
-                    "service": result.get("service"),
-                    "request": task_description,
-                    "changes": json.dumps(result.get("code_changes", {})),
-                    "review_score": result.get("review_results", {}).get("score"),
-                    "success": result.get("success", False),
-                    "backup_path": json.dumps(result.get("code_changes", {}).get("backups_created", [])),
-                    "test_results": json.dumps(result.get("test_results", {}))
-                }
-                # from src.core.database import database  # BROKEN - commented out
-                # await database.execute(query, values)  # BROKEN - commented out
-                
-                return {
-                    "success": result.get("success", False),
-                    "review_score": result.get("review_results", {}).get("score"),
-                    "files_modified": list(result.get("code_changes", {}).keys())
-                }
+                action = task.payload.get("action", "analyze")
+                project_path = task.payload.get("project_path")
+
+                if not project_path:
+                    raise ValueError("No project_path specified in task payload")
+
+                logger.info(f"🔧 Processing code refactor task: {action} on {project_path}")
+
+                # Import code refactor executor
+                from .code_refactor_executor import code_refactor_executor
+
+                if action == "analyze":
+                    # Analyze code quality
+                    result = await code_refactor_executor.analyze_code_quality(project_path)
+                    return {
+                        "success": True,
+                        "action": "analyze",
+                        "project": project_path,
+                        "quality_score": result.get("pylint_score"),
+                        "file_count": result.get("file_count"),
+                        "issues_found": len(result.get("issues", []))
+                    }
+
+                elif action == "auto_fix_code":
+                    # Perform automatic code fixes
+                    result = await code_refactor_executor.auto_fix_common_issues(project_path)
+                    return {
+                        "success": result.get("fixes_applied", 0) > 0,
+                        "action": "auto_fix_code",
+                        "project": project_path,
+                        "fixes_applied": result.get("fixes_applied", 0),
+                        "files_modified": result.get("files_modified", [])
+                    }
+
+                elif action == "format_code":
+                    # Format code with black
+                    if Path(project_path).is_file():
+                        result = await code_refactor_executor.auto_format_code(project_path)
+                    else:
+                        result = await code_refactor_executor.auto_fix_common_issues(project_path)
+                    return {
+                        "success": result.get("success", False),
+                        "action": "format_code",
+                        "project": project_path,
+                        "output": result.get("output", "")
+                    }
+
+                else:
+                    # Legacy support for task implementation
+                    task_description = task.payload.get("task")
+                    service = task.payload.get("service")
+                    test = task.payload.get("test", True)
+
+                    executor = get_task_implementation_executor(board=None)
+                    result = await executor.implement_task(task_description, service, test)
+
+                    return {
+                        "success": result.get("success", False),
+                        "review_score": result.get("review_results", {}).get("score"),
+                        "files_modified": list(result.get("code_changes", {}).keys())
+                    }
+
             except Exception as e:
                 logger.error(f"Code refactor task failed: {e}")
                 raise

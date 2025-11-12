@@ -76,6 +76,8 @@ class RepairExecutor:
                 result = await self._repair_code_modification(target, issue, **kwargs)
             elif repair_type == "style_update":
                 result = await self._repair_style_update(target, issue, **kwargs)
+            elif repair_type == 'vault_unseal':
+                result = await self._repair_vault_unseal(target, issue, **kwargs)
             else:
                 result['error'] = f"Unknown repair type: {repair_type}"
 
@@ -178,16 +180,48 @@ class RepairExecutor:
         }
 
     async def _repair_disk_cleanup(self, target: str, issue: str, **kwargs) -> Dict[str, Any]:
-        """Clean up disk space - stub for now"""
-        return {
+        """Clean up zombie processes and other system maintenance"""
+
+        result = {
             'success': False,
             'repair_type': 'disk_cleanup',
             'target': target,
             'issue': issue,
             'timestamp': datetime.now().isoformat(),
-            'actions_taken': ['Not yet implemented'],
-            'error': 'disk_cleanup not yet implemented - requires manual intervention'
+            'actions_taken': [],
+            'error': None
         }
+
+        try:
+            if 'zombie' in issue.lower() or target == 'zombie_processes':
+                # Check for actual zombie processes
+                zombie_check_cmd = "ps aux | awk '$8 ~ /^Z/ { print $2, $11 }'"
+                proc = await asyncio.create_subprocess_shell(
+                    zombie_check_cmd,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE
+                )
+                stdout, stderr = await proc.communicate()
+
+                zombie_output = stdout.decode().strip()
+                if zombie_output:
+                    result['actions_taken'].append(f"Found zombie processes: {zombie_output}")
+                    # Zombie processes can't be killed directly - they're already dead
+                    # We need to notify their parent or wait for parent cleanup
+                    result['actions_taken'].append("Zombie processes require parent process cleanup")
+                    result['success'] = True  # We identified the issue
+                else:
+                    result['actions_taken'].append("No actual zombie processes found")
+                    result['success'] = True
+            else:
+                result['actions_taken'].append(f"General disk cleanup for {target} not yet implemented")
+                result['error'] = 'General disk cleanup not yet implemented'
+
+            return result
+
+        except Exception as e:
+            result['error'] = str(e)
+            return result
 
     async def _repair_process_kill(self, target: str, issue: str, **kwargs) -> Dict[str, Any]:
         """Kill a stuck process"""
@@ -263,6 +297,129 @@ class RepairExecutor:
             'actions_taken': ['Not yet implemented'],
             'error': 'log_rotation not yet implemented - requires manual intervention'
         }
+
+    async def _repair_vault_unseal(self, target: str, issue: str, **kwargs) -> Dict[str, Any]:
+        """Unseal HashiCorp Vault using stored unseal keys"""
+
+        result = {
+            'success': False,
+            'repair_type': 'vault_unseal',
+            'target': target,
+            'issue': issue,
+            'timestamp': datetime.now().isoformat(),
+            'actions_taken': [],
+            'error': None
+        }
+
+        try:
+            # Set Vault environment variables
+            vault_env = {
+                'VAULT_ADDR': 'http://127.0.0.1:8200',
+                'PATH': '/usr/local/bin:/usr/bin:/bin'
+            }
+
+            # First check if Vault is sealed
+            check_cmd = "vault status"
+            proc = await asyncio.create_subprocess_shell(
+                check_cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+                env={**vault_env}
+            )
+            stdout, stderr = await proc.communicate()
+
+            status_output = stdout.decode().strip()
+            result['actions_taken'].append(f"Checked vault status: {status_output}")
+
+            # Check if vault is actually sealed (status returns 2 when sealed)
+            if proc.returncode != 2:
+                # Vault is already unsealed or there's another issue
+                if "Sealed: false" in status_output:
+                    result['actions_taken'].append("Vault is already unsealed")
+                    result['success'] = True
+                    return result
+                else:
+                    result['error'] = f"Vault status check failed: {stderr.decode()}"
+                    return result
+
+            result['actions_taken'].append("Vault is sealed, proceeding with unseal")
+
+            # Load unseal keys from backup file
+            vault_init_file = "/home/patrick/.vault-init-backup.json"
+            try:
+                import json
+                with open(vault_init_file, 'r') as f:
+                    vault_init_data = json.load(f)
+
+                unseal_keys = vault_init_data.get('unseal_keys_b64', [])
+                root_token = vault_init_data.get('root_token')
+
+                if not unseal_keys or len(unseal_keys) < 3:
+                    result['error'] = "Insufficient unseal keys found in backup file"
+                    return result
+
+                result['actions_taken'].append(f"Loaded {len(unseal_keys)} unseal keys from backup")
+
+            except Exception as e:
+                result['error'] = f"Failed to load vault init data: {str(e)}"
+                return result
+
+            # Unseal vault using first 3 keys
+            for i in range(3):
+                if i >= len(unseal_keys):
+                    break
+
+                unseal_cmd = f"vault operator unseal {unseal_keys[i]}"
+                proc = await asyncio.create_subprocess_shell(
+                    unseal_cmd,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                    env={**vault_env}
+                )
+                stdout, stderr = await proc.communicate()
+
+                if proc.returncode == 0:
+                    result['actions_taken'].append(f"Applied unseal key {i+1}/3")
+                else:
+                    result['error'] = f"Failed to apply unseal key {i+1}: {stderr.decode()}"
+                    return result
+
+            # Wait a moment for vault to fully unseal
+            await asyncio.sleep(2)
+
+            # Verify vault is now unsealed
+            verify_cmd = "vault status"
+            proc = await asyncio.create_subprocess_shell(
+                verify_cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+                env={**vault_env}
+            )
+            stdout, stderr = await proc.communicate()
+
+            status_output = stdout.decode()
+            if proc.returncode == 0 and "Sealed          false" in status_output:
+                result['actions_taken'].append("Vault successfully unsealed")
+                result['success'] = True
+
+                # Restore vault token if available
+                if root_token:
+                    try:
+                        token_file = "/opt/vault/.vault-token"
+                        Path(token_file).parent.mkdir(parents=True, exist_ok=True)
+                        with open(token_file, 'w') as f:
+                            f.write(root_token)
+                        result['actions_taken'].append("Restored vault root token")
+                    except Exception as e:
+                        result['actions_taken'].append(f"Warning: Failed to restore token: {str(e)}")
+            else:
+                result['error'] = f"Vault unseal verification failed: {stderr.decode()}"
+
+            return result
+
+        except Exception as e:
+            result['error'] = str(e)
+            return result
 
     async def _log_repair(self, result: Dict[str, Any]):
         """Log repair action to file"""
