@@ -1,0 +1,338 @@
+{
+  "test_characters": {
+    "Ryuu": {
+      "id": 1,
+      "name": "Ryuu",
+      "description": "Young male warrior with spiky black hair and determined expression",
+      "visual_features": {
+        "hair_color": "black",
+        "hair_style": "spiky",
+        "eye_color": "brown",
+        "gender": "male",
+        "age_range": "young_adult",
+        "clothing": "blue tunic",
+        "body_type": "athletic",
+        "height": "average",
+        "distinctive_features": ["scar on left cheek", "calloused hands"]
+      },
+      "personality": {
+        "primary_traits": ["brave", "determined", "loyal"],
+        "secondary_traits": ["stubborn", "protective", "honest"],
+        "flaws": ["impulsive", "overly trusting"],
+        "motivations": ["protect village", "master swordsmanship"]
+      },
+      "test_scenarios": [
+        {
+          "scenario": "standing in forest clearing",
+          "expected_mood": "alert",
+          "lighting": "natural daylight",
+          "pose": "standing upright"
+        },
+        {
+          "scenario": "holding sword in battle stance",
+          "expected_mood": "determined",
+          "lighting": "dramatic lighting",
+          "pose": "combat ready"
+        },
+        {
+          "scenario": "looking thoughtful by campfire",
+          "expected_mood": "contemplative",
+          "lighting": "warm firelight",
+          "pose": "seated"
+        }
+      ],
+      "test_emotions": [
+        {
+          "emotion": "determined",
+          "visual_cues": ["furrowed brow", "clenched jaw", "focused eyes"],
+          "body_language": ["straight posture", "firm stance"]
+        },
+        {
+          "emotion": "angry",
+          "visual_cues": ["narrowed eyes", "gritted teeth", "tense muscles"],
+          "body_language": ["aggressive stance", "clenched fists"]
+        },
+        {
+          "emotion": "neutral",
+          "visual_cues": ["relaxed expression", "normal posture"],
+          "body_language": ["natural stance", "arms at sides"]
+        }
+      ]
+    },
+    "Yuki": {
+      "id": 2,
+      "name": "Yuki",
+      "description": "Young female mage with long silver hair and gentle blue eyes",
+      "visual_features": {
+        "hair_color": "silver",
+        "hair_style": "long_flowing",
+        "eye_color": "blue",
+        "gender": "female",
+        "age_range": "young_adult",
+        "clothing": "white robes",
+        "body_type": "slender",
+        "height": "petite",
+        "distinctive_features": ["staff with crystal", "magical aura"]
+      },
+      "personality": {
+        "primary_traits": ["gentle", "wise", "compassionate"],
+        "secondary_traits": ["patient", "scholarly", "empathetic"],
+        "flaws": ["overly cautious", "self-doubting"],
+        "motivations": ["master magic", "help others", "preserve knowledge"]
+      },
+      "test_scenarios": [
+        {
+          "scenario": "casting spell with glowing hands",
+          "expected_mood": "focused",
+          "lighting": "magical glow",
+          "pose": "hands raised"
+        },
+        {
+          "scenario": "reading ancient tome in library",
+          "expected_mood": "studious",
+          "lighting": "soft library light",
+          "pose": "seated reading"
+        },
+        {
+          "scenario": "smiling while tending to flowers",
+          "expected_mood": "peaceful",
+          "lighting": "garden sunlight",
+          "pose": "kneeling"
+        }
+      ],
+      "test_emotions": [
+        {
+          "emotion": "gentle",
+          "visual_cues": ["soft smile", "kind eyes", "relaxed features"],
+          "body_language": ["graceful posture", "open gestures"]
+        },
+        {
+          "emotion": "concerned",
+          "visual_cues": ["slight frown", "worried eyes", "pursed lips"],
+          "body_language": ["leaning forward", "clasped hands"]
+        },
+        {
+          "emotion": "happy",
+          "visual_cues": ["bright smile", "sparkling eyes", "lifted cheeks"],
+          "body_language": ["upright posture", "relaxed shoulders"]
+        }
+      ]
+    }
+  },
+  "test_projects": [
+    {
+      "id": 1,
+      "name": "Fantasy Adventure",
+      "description": "Epic fantasy story with warriors and mages",
+      "style": "traditional_anime",
+      "genre": "fantasy_adventure",
+      "target_audience": "teen_adult",
+      "color_palette": "vibrant",
+      "art_style": "detailed_shading",
+      "status": "active"
+    },
+    {
+      "id": 2,
+      "name": "Cyberpunk Chronicles",
+      "description": "Futuristic tech noir with hackers and corporations",
+      "style": "cyberpunk_anime",
+      "genre": "sci_fi_thriller",
+      "target_audience": "adult",
+      "color_palette": "neon_dark",
+      "art_style": "high_contrast",
+      "status": "active"
+    },
+    {
+      "id": 3,
+      "name": "School Days",
+      "description": "Slice of life romance in high school setting",
+      "style": "modern_anime",
+      "genre": "slice_of_life",
+      "target_audience": "teen",
+      "color_palette": "soft_pastels",
+      "art_style": "clean_lines",
+      "status": "archived"
+    }
+  ],
+  "generation_presets": {
+    "high_quality": {
+      "steps": 28,
+      "cfg_scale": 8,
+      "sampler": "dpmpp_2m_karras",
+      "scheduler": "karras",
+      "width": 768,
+      "height": 768,
+      "batch_size": 1
+    },
+    "fast_test": {
+      "steps": 12,
+      "cfg_scale": 7,
+      "sampler": "euler_a",
+      "scheduler": "normal",
+      "width": 512,
+      "height": 512,
+      "batch_size": 1
+    },
+    "batch_generation": {
+      "steps": 20,
+      "cfg_scale": 7.5,
+      "sampler": "dpmpp_2m",
+      "scheduler": "normal",
+      "width": 512,
+      "height": 512,
+      "batch_size": 4
+    }
+  },
+  "style_presets": {
+    "anime_classic": {
+      "positive_prompt_additions": "anime style, cel shading, vibrant colors, detailed",
+      "negative_prompt": "realistic, photograph, 3d, blurry, low quality, artifacts",
+      "model": "animePastelDream_softBakedVae.safetensors"
+    },
+    "anime_realistic": {
+      "positive_prompt_additions": "semi-realistic anime, detailed shading, high quality",
+      "negative_prompt": "cartoon, chibi, low detail, flat colors, simple",
+      "model": "animeRealistic_v2.ckpt"
+    },
+    "cyberpunk_anime": {
+      "positive_prompt_additions": "cyberpunk anime, neon lights, futuristic, detailed tech",
+      "negative_prompt": "medieval, fantasy, natural, organic",
+      "model": "cyberpunkAnime_v1.safetensors"
+    }
+  },
+  "mock_api_responses": {
+    "generation_success": {
+      "job_id": "test-job-12345",
+      "status": "submitted",
+      "estimated_time": 45,
+      "queue_position": 1
+    },
+    "generation_complete": {
+      "status": "completed",
+      "output_path": "/tmp/test_outputs/generated_image.png",
+      "generation_time": 42.5,
+      "metadata": {
+        "seed": 12345,
+        "steps": 20,
+        "cfg_scale": 7.5
+      }
+    },
+    "generation_failed": {
+      "status": "failed",
+      "error": "Out of GPU memory",
+      "generation_time": 15.2
+    },
+    "service_health": {
+      "status": "healthy",
+      "gpu_available": true,
+      "gpu_memory_used": 4096,
+      "gpu_memory_total": 12288,
+      "active_jobs": 1,
+      "queue_length": 2
+    }
+  },
+  "test_workflows": {
+    "simple_character": {
+      "name": "Simple Character Generation",
+      "description": "Basic character image generation for testing",
+      "expected_duration": 30,
+      "steps": [
+        "Load character data",
+        "Generate prompt",
+        "Submit to ComfyUI",
+        "Wait for completion",
+        "Validate output"
+      ]
+    },
+    "character_variations": {
+      "name": "Character Variation Testing",
+      "description": "Generate multiple variations of the same character",
+      "expected_duration": 120,
+      "steps": [
+        "Load character data",
+        "Generate base prompt",
+        "Create variations with different seeds",
+        "Submit batch to ComfyUI",
+        "Validate consistency across outputs"
+      ]
+    },
+    "emotion_test": {
+      "name": "Emotion Expression Testing",
+      "description": "Test character emotion expression accuracy",
+      "expected_duration": 90,
+      "steps": [
+        "Load character and emotion data",
+        "Generate emotion-specific prompts",
+        "Submit emotion tests",
+        "Use LLaVA to validate emotions",
+        "Score emotion accuracy"
+      ]
+    }
+  },
+  "validation_thresholds": {
+    "character_consistency": {
+      "minimum_score": 8.5,
+      "target_score": 9.0,
+      "tolerance": 0.5
+    },
+    "style_compliance": {
+      "minimum_score": 9.0,
+      "target_score": 9.5,
+      "tolerance": 0.3
+    },
+    "image_quality": {
+      "minimum_score": 7.0,
+      "target_score": 8.5,
+      "tolerance": 1.0
+    },
+    "generation_time": {
+      "maximum_seconds": 60,
+      "target_seconds": 45,
+      "tolerance": 15
+    },
+    "api_response_time": {
+      "maximum_ms": 5000,
+      "target_ms": 2000,
+      "tolerance": 1000
+    }
+  },
+  "error_scenarios": {
+    "gpu_out_of_memory": {
+      "trigger": "Large batch size or high resolution",
+      "expected_error": "CUDA out of memory",
+      "recovery": "Reduce batch size or resolution"
+    },
+    "invalid_prompt": {
+      "trigger": "Malformed or empty prompt",
+      "expected_error": "Invalid prompt format",
+      "recovery": "Validate and fix prompt"
+    },
+    "service_unavailable": {
+      "trigger": "ComfyUI service down",
+      "expected_error": "Connection refused",
+      "recovery": "Check service health and restart if needed"
+    },
+    "timeout": {
+      "trigger": "Generation takes too long",
+      "expected_error": "Request timeout",
+      "recovery": "Increase timeout or check queue status"
+    }
+  },
+  "performance_baselines": {
+    "image_generation": {
+      "simple_character": {"target": 30, "maximum": 60},
+      "detailed_character": {"target": 45, "maximum": 90},
+      "complex_scene": {"target": 60, "maximum": 120}
+    },
+    "batch_generation": {
+      "4_images": {"target": 90, "maximum": 180},
+      "8_images": {"target": 150, "maximum": 300}
+    },
+    "api_endpoints": {
+      "health_check": {"target": 100, "maximum": 1000},
+      "project_list": {"target": 500, "maximum": 2000},
+      "character_list": {"target": 500, "maximum": 2000},
+      "generation_status": {"target": 200, "maximum": 1000}
+    }
+  }
+}

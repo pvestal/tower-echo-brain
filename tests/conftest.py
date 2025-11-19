@@ -1,11 +1,9 @@
 """
-Pytest Configuration and Fixtures for Board of Directors Test Suite
+Pytest Configuration and Fixtures for Echo Brain Anime Generation Testing
+Provides reusable test fixtures, mock configurations, and test data setup.
 
-This module provides common test fixtures, configuration, and utilities
-for the entire Board of Directors test suite.
-
-Author: Echo Brain Test Suite
-Created: 2025-09-16
+Author: Echo Brain Anime Testing Framework
+Created: 2025-11-19
 """
 
 import pytest
