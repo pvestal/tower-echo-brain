@@ -63,3 +63,4 @@ commitizen>=3.13.0
 # CI/CD utilities
 tox>=4.11.0
 nox>=2023.4.22
+Pillow==10.0.0
