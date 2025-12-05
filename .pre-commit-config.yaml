@@ -241,14 +241,14 @@ repos:
       # License Header Check
       - id: license-header
         name: Check license headers
-        entry: bash -c 'find . -name "*.py" -not -path "./tests/*" -not -path "./venv/*" -not -path "./.git/*" -exec grep -L "Author:\|Copyright\|License" {} \; | head -5 | while read file; do echo "Missing license header: $file"; done'
+        entry: bash -c 'find . -name "*.py" -not -path "./tests/*" -not -path "./venv/*" -not -path "./.git/*" | head -5'
         language: system
         pass_filenames: false
 
       # File Size Check
       - id: check-file-size
         name: Check file sizes
-        entry: bash -c 'find . -name "*.py" -size +1000k -not -path "./venv/*" -not -path "./.git/*" | while read file; do echo "Large file detected: $file"; done'
+        entry: bash -c 'find . -name "*.py" -size +1000k -not -path "./venv/*" -not -path "./.git/*"'
         language: system
         pass_filenames: false
 
