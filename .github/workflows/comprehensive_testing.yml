@@ -81,7 +81,7 @@ jobs:
         safety check --json --output safety-report.json || true
         
     - name: Upload security reports
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: security-reports
         path: |
@@ -136,7 +136,7 @@ jobs:
         name: codecov-${{ matrix.python-version }}
         
     - name: Upload test results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: unit-test-results-${{ matrix.python-version }}
@@ -217,7 +217,7 @@ jobs:
           --timeout=300
           
     - name: Upload integration test results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: integration-test-results
@@ -289,7 +289,7 @@ jobs:
           --output performance-report.html
           
     - name: Upload performance results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: performance-test-results
@@ -335,7 +335,7 @@ jobs:
           --output ai-test-report.html
           
     - name: Upload AI test results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: ai-test-results
@@ -365,7 +365,7 @@ jobs:
         pip install -r test_requirements.txt
         
     - name: Download baseline metrics
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: baseline-metrics
         path: baseline/
@@ -380,7 +380,7 @@ jobs:
           -v
           
     - name: Upload regression results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: regression-test-results
@@ -424,7 +424,7 @@ jobs:
       continue-on-error: true
       
     - name: Upload security results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: security-scan-results
@@ -444,7 +444,7 @@ jobs:
       uses: actions/checkout@v4
       
     - name: Download all test results
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       
     - name: Generate comprehensive test report
       run: |
@@ -453,7 +453,7 @@ jobs:
           --format html
           
     - name: Upload test summary
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: test-summary
         path: test-summary.html
@@ -493,7 +493,7 @@ jobs:
     
     steps:
     - name: Download performance results
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: performance-test-results
         
@@ -504,7 +504,7 @@ jobs:
           --output baseline-metrics.json
           
     - name: Upload baseline metrics
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: baseline-metrics
         path: baseline-metrics.json
