@@ -4,6 +4,7 @@ Database operations for Echo Brain system
 """
 
 import psycopg2
+import psycopg2.extras
 import json
 import logging
 import os
@@ -91,9 +92,9 @@ class EchoDatabase:
                      clarifying_questions, metadata)
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (query, response, model_used, processing_time,
-                      json.dumps(escalation_path), conversation_id or "", user_id, intent or "",
-                      confidence, requires_clarification, json.dumps(clarifying_questions or []),
-                      json.dumps(metadata)))
+                      psycopg2.extras.Json(escalation_path), conversation_id or "", user_id, intent or "",
+                      confidence, requires_clarification, psycopg2.extras.Json(clarifying_questions or []),
+                      psycopg2.extras.Json(metadata)))
 
                 conn.commit()
                 cursor.close()
