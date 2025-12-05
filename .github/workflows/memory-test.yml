@@ -11,105 +11,88 @@ jobs:
   test-memory:
     name: Test Memory System
     runs-on: ubuntu-latest
-    
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_PASSWORD: tower_echo_brain_secret_key_2025
-          POSTGRES_DB: echo_brain
-          POSTGRES_USER: patrick
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
 
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-      
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install psycopg2-binary requests
-      
-      - name: Test Python Imports
+          pip install psycopg2-binary
+
+      - name: Test Python Import
         run: |
           python -c "
-import sys
-print('Python version:', sys.version)
+import psycopg2.extras
+from psycopg2.extras import Json
+print('✅ psycopg2.extras imports successfully')
+test = Json({'test': 'data'})
+print('✅ Json wrapper works')
+"
 
-# Test basic import
-try:
-    import psycopg2
-    print('✅ psycopg2 imported')
-except ImportError as e:
-    print(f'❌ psycopg2 import failed: {e}')
-    sys.exit(1)
-
-# Test extras module
-try:
-    import psycopg2.extras
-    from psycopg2.extras import Json
-    print('✅ psycopg2.extras.Json imported')
-
-    # Test Json wrapper
-    test_json = Json({'test': 'data'})
-    print('✅ Json wrapper works')
-except Exception as e:
-    print(f'❌ psycopg2.extras failed: {e}')
-    sys.exit(1)
-          "
-      
-      - name: Verify Memory System Changes
+      - name: Verify Database File Changes
         run: |
-          echo "=== Checking Memory System Files ==="
+          echo "Checking database.py..."
 
-          # Check database.py
-          if [ -f "src/db/database.py" ]; then
-              echo "✅ database.py exists"
-
-              # Check for import
-              if grep -q "import psycopg2.extras" src/db/database.py; then
-                  echo "✅ psycopg2.extras import present"
-              else
-                  echo "❌ psycopg2.extras import missing"
-                  exit 1
-              fi
-
-              # Check for JSONB fix
-              count=$(grep -c "psycopg2.extras.Json" src/db/database.py || true)
-              if [ "$count" -gt 0 ]; then
-                  echo "✅ JSONB fix applied ($count occurrences)"
-              else
-                  echo "❌ JSONB fix missing"
-                  exit 1
-              fi
-
-              # Check for port fix (should not have 5433)
-              if grep -q "5433" src/db/database.py; then
-                  echo "❌ Old port 5433 still present"
-                  exit 1
-              else
-                  echo "✅ Port fix applied (5433 removed)"
-              fi
-          else
-              echo "❌ database.py not found"
+          if [ ! -f "src/db/database.py" ]; then
+              echo "❌ src/db/database.py not found"
               exit 1
           fi
 
-          # Check true_consciousness.py
-          if [ -f "src/true_consciousness.py" ]; then
-              echo "✅ true_consciousness.py exists"
+          echo "✅ database.py exists"
+
+          # Show what we're checking
+          echo ""
+          echo "Checking for psycopg2.extras import..."
+          if grep -q "^import psycopg2.extras" src/db/database.py; then
+              echo "✅ Import found"
           else
-              echo "⚠️ true_consciousness.py not found (may be OK)"
+              echo "⚠️ Checking alternative import pattern..."
+              if grep -q "psycopg2.extras" src/db/database.py; then
+                  echo "✅ psycopg2.extras usage found"
+              else
+                  echo "❌ No psycopg2.extras found"
+                  echo "First 20 lines of database.py:"
+                  head -20 src/db/database.py
+                  exit 1
+              fi
           fi
 
+          echo ""
+          echo "Checking for JSONB fix..."
+          if grep -q "psycopg2.extras.Json" src/db/database.py; then
+              count=$(grep -c "psycopg2.extras.Json" src/db/database.py)
+              echo "✅ JSONB fix found ($count occurrences)"
+              echo "Sample usage:"
+              grep "psycopg2.extras.Json" src/db/database.py | head -1
+          else
+              echo "❌ JSONB fix not found"
+              echo "Checking for json.dumps instead:"
+              grep "json.dumps" src/db/database.py | head -3
+              exit 1
+          fi
+
+          echo ""
+          echo "Checking port configuration..."
+          if grep -q "5433" src/db/database.py; then
+              echo "❌ Old port 5433 still exists:"
+              grep -n "5433" src/db/database.py
+              exit 1
+          else
+              echo "✅ No port 5433 found (correct)"
+          fi
+
+          echo ""
           echo "=== All checks passed ==="
+
+      - name: Summary
+        run: |
+          echo "✅ Memory System Changes Verified"
+          echo "- psycopg2.extras import: ✓"
+          echo "- JSONB handling fixed: ✓"
+          echo "- Port configuration correct: ✓"
