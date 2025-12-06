@@ -1,0 +1,41 @@
+{
+  "circuits": {
+    "deepseek-r1:14b": {
+      "is_open": false,
+      "failure_count": 0
+    },
+    "llama3.2:8b": {
+      "is_open": false,
+      "failure_count": 0
+    },
+    "mixtral:8x7b": {
+      "is_open": false,
+      "failure_count": 0
+    },
+    "deepseek-r1:32b": {
+      "is_open": false,
+      "failure_count": 0
+    },
+    "tinyllama:latest": {
+      "is_open": false,
+      "failure_count": 0
+    },
+    "llama3.2:3b": {
+      "is_open": false,
+      "failure_count": 0
+    },
+    "qwen2.5-coder:32b": {
+      "is_open": false,
+      "failure_count": 0
+    },
+    "llama3.1:70b": {
+      "is_open": false,
+      "failure_count": 0
+    },
+    "deepseek-coder:latest": {
+      "is_open": false,
+      "failure_count": 0
+    }
+  },
+  "saved_at": "2025-12-06T16:34:24.305386"
+}

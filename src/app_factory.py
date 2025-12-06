@@ -27,6 +27,16 @@ from veteran_guardian_endpoints import veteran_router
 from telegram_general_chat import general_telegram_router
 from telegram_integration import telegram_router
 
+# Resilient model management
+try:
+    from src.managers.echo_integration import router as resilient_router
+    resilient_available = True
+    print("✅ Resilient model router imported successfully")
+except ImportError as e:
+    resilient_available = False
+    print(f"❌ Failed to import resilient router: {e}")
+    resilient_router = None
+
 def create_app() -> FastAPI:
     """Create and configure FastAPI application"""
     # Load environment variables
@@ -63,6 +73,11 @@ def create_app() -> FastAPI:
     app.include_router(veteran_router, prefix="", tags=["veteran"])
     app.include_router(general_telegram_router, prefix="", tags=["telegram"])
     app.include_router(telegram_router, prefix="", tags=["telegram"])
+
+    # Resilient model management
+    if resilient_available and resilient_router:
+        app.include_router(resilient_router, prefix="", tags=["resilient-models"])
+        print("✅ Resilient model routes added to app")
 
     # Static files
     static_dir = "/opt/tower-echo-brain/static"
