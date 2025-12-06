@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 from src.api.routes import router as main_router
 from src.api.system_metrics import router as system_metrics_router
 from src.api.enhanced_system_metrics import router as enhanced_system_metrics_router
+from src.api.gpu_monitor import router as gpu_monitor_router
 from src.api.neural_metrics import router as neural_metrics_router
 from src.api.learning_routes import router as learning_router
 from src.api.autonomous_routes import router as autonomous_router
@@ -48,6 +49,7 @@ def create_app() -> FastAPI:
     app.include_router(main_router, prefix="", tags=["main"])
     app.include_router(system_metrics_router, prefix="", tags=["metrics"])
     app.include_router(enhanced_system_metrics_router, prefix="", tags=["enhanced-metrics"])
+    app.include_router(gpu_monitor_router, prefix="", tags=["gpu-monitoring"])
     app.include_router(neural_metrics_router, prefix="", tags=["neural"])
     app.include_router(learning_router, prefix="", tags=["learning"])
     app.include_router(autonomous_router, prefix="", tags=["autonomous"])

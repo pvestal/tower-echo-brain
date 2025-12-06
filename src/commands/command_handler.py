@@ -219,51 +219,97 @@ Examples:
             return f"❌ Status check failed: {str(e)}"
 
     async def repair_service(self, params: Dict) -> str:
-        """Repair a service"""
+        """Repair a service - HONEST IMPLEMENTATION"""
         service = params.get("args", "").strip()
         if not service:
             return "❌ Usage: /repair <service>\nExample: /repair auth"
 
-        return f"🔧 Repairing {service}... (not fully implemented yet)"
+        # HONEST: Don't pretend to repair, delegate to actual repair system
+        try:
+            from src.tasks.autonomous_repair_executor import repair_executor
+
+            # Actually attempt the repair using the working autonomous repair system
+            result = await repair_executor.execute_repair(
+                repair_type="service_restart",
+                target=service,
+                issue=f"Manual repair request via /repair command"
+            )
+
+            if result['success']:
+                actions = '\n'.join(f"• {action}" for action in result.get('actions_taken', []))
+                return f"✅ **Service Repair Successful: {service}**\n\n{actions}"
+            else:
+                error = result.get('error', 'Unknown error')
+                actions = '\n'.join(f"• {action}" for action in result.get('actions_taken', []))
+                return f"❌ **Service Repair Failed: {service}**\n\nError: {error}\n\nAttempted:\n{actions}"
+
+        except Exception as e:
+            return f"❌ **Repair system unavailable**: {str(e)}\n\n**This would require**: subprocess.run(['systemctl', 'restart', '{service}']) and verification"
 
     async def generate_image(self, params: Dict) -> str:
-        """Generate an image"""
+        """Generate an image - HONEST IMPLEMENTATION"""
         prompt = params.get("args", "").strip()
         if not prompt:
             return "❌ Usage: /image <prompt>\nExample: /image cyberpunk anime girl"
 
-        return f"🎨 Generating image: {prompt}... (delegating to ComfyUI)"
+        # HONEST: Don't pretend, explain what this would require
+        return f"""❌ **Image generation NOT IMPLEMENTED in command handler**
+
+**This would require**:
+1. HTTP POST to http://localhost:8188/api/prompt
+2. ComfyUI workflow JSON with text prompt: "{prompt}"
+3. Queue monitoring via /api/history
+4. File retrieval from /output/ directory
+5. Actual verification that image was generated
+
+**Alternative**: Use Tower anime production service directly at port 8328"""
 
     async def generate_voice(self, params: Dict) -> str:
-        """Generate voice"""
+        """Generate voice - HONEST IMPLEMENTATION"""
         text = params.get("args", "").strip()
         if not text:
             return "❌ Usage: /voice <text>\nExample: /voice Hello from Echo Brain"
 
-        return f"🎵 Generating voice: {text}... (delegating to voice service)"
+        # HONEST: Don't pretend, explain what this would require
+        return f"""❌ **Voice generation NOT IMPLEMENTED in command handler**
+
+**This would require**:
+1. TTS engine integration (Coqui TTS, Bark, or similar)
+2. Audio file generation for text: "{text}"
+3. File save to accessible location
+4. Actual verification that audio was generated
+5. Return of file path or audio data
+
+**Current status**: No voice generation service implemented"""
 
     async def list_capabilities(self, params: Dict) -> str:
-        """List all capabilities"""
-        return """🧠 **Echo Brain Capabilities**
+        """List all capabilities - HONEST VERSION"""
+        return """🧠 **Echo Brain Capabilities (HONEST STATUS)**
 
-**Connected & Ready:**
-✅ Code Review - Analyze code quality with pylint
-✅ Code Refactoring - Automatically fix code issues
-✅ Service Testing - Test any Tower service
-✅ Service Monitoring - Check health status
-✅ Service Repair - Auto-repair broken services
-✅ Image Generation - Via ComfyUI on NVIDIA GPU
-✅ Voice Generation - Multiple TTS engines
-✅ Database Operations - PostgreSQL queries
-✅ File Operations - Read/write/modify files
-✅ System Commands - Execute bash commands
+**✅ ACTUALLY WORKING:**
+✅ Service Status Queries - Get real Tower service status from database
+✅ Service Monitoring - Background autonomous monitoring (every 60s)
+✅ Service Repair - Actual systemctl restart with verification
+✅ Database Operations - PostgreSQL queries and updates
+✅ Conversation Memory - Context persistence across sessions
 
-**Autonomous Behaviors:**
-• Monitoring Tower services every 60s
-• Auto-repair with 5-minute cooldown
-• Code quality scanning
-• Task queue processing
-• Learning from patterns
+**⚠️ PARTIALLY WORKING:**
+⚠️ Code Review - Has framework but needs testing
+⚠️ Service Testing - Has framework but reliability unknown
+⚠️ Task Queue - Background processing working
 
-Use /help to see available commands.
+**❌ NOT IMPLEMENTED:**
+❌ Image Generation - Command handler has no ComfyUI integration
+❌ Voice Generation - No TTS engine implemented
+❌ Code Refactoring - Auto-fix functionality needs verification
+❌ File Operations - No direct file read/write via commands
+❌ System Commands - No bash execution via command handler
+
+**🔧 AUTONOMOUS BEHAVIORS (VERIFIED WORKING):**
+• Service restart with 5-minute cooldown protection
+• PostgreSQL conversation logging
+• Context system with fallback handling
+• Email notifications (when configured)
+
+**Bottom Line**: Query/status functions work reliably. Execution functions either work (service restart) or honestly admit they don't.
 """

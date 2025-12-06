@@ -25,13 +25,13 @@ class ModelSelector:
 
         # Models that EXIST and WORK
         self.model_hierarchy = {
-            "quick": "llama3.2:3b",  # FIXED: Use better model for basic queries
+            "quick": "tinyllama:latest",
             "standard": "llama3.2:3b",
             "professional": "mistral:7b-instruct",
             "expert": "qwen2.5-coder:32b",
             "genius": "llama3.1:70b",
             # Map legacy names
-            "tiny": "llama3.2:3b",  # FIXED: No more tinyllama for data retrieval
+            "tiny": "tinyllama:latest",
             "small": "llama3.2:3b",
             "medium": "mistral:7b-instruct",
             "large": "qwen2.5-coder:32b",

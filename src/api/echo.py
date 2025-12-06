@@ -346,19 +346,20 @@ async def query_echo(request: QueryRequest):
         if request.intelligence_level and request.intelligence_level != "auto":
             context["requested_level"] = request.intelligence_level
 
-        # Use cognitive model selection if available
+        # FIXED: Always use direct query_model instead of broken progressive_escalation
         if selected_model:
             logger.info(f"🧠 Using cognitively selected model: {selected_model} - {selection_reason}")
-            result = await intelligence_router.query_model(selected_model, request.query)
+            result = await intelligence_router.query_model(selected_model, request.query, context)
             if result["success"]:
                 result["intelligence_level"] = intelligence_level
                 result["escalation_path"] = [f"cognitive_selection:{selected_model}"]
                 result["decision_reason"] = selection_reason
             else:
-                logger.warning(f"⚠️ Cognitive model {selected_model} failed, falling back to progressive escalation")
-                result = await intelligence_router.progressive_escalation(request.query, context)
+                logger.warning(f"⚠️ Cognitive model {selected_model} failed, trying fallback model")
+                result = await intelligence_router.query_model("llama3.2:3b", request.query, context)
         else:
-            result = await intelligence_router.progressive_escalation(request.query, context)
+            # Use direct query_model instead of broken progressive_escalation
+            result = await intelligence_router.query_model("llama3.2:3b", request.query, context)
 
         if result["success"]:
             processing_time = time.time() - start_time

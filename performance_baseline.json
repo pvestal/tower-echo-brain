@@ -1,0 +1,34 @@
+{
+  "version": "simple_echo_v1",
+  "timestamp": 1764912495.8469894,
+  "results": {
+    "health": {
+      "sequential": {
+        "avg": 0.000793910026550293,
+        "min": 0.0005879402160644531,
+        "max": 0.0018243789672851562,
+        "success_rate": 1.0
+      },
+      "concurrent": {
+        "avg": 0.0020339488983154297,
+        "max": 0.0025920867919921875,
+        "success_rate": 1.0
+      }
+    },
+    "session_context": {
+      "sequential": {
+        "avg": 0.000937509536743164,
+        "min": 0.0007376670837402344,
+        "max": 0.0012285709381103516,
+        "success_rate": 1.0
+      },
+      "concurrent": {
+        "avg": 0.0022364139556884767,
+        "max": 0.002437114715576172,
+        "success_rate": 1.0
+      }
+    },
+    "query_processing": 0.0060656070709228516,
+    "memory_mb": 29.25
+  }
+}

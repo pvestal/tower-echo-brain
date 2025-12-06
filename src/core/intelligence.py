@@ -117,6 +117,9 @@ class EchoIntelligenceRouter:
             echo_suffix = "\n\nEcho:"
             full_prompt = system_prompt + conversation_context + omniscient_context + user_prefix + prompt + echo_suffix
 
+            # Log basic prompt info
+            logger.info(f"🔍 Prompt length: {len(full_prompt)} chars, context: {len(omniscient_context)} chars")
+
             async with aiohttp.ClientSession() as session:
                 payload = {
                     "model": model,
@@ -135,27 +138,27 @@ class EchoIntelligenceRouter:
                         processing_time = asyncio.get_event_loop().time() - start_time
                         response_text = result.get("response", "")
 
-                        # Validate and reload if needed for code generation tasks
-                        if validate_code and self.decision_engine:
-                            final_response, final_model, validation = await self.decision_engine.validate_and_reload_if_needed(
-                                response_text,
-                                prompt,
-                                model,
-                                "code" if self._is_code_prompt(prompt) else "general"
-                            )
+                        # DISABLED: Validation system was corrupting responses
+                        # if validate_code and self.decision_engine:
+                        #     final_response, final_model, validation = await self.decision_engine.validate_and_reload_if_needed(
+                        #         response_text,
+                        #         prompt,
+                        #         model,
+                        #         "code" if self._is_code_prompt(prompt) else "general"
+                        #     )
 
-                            if validation.is_gibberish or validation.requires_reload:
-                                logger.info(f"🔄 Reloaded model from {model} to {final_model} due to quality issues")
+                        #     if validation.is_gibberish or validation.requires_reload:
+                        #         logger.info(f"🔄 Reloaded model from {model} to {final_model} due to quality issues")
 
-                            return {
-                                "success": True,
-                                "response": final_response,
-                                "processing_time": processing_time,
-                                "model": final_model,
-                                "original_model": model if final_model != model else None,
-                                "validation_score": validation.quality_score if validation else None,
-                                "was_reloaded": final_model != model
-                            }
+                        #     return {
+                        #         "success": True,
+                        #         "response": final_response,
+                        #         "processing_time": processing_time,
+                        #         "model": final_model,
+                        #         "original_model": model if final_model != model else None,
+                        #         "validation_score": validation.quality_score if validation else None,
+                        #         "was_reloaded": final_model != model
+                        #     }
 
                         return {
                             "success": True,

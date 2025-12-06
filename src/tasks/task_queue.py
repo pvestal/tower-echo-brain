@@ -135,7 +135,7 @@ class TaskQueue:
                     return {
                         "database": db_data.get("database", "echo_brain"),
                         "user": db_data.get("user", "patrick"),
-                        "host": db_data.get("host", "***REMOVED***"),
+                        "host": db_data.get("host", "localhost"),
                         "password": db_data.get("password"),
                         "port": int(db_data.get("port", 5432))
                     }
@@ -146,7 +146,7 @@ class TaskQueue:
         return {
             "database": os.environ.get("DB_NAME", "echo_brain"),
             "user": os.environ.get("DB_USER", "patrick"),
-            "host": os.environ.get("DB_HOST", "***REMOVED***"),
+            "host": os.environ.get("DB_HOST", "localhost"),
             "password": os.environ.get("DB_PASSWORD", "***REMOVED***"),
             "port": int(os.environ.get("DB_PORT", 5432))
         }

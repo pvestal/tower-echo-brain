@@ -567,8 +567,8 @@ class ResilientOmniscientContext:
 
     async def _build_context_internal(self, query: str, conversation_id: str) -> str:
         """Internal context building with error handling"""
-        # Get relevant context with resilient search
-        context_items = await self.search_context_resilient(query, conversation_id, max_results=2)
+        # Get relevant context with resilient search - get more results for better Tower data
+        context_items = await self.search_context_resilient(query, conversation_id, max_results=5)
 
         # Build minimal context summary
         if not context_items:
@@ -576,17 +576,31 @@ class ResilientOmniscientContext:
 
         summary = "📋 CONTEXT:\n"
 
-        # Add personal info from fallback data
-        if 'name' in query.lower() or 'patrick' in query.lower():
-            summary += "• Name: Patrick\n"
+        # Prioritize Tower service data first
+        tower_items = [item for item in context_items if item.get('source_category') == 'tower_services']
+        system_items = [item for item in context_items if item.get('source_category') == 'system_facts']
+        other_items = [item for item in context_items if item.get('source_category') not in ['tower_services', 'system_facts']]
 
-        if any(term in query.lower() for term in ['anime', 'music', 'project', 'work']):
-            summary += "• Projects: anime production, music projects\n"
+        # Add Tower service info FIRST
+        if tower_items:
+            summary += "🏗️ TOWER SERVICES:\n"
+            for item in tower_items:
+                # Extract service status from the Tower service data
+                if 'TOWER_SERVICE_DATA:' in item['title']:
+                    summary += f"• {item['title']}\n"
+                else:
+                    summary += f"• {item['title']}: {item['content_preview'][:100]}...\n"
 
-        # Add relevant context items
-        if context_items:
-            summary += "📁 RELEVANT:\n"
-            for item in context_items:
+        # Add system facts
+        if system_items:
+            summary += "⚡ SYSTEM:\n"
+            for item in system_items:
+                summary += f"• {item['title']}: {item['content_preview'][:100]}...\n"
+
+        # Add other relevant items last
+        if other_items:
+            summary += "📁 OTHER:\n"
+            for item in other_items[:2]:  # Limit other items to 2
                 summary += f"• {item['title']}: {item['content_preview'][:100]}...\n"
 
         return summary
@@ -647,7 +661,7 @@ def get_resilient_omniscient_context() -> ResilientOmniscientContext:
 
     if resilient_context is None:
         db_config = {
-            'host': '***REMOVED***',
+            'host': 'localhost',
             'user': 'patrick',
             'password': '***REMOVED***',
             'database': 'echo_brain'
