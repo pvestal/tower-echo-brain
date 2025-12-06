@@ -497,28 +497,24 @@ Review the full repair log at: /opt/tower-echo-brain/logs/autonomous_repairs.log
             logger.error(f"Failed to send repair notification: {e}")
 
     async def _send_email(self, subject: str, body: str):
-        """Send email via Gmail SMTP"""
+        """Send email via centralized email manager"""
 
         try:
-            # For now, log the email content
-            logger.info(f"📧 Email Notification:\nSubject: {subject}\n{body}")
+            # Import the centralized email manager
+            from src.utils.email_manager import email_manager
 
-            # Try to send if credentials are available
-            if self.app_password:
-                msg = MIMEMultipart()
-                msg['From'] = self.smtp_config['from_email']
-                msg['To'] = self.smtp_config['to_email']
-                msg['Subject'] = subject
-                msg.attach(MIMEText(body, 'plain'))
+            # Send via the email manager
+            success = await email_manager.send_email(subject, body)
 
-                with smtplib.SMTP('localhost', 25) as server:
-                    # Local Postfix relay - no auth needed
-                    server.send_message(msg)
-
-                logger.info("✅ Email sent successfully")
+            if success:
+                logger.info("✅ Email sent successfully via email manager")
             else:
-                logger.warning("⚠️ SMTP credentials not configured - email logged only")
+                logger.warning("⚠️ Email could not be sent but was logged")
 
+        except ImportError:
+            # Fallback to logging if email manager not available
+            logger.warning("Email manager not available - logging email content")
+            logger.info(f"📧 Email Notification:\nSubject: {subject}\n{body}")
         except Exception as e:
             logger.error(f"Failed to send email: {e}")
 

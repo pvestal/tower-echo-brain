@@ -1,0 +1,10 @@
+{
+  "file_hashes": {
+    "/opt/tower-echo-brain/src/execution/__init__.py": "8933c2e504380ffe",
+    "/opt/tower-echo-brain/src/execution/verified_executor.py": "710eaa61262b7e3f",
+    "/opt/tower-echo-brain/src/execution/safe_refactor.py": "631d8cc9c58ecb59",
+    "/opt/tower-echo-brain/src/execution/safe_executor.py": "8f62f5247b0faee0",
+    "/opt/tower-echo-brain/src/execution/incremental_analyzer.py": "979b469677d2f291"
+  },
+  "last_full_scan": null
+}
