@@ -10,6 +10,16 @@ from dotenv import load_dotenv
 
 # Core routers
 from src.api.routes import router as main_router
+
+# Verified execution routes
+try:
+    from src.api.verified_execution_routes import router as verified_execution_router
+    verified_execution_available = True
+    print("✅ Verified execution router imported successfully")
+except ImportError as e:
+    verified_execution_available = False
+    print(f"❌ Failed to import verified execution router: {e}")
+    verified_execution_router = None
 from src.api.system_metrics import router as system_metrics_router
 from src.api.enhanced_system_metrics import router as enhanced_system_metrics_router
 from src.api.gpu_monitor import router as gpu_monitor_router
@@ -57,6 +67,9 @@ def create_app() -> FastAPI:
 
     # Include routers
     app.include_router(main_router, prefix="", tags=["main"])
+    if verified_execution_available and verified_execution_router:
+        app.include_router(verified_execution_router, prefix="", tags=["verified-execution"])
+        print("✅ Verified execution routes added to app")
     app.include_router(system_metrics_router, prefix="", tags=["metrics"])
     app.include_router(enhanced_system_metrics_router, prefix="", tags=["enhanced-metrics"])
     app.include_router(gpu_monitor_router, prefix="", tags=["gpu-monitoring"])
