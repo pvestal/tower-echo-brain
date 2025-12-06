@@ -45,7 +45,7 @@ class EchoDatabase:
                     return {
                         "database": db_data.get("database", "echo_brain"),
                         "user": db_data.get("user", "patrick"),
-                        "host": db_data.get("host", "192.168.50.135"),
+                        "host": db_data.get("host", "localhost"),
                         "password": db_data.get("password"),
                         "port": int(db_data.get("port", 5432))
                     }
@@ -56,7 +56,7 @@ class EchoDatabase:
         return {
             "database": os.environ.get("DB_NAME", "echo_brain"),
             "user": os.environ.get("DB_USER", "patrick"),
-            "host": os.environ.get("DB_HOST", "192.168.50.135"),
+            "host": os.environ.get("DB_HOST", "localhost"),
             "password": os.environ.get("DB_PASSWORD", "tower_echo_brain_secret_key_2025"),
             "port": os.environ.get("DB_PORT", 5432)
         }

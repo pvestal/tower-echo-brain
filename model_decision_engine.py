@@ -154,7 +154,7 @@ class ModelDecisionEngine:
         # Model configurations with actual installed models
         self.local_models = {
             ModelTier.TINY: [
-                {"name": "tinyllama:latest", "params": 1, "specialization": None}
+                {"name": "llama3.2:3b", "params": 3, "specialization": None}  # Use better base model
             ],
             ModelTier.SMALL: [
                 {"name": "deepseek-coder:latest", "params": 1.3, "specialization": "coding"},
@@ -310,8 +310,8 @@ class ModelDecisionEngine:
         except Exception as e:
             logger.warning(f"Using default thresholds: {e}")
             self.thresholds = {
-                "tiny": {"min": 0, "max": 5, "auto_escalate": True},
-                "small": {"min": 5, "max": 15, "auto_escalate": True},
+                "tiny": {"min": 0, "max": 2, "auto_escalate": True},  # Very basic only
+                "small": {"min": 2, "max": 15, "auto_escalate": True},  # Data retrieval starts here
                 "medium": {"min": 15, "max": 30, "auto_escalate": True},
                 "large": {"min": 30, "max": 50, "auto_escalate": True},
                 "cloud": {"min": 50, "max": 999, "auto_escalate": False}

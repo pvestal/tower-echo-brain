@@ -75,10 +75,9 @@ class EchoBrainStartup:
             asyncio.create_task(self.background_worker.start())
             logger.info("🔄 Background worker started")
 
-            # Start autonomous behaviors (temporarily disabled to debug startup)
-            # asyncio.create_task(self.autonomous_behaviors.start())
-            # logger.info("🤖 Autonomous behaviors started")
-            logger.info("⚠️ Autonomous behaviors temporarily disabled for debugging")
+            # Start autonomous behaviors
+            asyncio.create_task(self.autonomous_behaviors.start())
+            logger.info("🤖 Autonomous behaviors started")
 
         except Exception as e:
             logger.error(f"❌ Background service startup failed: {e}")

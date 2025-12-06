@@ -28,7 +28,7 @@ class FixedModelSelector:
             "code_generation": ("medium", "large", "expert"),  # Need good code models
             "code_modification": ("large", "expert", "expert"),  # Need precision
             "analysis": ("medium", "large", "expert"),  # Need analytical capability
-            "system_query": ("tiny", "tiny", "small"),  # Fast responses
+            "system_query": ("small", "medium", "large"),  # Need reliable data retrieval
             "general": ("tiny", "small", "medium"),  # Escalate as needed
             "image_generation": ("medium", "medium", "medium"),  # ComfyUI handles this
             "anime_generation": ("medium", "medium", "medium"),  # ComfyUI handles this

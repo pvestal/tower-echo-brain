@@ -47,7 +47,7 @@ class ComplexityAnalyzer:
 
     # Model mapping (matches complexity_thresholds table)
     TIER_TO_MODEL = {
-        "tiny": "tinyllama:latest",
+        "tiny": "llama3.2:3b",  # FIXED: No more tinyllama for any queries
         "small": "llama3.2:3b",
         "medium": "llama3.2:3b",
         "large": "qwen2.5-coder:32b",
