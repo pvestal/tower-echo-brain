@@ -7,12 +7,14 @@ import asyncio
 import json
 import logging
 import time
-from typing import Dict, List, Optional, Any
-import requests
+from typing import Any, Dict, List, Optional
+
 import numpy as np
+import requests
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 
 class AppleMusicBPMAnalyzer:
     """Enhanced Apple Music integration with BPM analysis for anime video synchronization"""
@@ -36,21 +38,26 @@ class AppleMusicBPMAnalyzer:
             "trance": {"base": 132, "range": (128, 140), "variance": 0.1},
             "j_pop": {"base": 120, "range": (100, 140), "variance": 0.2},
             "anime_opening": {"base": 140, "range": (120, 160), "variance": 0.25},
-            "orchestral": {"base": 100, "range": (60, 120), "variance": 0.3}
+            "orchestral": {"base": 100, "range": (60, 120), "variance": 0.3},
         }
 
-    async def analyze_video_for_music_sync(self, video_analysis: Dict) -> Dict[str, Any]:
+    async def analyze_video_for_music_sync(
+        self, video_analysis: Dict
+    ) -> Dict[str, Any]:
         """
         Analyze video characteristics and find optimal Apple Music tracks for synchronization
         """
         logger.info("Starting Apple Music BPM analysis for video sync")
 
         # Extract video characteristics
-        video_bpm_range = video_analysis.get('recommended_bpm_range', (120, 140))
-        project_context = video_analysis.get('project_context', {})
-        genre_recommendations = video_analysis.get('genre_recommendations', [])
-        duration = video_analysis.get('metadata', {}).get('duration', 10.0)
-        action_intensity = video_analysis.get('visual_analysis', {}).get('action_intensity', 0.7)
+        video_bpm_range = video_analysis.get(
+            "recommended_bpm_range", (120, 140))
+        project_context = video_analysis.get("project_context", {})
+        genre_recommendations = video_analysis.get("genre_recommendations", [])
+        duration = video_analysis.get("metadata", {}).get("duration", 10.0)
+        action_intensity = video_analysis.get("visual_analysis", {}).get(
+            "action_intensity", 0.7
+        )
 
         # Search for matching tracks
         search_results = await self._search_matching_tracks(
@@ -61,15 +68,17 @@ class AppleMusicBPMAnalyzer:
         analyzed_tracks = []
         for track in search_results:
             bpm_analysis = await self._analyze_track_bpm(track, video_analysis)
-            if bpm_analysis['compatibility_score'] > 0.6:
-                analyzed_tracks.append({
-                    **track,
-                    'bpm_analysis': bpm_analysis,
-                    'sync_potential': bpm_analysis['sync_potential']
-                })
+            if bpm_analysis["compatibility_score"] > 0.6:
+                analyzed_tracks.append(
+                    {
+                        **track,
+                        "bpm_analysis": bpm_analysis,
+                        "sync_potential": bpm_analysis["sync_potential"],
+                    }
+                )
 
         # Sort by sync potential
-        analyzed_tracks.sort(key=lambda x: x['sync_potential'], reverse=True)
+        analyzed_tracks.sort(key=lambda x: x["sync_potential"], reverse=True)
 
         return {
             "video_analysis": video_analysis,
@@ -77,21 +86,32 @@ class AppleMusicBPMAnalyzer:
             "search_summary": {
                 "total_searched": len(search_results),
                 "compatible_tracks": len(analyzed_tracks),
-                "best_match_score": analyzed_tracks[0]['sync_potential'] if analyzed_tracks else 0,
-                "search_time": time.time()
+                "best_match_score": (
+                    analyzed_tracks[0]["sync_potential"] if analyzed_tracks else 0
+                ),
+                "search_time": time.time(),
             },
-            "recommendation_strategy": self._create_recommendation_strategy(video_analysis, analyzed_tracks)
+            "recommendation_strategy": self._create_recommendation_strategy(
+                video_analysis, analyzed_tracks
+            ),
         }
 
-    async def _search_matching_tracks(self, bpm_range: tuple, project_context: Dict,
-                                    genre_recommendations: List[Dict], duration: float) -> List[Dict]:
+    async def _search_matching_tracks(
+        self,
+        bpm_range: tuple,
+        project_context: Dict,
+        genre_recommendations: List[Dict],
+        duration: float,
+    ) -> List[Dict]:
         """Search Apple Music for tracks matching video characteristics"""
 
         all_tracks = []
-        project_name = project_context.get('project', 'Generic')
+        project_name = project_context.get("project", "Generic")
 
         # Create targeted search queries based on project
-        search_queries = self._generate_search_queries(project_context, genre_recommendations)
+        search_queries = self._generate_search_queries(
+            project_context, genre_recommendations
+        )
 
         for query_info in search_queries:
             try:
@@ -99,26 +119,31 @@ class AppleMusicBPMAnalyzer:
 
                 # Call Apple Music search API
                 response = await self._call_apple_music_search(
-                    query_info['query'],
-                    limit=25,
-                    filters=query_info.get('filters', {})
+                    query_info["query"], limit=25, filters=query_info.get("filters", {})
                 )
 
-                if response.get('success', False):
-                    tracks = response.get('tracks', [])
-                    logger.info(f"Found {len(tracks)} tracks for query: {query_info['query']}")
+                if response.get("success", False):
+                    tracks = response.get("tracks", [])
+                    logger.info(
+                        f"Found {len(tracks)} tracks for query: {query_info['query']}"
+                    )
 
                     # Filter and enhance tracks
                     for track in tracks:
-                        enhanced_track = await self._enhance_track_data(track, query_info)
-                        if self._passes_initial_filter(enhanced_track, bpm_range, duration):
+                        enhanced_track = await self._enhance_track_data(
+                            track, query_info
+                        )
+                        if self._passes_initial_filter(
+                            enhanced_track, bpm_range, duration
+                        ):
                             all_tracks.append(enhanced_track)
 
                 else:
                     logger.warning(f"Search failed for: {query_info['query']}")
 
             except Exception as e:
-                logger.error(f"Error searching for '{query_info['query']}': {e}")
+                logger.error(
+                    f"Error searching for '{query_info['query']}': {e}")
                 continue
 
         # Remove duplicates and limit results
@@ -127,105 +152,112 @@ class AppleMusicBPMAnalyzer:
 
         return unique_tracks[:50]  # Limit to top 50 for analysis
 
-    def _generate_search_queries(self, project_context: Dict, genre_recommendations: List[Dict]) -> List[Dict]:
+    def _generate_search_queries(
+        self, project_context: Dict, genre_recommendations: List[Dict]
+    ) -> List[Dict]:
         """Generate targeted search queries for different projects"""
 
-        project = project_context.get('project', 'Generic')
+        project = project_context.get("project", "Generic")
         queries = []
 
         if project == "Cyberpunk Goblin Slayer":
             # Cyberpunk-specific searches
-            queries.extend([
-                {
-                    "query": "synthwave cyberpunk instrumental",
-                    "priority": 1.0,
-                    "filters": {"instrumental": True, "genre": "electronic"}
-                },
-                {
-                    "query": "dark electronic cyberpunk",
-                    "priority": 0.9,
-                    "filters": {"mood": "dark", "genre": "electronic"}
-                },
-                {
-                    "query": "retrowave neon synthpop",
-                    "priority": 0.8,
-                    "filters": {"decade": "2010s", "genre": "synthpop"}
-                },
-                {
-                    "query": "cyberpunk 2077 soundtrack style",
-                    "priority": 0.85,
-                    "filters": {"cinematic": True, "futuristic": True}
-                },
-                {
-                    "query": "industrial electronic dark ambient",
-                    "priority": 0.75,
-                    "filters": {"ambient": True, "industrial": True}
-                }
-            ])
+            queries.extend(
+                [
+                    {
+                        "query": "synthwave cyberpunk instrumental",
+                        "priority": 1.0,
+                        "filters": {"instrumental": True, "genre": "electronic"},
+                    },
+                    {
+                        "query": "dark electronic cyberpunk",
+                        "priority": 0.9,
+                        "filters": {"mood": "dark", "genre": "electronic"},
+                    },
+                    {
+                        "query": "retrowave neon synthpop",
+                        "priority": 0.8,
+                        "filters": {"decade": "2010s", "genre": "synthpop"},
+                    },
+                    {
+                        "query": "cyberpunk 2077 soundtrack style",
+                        "priority": 0.85,
+                        "filters": {"cinematic": True, "futuristic": True},
+                    },
+                    {
+                        "query": "industrial electronic dark ambient",
+                        "priority": 0.75,
+                        "filters": {"ambient": True, "industrial": True},
+                    },
+                ]
+            )
 
         elif project == "Tokyo Debt Desire":
             # Urban drama searches
-            queries.extend([
-                {
-                    "query": "urban drama instrumental tokyo",
-                    "priority": 1.0,
-                    "filters": {"instrumental": True, "genre": "soundtrack"}
-                },
-                {
-                    "query": "modern japanese instrumental tension",
-                    "priority": 0.9,
-                    "filters": {"japanese": True, "tension": True}
-                },
-                {
-                    "query": "neo soul urban contemporary",
-                    "priority": 0.8,
-                    "filters": {"genre": "neo_soul", "contemporary": True}
-                },
-                {
-                    "query": "financial district ambient corporate",
-                    "priority": 0.7,
-                    "filters": {"ambient": True, "corporate": True}
-                }
-            ])
+            queries.extend(
+                [
+                    {
+                        "query": "urban drama instrumental tokyo",
+                        "priority": 1.0,
+                        "filters": {"instrumental": True, "genre": "soundtrack"},
+                    },
+                    {
+                        "query": "modern japanese instrumental tension",
+                        "priority": 0.9,
+                        "filters": {"japanese": True, "tension": True},
+                    },
+                    {
+                        "query": "neo soul urban contemporary",
+                        "priority": 0.8,
+                        "filters": {"genre": "neo_soul", "contemporary": True},
+                    },
+                    {
+                        "query": "financial district ambient corporate",
+                        "priority": 0.7,
+                        "filters": {"ambient": True, "corporate": True},
+                    },
+                ]
+            )
 
         else:
             # Generic anime searches
-            queries.extend([
-                {
-                    "query": "anime instrumental soundtrack",
-                    "priority": 1.0,
-                    "filters": {"anime": True, "instrumental": True}
-                },
-                {
-                    "query": "j-pop instrumental energetic",
-                    "priority": 0.8,
-                    "filters": {"jpop": True, "energetic": True}
-                }
-            ])
+            queries.extend(
+                [
+                    {
+                        "query": "anime instrumental soundtrack",
+                        "priority": 1.0,
+                        "filters": {"anime": True, "instrumental": True},
+                    },
+                    {
+                        "query": "j-pop instrumental energetic",
+                        "priority": 0.8,
+                        "filters": {"jpop": True, "energetic": True},
+                    },
+                ]
+            )
 
         # Add genre-specific searches
         for genre_rec in genre_recommendations[:3]:  # Top 3 genres
-            genre = genre_rec['genre']
-            priority = genre_rec['priority']
+            genre = genre_rec["genre"]
+            priority = genre_rec["priority"]
 
-            queries.append({
-                "query": f"{genre} instrumental",
-                "priority": priority * 0.8,
-                "filters": {"genre": genre, "instrumental": True}
-            })
+            queries.append(
+                {
+                    "query": f"{genre} instrumental",
+                    "priority": priority * 0.8,
+                    "filters": {"genre": genre, "instrumental": True},
+                }
+            )
 
         return queries
 
-    async def _call_apple_music_search(self, query: str, limit: int = 25,
-                                     filters: Optional[Dict] = None) -> Dict:
+    async def _call_apple_music_search(
+        self, query: str, limit: int = 25, filters: Optional[Dict] = None
+    ) -> Dict:
         """Call Apple Music search API with error handling"""
 
         try:
-            params = {
-                "q": query,
-                "limit": limit,
-                "types": "songs"
-            }
+            params = {"q": query, "limit": limit, "types": "songs"}
 
             # Add filters if provided
             if filters:
@@ -234,8 +266,7 @@ class AppleMusicBPMAnalyzer:
                         params[f"filter_{key}"] = str(value)
 
             response = self.session.get(
-                f"{self.apple_music_base}/api/search",
-                params=params
+                f"{self.apple_music_base}/api/search", params=params
             )
 
             if response.status_code == 200:
@@ -243,10 +274,12 @@ class AppleMusicBPMAnalyzer:
                 return {
                     "success": True,
                     "tracks": data.get("results", {}).get("songs", {}).get("data", []),
-                    "query": query
+                    "query": query,
                 }
             else:
-                logger.warning(f"Apple Music API returned {response.status_code} for query: {query}")
+                logger.warning(
+                    f"Apple Music API returned {response.status_code} for query: {query}"
+                )
                 return {"success": False, "error": f"HTTP {response.status_code}"}
 
         except Exception as e:
@@ -271,8 +304,8 @@ class AppleMusicBPMAnalyzer:
             "explicit": attributes.get("contentRating") == "explicit",
             "preview_url": "",
             "apple_music_url": "",
-            "search_query": query_info['query'],
-            "search_priority": query_info['priority']
+            "search_query": query_info["query"],
+            "search_priority": query_info["priority"],
         }
 
         # Extract preview URL if available
@@ -281,16 +314,22 @@ class AppleMusicBPMAnalyzer:
             enhanced_track["preview_url"] = previews[0].get("url", "")
 
         # Estimate BPM from genre and metadata
-        enhanced_track["estimated_bpm"] = self._estimate_bpm_from_metadata(enhanced_track)
+        enhanced_track["estimated_bpm"] = self._estimate_bpm_from_metadata(
+            enhanced_track
+        )
 
         # Estimate energy level
-        enhanced_track["estimated_energy"] = self._estimate_energy_from_metadata(enhanced_track)
+        enhanced_track["estimated_energy"] = self._estimate_energy_from_metadata(
+            enhanced_track
+        )
 
         # Extract mood indicators
         enhanced_track["mood_tags"] = self._extract_mood_tags(enhanced_track)
 
         # Compatibility tags based on search context
-        enhanced_track["compatibility_tags"] = self._generate_compatibility_tags(enhanced_track, query_info)
+        enhanced_track["compatibility_tags"] = self._generate_compatibility_tags(
+            enhanced_track, query_info
+        )
 
         return enhanced_track
 
@@ -317,8 +356,15 @@ class AppleMusicBPMAnalyzer:
 
         # Title/artist-based hints
         speed_indicators = {
-            "fast": 1.2, "quick": 1.15, "rapid": 1.25, "slow": 0.8, "calm": 0.7,
-            "intense": 1.3, "energy": 1.1, "chill": 0.75, "ambient": 0.6
+            "fast": 1.2,
+            "quick": 1.15,
+            "rapid": 1.25,
+            "slow": 0.8,
+            "calm": 0.7,
+            "intense": 1.3,
+            "energy": 1.1,
+            "chill": 0.75,
+            "ambient": 0.6,
         }
 
         bpm_modifier = 1.0
@@ -341,10 +387,21 @@ class AppleMusicBPMAnalyzer:
 
         # Genre-based energy
         genre_energy = {
-            "electronic": 0.8, "techno": 0.9, "house": 0.75, "ambient": 0.3,
-            "synthwave": 0.7, "cyberpunk": 0.8, "dubstep": 0.95, "trance": 0.8,
-            "drum": 0.9, "industrial": 0.85, "pop": 0.6, "rock": 0.7,
-            "jazz": 0.5, "classical": 0.4, "soundtrack": 0.6
+            "electronic": 0.8,
+            "techno": 0.9,
+            "house": 0.75,
+            "ambient": 0.3,
+            "synthwave": 0.7,
+            "cyberpunk": 0.8,
+            "dubstep": 0.95,
+            "trance": 0.8,
+            "drum": 0.9,
+            "industrial": 0.85,
+            "pop": 0.6,
+            "rock": 0.7,
+            "jazz": 0.5,
+            "classical": 0.4,
+            "soundtrack": 0.6,
         }
 
         energy = 0.6  # Default
@@ -355,9 +412,17 @@ class AppleMusicBPMAnalyzer:
 
         # Title-based adjustments
         energy_words = {
-            "energy": 0.1, "power": 0.1, "intense": 0.15, "explosive": 0.2,
-            "calm": -0.2, "peaceful": -0.15, "soft": -0.1, "quiet": -0.15,
-            "aggressive": 0.2, "hard": 0.1, "heavy": 0.1
+            "energy": 0.1,
+            "power": 0.1,
+            "intense": 0.15,
+            "explosive": 0.2,
+            "calm": -0.2,
+            "peaceful": -0.15,
+            "soft": -0.1,
+            "quiet": -0.15,
+            "aggressive": 0.2,
+            "hard": 0.1,
+            "heavy": 0.1,
         }
 
         for word, adjustment in energy_words.items():
@@ -391,7 +456,7 @@ class AppleMusicBPMAnalyzer:
             "calm": ["calm", "peaceful", "serene", "quiet"],
             "energetic": ["energy", "active", "dynamic", "vibrant"],
             "mysterious": ["mystery", "enigma", "hidden", "secret"],
-            "dramatic": ["drama", "epic", "grand", "cinematic"]
+            "dramatic": ["drama", "epic", "grand", "cinematic"],
         }
 
         for mood, keywords in mood_keywords.items():
@@ -414,14 +479,14 @@ class AppleMusicBPMAnalyzer:
         tags = []
 
         # Add search priority indicator
-        priority = query_info.get('priority', 0.5)
+        priority = query_info.get("priority", 0.5)
         if priority >= 0.9:
             tags.append("high_priority_match")
         elif priority >= 0.7:
             tags.append("medium_priority_match")
 
         # Add query-based tags
-        query = query_info.get('query', '').lower()
+        query = query_info.get("query", "").lower()
         if "cyberpunk" in query:
             tags.append("cyberpunk_compatible")
         if "instrumental" in query:
@@ -430,14 +495,16 @@ class AppleMusicBPMAnalyzer:
             tags.append("urban_compatible")
 
         # Add filters as tags
-        filters = query_info.get('filters', {})
+        filters = query_info.get("filters", {})
         for filter_key, filter_value in filters.items():
             if filter_value:
                 tags.append(f"filter_{filter_key}")
 
         return tags
 
-    def _passes_initial_filter(self, track: Dict, bpm_range: tuple, duration: float) -> bool:
+    def _passes_initial_filter(
+        self, track: Dict, bpm_range: tuple, duration: float
+    ) -> bool:
         """Initial filtering to remove obviously incompatible tracks"""
 
         track_bpm = track.get("estimated_bpm", 120)
@@ -450,7 +517,9 @@ class AppleMusicBPMAnalyzer:
             return False
 
         # Duration filter (track should be at least 80% of video duration or easily loopable)
-        if track_duration < duration * 0.8 and track_duration < 30:  # Too short and not loopable
+        if (
+            track_duration < duration * 0.8 and track_duration < 30
+        ):  # Too short and not loopable
             return False
 
         # Content filter
@@ -467,8 +536,11 @@ class AppleMusicBPMAnalyzer:
 
         for track in tracks:
             # Create signature from title and artist
-            signature = f"{track.get('title', '').lower()}_{track.get('artist', '').lower()}"
-            signature = ''.join(c for c in signature if c.isalnum() or c == '_')
+            signature = (
+                f"{track.get('title', '').lower()}_{track.get('artist', '').lower()}"
+            )
+            signature = "".join(
+                c for c in signature if c.isalnum() or c == "_")
 
             if signature not in seen:
                 seen.add(signature)
@@ -484,11 +556,17 @@ class AppleMusicBPMAnalyzer:
         track_duration = track.get("duration", 180)
 
         # Video characteristics
-        video_bpm_range = video_analysis.get('recommended_bpm_range', (120, 140))
-        video_duration = video_analysis.get('metadata', {}).get('duration', 10.0)
-        video_energy = video_analysis.get('music_characteristics', {}).get('energy_level', 0.7)
-        action_intensity = video_analysis.get('visual_analysis', {}).get('action_intensity', 0.7)
-        sync_difficulty = video_analysis.get('sync_difficulty', 0.5)
+        video_bpm_range = video_analysis.get(
+            "recommended_bpm_range", (120, 140))
+        video_duration = video_analysis.get(
+            "metadata", {}).get("duration", 10.0)
+        video_energy = video_analysis.get("music_characteristics", {}).get(
+            "energy_level", 0.7
+        )
+        action_intensity = video_analysis.get("visual_analysis", {}).get(
+            "action_intensity", 0.7
+        )
+        sync_difficulty = video_analysis.get("sync_difficulty", 0.5)
 
         # BPM compatibility score
         bpm_min, bpm_max = video_bpm_range
@@ -525,25 +603,26 @@ class AppleMusicBPMAnalyzer:
         sync_potential_score = 1 - sync_difficulty
 
         # Mood compatibility
-        video_mood = video_analysis.get('music_characteristics', {}).get('mood', 'balanced')
-        track_moods = track.get('mood_tags', [])
+        video_mood = video_analysis.get("music_characteristics", {}).get(
+            "mood", "balanced"
+        )
+        track_moods = track.get("mood_tags", [])
         mood_score = self._calculate_mood_score(video_mood, track_moods)
 
         # Overall compatibility
         compatibility_score = (
-            bpm_score * 0.25 +
-            energy_score * 0.2 +
-            duration_score * 0.15 +
-            sync_potential_score * 0.15 +
-            mood_score * 0.15 +
-            action_bonus * 0.1
+            bpm_score * 0.25
+            + energy_score * 0.2
+            + duration_score * 0.15
+            + sync_potential_score * 0.15
+            + mood_score * 0.15
+            + action_bonus * 0.1
         )
 
         # Sync potential calculation
         sync_potential = (
-            compatibility_score * 0.7 +
-            bpm_score * 0.2 +
-            (1 - sync_difficulty) * 0.1
+            compatibility_score * 0.7 + bpm_score *
+            0.2 + (1 - sync_difficulty) * 0.1
         )
 
         return {
@@ -561,9 +640,13 @@ class AppleMusicBPMAnalyzer:
                 "track_energy": track_energy,
                 "video_energy": video_energy,
                 "energy_difference": energy_diff,
-                "duration_ratio": track_duration / video_duration if video_duration > 0 else 0
+                "duration_ratio": (
+                    track_duration / video_duration if video_duration > 0 else 0
+                ),
             },
-            "sync_recommendations": self._generate_sync_recommendations(track, video_analysis, compatibility_score)
+            "sync_recommendations": self._generate_sync_recommendations(
+                track, video_analysis, compatibility_score
+            ),
         }
 
     def _calculate_mood_score(self, video_mood: str, track_moods: List[str]) -> float:
@@ -574,28 +657,57 @@ class AppleMusicBPMAnalyzer:
 
         # Define mood compatibility matrix
         compatibility_matrix = {
-            "dark_intense": {"dark": 1.0, "intense": 0.9, "mysterious": 0.8, "dramatic": 0.7},
-            "futuristic_energetic": {"futuristic": 1.0, "energetic": 0.9, "bright": 0.7, "intense": 0.6},
-            "tense_modern": {"intense": 0.9, "dramatic": 0.8, "dark": 0.7, "energetic": 0.6},
-            "atmospheric": {"atmospheric": 1.0, "calm": 0.8, "mysterious": 0.7, "dark": 0.6},
-            "balanced": {"energetic": 0.8, "bright": 0.8, "calm": 0.7, "atmospheric": 0.7}
+            "dark_intense": {
+                "dark": 1.0,
+                "intense": 0.9,
+                "mysterious": 0.8,
+                "dramatic": 0.7,
+            },
+            "futuristic_energetic": {
+                "futuristic": 1.0,
+                "energetic": 0.9,
+                "bright": 0.7,
+                "intense": 0.6,
+            },
+            "tense_modern": {
+                "intense": 0.9,
+                "dramatic": 0.8,
+                "dark": 0.7,
+                "energetic": 0.6,
+            },
+            "atmospheric": {
+                "atmospheric": 1.0,
+                "calm": 0.8,
+                "mysterious": 0.7,
+                "dark": 0.6,
+            },
+            "balanced": {
+                "energetic": 0.8,
+                "bright": 0.8,
+                "calm": 0.7,
+                "atmospheric": 0.7,
+            },
         }
 
         mood_scores = []
         video_mood_map = compatibility_matrix.get(video_mood, {})
 
         for track_mood in track_moods:
-            score = video_mood_map.get(track_mood, 0.3)  # Default low compatibility
+            # Default low compatibility
+            score = video_mood_map.get(track_mood, 0.3)
             mood_scores.append(score)
 
         return max(mood_scores) if mood_scores else 0.5
 
-    def _generate_sync_recommendations(self, track: Dict, video_analysis: Dict, compatibility_score: float) -> Dict:
+    def _generate_sync_recommendations(
+        self, track: Dict, video_analysis: Dict, compatibility_score: float
+    ) -> Dict:
         """Generate synchronization recommendations for the track"""
 
         track_bpm = track.get("estimated_bpm", 120)
         track_duration = track.get("duration", 180)
-        video_duration = video_analysis.get('metadata', {}).get('duration', 10.0)
+        video_duration = video_analysis.get(
+            "metadata", {}).get("duration", 10.0)
 
         recommendations = {
             "tempo_adjustment": 0,
@@ -604,17 +716,19 @@ class AppleMusicBPMAnalyzer:
             "fade_out": 2.0,
             "loop_strategy": "none",
             "volume_strategy": "standard",
-            "sync_confidence": compatibility_score
+            "sync_confidence": compatibility_score,
         }
 
         # Tempo adjustment recommendation
-        optimal_bpm_range = video_analysis.get('recommended_bpm_range', (120, 140))
+        optimal_bpm_range = video_analysis.get(
+            "recommended_bpm_range", (120, 140))
         optimal_bpm = sum(optimal_bpm_range) / 2
 
         if abs(track_bpm - optimal_bpm) > 10:
             tempo_adjustment = (optimal_bpm - track_bpm) / track_bpm
             # Limit to prevent audio distortion
-            recommendations["tempo_adjustment"] = max(-0.1, min(0.1, tempo_adjustment))
+            recommendations["tempo_adjustment"] = max(
+                -0.1, min(0.1, tempo_adjustment))
 
         # Start offset for longer tracks
         if track_duration > video_duration * 1.5:
@@ -629,7 +743,9 @@ class AppleMusicBPMAnalyzer:
                 recommendations["loop_strategy"] = "crossfade_loop"
 
         # Fade recommendations based on video characteristics
-        action_intensity = video_analysis.get('visual_analysis', {}).get('action_intensity', 0.7)
+        action_intensity = video_analysis.get("visual_analysis", {}).get(
+            "action_intensity", 0.7
+        )
 
         if action_intensity > 0.8:
             # Fast fade for high action
@@ -648,22 +764,24 @@ class AppleMusicBPMAnalyzer:
 
         return recommendations
 
-    def _create_recommendation_strategy(self, video_analysis: Dict, analyzed_tracks: List[Dict]) -> Dict:
+    def _create_recommendation_strategy(
+        self, video_analysis: Dict, analyzed_tracks: List[Dict]
+    ) -> Dict:
         """Create overall recommendation strategy"""
 
         if not analyzed_tracks:
             return {"strategy": "fallback", "confidence": 0.0}
 
         best_track = analyzed_tracks[0]
-        best_score = best_track.get('sync_potential', 0)
+        best_score = best_track.get("sync_potential", 0)
 
         strategy = {
-            "primary_recommendation": best_track['id'],
+            "primary_recommendation": best_track["id"],
             "confidence": best_score,
             "alternative_count": len(analyzed_tracks) - 1,
             "strategy_type": "",
             "optimization_focus": [],
-            "potential_issues": []
+            "potential_issues": [],
         }
 
         # Determine strategy type
@@ -677,8 +795,13 @@ class AppleMusicBPMAnalyzer:
             strategy["strategy_type"] = "challenging_match_significant_adjustments"
 
         # Optimization focus
-        bpm_scores = [t.get('bpm_analysis', {}).get('bpm_score', 0) for t in analyzed_tracks[:5]]
-        energy_scores = [t.get('bpm_analysis', {}).get('energy_score', 0) for t in analyzed_tracks[:5]]
+        bpm_scores = [
+            t.get("bpm_analysis", {}).get("bpm_score", 0) for t in analyzed_tracks[:5]
+        ]
+        energy_scores = [
+            t.get("bpm_analysis", {}).get("energy_score", 0)
+            for t in analyzed_tracks[:5]
+        ]
 
         if np.mean(bpm_scores) < 0.7:
             strategy["optimization_focus"].append("bpm_alignment")
@@ -689,8 +812,9 @@ class AppleMusicBPMAnalyzer:
         if best_score < 0.7:
             strategy["potential_issues"].append("low_compatibility_score")
 
-        track_durations = [t.get('duration', 180) for t in analyzed_tracks[:3]]
-        video_duration = video_analysis.get('metadata', {}).get('duration', 10.0)
+        track_durations = [t.get("duration", 180) for t in analyzed_tracks[:3]]
+        video_duration = video_analysis.get(
+            "metadata", {}).get("duration", 10.0)
 
         if all(d < video_duration * 0.8 for d in track_durations):
             strategy["potential_issues"].append("short_track_duration")
@@ -701,31 +825,37 @@ class AppleMusicBPMAnalyzer:
         """Get detailed audio features for a specific track (if available from Apple Music)"""
 
         try:
-            response = self.session.get(f"{self.apple_music_base}/api/tracks/{track_id}/audio-features")
+            response = self.session.get(
+                f"{self.apple_music_base}/api/tracks/{track_id}/audio-features"
+            )
 
             if response.status_code == 200:
                 return response.json()
             else:
-                logger.warning(f"Audio features not available for track {track_id}")
+                logger.warning(
+                    f"Audio features not available for track {track_id}")
                 return None
 
         except Exception as e:
-            logger.error(f"Error fetching audio features for track {track_id}: {e}")
+            logger.error(
+                f"Error fetching audio features for track {track_id}: {e}")
             return None
 
 
 def main():
     """Test the Apple Music BPM analyzer"""
 
-    import sys
     import asyncio
+    import sys
 
     # Load video analysis results
     try:
-        with open("/opt/tower-echo-brain/video_analysis_results.json", 'r') as f:
+        with open("/opt/tower-echo-brain/video_analysis_results.json", "r") as f:
             video_results = json.load(f)
     except FileNotFoundError:
-        logger.error("Video analysis results not found. Run scaled_video_analyzer.py first.")
+        logger.error(
+            "Video analysis results not found. Run scaled_video_analyzer.py first."
+        )
         sys.exit(1)
 
     analyzer = AppleMusicBPMAnalyzer()
@@ -746,10 +876,11 @@ def main():
         print(f"\nApple Music BPM Analysis Results for {video_name}:")
         print(f"Compatible tracks found: {len(result['matching_tracks'])}")
         print(f"Search summary: {result['search_summary']}")
-        print(f"Strategy: {result['recommendation_strategy']['strategy_type']}")
+        print(
+            f"Strategy: {result['recommendation_strategy']['strategy_type']}")
 
-        if result['matching_tracks']:
-            best_track = result['matching_tracks'][0]
+        if result["matching_tracks"]:
+            best_track = result["matching_tracks"][0]
             print(f"\nBest match:")
             print(f"  Title: {best_track['title']}")
             print(f"  Artist: {best_track['artist']}")
@@ -758,7 +889,7 @@ def main():
 
         # Save results
         output_file = "/opt/tower-echo-brain/apple_music_analysis_results.json"
-        with open(output_file, 'w') as f:
+        with open(output_file, "w") as f:
             json.dump(result, f, indent=2, default=str)
 
         logger.info(f"Apple Music analysis results saved to: {output_file}")
