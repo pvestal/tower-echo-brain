@@ -47,6 +47,16 @@ except ImportError as e:
     print(f"❌ Failed to import resilient router: {e}")
     resilient_router = None
 
+# Conversation memory management
+try:
+    from src.api.conversation_memory_routes import router as memory_router
+    memory_available = True
+    print("✅ Conversation memory router imported successfully")
+except ImportError as e:
+    memory_available = False
+    print(f"❌ Failed to import conversation memory router: {e}")
+    memory_router = None
+
 def create_app() -> FastAPI:
     """Create and configure FastAPI application"""
     # Load environment variables
@@ -91,6 +101,11 @@ def create_app() -> FastAPI:
     if resilient_available and resilient_router:
         app.include_router(resilient_router, prefix="", tags=["resilient-models"])
         print("✅ Resilient model routes added to app")
+
+    # Conversation memory management
+    if memory_available and memory_router:
+        app.include_router(memory_router, prefix="", tags=["conversation-memory"])
+        print("✅ Conversation memory routes added to app")
 
     # Static files
     static_dir = "/opt/tower-echo-brain/static"

@@ -6,14 +6,16 @@ Provides real-time WebSocket streaming of Echo's cognitive processes
 
 import asyncio
 import json
-import time
-import websockets
-from datetime import datetime
-from typing import Dict, List, Any, Optional
 import logging
+import time
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+import websockets
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 
 class CognitiveState:
     """Tracks Echo's real-time cognitive state"""
@@ -29,7 +31,7 @@ class CognitiveState:
         self.complexity_level = 0
         self.iteration_count = 0
         self.hemisphere_balance = 0.0  # -1 to 1
-        self.cognitive_load = 0.0     # 0 to 1
+        self.cognitive_load = 0.0  # 0 to 1
         self.accuracy_score = 0
         self.switch_reason = ""
         self.processing_steps = []
@@ -50,8 +52,9 @@ class CognitiveState:
             "accuracyScore": self.accuracy_score,
             "switchReason": self.switch_reason,
             "processingSteps": self.processing_steps,
-            "neuralActivity": self.neural_activity
+            "neuralActivity": self.neural_activity,
         }
+
 
 class EchoCognitiveStreamer:
     """WebSocket server for real-time cognitive streaming"""
@@ -66,7 +69,8 @@ class EchoCognitiveStreamer:
     async def register_client(self, websocket):
         """Register a new client connection"""
         self.connected_clients.add(websocket)
-        logger.info(f"Client connected. Total clients: {len(self.connected_clients)}")
+        logger.info(
+            f"Client connected. Total clients: {len(self.connected_clients)}")
 
         # Send initial state
         await self.send_to_client(websocket, self.cognitive_state.to_dict())
@@ -74,7 +78,9 @@ class EchoCognitiveStreamer:
     async def unregister_client(self, websocket):
         """Unregister a client connection"""
         self.connected_clients.discard(websocket)
-        logger.info(f"Client disconnected. Total clients: {len(self.connected_clients)}")
+        logger.info(
+            f"Client disconnected. Total clients: {len(self.connected_clients)}"
+        )
 
     async def send_to_client(self, websocket, data):
         """Send data to a specific client"""
@@ -89,8 +95,11 @@ class EchoCognitiveStreamer:
         """Broadcast data to all connected clients"""
         if self.connected_clients:
             await asyncio.gather(
-                *[self.send_to_client(client, data) for client in self.connected_clients.copy()],
-                return_exceptions=True
+                *[
+                    self.send_to_client(client, data)
+                    for client in self.connected_clients.copy()
+                ],
+                return_exceptions=True,
             )
 
     async def simulate_cognitive_activity(self):
@@ -107,8 +116,8 @@ class EchoCognitiveStreamer:
                 "steps": [
                     {"name": "Input Analysis", "duration": 50},
                     {"name": "Quick Processing", "duration": 200},
-                    {"name": "Response Generation", "duration": 100}
-                ]
+                    {"name": "Response Generation", "duration": 100},
+                ],
             },
             {
                 "name": "Code Analysis",
@@ -122,8 +131,8 @@ class EchoCognitiveStreamer:
                     {"name": "Code Parsing", "duration": 150},
                     {"name": "Syntax Analysis", "duration": 400},
                     {"name": "Logic Verification", "duration": 600},
-                    {"name": "Solution Generation", "duration": 800}
-                ]
+                    {"name": "Solution Generation", "duration": 800},
+                ],
             },
             {
                 "name": "Deep Thinking",
@@ -138,9 +147,9 @@ class EchoCognitiveStreamer:
                     {"name": "Knowledge Integration", "duration": 1200},
                     {"name": "Creative Synthesis", "duration": 2000},
                     {"name": "Quality Refinement", "duration": 1500},
-                    {"name": "Confidence Validation", "duration": 500}
-                ]
-            }
+                    {"name": "Confidence Validation", "duration": 500},
+                ],
+            },
         ]
 
         scenario_index = 0
@@ -169,15 +178,19 @@ class EchoCognitiveStreamer:
 
             for i, step in enumerate(scenario["steps"]):
                 # Update processing step
-                self.cognitive_state.processing_mode = step["name"].lower().replace(" ", "_")
-                self.cognitive_state.cognitive_load = min(1.0, (i + 1) / len(scenario["steps"]) * scenario["load"])
+                self.cognitive_state.processing_mode = (
+                    step["name"].lower().replace(" ", "_")
+                )
+                self.cognitive_state.cognitive_load = min(
+                    1.0, (i + 1) / len(scenario["steps"]) * scenario["load"]
+                )
 
                 # Simulate neural activity
                 self.cognitive_state.neural_activity = {
                     "logic": 0.8 if scenario["balance"] < 0 else 0.3,
                     "creative": 0.8 if scenario["balance"] > 0 else 0.3,
                     "memory": 0.5 + (i * 0.1),
-                    "attention": 0.7 + (i * 0.05)
+                    "attention": 0.7 + (i * 0.05),
                 }
 
                 # Update processing steps
@@ -186,7 +199,7 @@ class EchoCognitiveStreamer:
                         "name": s["name"],
                         "active": j == i,
                         "completed": j < i,
-                        "duration": s["duration"] if j <= i else None
+                        "duration": s["duration"] if j <= i else None,
                     }
                     for j, s in enumerate(scenario["steps"])
                 ]
@@ -202,8 +215,11 @@ class EchoCognitiveStreamer:
             self.cognitive_state.processing_mode = "completed"
             self.cognitive_state.response_time = total_time
             self.cognitive_state.confidence_level = scenario["confidence"]
-            self.cognitive_state.accuracy_score = min(100, scenario["confidence"] + (10 - scenario["complexity"]))
-            self.cognitive_state.iteration_count = 1 + (scenario["complexity"] // 3)
+            self.cognitive_state.accuracy_score = min(
+                100, scenario["confidence"] + (10 - scenario["complexity"])
+            )
+            self.cognitive_state.iteration_count = 1 + \
+                (scenario["complexity"] // 3)
             self.cognitive_state.cognitive_load = 0.1
 
             # Mark all steps completed
@@ -248,7 +264,8 @@ class EchoCognitiveStreamer:
 
     async def start_server(self):
         """Start the WebSocket server"""
-        logger.info(f"Starting Echo Cognitive Streamer on {self.host}:{self.port}")
+        logger.info(
+            f"Starting Echo Cognitive Streamer on {self.host}:{self.port}")
 
         # Start simulation by default
         self.simulation_running = True
@@ -258,10 +275,12 @@ class EchoCognitiveStreamer:
             logger.info("Echo Cognitive Streamer is running...")
             await asyncio.Future()  # Run forever
 
+
 async def main():
     """Main entry point"""
     streamer = EchoCognitiveStreamer()
     await streamer.start_server()
+
 
 if __name__ == "__main__":
     try:
