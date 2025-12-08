@@ -26,8 +26,28 @@ try:
 except ImportError:
     agentic_persona = None
 
+# Import memory components for conversation context
+from src.memory.context_retrieval import ConversationContextRetriever
+from src.memory.pronoun_resolver import PronounResolver
+from src.memory.entity_extractor import EntityExtractor
+from src.memory.memory_integration import save_conversation_with_entities
+
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+# Initialize memory components lazily
+_context_retriever = None
+_pronoun_resolver = None
+_entity_extractor = None
+
+def get_memory_components():
+    """Get or create memory components"""
+    global _context_retriever, _pronoun_resolver, _entity_extractor
+    if _context_retriever is None:
+        _context_retriever = ConversationContextRetriever()
+        _pronoun_resolver = PronounResolver()
+        _entity_extractor = EntityExtractor()
+    return _context_retriever, _pronoun_resolver, _entity_extractor
 
 @router.post("/api/echo/query", response_model=QueryResponse)
 @router.post("/api/echo/chat", response_model=QueryResponse)
@@ -62,12 +82,10 @@ async def query_echo(request: QueryRequest):
 
                 # Direct subprocess execution - no safety restrictions
                 import subprocess
-                import shlex
 
-                # Execute the command directly
-                args = shlex.split(request.query)
-                process = await asyncio.create_subprocess_exec(
-                    *args,
+                # Execute the command directly using shell for full command support
+                process = await asyncio.create_subprocess_shell(
+                    request.query,
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE,
                     cwd="/tmp"  # Execute in /tmp directory
@@ -197,9 +215,43 @@ async def query_echo(request: QueryRequest):
         logger.debug("Cognitive selector not available, using default routing")
 
     try:
-        # Get conversation context
+        # Get memory components
+        context_retriever, pronoun_resolver, entity_extractor = get_memory_components()
+
+        # ============================================
+        # STEP 1: Retrieve conversation history with memory system
+        # ============================================
         conversation_context = await conversation_manager.get_conversation_context(request.conversation_id)
         logger.info(f"🔍 CONVERSATION CONTEXT: {len(conversation_context.get('history', []))} messages retrieved")
+
+        # Get enhanced history and entities from memory system
+        memory_history = await context_retriever.get_recent_history(request.conversation_id)
+        active_entities = await context_retriever.get_active_entities(request.conversation_id)
+        logger.info(f"🧠 MEMORY: {len(memory_history)} history messages, {len(active_entities)} entities")
+
+        # ============================================
+        # STEP 2: Extract entities from current query
+        # ============================================
+        current_entities = entity_extractor.extract(request.query)
+        logger.info(f"📋 EXTRACTED ENTITIES: {current_entities}")
+
+        # Merge with active entities from history
+        all_entities = {**active_entities, **current_entities}
+        logger.info(f"🔗 MERGED ENTITIES: {all_entities}")
+
+        # ============================================
+        # STEP 3: Resolve pronouns using context
+        # ============================================
+        original_query = request.query
+        resolved_query, resolved_entity = pronoun_resolver.resolve(
+            original_query,
+            all_entities  # Use merged entities for resolution
+        )
+
+        if resolved_entity:
+            logger.info(f"✨ PRONOUN RESOLVED: '{original_query}' → '{resolved_query}'")
+            # Update the request query to use the resolved version
+            request.query = resolved_query
 
         # Classify intent and extract parameters
         intent, confidence, intent_params = conversation_manager.classify_intent(
@@ -221,8 +273,12 @@ async def query_echo(request: QueryRequest):
                     request.query, intent, conversation_context.get("history", [])
                 )
 
-        # Check if clarification is needed
-        needs_clarification = should_ask_user or conversation_manager.needs_clarification(intent, confidence, request.query)
+        # Check if clarification is needed - BUT skip if pronoun was resolved
+        needs_clarification = (should_ask_user or conversation_manager.needs_clarification(intent, confidence, request.query))
+        if resolved_entity:
+            # If we resolved a pronoun, we likely don't need clarification
+            needs_clarification = False
+            logger.info("🎯 Skipping clarification - pronoun was resolved")
 
         if needs_clarification:
             if contextual_question:
@@ -244,23 +300,36 @@ async def query_echo(request: QueryRequest):
                 clarifying_questions=clarifying_questions,
                 conversation_id=request.conversation_id,
                 intent=intent,
-                confidence=confidence
+                confidence=confidence,
+                resolved_query=resolved_query if resolved_query != original_query else None,
+                entities_extracted=active_entities if active_entities else None
             )
 
             conversation_manager.update_conversation(
                 request.conversation_id, request.query, intent, response.response, True
             )
 
-            # Log to database for learning
+            # Log to database for learning WITH entities
             try:
-                await database.log_interaction(
-                    request.query, response.response, response.model_used,
-                    response.processing_time, response.escalation_path,
-                    request.conversation_id, request.user_id, intent, confidence,
-                    True, clarifying_questions, complexity_score, tier
+                await save_conversation_with_entities(
+                    database,
+                    original_query,  # Use original query for database
+                    response.response,
+                    request.conversation_id,
+                    all_entities,  # Include extracted and historical entities
+                    response.model_used,
+                    response.processing_time,
+                    response.escalation_path,
+                    request.user_id,
+                    intent,
+                    confidence,
+                    True,  # requires_clarification
+                    clarifying_questions,
+                    complexity_score,
+                    tier
                 )
             except Exception as e:
-                logger.error(f"❌ Clarification log_interaction FAILED: {e}")
+                logger.error(f"❌ Clarification save_conversation FAILED: {e}")
 
             return response
 
@@ -323,11 +392,23 @@ async def query_echo(request: QueryRequest):
             )
 
             try:
-                await database.log_interaction(
-                    request.query, response.response, response.model_used,
-                    response.processing_time, response.escalation_path,
-                    request.conversation_id, request.user_id, intent, confidence,
-                    False, None, complexity_score, tier
+                # Save with entities
+                await save_conversation_with_entities(
+                    database,
+                    original_query,  # Use original, not resolved query
+                    response.response,
+                    request.conversation_id,
+                    all_entities,  # Include all extracted entities
+                    response.model_used,
+                    response.processing_time,
+                    response.escalation_path,
+                    request.user_id,
+                    intent,
+                    confidence,
+                    False,
+                    None,
+                    complexity_score,
+                    tier
                 )
             except Exception as e:
                 logger.error(f"❌ log_interaction FAILED: {e}")
@@ -380,11 +461,23 @@ async def query_echo(request: QueryRequest):
             )
 
             try:
-                await database.log_interaction(
-                    request.query, response.response, response.model_used,
-                    response.processing_time, response.escalation_path,
-                    request.conversation_id, request.user_id, intent, confidence,
-                    False, None, complexity_score, tier
+                # Save with entities
+                await save_conversation_with_entities(
+                    database,
+                    original_query,  # Use original, not resolved query
+                    response.response,
+                    request.conversation_id,
+                    all_entities,  # Include all extracted entities
+                    response.model_used,
+                    response.processing_time,
+                    response.escalation_path,
+                    request.user_id,
+                    intent,
+                    confidence,
+                    False,
+                    None,
+                    complexity_score,
+                    tier
                 )
             except Exception as e:
                 logger.error(f"❌ log_interaction FAILED: {e}")

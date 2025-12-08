@@ -4,24 +4,27 @@ AI Assist Memory Consolidation System
 Implements long-term memory storage and retrieval for continuous learning
 """
 import asyncio
+import hashlib
 import json
 import logging
+import pickle
+from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
-from typing import Dict, List, Any, Optional
-from dataclasses import dataclass, asdict
 from enum import Enum
-import hashlib
+from typing import Any, Dict, List, Optional
+
+import numpy as np
 import psycopg2
 from psycopg2.extras import RealDictCursor
-import numpy as np
 from sentence_transformers import SentenceTransformer
-import pickle
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 class MemoryType(Enum):
     """Types of memories Echo can store"""
+
     CONVERSATION = "conversation"
     LEARNING = "learning"
     PATTERN = "pattern"
@@ -31,9 +34,11 @@ class MemoryType(Enum):
     ERROR = "error"
     SUCCESS = "success"
 
+
 @dataclass
 class Memory:
     """Individual memory unit"""
+
     id: str
     type: MemoryType
     content: Dict[str, Any]
@@ -46,28 +51,29 @@ class Memory:
     decay_rate: float  # How quickly memory fades
     reinforcement_count: int  # Times reinforced
 
+
 class EchoMemoryConsolidation:
     """Manages Echo's long-term memory consolidation and retrieval"""
 
     def __init__(self, db_config: Optional[Dict] = None):
         self.db_config = db_config or {
-            'dbname': 'echo_memory',
-            'user': 'echo',
-            'host': 'localhost',
-            'port': 5432
+            "dbname": "echo_memory",
+            "user": "echo",
+            "host": "localhost",
+            "port": 5432,
         }
 
         # Initialize sentence transformer for embeddings
-        self.encoder = SentenceTransformer('all-MiniLM-L6-v2')
+        self.encoder = SentenceTransformer("all-MiniLM-L6-v2")
 
         # Memory configuration
         self.config = {
-            'consolidation_interval': 3600,  # Consolidate every hour
-            'importance_threshold': 0.3,  # Min importance to store
-            'max_short_term': 1000,  # Max short-term memories
-            'embedding_dim': 384,  # Dimension of sentence embeddings
-            'decay_base': 0.95,  # Base decay rate
-            'reinforcement_boost': 0.1  # Importance boost per reinforcement
+            "consolidation_interval": 3600,  # Consolidate every hour
+            "importance_threshold": 0.3,  # Min importance to store
+            "max_short_term": 1000,  # Max short-term memories
+            "embedding_dim": 384,  # Dimension of sentence embeddings
+            "decay_base": 0.95,  # Base decay rate
+            "reinforcement_boost": 0.1,  # Importance boost per reinforcement
         }
 
         # Short-term memory buffer
@@ -89,7 +95,8 @@ class EchoMemoryConsolidation:
             cur = conn.cursor()
 
             # Create memories table
-            cur.execute("""
+            cur.execute(
+                """
                 CREATE TABLE IF NOT EXISTS memories (
                     id VARCHAR(64) PRIMARY KEY,
                     type VARCHAR(32) NOT NULL,
@@ -104,10 +111,12 @@ class EchoMemoryConsolidation:
                     reinforcement_count INTEGER DEFAULT 0,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """)
+            """
+            )
 
             # Create patterns table
-            cur.execute("""
+            cur.execute(
+                """
                 CREATE TABLE IF NOT EXISTS patterns (
                     id VARCHAR(64) PRIMARY KEY,
                     pattern_type VARCHAR(32) NOT NULL,
@@ -117,10 +126,12 @@ class EchoMemoryConsolidation:
                     confidence FLOAT DEFAULT 0.5,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """)
+            """
+            )
 
             # Create memory associations table
-            cur.execute("""
+            cur.execute(
+                """
                 CREATE TABLE IF NOT EXISTS memory_associations (
                     memory_id VARCHAR(64) REFERENCES memories(id),
                     associated_id VARCHAR(64) REFERENCES memories(id),
@@ -128,12 +139,19 @@ class EchoMemoryConsolidation:
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     PRIMARY KEY (memory_id, associated_id)
                 )
-            """)
+            """
+            )
 
             # Create indexes for performance
-            cur.execute("CREATE INDEX IF NOT EXISTS idx_memories_type ON memories(type)")
-            cur.execute("CREATE INDEX IF NOT EXISTS idx_memories_timestamp ON memories(timestamp DESC)")
-            cur.execute("CREATE INDEX IF NOT EXISTS idx_memories_importance ON memories(importance DESC)")
+            cur.execute(
+                "CREATE INDEX IF NOT EXISTS idx_memories_type ON memories(type)"
+            )
+            cur.execute(
+                "CREATE INDEX IF NOT EXISTS idx_memories_timestamp ON memories(timestamp DESC)"
+            )
+            cur.execute(
+                "CREATE INDEX IF NOT EXISTS idx_memories_importance ON memories(importance DESC)"
+            )
 
             conn.commit()
             conn.close()
@@ -144,9 +162,9 @@ class EchoMemoryConsolidation:
             # Create in-memory fallback
             self.use_in_memory = True
 
-    async def store_memory(self, content: Dict[str, Any],
-                          memory_type: MemoryType,
-                          importance: float = 0.5) -> str:
+    async def store_memory(
+        self, content: Dict[str, Any], memory_type: MemoryType, importance: float = 0.5
+    ) -> str:
         """Store a new memory"""
         # Generate unique ID
         memory_id = hashlib.sha256(
@@ -168,15 +186,15 @@ class EchoMemoryConsolidation:
             access_count=0,
             last_accessed=datetime.now(),
             associations=[],
-            decay_rate=self.config['decay_base'],
-            reinforcement_count=0
+            decay_rate=self.config["decay_base"],
+            reinforcement_count=0,
         )
 
         # Add to short-term buffer
         self.short_term_buffer.append(memory)
 
         # Check if consolidation needed
-        if len(self.short_term_buffer) >= self.config['max_short_term']:
+        if len(self.short_term_buffer) >= self.config["max_short_term"]:
             await self.consolidate_memories()
 
         # Detect patterns
@@ -184,9 +202,12 @@ class EchoMemoryConsolidation:
 
         return memory_id
 
-    async def recall_memory(self, query: str,
-                          top_k: int = 5,
-                          memory_types: Optional[List[MemoryType]] = None) -> List[Memory]:
+    async def recall_memory(
+        self,
+        query: str,
+        top_k: int = 5,
+        memory_types: Optional[List[MemoryType]] = None,
+    ) -> List[Memory]:
         """Recall relevant memories based on query"""
         # Create query embedding
         query_embedding = self.encoder.encode(query)
@@ -204,14 +225,18 @@ class EchoMemoryConsolidation:
 
             # Retrieve memories with similarity search
             # Note: In production, use pgvector for efficient similarity search
-            cur.execute(f"""
+            cur.execute(
+                f"""
                 SELECT *,
                        1 - (embedding <-> %s::vector) as similarity
                 FROM memories
                 WHERE importance > %s {type_filter}
                 ORDER BY similarity DESC, importance DESC
                 LIMIT %s
-            """, (query_embedding.tolist(), self.config['importance_threshold'], top_k))
+            """,
+                (query_embedding.tolist(),
+                 self.config["importance_threshold"], top_k),
+            )
 
             memories = []
             for row in cur.fetchall():
@@ -241,7 +266,7 @@ class EchoMemoryConsolidation:
                 memory.importance *= memory.decay_rate
 
                 # Skip if below threshold
-                if memory.importance < self.config['importance_threshold']:
+                if memory.importance < self.config["importance_threshold"]:
                     continue
 
                 # Find associations
@@ -249,7 +274,8 @@ class EchoMemoryConsolidation:
                 memory.associations = associations
 
                 # Store in database
-                cur.execute("""
+                cur.execute(
+                    """
                     INSERT INTO memories
                     (id, type, content, embedding, timestamp, importance,
                      access_count, last_accessed, associations, decay_rate,
@@ -260,22 +286,33 @@ class EchoMemoryConsolidation:
                         access_count = memories.access_count + 1,
                         last_accessed = EXCLUDED.last_accessed,
                         reinforcement_count = memories.reinforcement_count + 1
-                """, (
-                    memory.id, memory.type.value, json.dumps(memory.content),
-                    memory.embedding, memory.timestamp, memory.importance,
-                    memory.access_count, memory.last_accessed,
-                    memory.associations, memory.decay_rate,
-                    memory.reinforcement_count
-                ))
+                """,
+                    (
+                        memory.id,
+                        memory.type.value,
+                        json.dumps(memory.content),
+                        memory.embedding,
+                        memory.timestamp,
+                        memory.importance,
+                        memory.access_count,
+                        memory.last_accessed,
+                        memory.associations,
+                        memory.decay_rate,
+                        memory.reinforcement_count,
+                    ),
+                )
 
                 # Store associations
                 for assoc_id in associations:
-                    cur.execute("""
+                    cur.execute(
+                        """
                         INSERT INTO memory_associations (memory_id, associated_id, strength)
                         VALUES (%s, %s, %s)
                         ON CONFLICT (memory_id, associated_id) DO UPDATE SET
                             strength = memory_associations.strength * 1.1
-                    """, (memory.id, assoc_id, 0.5))
+                    """,
+                        (memory.id, assoc_id, 0.5),
+                    )
 
             conn.commit()
             conn.close()
@@ -287,8 +324,9 @@ class EchoMemoryConsolidation:
         except Exception as e:
             logger.error(f"Consolidation failed: {e}")
 
-    async def find_associations(self, memory: Memory,
-                               threshold: float = 0.7) -> List[str]:
+    async def find_associations(
+        self, memory: Memory, threshold: float = 0.7
+    ) -> List[str]:
         """Find memories associated with the given memory"""
         associations = []
 
@@ -297,14 +335,17 @@ class EchoMemoryConsolidation:
             cur = conn.cursor()
 
             # Find similar memories using embedding similarity
-            cur.execute("""
+            cur.execute(
+                """
                 SELECT id, 1 - (embedding <-> %s::vector) as similarity
                 FROM memories
                 WHERE id != %s
                 AND 1 - (embedding <-> %s::vector) > %s
                 ORDER BY similarity DESC
                 LIMIT 10
-            """, (memory.embedding, memory.id, memory.embedding, threshold))
+            """,
+                (memory.embedding, memory.id, memory.embedding, threshold),
+            )
 
             for row in cur.fetchall():
                 associations.append(row[0])
@@ -328,25 +369,24 @@ class EchoMemoryConsolidation:
 
             if pattern_id in self.patterns:
                 # Update existing pattern
-                self.patterns[pattern_id]['frequency'] += 1
-                self.patterns[pattern_id]['last_seen'] = datetime.now()
-                self.patterns[pattern_id]['confidence'] = min(
-                    0.95,
-                    self.patterns[pattern_id]['confidence'] * 1.05
+                self.patterns[pattern_id]["frequency"] += 1
+                self.patterns[pattern_id]["last_seen"] = datetime.now()
+                self.patterns[pattern_id]["confidence"] = min(
+                    0.95, self.patterns[pattern_id]["confidence"] * 1.05
                 )
             else:
                 # Create new pattern
                 self.patterns[pattern_id] = {
-                    'type': feature_key,
-                    'value': feature_value,
-                    'frequency': 1,
-                    'last_seen': datetime.now(),
-                    'confidence': 0.5,
-                    'memories': [memory.id]
+                    "type": feature_key,
+                    "value": feature_value,
+                    "frequency": 1,
+                    "last_seen": datetime.now(),
+                    "confidence": 0.5,
+                    "memories": [memory.id],
                 }
 
             # Store significant patterns
-            if self.patterns[pattern_id]['frequency'] >= 3:
+            if self.patterns[pattern_id]["frequency"] >= 3:
                 await self._store_pattern(pattern_id, self.patterns[pattern_id])
 
     async def reinforce_memory(self, memory_id: str, boost: float = 0.1):
@@ -355,13 +395,16 @@ class EchoMemoryConsolidation:
             conn = psycopg2.connect(**self.db_config)
             cur = conn.cursor()
 
-            cur.execute("""
+            cur.execute(
+                """
                 UPDATE memories
                 SET importance = LEAST(1.0, importance + %s),
                     reinforcement_count = reinforcement_count + 1,
                     last_accessed = CURRENT_TIMESTAMP
                 WHERE id = %s
-            """, (boost, memory_id))
+            """,
+                (boost, memory_id),
+            )
 
             conn.commit()
             conn.close()
@@ -376,18 +419,23 @@ class EchoMemoryConsolidation:
             cur = conn.cursor()
 
             # Apply decay to all memories
-            cur.execute("""
+            cur.execute(
+                """
                 UPDATE memories
                 SET importance = importance * decay_rate
                 WHERE last_accessed < CURRENT_TIMESTAMP - INTERVAL '7 days'
-            """)
+            """
+            )
 
             # Delete unimportant memories
-            cur.execute("""
+            cur.execute(
+                """
                 DELETE FROM memories
                 WHERE importance < %s
                 AND reinforcement_count < 3
-            """, (threshold,))
+            """,
+                (threshold,),
+            )
 
             affected = cur.rowcount
             conn.commit()
@@ -408,33 +456,39 @@ class EchoMemoryConsolidation:
 
             # Total memories
             cur.execute("SELECT COUNT(*) as total FROM memories")
-            stats['total_memories'] = cur.fetchone()['total']
+            stats["total_memories"] = cur.fetchone()["total"]
 
             # Memory types distribution
-            cur.execute("""
+            cur.execute(
+                """
                 SELECT type, COUNT(*) as count
                 FROM memories
                 GROUP BY type
-            """)
-            stats['type_distribution'] = {row['type']: row['count']
-                                         for row in cur.fetchall()}
+            """
+            )
+            stats["type_distribution"] = {
+                row["type"]: row["count"] for row in cur.fetchall()
+            }
 
             # Average importance
-            cur.execute("SELECT AVG(importance) as avg_importance FROM memories")
-            stats['average_importance'] = cur.fetchone()['avg_importance']
+            cur.execute(
+                "SELECT AVG(importance) as avg_importance FROM memories")
+            stats["average_importance"] = cur.fetchone()["avg_importance"]
 
             # Most accessed memories
-            cur.execute("""
+            cur.execute(
+                """
                 SELECT id, content->>'summary' as summary, access_count
                 FROM memories
                 ORDER BY access_count DESC
                 LIMIT 5
-            """)
-            stats['most_accessed'] = cur.fetchall()
+            """
+            )
+            stats["most_accessed"] = cur.fetchall()
 
             # Pattern statistics
             cur.execute("SELECT COUNT(*) as total FROM patterns")
-            stats['total_patterns'] = cur.fetchone()['total']
+            stats["total_patterns"] = cur.fetchone()["total"]
 
             conn.close()
             return stats
@@ -458,16 +512,16 @@ class EchoMemoryConsolidation:
         features = {}
 
         # Extract common patterns
-        if 'user' in content:
-            features['user'] = content['user']
-        if 'action' in content:
-            features['action'] = content['action']
-        if 'intent' in content:
-            features['intent'] = content['intent']
-        if 'emotion' in content:
-            features['emotion'] = content['emotion']
-        if 'topic' in content:
-            features['topic'] = content['topic']
+        if "user" in content:
+            features["user"] = content["user"]
+        if "action" in content:
+            features["action"] = content["action"]
+        if "intent" in content:
+            features["intent"] = content["intent"]
+        if "emotion" in content:
+            features["emotion"] = content["emotion"]
+        if "topic" in content:
+            features["topic"] = content["topic"]
 
         return features
 
@@ -477,7 +531,8 @@ class EchoMemoryConsolidation:
             conn = psycopg2.connect(**self.db_config)
             cur = conn.cursor()
 
-            cur.execute("""
+            cur.execute(
+                """
                 INSERT INTO patterns (id, pattern_type, pattern_data, frequency,
                                     last_seen, confidence)
                 VALUES (%s, %s, %s, %s, %s, %s)
@@ -485,11 +540,16 @@ class EchoMemoryConsolidation:
                     frequency = EXCLUDED.frequency,
                     last_seen = EXCLUDED.last_seen,
                     confidence = EXCLUDED.confidence
-            """, (
-                pattern_id, pattern_data['type'], json.dumps(pattern_data),
-                pattern_data['frequency'], pattern_data['last_seen'],
-                pattern_data['confidence']
-            ))
+            """,
+                (
+                    pattern_id,
+                    pattern_data["type"],
+                    json.dumps(pattern_data),
+                    pattern_data["frequency"],
+                    pattern_data["last_seen"],
+                    pattern_data["confidence"],
+                ),
+            )
 
             conn.commit()
             conn.close()
@@ -500,17 +560,17 @@ class EchoMemoryConsolidation:
     def _row_to_memory(self, row: Dict) -> Memory:
         """Convert database row to Memory object"""
         return Memory(
-            id=row['id'],
-            type=MemoryType(row['type']),
-            content=row['content'],
-            embedding=row['embedding'],
-            timestamp=row['timestamp'],
-            importance=row['importance'],
-            access_count=row['access_count'],
-            last_accessed=row['last_accessed'],
-            associations=row['associations'] or [],
-            decay_rate=row['decay_rate'],
-            reinforcement_count=row['reinforcement_count']
+            id=row["id"],
+            type=MemoryType(row["type"]),
+            content=row["content"],
+            embedding=row["embedding"],
+            timestamp=row["timestamp"],
+            importance=row["importance"],
+            access_count=row["access_count"],
+            last_accessed=row["last_accessed"],
+            associations=row["associations"] or [],
+            decay_rate=row["decay_rate"],
+            reinforcement_count=row["reinforcement_count"],
         )
 
     def _update_access(self, memory_id: str):
@@ -518,12 +578,15 @@ class EchoMemoryConsolidation:
         try:
             conn = psycopg2.connect(**self.db_config)
             cur = conn.cursor()
-            cur.execute("""
+            cur.execute(
+                """
                 UPDATE memories
                 SET access_count = access_count + 1,
                     last_accessed = CURRENT_TIMESTAMP
                 WHERE id = %s
-            """, (memory_id,))
+            """,
+                (memory_id,),
+            )
             conn.commit()
             conn.close()
         except:
@@ -550,26 +613,21 @@ async def integrate_with_echo():
 
     # Example: Store conversation memory
     conversation_memory = {
-        'user': 'Patrick',
-        'message': 'Help me generate an anime character',
-        'response': 'Created cyberpunk character Kai',
-        'context': 'anime_generation',
-        'success': True
+        "user": "Patrick",
+        "message": "Help me generate an anime character",
+        "response": "Created cyberpunk character Kai",
+        "context": "anime_generation",
+        "success": True,
     }
 
     memory_id = await memory_system.store_memory(
-        conversation_memory,
-        MemoryType.CONVERSATION,
-        importance=0.8
+        conversation_memory, MemoryType.CONVERSATION, importance=0.8
     )
 
     logger.info(f"Stored memory: {memory_id}")
 
     # Recall related memories
-    memories = await memory_system.recall_memory(
-        "anime character generation",
-        top_k=3
-    )
+    memories = await memory_system.recall_memory("anime character generation", top_k=3)
 
     for memory in memories:
         logger.info(f"Recalled: {memory.content.get('summary', memory.id)}")
@@ -577,6 +635,7 @@ async def integrate_with_echo():
     # Get statistics
     stats = await memory_system.get_memory_stats()
     logger.info(f"Memory stats: {stats}")
+
 
 if __name__ == "__main__":
     asyncio.run(integrate_with_echo())
