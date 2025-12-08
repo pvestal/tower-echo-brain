@@ -4,28 +4,33 @@ Model Decision Engine for AI Assist
 Intelligent routing between local models and API with performance tracking
 """
 
+import asyncio
+import json
+import logging
 import os
 import time
-import json
+from contextlib import contextmanager
+from datetime import datetime, timedelta
+from enum import Enum
+from typing import Dict, List, Optional, Tuple
+
+import aiohttp
 import psycopg2
 import psycopg2.pool
-import asyncio
-import aiohttp
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
-from enum import Enum
-import logging
-from contextlib import contextmanager
-from code_quality_validator import CodeQualityValidator, ModelReloadManager, ValidationResult
+
+from code_quality_validator import (CodeQualityValidator, ModelReloadManager,
+                                    ValidationResult)
 
 logger = logging.getLogger(__name__)
 
+
 class ModelTier(str, Enum):
-    TINY = "tiny"          # 1B params - basic queries
-    SMALL = "small"        # 3-7B params - standard coding
-    MEDIUM = "medium"      # 13-16B params - complex coding
-    LARGE = "large"        # 32-70B params - architecture
-    CLOUD = "cloud"        # API only - cutting edge
+    TINY = "tiny"  # 1B params - basic queries
+    SMALL = "small"  # 3-7B params - standard coding
+    MEDIUM = "medium"  # 13-16B params - complex coding
+    LARGE = "large"  # 32-70B params - architecture
+    CLOUD = "cloud"  # API only - cutting edge
+
 
 class QueryComplexity:
     """Analyze query complexity with learnable weights"""
@@ -36,21 +41,28 @@ class QueryComplexity:
 
     async def load_weights(self):
         """Load learned weights from database (async with thread wrapper)"""
+
         def _load():
             try:
                 conn = psycopg2.connect(**self.db_config)
                 cursor = conn.cursor()
-                cursor.execute("""
+                cursor.execute(
+                    """
                     SELECT feature, weight FROM model_decision_weights
                     WHERE active = true
-                """)
-                weights = dict(cursor.fetchall()) if cursor.rowcount > 0 else self.default_weights()
+                """
+                )
+                weights = (
+                    dict(cursor.fetchall())
+                    if cursor.rowcount > 0
+                    else self.default_weights()
+                )
                 conn.close()
                 return weights
             except Exception as e:
                 logger.warning(f"Using default weights: {e}")
                 return self.default_weights()
-        
+
         self.weights = await asyncio.to_thread(_load)
 
     def default_weights(self) -> Dict[str, float]:
@@ -64,7 +76,7 @@ class QueryComplexity:
             "optimization": 2.5,
             "security": 2.0,
             "api_design": 2.5,
-            "refactoring": 3.0
+            "refactoring": 3.0,
         }
 
     def analyze(self, query: str, context: Dict) -> Tuple[float, Dict[str, float]]:
@@ -74,50 +86,90 @@ class QueryComplexity:
         features = {}
 
         # Code complexity indicators
-        code_indicators = ['implement', 'write', 'create', 'build', 'develop']
-        features['code_complexity'] = sum(1 for ind in code_indicators if ind in query.lower())
+        code_indicators = ["implement", "write", "create", "build", "develop"]
+        features["code_complexity"] = sum(
+            1 for ind in code_indicators if ind in query.lower()
+        )
 
         # Context size
         context_size = len(str(context))
-        features['context_lines'] = min(context_size / 1000, 10)  # Scale to 0-10
+        features["context_lines"] = min(
+            context_size / 1000, 10)  # Scale to 0-10
 
         # Technical depth
-        tech_terms = ['algorithm', 'optimize', 'performance', 'scalability', 'distributed',
-                     'microservice', 'architecture', 'design pattern', 'async', 'concurrent']
-        features['technical_depth'] = sum(1 for term in tech_terms if term in query.lower())
+        tech_terms = [
+            "algorithm",
+            "optimize",
+            "performance",
+            "scalability",
+            "distributed",
+            "microservice",
+            "architecture",
+            "design pattern",
+            "async",
+            "concurrent",
+        ]
+        features["technical_depth"] = sum(
+            1 for term in tech_terms if term in query.lower()
+        )
 
         # Multi-file operations
-        multi_file = ['refactor', 'migrate', 'reorganize', 'across', 'multiple files']
-        features['multi_file'] = sum(2 for term in multi_file if term in query.lower())
+        multi_file = ["refactor", "migrate",
+                      "reorganize", "across", "multiple files"]
+        features["multi_file"] = sum(
+            2 for term in multi_file if term in query.lower())
 
         # Architecture decisions
-        arch_terms = ['design', 'architect', 'structure', 'pattern', 'framework choice']
-        features['architecture'] = sum(2 for term in arch_terms if term in query.lower())
+        arch_terms = ["design", "architect",
+                      "structure", "pattern", "framework choice"]
+        features["architecture"] = sum(
+            2 for term in arch_terms if term in query.lower()
+        )
 
         # Debugging complexity
-        debug_terms = ['debug', 'fix', 'error', 'bug', 'issue', 'problem', 'failing']
-        features['debugging'] = sum(1 for term in debug_terms if term in query.lower())
+        debug_terms = ["debug", "fix", "error",
+                       "bug", "issue", "problem", "failing"]
+        features["debugging"] = sum(
+            1 for term in debug_terms if term in query.lower())
 
         # Optimization requests
-        opt_terms = ['optimize', 'improve', 'faster', 'performance', 'efficient']
-        features['optimization'] = sum(1.5 for term in opt_terms if term in query.lower())
+        opt_terms = ["optimize", "improve",
+                     "faster", "performance", "efficient"]
+        features["optimization"] = sum(
+            1.5 for term in opt_terms if term in query.lower()
+        )
 
         # Security concerns
-        sec_terms = ['security', 'vulnerability', 'authentication', 'authorization', 'encryption']
-        features['security'] = sum(2 for term in sec_terms if term in query.lower())
+        sec_terms = [
+            "security",
+            "vulnerability",
+            "authentication",
+            "authorization",
+            "encryption",
+        ]
+        features["security"] = sum(
+            2 for term in sec_terms if term in query.lower())
 
         # API design
-        api_terms = ['api', 'endpoint', 'rest', 'graphql', 'websocket', 'interface']
-        features['api_design'] = sum(1.5 for term in api_terms if term in query.lower())
+        api_terms = ["api", "endpoint", "rest",
+                     "graphql", "websocket", "interface"]
+        features["api_design"] = sum(
+            1.5 for term in api_terms if term in query.lower())
 
         # Large refactoring
-        refactor_terms = ['refactor', 'rewrite', 'restructure', 'modernize', 'upgrade']
-        features['refactoring'] = sum(2 for term in refactor_terms if term in query.lower())
+        refactor_terms = ["refactor", "rewrite",
+                          "restructure", "modernize", "upgrade"]
+        features["refactoring"] = sum(
+            2 for term in refactor_terms if term in query.lower()
+        )
 
         # Calculate weighted score
-        score = sum(features.get(k, 0) * self.weights.get(k, 1.0) for k in self.weights.keys())
+        score = sum(
+            features.get(k, 0) * self.weights.get(k, 1.0) for k in self.weights.keys()
+        )
 
         return score, features
+
 
 class ModelDecisionEngine:
     """
@@ -132,12 +184,13 @@ class ModelDecisionEngine:
             self.connection_pool = psycopg2.pool.ThreadedConnectionPool(
                 minconn=1,
                 maxconn=20,
-                host=db_config.get('host', 'localhost'),
-                database=db_config.get('database', 'echo_brain'),
-                user=db_config.get('user', os.getenv("TOWER_USER", "patrick")),
-                password=db_config.get('password', 'patrick123')
+                host=db_config.get("host", "localhost"),
+                database=db_config.get("database", "echo_brain"),
+                user=db_config.get("user", os.getenv("TOWER_USER", "patrick")),
+                password=db_config.get("password", "patrick123"),
             )
-            logger.info("✅ Database connection pool initialized (20 connections)")
+            logger.info(
+                "✅ Database connection pool initialized (20 connections)")
         except Exception as e:
             logger.error(f"Failed to create connection pool: {e}")
             # Fallback to regular connections
@@ -154,23 +207,37 @@ class ModelDecisionEngine:
         # Model configurations with actual installed models
         self.local_models = {
             ModelTier.TINY: [
-                {"name": "llama3.2:3b", "params": 3, "specialization": None}  # Use better base model
+                {
+                    "name": "llama3.2:3b",
+                    "params": 3,
+                    "specialization": None,
+                }  # Use better base model
             ],
             ModelTier.SMALL: [
-                {"name": "deepseek-coder:latest", "params": 1.3, "specialization": "coding"},
+                {
+                    "name": "deepseek-coder:latest",
+                    "params": 1.3,
+                    "specialization": "coding",
+                },
                 {"name": "llama3.2:3b", "params": 3, "specialization": None},
                 {"name": "mistral:7b", "params": 7, "specialization": None},
-                {"name": "codellama:7b", "params": 7, "specialization": "coding"}
+                {"name": "codellama:7b", "params": 7, "specialization": "coding"},
             ],
             ModelTier.MEDIUM: [
                 {"name": "codellama:13b", "params": 13, "specialization": "coding"},
-                {"name": "deepseek-coder-v2:16b", "params": 16, "specialization": "coding"}
+                {
+                    "name": "deepseek-coder-v2:16b",
+                    "params": 16,
+                    "specialization": "coding",
+                },
             ],
             ModelTier.LARGE: [
-                {"name": "qwen2.5-coder:32b", "params": 32, "specialization": "coding"},
-                {"name": "codellama:70b", "params": 70, "specialization": "analysis"},
-                {"name": "llama3.1:70b", "params": 70, "specialization": None}
-            ]
+                {"name": "qwen2.5-coder:32b", "params": 32,
+                    "specialization": "coding"},
+                {"name": "codellama:70b", "params": 70,
+                    "specialization": "analysis"},
+                {"name": "llama3.1:70b", "params": 70, "specialization": None},
+            ],
         }
 
         # Thresholds (learnable)
@@ -211,7 +278,8 @@ class ModelDecisionEngine:
             cursor = conn.cursor()
 
             # Model decision history
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS model_decisions (
                     decision_id SERIAL PRIMARY KEY,
                     query_hash VARCHAR(64),
@@ -233,10 +301,12 @@ class ModelDecisionEngine:
 
                 CREATE INDEX IF NOT EXISTS idx_model_decisions_score
                 ON model_decisions(complexity_score);
-            """)
+            """
+            )
 
             # Model performance metrics
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS model_performance (
                     model_name VARCHAR(100) PRIMARY KEY,
                     total_queries INTEGER DEFAULT 0,
@@ -247,20 +317,24 @@ class ModelDecisionEngine:
                     complexity_sweet_spot FLOAT,
                     last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 );
-            """)
+            """
+            )
 
             # Decision weights (learnable parameters)
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS model_decision_weights (
                     feature VARCHAR(100) PRIMARY KEY,
                     weight FLOAT DEFAULT 1.0,
                     update_count INTEGER DEFAULT 0,
                     active BOOLEAN DEFAULT TRUE
                 );
-            """)
+            """
+            )
 
             # Complexity thresholds
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS complexity_thresholds (
                     tier VARCHAR(20) PRIMARY KEY,
                     min_score FLOAT,
@@ -278,7 +352,8 @@ class ModelDecisionEngine:
                     ('large', 30, 50),
                     ('cloud', 50, 999)
                 ON CONFLICT DO NOTHING;
-            """)
+            """
+            )
 
             conn.commit()
             conn.close()
@@ -292,17 +367,19 @@ class ModelDecisionEngine:
             conn = psycopg2.connect(**self.db_config)
             cursor = conn.cursor()
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT tier, min_score, max_score, auto_escalate
                 FROM complexity_thresholds
-            """)
+            """
+            )
 
             self.thresholds = {}
             for tier, min_score, max_score, auto_escalate in cursor.fetchall():
                 self.thresholds[tier] = {
                     "min": min_score,
                     "max": max_score,
-                    "auto_escalate": auto_escalate
+                    "auto_escalate": auto_escalate,
                 }
 
             conn.close()
@@ -310,11 +387,16 @@ class ModelDecisionEngine:
         except Exception as e:
             logger.warning(f"Using default thresholds: {e}")
             self.thresholds = {
-                "tiny": {"min": 0, "max": 2, "auto_escalate": True},  # Very basic only
-                "small": {"min": 2, "max": 15, "auto_escalate": True},  # Data retrieval starts here
+                # Very basic only
+                "tiny": {"min": 0, "max": 2, "auto_escalate": True},
+                "small": {
+                    "min": 2,
+                    "max": 15,
+                    "auto_escalate": True,
+                },  # Data retrieval starts here
                 "medium": {"min": 15, "max": 30, "auto_escalate": True},
                 "large": {"min": 30, "max": 50, "auto_escalate": True},
-                "cloud": {"min": 50, "max": 999, "auto_escalate": False}
+                "cloud": {"min": 50, "max": 999, "auto_escalate": False},
             }
 
     async def decide_model(self, query: str, context: Dict) -> Dict:
@@ -322,7 +404,8 @@ class ModelDecisionEngine:
         Make intelligent model decision based on query analysis
         """
         # Analyze complexity
-        complexity_score, features = self.complexity_analyzer.analyze(query, context)
+        complexity_score, features = self.complexity_analyzer.analyze(
+            query, context)
 
         # Check for user preference override
         if context.get("preferred_model"):
@@ -331,7 +414,7 @@ class ModelDecisionEngine:
                 "tier": self._get_model_tier(context["preferred_model"]),
                 "complexity_score": complexity_score,
                 "features": features,
-                "reason": "User preference override"
+                "reason": "User preference override",
             }
 
         # Determine tier based on complexity
@@ -345,14 +428,16 @@ class ModelDecisionEngine:
                 "complexity_score": complexity_score,
                 "features": features,
                 "reason": "Complexity exceeds local capacity",
-                "use_api": True
+                "use_api": True,
             }
 
         # Select best model from tier
         model = await self._select_best_model(selected_tier, features, context)
 
         # Record decision
-        await self._record_decision(query, complexity_score, features, model, selected_tier)
+        await self._record_decision(
+            query, complexity_score, features, model, selected_tier
+        )
 
         return {
             "model": model["name"],
@@ -360,7 +445,7 @@ class ModelDecisionEngine:
             "complexity_score": complexity_score,
             "features": features,
             "reason": f"Optimal for complexity score {complexity_score:.1f}",
-            "use_api": False
+            "use_api": False,
         }
 
     def _select_tier(self, complexity_score: float) -> ModelTier:
@@ -372,7 +457,9 @@ class ModelDecisionEngine:
         # Default to large for high complexity
         return ModelTier.LARGE if complexity_score < 50 else ModelTier.CLOUD
 
-    async def _select_best_model(self, tier: ModelTier, features: Dict, context: Dict) -> Dict:
+    async def _select_best_model(
+        self, tier: ModelTier, features: Dict, context: Dict
+    ) -> Dict:
         """Select the best model within a tier based on specialization and performance"""
 
         candidates = self.local_models.get(tier, [])
@@ -383,9 +470,11 @@ class ModelDecisionEngine:
             return await self._select_best_model(next_tier, features, context)
 
         # Check for specialization needs
-        if features.get('code_complexity', 0) > 0 or features.get('debugging', 0) > 0:
+        if features.get("code_complexity", 0) > 0 or features.get("debugging", 0) > 0:
             # Prefer coding specialists
-            coding_models = [m for m in candidates if m.get('specialization') == 'coding']
+            coding_models = [
+                m for m in candidates if m.get("specialization") == "coding"
+            ]
             if coding_models:
                 return self._pick_by_performance(coding_models)
 
@@ -402,9 +491,10 @@ class ModelDecisionEngine:
         if self.performance_cache:
             scored_models = []
             for model in models:
-                perf = self.performance_cache.get(model['name'], {})
-                score = perf.get('satisfaction_score', 0.5) * 100 + \
-                       (100 - perf.get('avg_response_time', 50))
+                perf = self.performance_cache.get(model["name"], {})
+                score = perf.get("satisfaction_score", 0.5) * 100 + (
+                    100 - perf.get("avg_response_time", 50)
+                )
                 scored_models.append((score, model))
 
             scored_models.sort(reverse=True)
@@ -415,8 +505,13 @@ class ModelDecisionEngine:
 
     def _escalate_tier(self, current_tier: ModelTier) -> ModelTier:
         """Escalate to next tier"""
-        tier_order = [ModelTier.TINY, ModelTier.SMALL, ModelTier.MEDIUM,
-                     ModelTier.LARGE, ModelTier.CLOUD]
+        tier_order = [
+            ModelTier.TINY,
+            ModelTier.SMALL,
+            ModelTier.MEDIUM,
+            ModelTier.LARGE,
+            ModelTier.CLOUD,
+        ]
 
         current_index = tier_order.index(current_tier)
         next_index = min(current_index + 1, len(tier_order) - 1)
@@ -426,29 +521,40 @@ class ModelDecisionEngine:
     def _get_model_tier(self, model_name: str) -> ModelTier:
         """Get tier of a specific model"""
         for tier, models in self.local_models.items():
-            if any(m['name'] == model_name for m in models):
+            if any(m["name"] == model_name for m in models):
                 return tier
         return ModelTier.CLOUD
 
-    async def _record_decision(self, query: str, score: float, features: Dict,
-                        model: Dict, tier: ModelTier):
+    async def _record_decision(
+        self, query: str, score: float, features: Dict, model: Dict, tier: ModelTier
+    ):
         """Record decision for learning (async with thread wrapper)"""
+
         def _record():
             try:
                 conn = psycopg2.connect(**self.db_config)
                 cursor = conn.cursor()
                 import hashlib
+
                 query_hash = hashlib.sha256(query.encode()).hexdigest()
-                cursor.execute("""
+                cursor.execute(
+                    """
                     INSERT INTO model_decisions
                     (query_hash, query_text, complexity_score, features,
                      selected_model, model_tier, created_at)
                     VALUES (%s, %s, %s, %s, %s, %s, %s)
                     RETURNING decision_id
-                """, (
-                    query_hash, query[:1000], score, json.dumps(features),
-                    model.get('name', 'unknown'), tier.value, datetime.now()
-                ))
+                """,
+                    (
+                        query_hash,
+                        query[:1000],
+                        score,
+                        json.dumps(features),
+                        model.get("name", "unknown"),
+                        tier.value,
+                        datetime.now(),
+                    ),
+                )
                 decision_id = cursor.fetchone()[0]
                 conn.commit()
                 conn.close()
@@ -456,23 +562,27 @@ class ModelDecisionEngine:
             except Exception as e:
                 logger.error(f"Failed to record decision: {e}")
                 return None
-        
+
         return await asyncio.to_thread(_record)
 
-    async def record_performance(self, decision_id: int, response_time: float,
-                                token_count: int, success: bool):
+    async def record_performance(
+        self, decision_id: int, response_time: float, token_count: int, success: bool
+    ):
         """Record actual performance for learning"""
         try:
             conn = psycopg2.connect(**self.db_config)
             cursor = conn.cursor()
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 UPDATE model_decisions
                 SET response_time = %s,
                     token_count = %s,
                     success = %s
                 WHERE decision_id = %s
-            """, (response_time, token_count, success, decision_id))
+            """,
+                (response_time, token_count, success, decision_id),
+            )
 
             conn.commit()
             conn.close()
@@ -486,11 +596,14 @@ class ModelDecisionEngine:
             conn = psycopg2.connect(**self.db_config)
             cursor = conn.cursor()
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 UPDATE model_decisions
                 SET user_feedback = %s
                 WHERE decision_id = %s
-            """, (feedback, decision_id))
+            """,
+                (feedback, decision_id),
+            )
 
             # Trigger learning update if feedback is poor
             if feedback <= 2:
@@ -509,11 +622,14 @@ class ModelDecisionEngine:
             cursor = conn.cursor()
 
             # Get decision details
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT complexity_score, features, model_tier, user_feedback
                 FROM model_decisions
                 WHERE decision_id = %s
-            """, (decision_id,))
+            """,
+                (decision_id,),
+            )
 
             score, features, tier, feedback = cursor.fetchone()
 
@@ -523,13 +639,16 @@ class ModelDecisionEngine:
 
             for feature, value in features.items():
                 if value > 0:
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                         INSERT INTO model_decision_weights (feature, weight)
                         VALUES (%s, %s)
                         ON CONFLICT (feature) DO UPDATE
                         SET weight = model_decision_weights.weight + %s,
                             update_count = model_decision_weights.update_count + 1
-                    """, (feature, 1.0 + adjustment, adjustment))
+                    """,
+                        (feature, 1.0 + adjustment, adjustment),
+                    )
 
             conn.commit()
             conn.close()
@@ -541,11 +660,7 @@ class ModelDecisionEngine:
             logger.error(f"Failed to adjust weights: {e}")
 
     async def validate_and_reload_if_needed(
-        self,
-        output: str,
-        query: str,
-        model_used: str,
-        expected_type: str = "general"
+        self, output: str, query: str, model_used: str, expected_type: str = "general"
     ) -> Tuple[str, str, ValidationResult]:
         """
         Validate output quality and reload with better model if needed
@@ -571,37 +686,49 @@ class ModelDecisionEngine:
 
                 if better_output:
                     # Re-validate the new output
-                    new_validation = self.code_validator.validate_code(better_output)
+                    new_validation = self.code_validator.validate_code(
+                        better_output)
                     return better_output, better_model, new_validation
 
             return output, model_used, validation
 
         # For non-code tasks, return original output
-        return output, model_used, ValidationResult(
-            is_valid=True,
-            confidence=1.0,
-            issues=[],
-            language=None,
-            quality_score=1.0,
-            is_gibberish=False,
-            requires_reload=False
+        return (
+            output,
+            model_used,
+            ValidationResult(
+                is_valid=True,
+                confidence=1.0,
+                issues=[],
+                language=None,
+                quality_score=1.0,
+                is_gibberish=False,
+                requires_reload=False,
+            ),
         )
 
     def _is_code_generation_task(self, query: str) -> bool:
         """Detect if the query is asking for code generation"""
         code_indicators = [
-            "write code", "generate code", "create a function", "implement",
-            "write a script", "create a class", "code for", "program",
-            "python", "javascript", "sql", "bash", "typescript"
+            "write code",
+            "generate code",
+            "create a function",
+            "implement",
+            "write a script",
+            "create a class",
+            "code for",
+            "program",
+            "python",
+            "javascript",
+            "sql",
+            "bash",
+            "typescript",
         ]
         query_lower = query.lower()
         return any(indicator in query_lower for indicator in code_indicators)
 
     async def _retry_with_better_model(
-        self,
-        query: str,
-        failed_model: str,
-        validation: ValidationResult
+        self, query: str, failed_model: str, validation: ValidationResult
     ) -> Tuple[str, str]:
         """Retry with a progressively better model"""
 
@@ -617,7 +744,9 @@ class ModelDecisionEngine:
 
             # Get models in this tier specialized for coding
             tier_models = self.local_models.get(tier, [])
-            coding_models = [m for m in tier_models if m.get("specialization") == "coding"]
+            coding_models = [
+                m for m in tier_models if m.get("specialization") == "coding"
+            ]
 
             if not coding_models:
                 coding_models = tier_models  # Fall back to any model in tier
@@ -630,7 +759,9 @@ class ModelDecisionEngine:
 
                     try:
                         # Enhanced prompt for better results
-                        enhanced_query = self._enhance_query_for_code(query, validation.issues)
+                        enhanced_query = self._enhance_query_for_code(
+                            query, validation.issues
+                        )
 
                         # Call the model (this would integrate with your model manager)
                         result = await self._call_model(model_name, enhanced_query)
@@ -658,7 +789,8 @@ class ModelDecisionEngine:
             enhancements.append("Ensure proper syntax with balanced brackets.")
 
         if any("no language" in str(issue).lower() for issue in issues):
-            enhancements.append("Clearly use proper programming language syntax.")
+            enhancements.append(
+                "Clearly use proper programming language syntax.")
 
         enhancement_text = " ".join(enhancements)
 
@@ -671,7 +803,7 @@ class ModelDecisionEngine:
                 async with session.get("http://localhost:11434/api/tags") as response:
                     if response.status == 200:
                         data = await response.json()
-                        models = [m['name'] for m in data.get('models', [])]
+                        models = [m["name"] for m in data.get("models", [])]
                         return model_name in models
         except Exception as e:
             logger.error(f"Failed to check model availability: {e}")
@@ -686,21 +818,18 @@ class ModelDecisionEngine:
                     "model": model_name,
                     "prompt": query,
                     "stream": False,
-                    "options": {
-                        "temperature": 0.3,
-                        "num_predict": 2000
-                    }
+                    "options": {"temperature": 0.3, "num_predict": 2000},
                 }
 
                 async with session.post(
-                    "http://localhost:11434/api/generate",
-                    json=payload
+                    "http://localhost:11434/api/generate", json=payload
                 ) as response:
                     if response.status == 200:
                         result = await response.json()
                         return result.get("response", "")
                     else:
-                        logger.error(f"Ollama API error: HTTP {response.status}")
+                        logger.error(
+                            f"Ollama API error: HTTP {response.status}")
                         return None
 
         except asyncio.TimeoutError:
@@ -717,7 +846,8 @@ class ModelDecisionEngine:
             cursor = conn.cursor()
 
             # Overall stats
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT
                     COUNT(*) as total_decisions,
                     AVG(complexity_score) as avg_complexity,
@@ -726,12 +856,14 @@ class ModelDecisionEngine:
                     SUM(CASE WHEN api_fallback THEN 1 ELSE 0 END) as api_fallbacks
                 FROM model_decisions
                 WHERE created_at > NOW() - INTERVAL '24 hours'
-            """)
+            """
+            )
 
             stats = cursor.fetchone()
 
             # Per-model performance
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT
                     selected_model,
                     COUNT(*) as queries,
@@ -740,7 +872,8 @@ class ModelDecisionEngine:
                 FROM model_decisions
                 WHERE created_at > NOW() - INTERVAL '24 hours'
                 GROUP BY selected_model
-            """)
+            """
+            )
 
             model_stats = cursor.fetchall()
 
@@ -752,24 +885,26 @@ class ModelDecisionEngine:
                     "avg_complexity": stats[1] or 0,
                     "avg_response_time": stats[2] or 0,
                     "avg_feedback": stats[3] or 0,
-                    "api_fallbacks": stats[4] or 0
+                    "api_fallbacks": stats[4] or 0,
                 },
                 "models": {
                     model: {
                         "queries": queries,
                         "avg_time": avg_time,
-                        "avg_feedback": avg_feedback
+                        "avg_feedback": avg_feedback,
                     }
                     for model, queries, avg_time, avg_feedback in model_stats
-                }
+                },
             }
 
         except Exception as e:
             logger.error(f"Failed to get performance summary: {e}")
             return {}
 
+
 # Singleton instance
 _engine_instance: Optional[ModelDecisionEngine] = None
+
 
 def get_decision_engine(db_config: Dict) -> ModelDecisionEngine:
     """Get or create decision engine instance"""

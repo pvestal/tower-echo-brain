@@ -1,713 +1,9 @@
 {
   "sessions": {
-    "test_multi_turn": {
-      "conversation_id": "test_multi_turn",
-      "started_at": "2025-12-06T17:50:08.073922",
-      "last_activity": "2025-12-06T17:50:08.109517",
-      "session_summary": "",
-      "entities": {
-        "8309": {
-          "name": "8309",
-          "entity_type": "port",
-          "value": "8309",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T17:50:08.074998",
-          "last_mentioned": "2025-12-06T17:50:08.109517",
-          "mention_count": 2,
-          "context": "What services are running on port 8309?",
-          "aliases": []
-        },
-        "echo brain": {
-          "name": "echo brain",
-          "entity_type": "service",
-          "value": "echo brain",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T17:50:08.075343",
-          "last_mentioned": "2025-12-06T17:50:08.109517",
-          "mention_count": 1,
-          "context": "Echo Brain is running on port 8309. The service includes conversation memory and verified execution.",
-          "aliases": []
-        }
-      },
-      "turn_count": 0
-    },
-    "complex_test_conversation": {
-      "conversation_id": "complex_test_conversation",
-      "started_at": "2025-12-06T18:01:47.003415",
-      "last_activity": "2025-12-06T18:01:47.042638",
-      "session_summary": "",
-      "entities": {
-        "tower-anime-production": {
-          "name": "tower-anime-production",
-          "entity_type": "service",
-          "value": "tower-anime-production",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:01:47.003534",
-          "last_mentioned": "2025-12-06T18:01:47.042261",
-          "mention_count": 2,
-          "context": "What services are broken? Check tower-anime-production and tower-auth.",
-          "aliases": []
-        },
-        "tower-auth": {
-          "name": "tower-auth",
-          "entity_type": "service",
-          "value": "tower-auth",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:01:47.003574",
-          "last_mentioned": "2025-12-06T18:01:47.042261",
-          "mention_count": 2,
-          "context": "What services are broken? Check tower-anime-production and tower-auth.",
-          "aliases": []
-        },
-        "authentication": {
-          "name": "authentication",
-          "entity_type": "service",
-          "value": "authentication",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:01:47.042606",
-          "last_mentioned": "2025-12-06T18:01:47.042638",
-          "mention_count": 1,
-          "context": "Did that fix the authentication problem?",
-          "aliases": []
-        }
-      },
-      "turn_count": 0
-    },
-    "telegram_user_123": {
-      "conversation_id": "telegram_user_123",
-      "started_at": "2025-12-06T18:23:50.766566",
-      "last_activity": "2025-12-06T18:23:50.806430",
-      "session_summary": "",
-      "entities": {
-        "tower-anime-production": {
-          "name": "tower-anime-production",
-          "entity_type": "service",
-          "value": "tower-anime-production",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:23:50.766693",
-          "last_mentioned": "2025-12-06T18:23:50.806431",
-          "mention_count": 2,
-          "context": "Check the status of tower-anime-production on port 8328",
-          "aliases": []
-        },
-        "8328": {
-          "name": "8328",
-          "entity_type": "port",
-          "value": "8328",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:23:50.767681",
-          "last_mentioned": "2025-12-06T18:23:50.802087",
-          "mention_count": 1,
-          "context": "Check the status of tower-anime-production on port 8328",
-          "aliases": []
-        }
-      },
-      "turn_count": 0
-    },
-    "telegram_load_test_0": {
-      "conversation_id": "telegram_load_test_0",
-      "started_at": "2025-12-06T18:23:50.821401",
-      "last_activity": "2025-12-06T18:23:50.932568",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "web_load_test_1": {
-      "conversation_id": "web_load_test_1",
-      "started_at": "2025-12-06T18:23:50.821493",
-      "last_activity": "2025-12-06T18:23:50.900251",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "cli_load_test_2": {
-      "conversation_id": "cli_load_test_2",
-      "started_at": "2025-12-06T18:23:50.821555",
-      "last_activity": "2025-12-06T18:23:50.909243",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "internal_load_test_3": {
-      "conversation_id": "internal_load_test_3",
-      "started_at": "2025-12-06T18:23:50.821616",
-      "last_activity": "2025-12-06T18:23:50.948169",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "telegram_load_test_4": {
-      "conversation_id": "telegram_load_test_4",
-      "started_at": "2025-12-06T18:23:50.821680",
-      "last_activity": "2025-12-06T18:23:50.988454",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "web_load_test_5": {
-      "conversation_id": "web_load_test_5",
-      "started_at": "2025-12-06T18:23:50.821743",
-      "last_activity": "2025-12-06T18:23:50.889142",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "cli_load_test_6": {
-      "conversation_id": "cli_load_test_6",
-      "started_at": "2025-12-06T18:23:50.821801",
-      "last_activity": "2025-12-06T18:23:50.971122",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "internal_load_test_7": {
-      "conversation_id": "internal_load_test_7",
-      "started_at": "2025-12-06T18:23:50.821860",
-      "last_activity": "2025-12-06T18:23:50.914499",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "telegram_load_test_8": {
-      "conversation_id": "telegram_load_test_8",
-      "started_at": "2025-12-06T18:23:50.821935",
-      "last_activity": "2025-12-06T18:23:50.963736",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "web_load_test_9": {
-      "conversation_id": "web_load_test_9",
-      "started_at": "2025-12-06T18:23:50.821989",
-      "last_activity": "2025-12-06T18:23:50.924179",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "cli_load_test_10": {
-      "conversation_id": "cli_load_test_10",
-      "started_at": "2025-12-06T18:23:50.822033",
-      "last_activity": "2025-12-06T18:23:50.942791",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "internal_load_test_11": {
-      "conversation_id": "internal_load_test_11",
-      "started_at": "2025-12-06T18:23:50.822080",
-      "last_activity": "2025-12-06T18:23:50.941775",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "telegram_load_test_12": {
-      "conversation_id": "telegram_load_test_12",
-      "started_at": "2025-12-06T18:23:50.822158",
-      "last_activity": "2025-12-06T18:23:50.902982",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "web_load_test_13": {
-      "conversation_id": "web_load_test_13",
-      "started_at": "2025-12-06T18:23:50.822211",
-      "last_activity": "2025-12-06T18:23:50.933877",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "cli_load_test_14": {
-      "conversation_id": "cli_load_test_14",
-      "started_at": "2025-12-06T18:23:50.822256",
-      "last_activity": "2025-12-06T18:23:50.921365",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "internal_load_test_15": {
-      "conversation_id": "internal_load_test_15",
-      "started_at": "2025-12-06T18:23:50.822300",
-      "last_activity": "2025-12-06T18:23:50.920335",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "telegram_load_test_16": {
-      "conversation_id": "telegram_load_test_16",
-      "started_at": "2025-12-06T18:23:50.822351",
-      "last_activity": "2025-12-06T18:23:50.895996",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "web_load_test_17": {
-      "conversation_id": "web_load_test_17",
-      "started_at": "2025-12-06T18:23:50.822406",
-      "last_activity": "2025-12-06T18:23:50.952875",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "cli_load_test_18": {
-      "conversation_id": "cli_load_test_18",
-      "started_at": "2025-12-06T18:23:50.822455",
-      "last_activity": "2025-12-06T18:23:50.970370",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "internal_load_test_19": {
-      "conversation_id": "internal_load_test_19",
-      "started_at": "2025-12-06T18:23:50.822501",
-      "last_activity": "2025-12-06T18:23:50.888286",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "telegram_load_test_20": {
-      "conversation_id": "telegram_load_test_20",
-      "started_at": "2025-12-06T18:23:50.822550",
-      "last_activity": "2025-12-06T18:23:50.963120",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "web_load_test_21": {
-      "conversation_id": "web_load_test_21",
-      "started_at": "2025-12-06T18:23:50.822601",
-      "last_activity": "2025-12-06T18:23:50.899789",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "cli_load_test_22": {
-      "conversation_id": "cli_load_test_22",
-      "started_at": "2025-12-06T18:23:50.822649",
-      "last_activity": "2025-12-06T18:23:50.934315",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "internal_load_test_23": {
-      "conversation_id": "internal_load_test_23",
-      "started_at": "2025-12-06T18:23:50.822697",
-      "last_activity": "2025-12-06T18:23:50.966655",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "telegram_load_test_24": {
-      "conversation_id": "telegram_load_test_24",
-      "started_at": "2025-12-06T18:23:50.822746",
-      "last_activity": "2025-12-06T18:23:50.916317",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "web_load_test_25": {
-      "conversation_id": "web_load_test_25",
-      "started_at": "2025-12-06T18:23:50.823407",
-      "last_activity": "2025-12-06T18:23:50.911902",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "cli_load_test_26": {
-      "conversation_id": "cli_load_test_26",
-      "started_at": "2025-12-06T18:23:50.823460",
-      "last_activity": "2025-12-06T18:23:50.918427",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "internal_load_test_27": {
-      "conversation_id": "internal_load_test_27",
-      "started_at": "2025-12-06T18:23:50.823512",
-      "last_activity": "2025-12-06T18:23:50.973532",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "telegram_load_test_28": {
-      "conversation_id": "telegram_load_test_28",
-      "started_at": "2025-12-06T18:23:50.823565",
-      "last_activity": "2025-12-06T18:23:50.968815",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "web_load_test_29": {
-      "conversation_id": "web_load_test_29",
-      "started_at": "2025-12-06T18:23:50.823614",
-      "last_activity": "2025-12-06T18:23:50.950646",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "cli_load_test_30": {
-      "conversation_id": "cli_load_test_30",
-      "started_at": "2025-12-06T18:23:50.823657",
-      "last_activity": "2025-12-06T18:23:50.923564",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "internal_load_test_31": {
-      "conversation_id": "internal_load_test_31",
-      "started_at": "2025-12-06T18:23:50.823700",
-      "last_activity": "2025-12-06T18:23:50.956381",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "telegram_load_test_32": {
-      "conversation_id": "telegram_load_test_32",
-      "started_at": "2025-12-06T18:23:50.823748",
-      "last_activity": "2025-12-06T18:23:50.962474",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "web_load_test_33": {
-      "conversation_id": "web_load_test_33",
-      "started_at": "2025-12-06T18:23:50.823798",
-      "last_activity": "2025-12-06T18:23:50.965038",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "cli_load_test_34": {
-      "conversation_id": "cli_load_test_34",
-      "started_at": "2025-12-06T18:23:50.823842",
-      "last_activity": "2025-12-06T18:23:50.909954",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "internal_load_test_35": {
-      "conversation_id": "internal_load_test_35",
-      "started_at": "2025-12-06T18:23:50.823888",
-      "last_activity": "2025-12-06T18:23:50.947439",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "telegram_load_test_36": {
-      "conversation_id": "telegram_load_test_36",
-      "started_at": "2025-12-06T18:23:50.823943",
-      "last_activity": "2025-12-06T18:23:50.906557",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "web_load_test_37": {
-      "conversation_id": "web_load_test_37",
-      "started_at": "2025-12-06T18:23:50.823993",
-      "last_activity": "2025-12-06T18:23:50.902266",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "cli_load_test_38": {
-      "conversation_id": "cli_load_test_38",
-      "started_at": "2025-12-06T18:23:50.824057",
-      "last_activity": "2025-12-06T18:23:50.958532",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "internal_load_test_39": {
-      "conversation_id": "internal_load_test_39",
-      "started_at": "2025-12-06T18:23:50.824104",
-      "last_activity": "2025-12-06T18:23:50.953319",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "telegram_load_test_40": {
-      "conversation_id": "telegram_load_test_40",
-      "started_at": "2025-12-06T18:23:50.824156",
-      "last_activity": "2025-12-06T18:23:50.906108",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "web_load_test_41": {
-      "conversation_id": "web_load_test_41",
-      "started_at": "2025-12-06T18:23:50.824210",
-      "last_activity": "2025-12-06T18:23:50.943549",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "cli_load_test_42": {
-      "conversation_id": "cli_load_test_42",
-      "started_at": "2025-12-06T18:23:50.824254",
-      "last_activity": "2025-12-06T18:23:50.956815",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "internal_load_test_43": {
-      "conversation_id": "internal_load_test_43",
-      "started_at": "2025-12-06T18:23:50.824296",
-      "last_activity": "2025-12-06T18:23:50.892428",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "telegram_load_test_44": {
-      "conversation_id": "telegram_load_test_44",
-      "started_at": "2025-12-06T18:23:50.824350",
-      "last_activity": "2025-12-06T18:23:50.937138",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "web_load_test_45": {
-      "conversation_id": "web_load_test_45",
-      "started_at": "2025-12-06T18:23:50.824400",
-      "last_activity": "2025-12-06T18:23:50.890433",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "cli_load_test_46": {
-      "conversation_id": "cli_load_test_46",
-      "started_at": "2025-12-06T18:23:50.824445",
-      "last_activity": "2025-12-06T18:23:50.931176",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "internal_load_test_47": {
-      "conversation_id": "internal_load_test_47",
-      "started_at": "2025-12-06T18:23:50.824490",
-      "last_activity": "2025-12-06T18:23:50.927664",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "telegram_load_test_48": {
-      "conversation_id": "telegram_load_test_48",
-      "started_at": "2025-12-06T18:23:50.824541",
-      "last_activity": "2025-12-06T18:23:50.972420",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "web_load_test_49": {
-      "conversation_id": "web_load_test_49",
-      "started_at": "2025-12-06T18:23:50.824590",
-      "last_activity": "2025-12-06T18:23:50.939964",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "multi_interface_persistence_cli": {
-      "conversation_id": "multi_interface_persistence_cli",
-      "started_at": "2025-12-06T18:23:50.989029",
-      "last_activity": "2025-12-06T18:23:50.990729",
-      "session_summary": "",
-      "entities": {
-        "tower-echo-brain": {
-          "name": "tower-echo-brain",
-          "entity_type": "service",
-          "value": "tower-echo-brain",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:23:50.989039",
-          "last_mentioned": "2025-12-06T18:23:50.989089",
-          "mention_count": 1,
-          "context": "Check the tower-echo-brain service logs",
-          "aliases": []
-        }
-      },
-      "turn_count": 0
-    },
-    "multi_interface_persistence_telegram": {
-      "conversation_id": "multi_interface_persistence_telegram",
-      "started_at": "2025-12-06T18:23:50.989658",
-      "last_activity": "2025-12-06T18:23:50.989712",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "multi_interface_persistence_web": {
-      "conversation_id": "multi_interface_persistence_web",
-      "started_at": "2025-12-06T18:23:50.990234",
-      "last_activity": "2025-12-06T18:23:50.990291",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "kb_integration_test": {
-      "conversation_id": "kb_integration_test",
-      "started_at": "2025-12-06T18:24:23.623825",
-      "last_activity": "2025-12-06T18:24:23.664749",
-      "session_summary": "",
-      "entities": {
-        "tower-auth": {
-          "name": "tower-auth",
-          "entity_type": "service",
-          "value": "tower-auth",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:24:23.624119",
-          "last_mentioned": "2025-12-06T18:24:23.659660",
-          "mention_count": 1,
-          "context": "The tower-auth service is showing bypass mode errors",
-          "aliases": []
-        },
-        "authentication": {
-          "name": "authentication",
-          "entity_type": "service",
-          "value": "authentication",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:24:23.660444",
-          "last_mentioned": "2025-12-06T18:24:23.664749",
-          "mention_count": 1,
-          "context": "Found authentication issue. Reference KB article KB-001: Tower Service Authentication Troubleshootin",
-          "aliases": [
-            "authentication"
-          ]
-        },
-        "kb": {
-          "name": "kb",
-          "entity_type": "service",
-          "value": "kb",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:24:23.660456",
-          "last_mentioned": "2025-12-06T18:24:23.664749",
-          "mention_count": 1,
-          "context": "Found authentication issue. Reference KB article KB-001: Tower Service Authentication Troubleshootin",
-          "aliases": [
-            "kb"
-          ]
-        },
-        "vault": {
-          "name": "vault",
-          "entity_type": "service",
-          "value": "vault",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:24:23.660474",
-          "last_mentioned": "2025-12-06T18:24:23.664749",
-          "mention_count": 1,
-          "context": "Found authentication issue. Reference KB article KB-001: Tower Service Authentication Troubleshootin",
-          "aliases": []
-        }
-      },
-      "turn_count": 0
-    },
-    "claude_history_test": {
-      "conversation_id": "claude_history_test",
-      "started_at": "2025-12-06T18:24:23.665348",
-      "last_activity": "2025-12-06T18:24:23.669915",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "system_logs_test": {
-      "conversation_id": "system_logs_test",
-      "started_at": "2025-12-06T18:24:23.670402",
-      "last_activity": "2025-12-06T18:24:23.671149",
-      "session_summary": "",
-      "entities": {
-        "anime production": {
-          "name": "anime production",
-          "entity_type": "service",
-          "value": "anime production",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:24:23.670413",
-          "last_mentioned": "2025-12-06T18:24:23.670493",
-          "mention_count": 1,
-          "context": "I'm seeing performance issues with the anime production service",
-          "aliases": []
-        },
-        "25": {
-          "name": "25",
-          "entity_type": "port",
-          "value": "25",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:24:23.671092",
-          "last_mentioned": "2025-12-06T18:24:23.671149",
-          "mention_count": 1,
-          "context": "Performance issue identified. System logs show High GPU memory usage detected: 95% utilization at 20",
-          "aliases": []
-        },
-        "00": {
-          "name": "00",
-          "entity_type": "port",
-          "value": "00",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:24:23.671094",
-          "last_mentioned": "2025-12-06T18:24:23.671149",
-          "mention_count": 1,
-          "context": "Performance issue identified. System logs show High GPU memory usage detected: 95% utilization at 20",
-          "aliases": []
-        }
-      },
-      "turn_count": 0
-    },
-    "cross_modal_test": {
-      "conversation_id": "cross_modal_test",
-      "started_at": "2025-12-06T18:24:23.671680",
-      "last_activity": "2025-12-06T18:24:23.672490",
-      "session_summary": "",
-      "entities": {
-        "authentication": {
-          "name": "authentication",
-          "entity_type": "service",
-          "value": "authentication",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:24:23.671690",
-          "last_mentioned": "2025-12-06T18:24:23.672490",
-          "mention_count": 2,
-          "context": "The authentication issues we discussed last week are happening again. Check what the logs say about ",
-          "aliases": []
-        },
-        "tower-auth": {
-          "name": "tower-auth",
-          "entity_type": "service",
-          "value": "tower-auth",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:24:23.671693",
-          "last_mentioned": "2025-12-06T18:24:23.671788",
-          "mention_count": 1,
-          "context": "The authentication issues we discussed last week are happening again. Check what the logs say about ",
-          "aliases": []
-        },
-        "kb": {
-          "name": "kb",
-          "entity_type": "service",
-          "value": "kb",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:24:23.672351",
-          "last_mentioned": "2025-12-06T18:24:23.672490",
-          "mention_count": 1,
-          "context": "Authentication recurring issue identified. Cross-referencing KB article KB-001, previous conversatio",
-          "aliases": [
-            "kb"
-          ]
-        },
-        "vault": {
-          "name": "vault",
-          "entity_type": "service",
-          "value": "vault",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:24:23.672369",
-          "last_mentioned": "2025-12-06T18:24:23.672490",
-          "mention_count": 1,
-          "context": "Authentication recurring issue identified. Cross-referencing KB article KB-001, previous conversatio",
-          "aliases": [
-            "vault"
-          ]
-        }
-      },
-      "turn_count": 0
-    },
     "extraction_test_0": {
       "conversation_id": "extraction_test_0",
-      "started_at": "2025-12-06T18:25:38.660509",
-      "last_activity": "2025-12-06T18:32:02.839067",
+      "started_at": "2025-12-07T23:38:44.965496",
+      "last_activity": "2025-12-07T23:38:48.146083",
       "session_summary": "",
       "entities": {
         "tower-echo-brain": {
@@ -715,9 +11,9 @@
           "entity_type": "service",
           "value": "tower-echo-brain",
           "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:25:38.660572",
-          "last_mentioned": "2025-12-06T18:32:02.839067",
-          "mention_count": 2,
+          "first_mentioned": "2025-12-07T23:38:44.965561",
+          "last_mentioned": "2025-12-07T23:38:48.146084",
+          "mention_count": 1,
           "context": "The tower-echo-brain service on port 8309 is having connection issues",
           "aliases": []
         },
@@ -726,41 +22,41 @@
           "entity_type": "port",
           "value": "8309",
           "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:25:38.661600",
-          "last_mentioned": "2025-12-06T18:32:02.839067",
-          "mention_count": 2,
+          "first_mentioned": "2025-12-07T23:38:44.966608",
+          "last_mentioned": "2025-12-07T23:38:48.146084",
+          "mention_count": 1,
           "context": "The tower-echo-brain service on port 8309 is having connection issues",
           "aliases": []
         },
         "tower-echo-brain service": {
           "name": "tower-echo-brain service",
           "entity_type": "service",
-          "value": "tower-echo-brain service",
+          "value": "tower-echo-brain",
           "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:32:02.838858",
-          "last_mentioned": "2025-12-06T18:32:02.839067",
+          "first_mentioned": "2025-12-07T23:38:48.145980",
+          "last_mentioned": "2025-12-07T23:38:48.146084",
           "mention_count": 1,
           "context": "The tower-echo-brain service on port 8309 is having connection issues",
           "aliases": []
         },
-        "port": {
-          "name": "port",
-          "entity_type": "generic",
-          "value": "8309",
+        "connection issues": {
+          "name": "connection issues",
+          "entity_type": "error",
+          "value": "connection issues",
           "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:32:02.838866",
-          "last_mentioned": "2025-12-06T18:32:02.839067",
+          "first_mentioned": "2025-12-07T23:38:48.145986",
+          "last_mentioned": "2025-12-07T23:38:48.146084",
           "mention_count": 1,
           "context": "The tower-echo-brain service on port 8309 is having connection issues",
           "aliases": []
         }
       },
-      "turn_count": 0
+      "turn_count": 1
     },
     "extraction_test_1": {
       "conversation_id": "extraction_test_1",
-      "started_at": "2025-12-06T18:25:38.696566",
-      "last_activity": "2025-12-06T18:32:13.031061",
+      "started_at": "2025-12-07T23:38:48.147066",
+      "last_activity": "2025-12-07T23:38:49.140137",
       "session_summary": "",
       "entities": {
         "anime-production": {
@@ -768,9 +64,9 @@
           "entity_type": "service",
           "value": "anime-production",
           "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:25:38.696582",
-          "last_mentioned": "2025-12-06T18:32:13.031061",
-          "mention_count": 2,
+          "first_mentioned": "2025-12-07T23:38:48.147081",
+          "last_mentioned": "2025-12-07T23:38:49.140138",
+          "mention_count": 1,
           "context": "Check the anime-production API and restart the authentication service",
           "aliases": []
         },
@@ -779,41 +75,41 @@
           "entity_type": "service",
           "value": "authentication",
           "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:25:38.696588",
-          "last_mentioned": "2025-12-06T18:32:13.031061",
-          "mention_count": 2,
+          "first_mentioned": "2025-12-07T23:38:48.147086",
+          "last_mentioned": "2025-12-07T23:38:49.140138",
+          "mention_count": 1,
           "context": "Check the anime-production API and restart the authentication service",
           "aliases": []
         },
         "authentication service": {
           "name": "authentication service",
           "entity_type": "system",
-          "value": "service",
+          "value": "authentication service",
           "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:32:13.030947",
-          "last_mentioned": "2025-12-06T18:32:13.031061",
+          "first_mentioned": "2025-12-07T23:38:49.140025",
+          "last_mentioned": "2025-12-07T23:38:49.140138",
           "mention_count": 1,
           "context": "Check the anime-production API and restart the authentication service",
           "aliases": []
         },
         "anime-production API": {
           "name": "anime-production API",
-          "entity_type": "generic",
-          "value": "API",
+          "entity_type": "service",
+          "value": "anime-production API",
           "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:32:13.030954",
-          "last_mentioned": "2025-12-06T18:32:13.031061",
+          "first_mentioned": "2025-12-07T23:38:49.140032",
+          "last_mentioned": "2025-12-07T23:38:49.140138",
           "mention_count": 1,
           "context": "Check the anime-production API and restart the authentication service",
           "aliases": []
         }
       },
-      "turn_count": 0
+      "turn_count": 1
     },
     "extraction_test_2": {
       "conversation_id": "extraction_test_2",
-      "started_at": "2025-12-06T18:25:38.700934",
-      "last_activity": "2025-12-06T18:32:14.947239",
+      "started_at": "2025-12-07T23:38:49.142840",
+      "last_activity": "2025-12-07T23:38:49.944168",
       "session_summary": "",
       "entities": {
         "tower-auth": {
@@ -821,9 +117,9 @@
           "entity_type": "service",
           "value": "tower-auth",
           "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:25:38.700944",
-          "last_mentioned": "2025-12-06T18:32:14.947240",
-          "mention_count": 2,
+          "first_mentioned": "2025-12-07T23:38:49.142860",
+          "last_mentioned": "2025-12-07T23:38:49.944169",
+          "mention_count": 1,
           "context": "vault.json has the OAuth credentials for tower-auth",
           "aliases": [
             "tower-auth"
@@ -834,9 +130,9 @@
           "entity_type": "service",
           "value": "vault",
           "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:25:38.700952",
-          "last_mentioned": "2025-12-06T18:32:14.947240",
-          "mention_count": 2,
+          "first_mentioned": "2025-12-07T23:38:49.142870",
+          "last_mentioned": "2025-12-07T23:38:49.944169",
+          "mention_count": 1,
           "context": "vault.json has the OAuth credentials for tower-auth",
           "aliases": []
         },
@@ -845,9 +141,9 @@
           "entity_type": "file",
           "value": "vault.js",
           "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:25:38.700958",
-          "last_mentioned": "2025-12-06T18:32:14.947240",
-          "mention_count": 2,
+          "first_mentioned": "2025-12-07T23:38:49.142877",
+          "last_mentioned": "2025-12-07T23:38:49.944169",
+          "mention_count": 1,
           "context": "vault.json has the OAuth credentials for tower-auth",
           "aliases": []
         },
@@ -856,21 +152,21 @@
           "entity_type": "file",
           "value": "vault.json",
           "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:25:38.700964",
-          "last_mentioned": "2025-12-06T18:32:14.947240",
-          "mention_count": 2,
+          "first_mentioned": "2025-12-07T23:38:49.142884",
+          "last_mentioned": "2025-12-07T23:38:49.944169",
+          "mention_count": 1,
           "context": "vault.json has the OAuth credentials for tower-auth",
           "aliases": [
             "vault.json"
           ]
         }
       },
-      "turn_count": 0
+      "turn_count": 1
     },
     "resolution_test": {
       "conversation_id": "resolution_test",
-      "started_at": "2025-12-06T18:25:38.706689",
-      "last_activity": "2025-12-06T18:32:39.047467",
+      "started_at": "2025-12-07T23:38:49.945224",
+      "last_activity": "2025-12-07T23:38:51.824468",
       "session_summary": "",
       "entities": {
         "tower-anime-production": {
@@ -878,9 +174,42 @@
           "entity_type": "service",
           "value": "tower-anime-production",
           "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:25:38.706701",
-          "last_mentioned": "2025-12-06T18:32:37.037694",
-          "mention_count": 2,
+          "first_mentioned": "2025-12-07T23:38:49.945239",
+          "last_mentioned": "2025-12-07T23:38:51.017948",
+          "mention_count": 1,
+          "context": "The tower-anime-production service is failing with GPU errors",
+          "aliases": []
+        },
+        "GPU": {
+          "name": "GPU",
+          "entity_type": "generic",
+          "value": "GPU",
+          "confidence": 0.8,
+          "first_mentioned": "2025-12-07T23:38:51.017853",
+          "last_mentioned": "2025-12-07T23:38:51.017948",
+          "mention_count": 1,
+          "context": "The tower-anime-production service is failing with GPU errors",
+          "aliases": []
+        },
+        "GPU errors": {
+          "name": "GPU errors",
+          "entity_type": "generic",
+          "value": "GPU errors",
+          "confidence": 0.8,
+          "first_mentioned": "2025-12-07T23:38:51.017860",
+          "last_mentioned": "2025-12-07T23:38:51.017948",
+          "mention_count": 1,
+          "context": "The tower-anime-production service is failing with GPU errors",
+          "aliases": []
+        },
+        "tower-anime-production service": {
+          "name": "tower-anime-production service",
+          "entity_type": "system",
+          "value": "tower-anime-production service",
+          "confidence": 0.8,
+          "first_mentioned": "2025-12-07T23:38:51.017863",
+          "last_mentioned": "2025-12-07T23:38:51.017948",
+          "mention_count": 1,
           "context": "The tower-anime-production service is failing with GPU errors",
           "aliases": []
         },
@@ -889,9 +218,9 @@
           "entity_type": "service",
           "value": "auth service",
           "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:25:38.707643",
-          "last_mentioned": "2025-12-06T18:32:39.047467",
-          "mention_count": 2,
+          "first_mentioned": "2025-12-07T23:38:51.019129",
+          "last_mentioned": "2025-12-07T23:38:51.824468",
+          "mention_count": 1,
           "context": "Also check the auth service and the knowledge base API",
           "aliases": [
             "auth service"
@@ -902,52 +231,30 @@
           "entity_type": "service",
           "value": "knowledge base",
           "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:25:38.707646",
-          "last_mentioned": "2025-12-06T18:32:39.047467",
-          "mention_count": 2,
+          "first_mentioned": "2025-12-07T23:38:51.019133",
+          "last_mentioned": "2025-12-07T23:38:51.824468",
+          "mention_count": 1,
           "context": "Also check the auth service and the knowledge base API",
-          "aliases": []
-        },
-        "GPU": {
-          "name": "GPU",
-          "entity_type": "system",
-          "value": "Graphics Processing Unit",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:32:37.037599",
-          "last_mentioned": "2025-12-06T18:32:37.037694",
-          "mention_count": 1,
-          "context": "The tower-anime-production service is failing with GPU errors",
-          "aliases": []
-        },
-        "tower-anime-production service": {
-          "name": "tower-anime-production service",
-          "entity_type": "service",
-          "value": "",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:32:37.037605",
-          "last_mentioned": "2025-12-06T18:32:37.037694",
-          "mention_count": 1,
-          "context": "The tower-anime-production service is failing with GPU errors",
           "aliases": []
         },
         "knowledge base API": {
           "name": "knowledge base API",
-          "entity_type": "system",
-          "value": "knowledge base API",
+          "entity_type": "service",
+          "value": "",
           "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:32:39.047363",
-          "last_mentioned": "2025-12-06T18:32:39.047467",
+          "first_mentioned": "2025-12-07T23:38:51.824363",
+          "last_mentioned": "2025-12-07T23:38:51.824468",
           "mention_count": 1,
           "context": "Also check the auth service and the knowledge base API",
           "aliases": []
         }
       },
-      "turn_count": 0
+      "turn_count": 2
     },
     "persistence_test": {
       "conversation_id": "persistence_test",
-      "started_at": "2025-12-06T18:25:38.708427",
-      "last_activity": "2025-12-06T18:33:08.579431",
+      "started_at": "2025-12-07T23:38:51.825894",
+      "last_activity": "2025-12-07T23:38:54.009140",
       "session_summary": "",
       "entities": {
         "anime production": {
@@ -955,9 +262,9 @@
           "entity_type": "service",
           "value": "anime production",
           "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:25:38.708433",
-          "last_mentioned": "2025-12-06T18:32:39.049010",
-          "mention_count": 2,
+          "first_mentioned": "2025-12-07T23:38:51.825910",
+          "last_mentioned": "2025-12-07T23:38:51.825957",
+          "mention_count": 1,
           "context": "I need to debug the anime production pipeline",
           "aliases": []
         },
@@ -966,8 +273,21 @@
           "entity_type": "service",
           "value": "tower-anime-production",
           "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:25:38.709159",
-          "last_mentioned": "2025-12-06T18:32:54.597499",
+          "first_mentioned": "2025-12-07T23:38:51.826937",
+          "last_mentioned": "2025-12-07T23:38:52.622570",
+          "mention_count": 1,
+          "context": "I'll help you debug tower-anime-production. First, let's check the GPU status",
+          "aliases": [
+            "tower-anime-production"
+          ]
+        },
+        "GPU": {
+          "name": "GPU",
+          "entity_type": "generic",
+          "value": "GPU status",
+          "confidence": 0.8,
+          "first_mentioned": "2025-12-07T23:38:52.622485",
+          "last_mentioned": "2025-12-07T23:38:53.572629",
           "mention_count": 2,
           "context": "I'll help you debug tower-anime-production. First, let's check the GPU status",
           "aliases": []
@@ -977,41 +297,32 @@
           "entity_type": "service",
           "value": "comfyui",
           "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:25:38.710656",
-          "last_mentioned": "2025-12-06T18:32:57.200252",
-          "mention_count": 2,
-          "context": "High GPU usage detected. Checking ComfyUI workflows for memory leaks",
-          "aliases": []
-        },
-        "video generation time": {
-          "name": "video generation time",
-          "entity_type": "service",
-          "value": "8+ minutes per scene",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:33:08.579319",
-          "last_mentioned": "2025-12-06T18:33:08.579432",
+          "first_mentioned": "2025-12-07T23:38:52.627481",
+          "last_mentioned": "2025-12-07T23:38:53.572629",
           "mention_count": 1,
-          "context": "Also the video generation is taking 8+ minutes per scene",
-          "aliases": []
+          "context": "High GPU usage detected. Checking ComfyUI workflows for memory leaks",
+          "aliases": [
+            "ComfyUI"
+          ]
         },
-        "scene": {
-          "name": "scene",
-          "entity_type": "task",
-          "value": "per scene",
+        "video generation": {
+          "name": "video generation",
+          "entity_type": "service",
+          "value": "taking",
           "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:33:08.579327",
-          "last_mentioned": "2025-12-06T18:33:08.579432",
+          "first_mentioned": "2025-12-07T23:38:54.008885",
+          "last_mentioned": "2025-12-07T23:38:54.009141",
           "mention_count": 1,
           "context": "Also the video generation is taking 8+ minutes per scene",
           "aliases": []
         }
       },
-      "turn_count": 0
+      "turn_count": 5
     },
     "cross_interface_sim_telegram": {
       "conversation_id": "cross_interface_sim_telegram",
-      "started_at": "2025-12-06T18:25:38.712239",
-      "last_activity": "2025-12-06T18:33:19.499674",
+      "started_at": "2025-12-07T23:38:54.010348",
+      "last_activity": "2025-12-07T23:38:54.741903",
       "session_summary": "",
       "entities": {
         "authentication": {
@@ -1019,19 +330,19 @@
           "entity_type": "service",
           "value": "authentication",
           "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:25:38.712247",
-          "last_mentioned": "2025-12-06T18:33:19.499675",
-          "mention_count": 2,
+          "first_mentioned": "2025-12-07T23:38:54.010363",
+          "last_mentioned": "2025-12-07T23:38:54.741903",
+          "mention_count": 1,
           "context": "The authentication service is showing bypass mode warnings",
           "aliases": []
         },
         "authentication service": {
           "name": "authentication service",
           "entity_type": "system",
-          "value": "None",
+          "value": "the authentication service",
           "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:33:19.499586",
-          "last_mentioned": "2025-12-06T18:33:19.499675",
+          "first_mentioned": "2025-12-07T23:38:54.741804",
+          "last_mentioned": "2025-12-07T23:38:54.741903",
           "mention_count": 1,
           "context": "The authentication service is showing bypass mode warnings",
           "aliases": []
@@ -1039,21 +350,21 @@
         "bypass mode": {
           "name": "bypass mode",
           "entity_type": "generic",
-          "value": "None",
+          "value": "warnings",
           "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:33:19.499592",
-          "last_mentioned": "2025-12-06T18:33:19.499675",
+          "first_mentioned": "2025-12-07T23:38:54.741811",
+          "last_mentioned": "2025-12-07T23:38:54.741903",
           "mention_count": 1,
           "context": "The authentication service is showing bypass mode warnings",
           "aliases": []
         }
       },
-      "turn_count": 0
+      "turn_count": 1
     },
     "cross_interface_sim_web": {
       "conversation_id": "cross_interface_sim_web",
-      "started_at": "2025-12-06T18:25:38.713039",
-      "last_activity": "2025-12-06T18:33:35.450254",
+      "started_at": "2025-12-07T23:38:54.743555",
+      "last_activity": "2025-12-07T23:38:57.026305",
       "session_summary": "",
       "entities": {
         "vault": {
@@ -1061,195 +372,311 @@
           "entity_type": "service",
           "value": "vault",
           "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:25:38.713055",
-          "last_mentioned": "2025-12-06T18:33:35.450254",
-          "mention_count": 4,
+          "first_mentioned": "2025-12-07T23:38:54.743594",
+          "last_mentioned": "2025-12-07T23:38:57.026306",
+          "mention_count": 2,
           "context": "I need to check the OAuth configuration in the vault",
           "aliases": [
+            "Vault",
             "vault"
           ]
+        },
+        "OAuth configuration": {
+          "name": "OAuth configuration",
+          "entity_type": "generic",
+          "value": "vault",
+          "confidence": 0.8,
+          "first_mentioned": "2025-12-07T23:38:56.162871",
+          "last_mentioned": "2025-12-07T23:38:56.162964",
+          "mention_count": 1,
+          "context": "I need to check the OAuth configuration in the vault",
+          "aliases": []
         },
         "auth service": {
           "name": "auth service",
           "entity_type": "service",
           "value": "auth service",
           "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:25:38.714606",
-          "last_mentioned": "2025-12-06T18:33:35.450254",
-          "mention_count": 2,
+          "first_mentioned": "2025-12-07T23:38:56.179830",
+          "last_mentioned": "2025-12-07T23:38:57.026306",
+          "mention_count": 1,
           "context": "Now restart both the auth service and vault to apply changes",
           "aliases": [
             "auth service"
           ]
-        },
-        "OAuth configuration": {
-          "name": "OAuth configuration",
-          "entity_type": "service",
-          "value": "vault",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:33:33.000307",
-          "last_mentioned": "2025-12-06T18:33:33.000393",
-          "mention_count": 1,
-          "context": "I need to check the OAuth configuration in the vault",
-          "aliases": []
         }
       },
-      "turn_count": 0
+      "turn_count": 2
     },
     "cross_interface_sim_cli": {
       "conversation_id": "cross_interface_sim_cli",
-      "started_at": "2025-12-06T18:25:38.713838",
-      "last_activity": "2025-12-06T18:33:33.004501",
+      "started_at": "2025-12-07T23:38:56.167525",
+      "last_activity": "2025-12-07T23:38:56.167585",
       "session_summary": "",
       "entities": {},
-      "turn_count": 0
+      "turn_count": 1
     },
     "perf_test_00": {
       "conversation_id": "perf_test_00",
-      "started_at": "2025-12-06T18:25:38.715484",
-      "last_activity": "2025-12-06T18:25:38.787620",
+      "started_at": "2025-12-07T23:38:57.027871",
+      "last_activity": "2025-12-07T23:39:02.145694",
       "session_summary": "",
       "entities": {},
-      "turn_count": 0
+      "turn_count": 1
     },
     "perf_test_01": {
       "conversation_id": "perf_test_01",
-      "started_at": "2025-12-06T18:25:38.715537",
-      "last_activity": "2025-12-06T18:25:38.788474",
+      "started_at": "2025-12-07T23:38:57.039132",
+      "last_activity": "2025-12-07T23:39:13.048025",
       "session_summary": "",
       "entities": {},
-      "turn_count": 0
+      "turn_count": 1
     },
     "perf_test_02": {
       "conversation_id": "perf_test_02",
-      "started_at": "2025-12-06T18:25:38.715587",
-      "last_activity": "2025-12-06T18:25:38.789308",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "perf_test_03": {
-      "conversation_id": "perf_test_03",
-      "started_at": "2025-12-06T18:25:38.715633",
-      "last_activity": "2025-12-06T18:33:51.341232",
+      "started_at": "2025-12-07T23:38:57.049675",
+      "last_activity": "2025-12-07T23:38:58.202719",
       "session_summary": "",
       "entities": {
-        "service_03": {
-          "name": "service_03",
+        "service_02": {
+          "name": "service_02",
           "entity_type": "service",
-          "value": "status and performance metrics discussion",
+          "value": "service_02",
           "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:33:51.341116",
-          "last_mentioned": "2025-12-06T18:33:51.341233",
+          "first_mentioned": "2025-12-07T23:38:58.202622",
+          "last_mentioned": "2025-12-07T23:38:58.202719",
           "mention_count": 1,
-          "context": "Turn 0: Discussing service_03 status and performance metrics",
+          "context": "Turn 0: Discussing service_02 status and performance metrics",
           "aliases": []
         },
         "performance metrics": {
           "name": "performance metrics",
-          "entity_type": "generic",
-          "value": "discussed",
+          "entity_type": "task",
+          "value": "performance metrics",
           "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:33:51.341124",
-          "last_mentioned": "2025-12-06T18:33:51.341233",
+          "first_mentioned": "2025-12-07T23:38:58.202629",
+          "last_mentioned": "2025-12-07T23:38:58.202719",
           "mention_count": 1,
-          "context": "Turn 0: Discussing service_03 status and performance metrics",
+          "context": "Turn 0: Discussing service_02 status and performance metrics",
           "aliases": []
         }
       },
+      "turn_count": 1
+    },
+    "perf_test_03": {
+      "conversation_id": "perf_test_03",
+      "started_at": "2025-12-07T23:38:57.060242",
+      "last_activity": "2025-12-07T23:38:57.060244",
+      "session_summary": "",
+      "entities": {},
       "turn_count": 0
     },
     "perf_test_04": {
       "conversation_id": "perf_test_04",
-      "started_at": "2025-12-06T18:25:38.715731",
-      "last_activity": "2025-12-06T18:25:38.790969",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "perf_test_05": {
-      "conversation_id": "perf_test_05",
-      "started_at": "2025-12-06T18:25:38.715777",
-      "last_activity": "2025-12-06T18:25:38.791797",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "perf_test_06": {
-      "conversation_id": "perf_test_06",
-      "started_at": "2025-12-06T18:25:38.715828",
-      "last_activity": "2025-12-06T18:25:38.792623",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "perf_test_07": {
-      "conversation_id": "perf_test_07",
-      "started_at": "2025-12-06T18:25:38.715873",
-      "last_activity": "2025-12-06T18:33:54.049887",
+      "started_at": "2025-12-07T23:38:57.072638",
+      "last_activity": "2025-12-07T23:39:03.014642",
       "session_summary": "",
       "entities": {
-        "service_07": {
-          "name": "service_07",
-          "entity_type": "system",
-          "value": "service_07",
+        "service_04": {
+          "name": "service_04",
+          "entity_type": "service",
+          "value": "service_04",
           "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:33:54.049801",
-          "last_mentioned": "2025-12-06T18:33:54.049888",
+          "first_mentioned": "2025-12-07T23:39:03.014520",
+          "last_mentioned": "2025-12-07T23:39:03.014642",
           "mention_count": 1,
-          "context": "Turn 0: Discussing service_07 status and performance metrics",
+          "context": "Turn 0: Discussing service_04 status and performance metrics",
           "aliases": []
         },
         "performance metrics": {
           "name": "performance metrics",
-          "entity_type": "error",
+          "entity_type": "task",
           "value": "performance metrics",
           "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:33:54.049807",
-          "last_mentioned": "2025-12-06T18:33:54.049888",
+          "first_mentioned": "2025-12-07T23:39:03.014527",
+          "last_mentioned": "2025-12-07T23:39:03.014642",
           "mention_count": 1,
-          "context": "Turn 0: Discussing service_07 status and performance metrics",
+          "context": "Turn 0: Discussing service_04 status and performance metrics",
           "aliases": []
         }
       },
-      "turn_count": 0
+      "turn_count": 1
+    },
+    "perf_test_05": {
+      "conversation_id": "perf_test_05",
+      "started_at": "2025-12-07T23:38:57.084307",
+      "last_activity": "2025-12-07T23:38:59.915380",
+      "session_summary": "",
+      "entities": {
+        "service_05": {
+          "name": "service_05",
+          "entity_type": "service",
+          "value": "status",
+          "confidence": 0.8,
+          "first_mentioned": "2025-12-07T23:38:59.915276",
+          "last_mentioned": "2025-12-07T23:38:59.915380",
+          "mention_count": 1,
+          "context": "Turn 0: Discussing service_05 status and performance metrics",
+          "aliases": []
+        },
+        "performance metrics": {
+          "name": "performance metrics",
+          "entity_type": "task",
+          "value": "",
+          "confidence": 0.8,
+          "first_mentioned": "2025-12-07T23:38:59.915283",
+          "last_mentioned": "2025-12-07T23:38:59.915380",
+          "mention_count": 1,
+          "context": "Turn 0: Discussing service_05 status and performance metrics",
+          "aliases": []
+        }
+      },
+      "turn_count": 1
+    },
+    "perf_test_06": {
+      "conversation_id": "perf_test_06",
+      "started_at": "2025-12-07T23:38:57.095983",
+      "last_activity": "2025-12-07T23:38:59.041452",
+      "session_summary": "",
+      "entities": {
+        "service_06": {
+          "name": "service_06",
+          "entity_type": "system",
+          "value": "service_06",
+          "confidence": 0.8,
+          "first_mentioned": "2025-12-07T23:38:59.041357",
+          "last_mentioned": "2025-12-07T23:38:59.041453",
+          "mention_count": 1,
+          "context": "Turn 0: Discussing service_06 status and performance metrics",
+          "aliases": []
+        },
+        "performance metrics": {
+          "name": "performance metrics",
+          "entity_type": "task",
+          "value": "performance metrics",
+          "confidence": 0.8,
+          "first_mentioned": "2025-12-07T23:38:59.041365",
+          "last_mentioned": "2025-12-07T23:38:59.041453",
+          "mention_count": 1,
+          "context": "Turn 0: Discussing service_06 status and performance metrics",
+          "aliases": []
+        }
+      },
+      "turn_count": 1
+    },
+    "perf_test_07": {
+      "conversation_id": "perf_test_07",
+      "started_at": "2025-12-07T23:38:57.106945",
+      "last_activity": "2025-12-07T23:39:09.985126",
+      "session_summary": "",
+      "entities": {},
+      "turn_count": 1
     },
     "perf_test_08": {
       "conversation_id": "perf_test_08",
-      "started_at": "2025-12-06T18:25:38.715928",
-      "last_activity": "2025-12-06T18:25:38.794283",
+      "started_at": "2025-12-07T23:38:57.117878",
+      "last_activity": "2025-12-07T23:39:05.978614",
       "session_summary": "",
-      "entities": {},
-      "turn_count": 0
+      "entities": {
+        "service_08": {
+          "name": "service_08",
+          "entity_type": "service",
+          "value": "service_08",
+          "confidence": 0.8,
+          "first_mentioned": "2025-12-07T23:39:05.978531",
+          "last_mentioned": "2025-12-07T23:39:05.978615",
+          "mention_count": 1,
+          "context": "Turn 0: Discussing service_08 status and performance metrics",
+          "aliases": []
+        },
+        "performance metrics": {
+          "name": "performance metrics",
+          "entity_type": "task",
+          "value": "performance metrics",
+          "confidence": 0.8,
+          "first_mentioned": "2025-12-07T23:39:05.978537",
+          "last_mentioned": "2025-12-07T23:39:05.978615",
+          "mention_count": 1,
+          "context": "Turn 0: Discussing service_08 status and performance metrics",
+          "aliases": []
+        }
+      },
+      "turn_count": 1
     },
     "perf_test_09": {
       "conversation_id": "perf_test_09",
-      "started_at": "2025-12-06T18:25:38.715993",
-      "last_activity": "2025-12-06T18:25:38.795120",
+      "started_at": "2025-12-07T23:38:57.128881",
+      "last_activity": "2025-12-07T23:38:57.128883",
       "session_summary": "",
       "entities": {},
       "turn_count": 0
     },
     "perf_test_10": {
       "conversation_id": "perf_test_10",
-      "started_at": "2025-12-06T18:25:38.716042",
-      "last_activity": "2025-12-06T18:25:38.795982",
+      "started_at": "2025-12-07T23:38:57.140238",
+      "last_activity": "2025-12-07T23:39:00.687227",
       "session_summary": "",
-      "entities": {},
-      "turn_count": 0
+      "entities": {
+        "service_10": {
+          "name": "service_10",
+          "entity_type": "service",
+          "value": "service_10",
+          "confidence": 0.8,
+          "first_mentioned": "2025-12-07T23:39:00.687122",
+          "last_mentioned": "2025-12-07T23:39:00.687228",
+          "mention_count": 1,
+          "context": "Turn 0: Discussing service_10 status and performance metrics",
+          "aliases": []
+        },
+        "performance metrics": {
+          "name": "performance metrics",
+          "entity_type": "task",
+          "value": "performance metrics",
+          "confidence": 0.8,
+          "first_mentioned": "2025-12-07T23:39:00.687129",
+          "last_mentioned": "2025-12-07T23:39:00.687228",
+          "mention_count": 1,
+          "context": "Turn 0: Discussing service_10 status and performance metrics",
+          "aliases": []
+        }
+      },
+      "turn_count": 1
     },
     "perf_test_11": {
       "conversation_id": "perf_test_11",
-      "started_at": "2025-12-06T18:25:38.716094",
-      "last_activity": "2025-12-06T18:25:38.796805",
+      "started_at": "2025-12-07T23:38:57.151331",
+      "last_activity": "2025-12-07T23:39:05.262729",
       "session_summary": "",
-      "entities": {},
-      "turn_count": 0
+      "entities": {
+        "performance metrics": {
+          "name": "performance metrics",
+          "entity_type": "service",
+          "value": "service_11",
+          "confidence": 0.8,
+          "first_mentioned": "2025-12-07T23:39:05.262632",
+          "last_mentioned": "2025-12-07T23:39:05.262729",
+          "mention_count": 1,
+          "context": "Turn 0: Discussing service_11 status and performance metrics",
+          "aliases": []
+        },
+        "service_11 status": {
+          "name": "service_11 status",
+          "entity_type": "system",
+          "value": "",
+          "confidence": 0.8,
+          "first_mentioned": "2025-12-07T23:39:05.262638",
+          "last_mentioned": "2025-12-07T23:39:05.262729",
+          "mention_count": 1,
+          "context": "Turn 0: Discussing service_11 status and performance metrics",
+          "aliases": []
+        }
+      },
+      "turn_count": 1
     },
     "perf_test_12": {
       "conversation_id": "perf_test_12",
-      "started_at": "2025-12-06T18:25:38.716137",
-      "last_activity": "2025-12-06T18:33:46.857702",
+      "started_at": "2025-12-07T23:38:57.162386",
+      "last_activity": "2025-12-07T23:39:07.202327",
       "session_summary": "",
       "entities": {
         "service_12": {
@@ -1257,41 +684,10 @@
           "entity_type": "service",
           "value": "service_12",
           "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:33:46.857593",
-          "last_mentioned": "2025-12-06T18:33:46.857703",
+          "first_mentioned": "2025-12-07T23:39:07.202219",
+          "last_mentioned": "2025-12-07T23:39:07.202328",
           "mention_count": 1,
           "context": "Turn 0: Discussing service_12 status and performance metrics",
-          "aliases": []
-        },
-        "": {
-          "name": "",
-          "entity_type": "system",
-          "value": "",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:33:46.857600",
-          "last_mentioned": "2025-12-06T18:33:46.857703",
-          "mention_count": 1,
-          "context": "Turn 0: Discussing service_12 status and performance metrics",
-          "aliases": []
-        }
-      },
-      "turn_count": 0
-    },
-    "perf_test_13": {
-      "conversation_id": "perf_test_13",
-      "started_at": "2025-12-06T18:25:38.716180",
-      "last_activity": "2025-12-06T18:33:59.050026",
-      "session_summary": "",
-      "entities": {
-        "service_13": {
-          "name": "service_13",
-          "entity_type": "system",
-          "value": "service_13",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:33:59.049930",
-          "last_mentioned": "2025-12-06T18:33:59.050026",
-          "mention_count": 1,
-          "context": "Turn 0: Discussing service_13 status and performance metrics",
           "aliases": []
         },
         "performance metrics": {
@@ -1299,67 +695,100 @@
           "entity_type": "task",
           "value": "performance metrics",
           "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:33:59.049936",
-          "last_mentioned": "2025-12-06T18:33:59.050026",
+          "first_mentioned": "2025-12-07T23:39:07.202227",
+          "last_mentioned": "2025-12-07T23:39:07.202328",
           "mention_count": 1,
-          "context": "Turn 0: Discussing service_13 status and performance metrics",
+          "context": "Turn 0: Discussing service_12 status and performance metrics",
           "aliases": []
         }
       },
-      "turn_count": 0
+      "turn_count": 1
+    },
+    "perf_test_13": {
+      "conversation_id": "perf_test_13",
+      "started_at": "2025-12-07T23:38:57.173325",
+      "last_activity": "2025-12-07T23:39:04.429964",
+      "session_summary": "",
+      "entities": {},
+      "turn_count": 1
     },
     "perf_test_14": {
       "conversation_id": "perf_test_14",
-      "started_at": "2025-12-06T18:25:38.716224",
-      "last_activity": "2025-12-06T18:25:38.799302",
+      "started_at": "2025-12-07T23:38:57.185092",
+      "last_activity": "2025-12-07T23:39:12.432487",
       "session_summary": "",
-      "entities": {},
-      "turn_count": 0
+      "entities": {
+        "service_14": {
+          "name": "service_14",
+          "entity_type": "service",
+          "value": "service_14",
+          "confidence": 0.8,
+          "first_mentioned": "2025-12-07T23:39:12.432392",
+          "last_mentioned": "2025-12-07T23:39:12.432488",
+          "mention_count": 1,
+          "context": "Turn 0: Discussing service_14 status and performance metrics",
+          "aliases": []
+        },
+        "performance metrics": {
+          "name": "performance metrics",
+          "entity_type": "task",
+          "value": "performance metrics",
+          "confidence": 0.8,
+          "first_mentioned": "2025-12-07T23:39:12.432398",
+          "last_mentioned": "2025-12-07T23:39:12.432488",
+          "mention_count": 1,
+          "context": "Turn 0: Discussing service_14 status and performance metrics",
+          "aliases": []
+        }
+      },
+      "turn_count": 1
     },
     "perf_test_15": {
       "conversation_id": "perf_test_15",
-      "started_at": "2025-12-06T18:25:38.716268",
-      "last_activity": "2025-12-06T18:33:48.968339",
+      "started_at": "2025-12-07T23:38:57.195836",
+      "last_activity": "2025-12-07T23:39:11.205824",
       "session_summary": "",
       "entities": {
-        "service_15": {
-          "name": "service_15",
+        "performance metrics": {
+          "name": "performance metrics",
           "entity_type": "service",
-          "value": "service_15",
+          "value": "service_15 status",
           "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:33:48.968248",
-          "last_mentioned": "2025-12-06T18:33:48.968340",
+          "first_mentioned": "2025-12-07T23:39:11.205740",
+          "last_mentioned": "2025-12-07T23:39:11.205824",
           "mention_count": 1,
           "context": "Turn 0: Discussing service_15 status and performance metrics",
-          "aliases": []
+          "aliases": [
+            "performance metrics"
+          ]
         },
-        "": {
-          "name": "",
+        "file paths": {
+          "name": "file paths",
           "entity_type": "system",
           "value": "",
           "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:33:48.968254",
-          "last_mentioned": "2025-12-06T18:33:48.968340",
+          "first_mentioned": "2025-12-07T23:39:11.205745",
+          "last_mentioned": "2025-12-07T23:39:11.205824",
           "mention_count": 1,
           "context": "Turn 0: Discussing service_15 status and performance metrics",
           "aliases": []
         }
       },
-      "turn_count": 0
+      "turn_count": 1
     },
     "perf_test_16": {
       "conversation_id": "perf_test_16",
-      "started_at": "2025-12-06T18:25:38.716314",
-      "last_activity": "2025-12-06T18:33:56.553920",
+      "started_at": "2025-12-07T23:38:57.207056",
+      "last_activity": "2025-12-07T23:39:08.540843",
       "session_summary": "",
       "entities": {
         "service_16": {
           "name": "service_16",
-          "entity_type": "system",
-          "value": "service 16",
+          "entity_type": "service",
+          "value": "service_16",
           "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:33:56.553810",
-          "last_mentioned": "2025-12-06T18:33:56.553921",
+          "first_mentioned": "2025-12-07T23:39:08.540753",
+          "last_mentioned": "2025-12-07T23:39:08.540843",
           "mention_count": 1,
           "context": "Turn 0: Discussing service_16 status and performance metrics",
           "aliases": []
@@ -1369,2382 +798,61 @@
           "entity_type": "task",
           "value": "performance metrics",
           "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:33:56.553817",
-          "last_mentioned": "2025-12-06T18:33:56.553921",
+          "first_mentioned": "2025-12-07T23:39:08.540759",
+          "last_mentioned": "2025-12-07T23:39:08.540843",
           "mention_count": 1,
           "context": "Turn 0: Discussing service_16 status and performance metrics",
           "aliases": []
         }
       },
-      "turn_count": 0
+      "turn_count": 1
     },
     "perf_test_17": {
       "conversation_id": "perf_test_17",
-      "started_at": "2025-12-06T18:25:38.716363",
-      "last_activity": "2025-12-06T18:25:38.801824",
+      "started_at": "2025-12-07T23:38:57.218175",
+      "last_activity": "2025-12-07T23:38:57.218176",
       "session_summary": "",
       "entities": {},
       "turn_count": 0
     },
     "perf_test_18": {
       "conversation_id": "perf_test_18",
-      "started_at": "2025-12-06T18:25:38.717085",
-      "last_activity": "2025-12-06T18:25:38.802660",
+      "started_at": "2025-12-07T23:38:57.228857",
+      "last_activity": "2025-12-07T23:39:13.755711",
       "session_summary": "",
-      "entities": {},
-      "turn_count": 0
+      "entities": {
+        "service_18": {
+          "name": "service_18",
+          "entity_type": "service",
+          "value": "service_18",
+          "confidence": 0.8,
+          "first_mentioned": "2025-12-07T23:39:13.755600",
+          "last_mentioned": "2025-12-07T23:39:13.755711",
+          "mention_count": 1,
+          "context": "Turn 0: Discussing service_18 status and performance metrics",
+          "aliases": []
+        },
+        "performance metrics": {
+          "name": "performance metrics",
+          "entity_type": "task",
+          "value": "performance metrics",
+          "confidence": 0.8,
+          "first_mentioned": "2025-12-07T23:39:13.755609",
+          "last_mentioned": "2025-12-07T23:39:13.755711",
+          "mention_count": 1,
+          "context": "Turn 0: Discussing service_18 status and performance metrics",
+          "aliases": []
+        }
+      },
+      "turn_count": 1
     },
     "perf_test_19": {
       "conversation_id": "perf_test_19",
-      "started_at": "2025-12-06T18:25:38.717132",
-      "last_activity": "2025-12-06T18:25:38.803549",
+      "started_at": "2025-12-07T23:38:57.239934",
+      "last_activity": "2025-12-07T23:38:57.239936",
       "session_summary": "",
       "entities": {},
       "turn_count": 0
-    },
-    "persistence_recovery_test": {
-      "conversation_id": "persistence_recovery_test",
-      "started_at": "2025-12-06T18:25:38.804410",
-      "last_activity": "2025-12-06T18:25:38.805499",
-      "session_summary": "",
-      "entities": {
-        "tower-dashboard": {
-          "name": "tower-dashboard",
-          "entity_type": "service",
-          "value": "tower-dashboard",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:25:38.804429",
-          "last_mentioned": "2025-12-06T18:25:38.805499",
-          "mention_count": 2,
-          "context": "The tower-dashboard service on port 8080 needs monitoring setup",
-          "aliases": []
-        },
-        "8080": {
-          "name": "8080",
-          "entity_type": "port",
-          "value": "8080",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:25:38.804460",
-          "last_mentioned": "2025-12-06T18:25:38.804530",
-          "mention_count": 1,
-          "context": "The tower-dashboard service on port 8080 needs monitoring setup",
-          "aliases": []
-        }
-      },
-      "turn_count": 0
-    },
-    "test_real_llm": {
-      "conversation_id": "test_real_llm",
-      "started_at": "2025-12-06T18:34:10.044056",
-      "last_activity": "2025-12-06T18:34:12.946794",
-      "session_summary": "",
-      "entities": {
-        "tower-anime-production": {
-          "name": "tower-anime-production",
-          "entity_type": "service",
-          "value": "tower-anime-production",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:34:10.044167",
-          "last_mentioned": "2025-12-06T18:34:12.946795",
-          "mention_count": 1,
-          "context": "The tower-anime-production service on port 8328 is failing with GPU memory issues",
-          "aliases": []
-        },
-        "8328": {
-          "name": "8328",
-          "entity_type": "port",
-          "value": "8328",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:34:10.045099",
-          "last_mentioned": "2025-12-06T18:34:12.946795",
-          "mention_count": 1,
-          "context": "The tower-anime-production service on port 8328 is failing with GPU memory issues",
-          "aliases": []
-        },
-        "port": {
-          "name": "port",
-          "entity_type": "generic",
-          "value": "8328",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:34:12.946654",
-          "last_mentioned": "2025-12-06T18:34:12.946795",
-          "mention_count": 1,
-          "context": "The tower-anime-production service on port 8328 is failing with GPU memory issues",
-          "aliases": []
-        },
-        "GPU memory issues": {
-          "name": "GPU memory issues",
-          "entity_type": "generic",
-          "value": "",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:34:12.946662",
-          "last_mentioned": "2025-12-06T18:34:12.946795",
-          "mention_count": 1,
-          "context": "The tower-anime-production service on port 8328 is failing with GPU memory issues",
-          "aliases": []
-        },
-        "tower-anime-production service": {
-          "name": "tower-anime-production service",
-          "entity_type": "service",
-          "value": "",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:34:12.946668",
-          "last_mentioned": "2025-12-06T18:34:12.946795",
-          "mention_count": 1,
-          "context": "The tower-anime-production service on port 8328 is failing with GPU memory issues",
-          "aliases": []
-        }
-      },
-      "turn_count": 0
-    },
-    "user_scenario": {
-      "conversation_id": "user_scenario",
-      "started_at": "2025-12-06T18:34:34.695717",
-      "last_activity": "2025-12-06T18:34:46.952481",
-      "session_summary": "",
-      "entities": {
-        "anime-production": {
-          "name": "anime-production",
-          "entity_type": "service",
-          "value": "anime-production",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:34:34.698211",
-          "last_mentioned": "2025-12-06T18:34:46.952482",
-          "mention_count": 1,
-          "context": "The anime-production service on port 8328 is failing with 8+ minute generation times and the auth se",
-          "aliases": []
-        },
-        "auth service": {
-          "name": "auth service",
-          "entity_type": "service",
-          "value": "auth service",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:34:34.698219",
-          "last_mentioned": "2025-12-06T18:34:46.952482",
-          "mention_count": 1,
-          "context": "The anime-production service on port 8328 is failing with 8+ minute generation times and the auth se",
-          "aliases": [
-            "auth service"
-          ]
-        },
-        "8328": {
-          "name": "8328",
-          "entity_type": "port",
-          "value": "8328",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:34:34.698268",
-          "last_mentioned": "2025-12-06T18:34:46.952482",
-          "mention_count": 1,
-          "context": "The anime-production service on port 8328 is failing with 8+ minute generation times and the auth se",
-          "aliases": []
-        },
-        "anime-production service": {
-          "name": "anime-production service",
-          "entity_type": "service",
-          "value": "port 8328",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:34:46.952352",
-          "last_mentioned": "2025-12-06T18:34:46.952482",
-          "mention_count": 1,
-          "context": "The anime-production service on port 8328 is failing with 8+ minute generation times and the auth se",
-          "aliases": []
-        },
-        "generation time": {
-          "name": "generation time",
-          "entity_type": "error",
-          "value": "8+ minutes",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:34:46.952356",
-          "last_mentioned": "2025-12-06T18:34:46.952482",
-          "mention_count": 1,
-          "context": "The anime-production service on port 8328 is failing with 8+ minute generation times and the auth se",
-          "aliases": []
-        }
-      },
-      "turn_count": 0
-    },
-    "diag_1": {
-      "conversation_id": "diag_1",
-      "started_at": "2025-12-06T18:41:49.864015",
-      "last_activity": "2025-12-06T18:41:52.104006",
-      "session_summary": "Main topic discussed: The anime service on port 8328 was reported to be broken.\n\nActions taken or requested: I found a memory leak in the anime service, indicating the issue may be related to a technical problem.\n\nCurrent status of any issues: The conversation started with a report of the anime service being broken, and I identified a potential cause (memory leak), but no further resolution has been discussed.",
-      "entities": {
-        "8328": {
-          "name": "8328",
-          "entity_type": "port",
-          "value": "8328",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:41:49.865040",
-          "last_mentioned": "2025-12-06T18:41:49.865206",
-          "mention_count": 1,
-          "context": "The anime service on port 8328 is broken",
-          "aliases": []
-        }
-      },
-      "turn_count": 0
-    },
-    "diag_0": {
-      "conversation_id": "diag_0",
-      "started_at": "2025-12-06T18:41:52.102708",
-      "last_activity": "2025-12-06T18:41:52.102751",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "diag_2": {
-      "conversation_id": "diag_2",
-      "started_at": "2025-12-06T18:41:52.105416",
-      "last_activity": "2025-12-06T18:41:52.105448",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "test_coherence_1": {
-      "conversation_id": "test_coherence_1",
-      "started_at": "2025-12-06T18:43:43.202529",
-      "last_activity": "2025-12-06T18:44:07.610061",
-      "session_summary": "Here is a summary of the conversation:\n\nThe user reported issues with two anime services, one crashing due to OOM errors and the other experiencing connection pool exhaustion. The assistant provided troubleshooting suggestions, recommending increased memory allocation for the first service and applying the same configuration to fix both services.",
-      "entities": {
-        "8309": {
-          "name": "8309",
-          "entity_type": "port",
-          "value": "8309",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:43:43.203590",
-          "last_mentioned": "2025-12-06T18:43:53.972176",
-          "mention_count": 1,
-          "context": "The anime service on port 8309 is crashing with OOM errors",
-          "aliases": []
-        },
-        "port": {
-          "name": "port",
-          "entity_type": "system",
-          "value": "8309",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:43:53.972057",
-          "last_mentioned": "2025-12-06T18:43:53.972176",
-          "mention_count": 1,
-          "context": "The anime service on port 8309 is crashing with OOM errors",
-          "aliases": []
-        },
-        "OOM errors": {
-          "name": "OOM errors",
-          "entity_type": "generic",
-          "value": "",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:43:53.972064",
-          "last_mentioned": "2025-12-06T18:43:53.972176",
-          "mention_count": 1,
-          "context": "The anime service on port 8309 is crashing with OOM errors",
-          "aliases": []
-        },
-        "anime service": {
-          "name": "anime service",
-          "entity_type": "service",
-          "value": "",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:43:53.972068",
-          "last_mentioned": "2025-12-06T18:43:53.972176",
-          "mention_count": 1,
-          "context": "The anime service on port 8309 is crashing with OOM errors",
-          "aliases": []
-        },
-        "authentication": {
-          "name": "authentication",
-          "entity_type": "service",
-          "value": "authentication",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:43:59.087552",
-          "last_mentioned": "2025-12-06T18:44:07.605582",
-          "mention_count": 1,
-          "context": "What about the authentication service on port 3000?",
-          "aliases": []
-        },
-        "3000": {
-          "name": "3000",
-          "entity_type": "port",
-          "value": "3000",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:43:59.087581",
-          "last_mentioned": "2025-12-06T18:44:07.605582",
-          "mention_count": 1,
-          "context": "What about the authentication service on port 3000?",
-          "aliases": []
-        },
-        "authentication service": {
-          "name": "authentication service",
-          "entity_type": "service",
-          "value": "port 3000",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:44:07.605505",
-          "last_mentioned": "2025-12-06T18:44:07.605582",
-          "mention_count": 1,
-          "context": "What about the authentication service on port 3000?",
-          "aliases": []
-        }
-      },
-      "turn_count": 0
-    },
-    "test_coherence_2": {
-      "conversation_id": "test_coherence_2",
-      "started_at": "2025-12-06T18:44:09.240506",
-      "last_activity": "2025-12-06T18:44:38.586485",
-      "session_summary": "This conversation discusses Project Quantum, an anime production project. The user requests information on allocating resources (developers and QA engineers) and budget ($150k for Q3), as well as infrastructure costs for AWS and ComfyUI. The assistant provides updates to the timeline, including a comprehensive testing phase, in response to these inquiries.",
-      "entities": {
-        "anime production": {
-          "name": "anime production",
-          "entity_type": "service",
-          "value": "anime production",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:44:09.240524",
-          "last_mentioned": "2025-12-06T18:44:19.463851",
-          "mention_count": 1,
-          "context": "Let's discuss Project Quantum timeline for anime production",
-          "aliases": []
-        },
-        "Project Quantum": {
-          "name": "Project Quantum",
-          "entity_type": "generic",
-          "value": "None",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:44:19.463751",
-          "last_mentioned": "2025-12-06T18:44:19.463851",
-          "mention_count": 1,
-          "context": "Let's discuss Project Quantum timeline for anime production",
-          "aliases": []
-        },
-        "timeline": {
-          "name": "timeline",
-          "entity_type": "task",
-          "value": "None",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:44:19.463760",
-          "last_mentioned": "2025-12-06T18:44:38.586486",
-          "mention_count": 2,
-          "context": "Let's discuss Project Quantum timeline for anime production",
-          "aliases": []
-        },
-        "team": {
-          "name": "team",
-          "entity_type": "system",
-          "value": "development team",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:44:22.406320",
-          "last_mentioned": "2025-12-06T18:44:22.406423",
-          "mention_count": 1,
-          "context": "We need to allocate 3 developers and 2 QA engineers for the team",
-          "aliases": []
-        },
-        "developers": {
-          "name": "developers",
-          "entity_type": "generic",
-          "value": "3",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:44:22.406326",
-          "last_mentioned": "2025-12-06T18:44:22.406423",
-          "mention_count": 1,
-          "context": "We need to allocate 3 developers and 2 QA engineers for the team",
-          "aliases": []
-        },
-        "comfyui": {
-          "name": "comfyui",
-          "entity_type": "service",
-          "value": "comfyui",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:44:22.411485",
-          "last_mentioned": "2025-12-06T18:44:36.183547",
-          "mention_count": 1,
-          "context": "What about the infrastructure costs for AWS and ComfyUI?",
-          "aliases": []
-        },
-        "AWS": {
-          "name": "AWS",
-          "entity_type": "system",
-          "value": "ComfyUI",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:44:36.183461",
-          "last_mentioned": "2025-12-06T18:44:36.183547",
-          "mention_count": 1,
-          "context": "What about the infrastructure costs for AWS and ComfyUI?",
-          "aliases": []
-        },
-        "infrastructure costs": {
-          "name": "infrastructure costs",
-          "entity_type": "task",
-          "value": "ComfyUI",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:44:36.183466",
-          "last_mentioned": "2025-12-06T18:44:36.183547",
-          "mention_count": 1,
-          "context": "What about the infrastructure costs for AWS and ComfyUI?",
-          "aliases": []
-        },
-        "RDS instance": {
-          "name": "RDS instance",
-          "entity_type": "system",
-          "value": "RDS instance",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:44:36.944190",
-          "last_mentioned": "2025-12-06T18:44:36.944301",
-          "mention_count": 1,
-          "context": "Include RDS instance and 2 EC2 nodes for the deployment",
-          "aliases": []
-        },
-        "EC2 nodes": {
-          "name": "EC2 nodes",
-          "entity_type": "system",
-          "value": "EC2 nodes",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:44:36.944195",
-          "last_mentioned": "2025-12-06T18:44:36.944301",
-          "mention_count": 1,
-          "context": "Include RDS instance and 2 EC2 nodes for the deployment",
-          "aliases": []
-        },
-        "testing phase": {
-          "name": "testing phase",
-          "entity_type": "system",
-          "value": "comprehensive testing phase",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:44:38.586378",
-          "last_mentioned": "2025-12-06T18:44:38.586486",
-          "mention_count": 1,
-          "context": "Update the timeline to include comprehensive testing phase",
-          "aliases": []
-        }
-      },
-      "turn_count": 0
-    },
-    "scenario_0_1765046691": {
-      "conversation_id": "scenario_0_1765046691",
-      "started_at": "2025-12-06T18:44:51.313565",
-      "last_activity": "2025-12-06T18:45:37.121799",
-      "session_summary": "The conversation involved two separate issues with anime-production and authentication services, which were experiencing downtime and slow performance respectively. The anime-production service was restarted with an increased memory limit, bringing it back online, while the authentication service showed high latency but no critical errors. No further issues or actions are mentioned, indicating that both services are currently up and running.",
-      "entities": {
-        "anime-production": {
-          "name": "anime-production",
-          "entity_type": "service",
-          "value": "anime-production",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:44:51.313584",
-          "last_mentioned": "2025-12-06T18:45:16.838196",
-          "mention_count": 2,
-          "context": "URGENT: anime-production service is completely down on port 8328",
-          "aliases": []
-        },
-        "8328": {
-          "name": "8328",
-          "entity_type": "port",
-          "value": "8328",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:44:51.313623",
-          "last_mentioned": "2025-12-06T18:44:54.583272",
-          "mention_count": 1,
-          "context": "URGENT: anime-production service is completely down on port 8328",
-          "aliases": []
-        },
-        "anime-production service": {
-          "name": "anime-production service",
-          "entity_type": "service",
-          "value": "complete",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:44:54.583165",
-          "last_mentioned": "2025-12-06T18:44:54.583272",
-          "mention_count": 1,
-          "context": "URGENT: anime-production service is completely down on port 8328",
-          "aliases": []
-        },
-        "port": {
-          "name": "port",
-          "entity_type": "system",
-          "value": "8328",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:44:54.583171",
-          "last_mentioned": "2025-12-06T18:44:54.583272",
-          "mention_count": 1,
-          "context": "URGENT: anime-production service is completely down on port 8328",
-          "aliases": []
-        },
-        "service logs": {
-          "name": "service logs",
-          "entity_type": "system",
-          "value": "service logs",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:45:05.078625",
-          "last_mentioned": "2025-12-06T18:45:05.078725",
-          "mention_count": 1,
-          "context": "Checking service logs and system metrics. Last healthy status 15 minutes ago.",
-          "aliases": []
-        },
-        "system metrics": {
-          "name": "system metrics",
-          "entity_type": "system",
-          "value": "system metrics",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:45:05.078631",
-          "last_mentioned": "2025-12-06T18:45:05.078725",
-          "mention_count": 1,
-          "context": "Checking service logs and system metrics. Last healthy status 15 minutes ago.",
-          "aliases": []
-        },
-        "container logs": {
-          "name": "container logs",
-          "entity_type": "file",
-          "value": "container logs",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:45:08.357940",
-          "last_mentioned": "2025-12-06T18:45:08.358019",
-          "mention_count": 1,
-          "context": "Found OOM error in container logs. Memory usage spiked to 95% before crash",
-          "aliases": []
-        },
-        "Memory usage": {
-          "name": "Memory usage",
-          "entity_type": "generic",
-          "value": "95%",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:45:08.357945",
-          "last_mentioned": "2025-12-06T18:45:08.358019",
-          "mention_count": 1,
-          "context": "Found OOM error in container logs. Memory usage spiked to 95% before crash",
-          "aliases": []
-        },
-        "OOM error": {
-          "name": "OOM error",
-          "entity_type": "generic",
-          "value": "OOM error",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:45:08.357948",
-          "last_mentioned": "2025-12-06T18:45:08.358019",
-          "mention_count": 1,
-          "context": "Found OOM error in container logs. Memory usage spiked to 95% before crash",
-          "aliases": []
-        },
-        "production": {
-          "name": "production",
-          "entity_type": "system",
-          "value": "anime",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:45:16.838086",
-          "last_mentioned": "2025-12-06T18:45:16.838196",
-          "mention_count": 1,
-          "context": "Restarted anime-production with 8GB memory limit. Service is now healthy",
-          "aliases": []
-        },
-        "memory limit": {
-          "name": "memory limit",
-          "entity_type": "service",
-          "value": "8GB",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:45:16.838092",
-          "last_mentioned": "2025-12-06T18:45:16.838196",
-          "mention_count": 1,
-          "context": "Restarted anime-production with 8GB memory limit. Service is now healthy",
-          "aliases": []
-        },
-        "authentication": {
-          "name": "authentication",
-          "entity_type": "service",
-          "value": "authentication",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:45:16.891784",
-          "last_mentioned": "2025-12-06T18:45:19.385190",
-          "mention_count": 1,
-          "context": "Now check the authentication service too - users can't login",
-          "aliases": []
-        },
-        "authentication service": {
-          "name": "authentication service",
-          "entity_type": "service",
-          "value": "authentication service",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:45:19.385095",
-          "last_mentioned": "2025-12-06T18:45:19.385190",
-          "mention_count": 1,
-          "context": "Now check the authentication service too - users can't login",
-          "aliases": []
-        },
-        "": {
-          "name": "",
-          "entity_type": "generic",
-          "value": "",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:45:19.385102",
-          "last_mentioned": "2025-12-06T18:45:19.385190",
-          "mention_count": 1,
-          "context": "Now check the authentication service too - users can't login",
-          "aliases": []
-        },
-        "auth service": {
-          "name": "auth service",
-          "entity_type": "service",
-          "value": "auth service",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:45:19.437639",
-          "last_mentioned": "2025-12-06T18:45:32.888010",
-          "mention_count": 1,
-          "context": "Auth service shows high latency but is responding. No critical errors",
-          "aliases": [
-            "auth service"
-          ]
-        },
-        "latency": {
-          "name": "latency",
-          "entity_type": "generic",
-          "value": "high latency",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:45:32.887934",
-          "last_mentioned": "2025-12-06T18:45:32.888010",
-          "mention_count": 1,
-          "context": "Auth service shows high latency but is responding. No critical errors",
-          "aliases": []
-        }
-      },
-      "turn_count": 0
-    },
-    "scenario_1_1765046746": {
-      "conversation_id": "scenario_1_1765046746",
-      "started_at": "2025-12-06T18:45:46.114905",
-      "last_activity": "2025-12-06T18:46:29.202474",
-      "session_summary": "Here is a summary of the conversation:\n\nA deployment of the \"tower-anime-production\" version 2.5.0 to a production cluster encountered issues, including an image pull error that was resolved after refreshing container registry credentials. To mitigate the issue, the entire deployment was rolled back to version 2.4.1. The database migration status for schema compatibility has also been checked and confirmed successful.\n\nMain topics discussed: Deployment of \"tower-anime-production\" to production cluster\n\nActions taken or requested:\n- Initiating deployment\n- Checking container registry credentials and authentication\n- Rolling back entire deployment\n- Checking database migration status\n\nCurrent status of any issues: The image pull error is resolved, but the entire deployment was rolled back due to the issue.\n\nKey entities mentioned: \n- \"tower-anime-production\" (application/deployment)\n- Kubernetes cluster",
-      "entities": {
-        "tower-anime-production": {
-          "name": "tower-anime-production",
-          "entity_type": "service",
-          "value": "tower-anime-production",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:45:46.114927",
-          "last_mentioned": "2025-12-06T18:45:48.458969",
-          "mention_count": 1,
-          "context": "Deploying tower-anime-production v2.5.0 to production cluster",
-          "aliases": []
-        },
-        "Kubernetes": {
-          "name": "Kubernetes",
-          "entity_type": "system",
-          "value": "Kubernetes",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:45:58.037436",
-          "last_mentioned": "2025-12-06T18:45:58.037552",
-          "mention_count": 1,
-          "context": "Deployment initiated. Kubernetes updating 10 pods in rolling update",
-          "aliases": []
-        },
-        "pods": {
-          "name": "pods",
-          "entity_type": "generic",
-          "value": "10",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:45:58.037443",
-          "last_mentioned": "2025-12-06T18:46:14.185078",
-          "mention_count": 2,
-          "context": "Deployment initiated. Kubernetes updating 10 pods in rolling update",
-          "aliases": []
-        },
-        "registry": {
-          "name": "registry",
-          "entity_type": "system",
-          "value": "registry",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:46:00.310911",
-          "last_mentioned": "2025-12-06T18:46:00.311007",
-          "mention_count": 1,
-          "context": "Pod 3/10 failed with image pull error from registry",
-          "aliases": []
-        },
-        "image pull error": {
-          "name": "image pull error",
-          "entity_type": "error",
-          "value": "image pull error",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:46:00.310919",
-          "last_mentioned": "2025-12-06T18:46:00.311007",
-          "mention_count": 1,
-          "context": "Pod 3/10 failed with image pull error from registry",
-          "aliases": []
-        },
-        "authentication": {
-          "name": "authentication",
-          "entity_type": "service",
-          "value": "authentication",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:46:00.363920",
-          "last_mentioned": "2025-12-06T18:46:10.377423",
-          "mention_count": 1,
-          "context": "Check the container registry credentials and authentication",
-          "aliases": [
-            "authentication"
-          ]
-        },
-        "container registry": {
-          "name": "container registry",
-          "entity_type": "generic",
-          "value": "container registry",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:46:10.377291",
-          "last_mentioned": "2025-12-06T18:46:10.377423",
-          "mention_count": 1,
-          "context": "Check the container registry credentials and authentication",
-          "aliases": []
-        },
-        "credentials": {
-          "name": "credentials",
-          "entity_type": "generic",
-          "value": "credentials",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:46:10.377297",
-          "last_mentioned": "2025-12-06T18:46:10.377423",
-          "mention_count": 1,
-          "context": "Check the container registry credentials and authentication",
-          "aliases": []
-        },
-        "v2.4.1": {
-          "name": "v2.4.1",
-          "entity_type": "generic",
-          "value": "2.4.1",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:46:14.184977",
-          "last_mentioned": "2025-12-06T18:46:14.185078",
-          "mention_count": 1,
-          "context": "Initiating rollback to v2.4.1. All pods rolling back",
-          "aliases": []
-        },
-        "database": {
-          "name": "database",
-          "entity_type": "system",
-          "value": "None",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:46:16.679943",
-          "last_mentioned": "2025-12-06T18:46:16.680028",
-          "mention_count": 1,
-          "context": "Check database migration status for schema compatibility",
-          "aliases": []
-        },
-        "schema": {
-          "name": "schema",
-          "entity_type": "generic",
-          "value": "None",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:46:16.679948",
-          "last_mentioned": "2025-12-06T18:46:16.680028",
-          "mention_count": 1,
-          "context": "Check database migration status for schema compatibility",
-          "aliases": []
-        },
-        "Database": {
-          "name": "Database",
-          "entity_type": "service",
-          "value": "database",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:46:29.202398",
-          "last_mentioned": "2025-12-06T18:46:29.202475",
-          "mention_count": 1,
-          "context": "Database migration rolled back successfully. Schema at v2.4.1",
-          "aliases": []
-        },
-        "Schema": {
-          "name": "Schema",
-          "entity_type": "system",
-          "value": "schema",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:46:29.202403",
-          "last_mentioned": "2025-12-06T18:46:29.202475",
-          "mention_count": 1,
-          "context": "Database migration rolled back successfully. Schema at v2.4.1",
-          "aliases": []
-        }
-      },
-      "turn_count": 0
-    },
-    "stress_0": {
-      "conversation_id": "stress_0",
-      "started_at": "2025-12-06T18:46:39.287680",
-      "last_activity": "2025-12-06T18:48:42.137375",
-      "session_summary": "",
-      "entities": {
-        "tower-apple-music": {
-          "name": "tower-apple-music",
-          "entity_type": "service",
-          "value": "tower-apple-music",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:46:39.287707",
-          "last_mentioned": "2025-12-06T18:48:42.122838",
-          "mention_count": 2,
-          "context": "Service tower-apple-music on port 8088 is experiencing Disk space",
-          "aliases": [
-            "tower-apple-music"
-          ]
-        },
-        "8088": {
-          "name": "8088",
-          "entity_type": "port",
-          "value": "8088",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:46:39.287734",
-          "last_mentioned": "2025-12-06T18:46:59.822412",
-          "mention_count": 1,
-          "context": "Service tower-apple-music on port 8088 is experiencing Disk space",
-          "aliases": []
-        },
-        "port 8088": {
-          "name": "port 8088",
-          "entity_type": "generic",
-          "value": "port 8088",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:46:59.822290",
-          "last_mentioned": "2025-12-06T18:46:59.822412",
-          "mention_count": 1,
-          "context": "Service tower-apple-music on port 8088 is experiencing Disk space",
-          "aliases": []
-        },
-        "Disk space": {
-          "name": "Disk space",
-          "entity_type": "generic",
-          "value": "Disk space",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:46:59.822293",
-          "last_mentioned": "2025-12-06T18:47:21.301868",
-          "mention_count": 2,
-          "context": "Service tower-apple-music on port 8088 is experiencing Disk space",
-          "aliases": []
-        },
-        "tower-kb": {
-          "name": "tower-kb",
-          "entity_type": "service",
-          "value": "tower-kb",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:46:59.835868",
-          "last_mentioned": "2025-12-06T18:48:16.643282",
-          "mention_count": 2,
-          "context": "Investigating tower-kb. Found correlation with Disk space in system logs",
-          "aliases": []
-        },
-        "tower": {
-          "name": "tower",
-          "entity_type": "system",
-          "value": "kb",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:47:21.301776",
-          "last_mentioned": "2025-12-06T18:47:21.301868",
-          "mention_count": 1,
-          "context": "Investigating tower-kb. Found correlation with Disk space in system logs",
-          "aliases": []
-        },
-        "tower-auth": {
-          "name": "tower-auth",
-          "entity_type": "service",
-          "value": "tower-auth",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:47:21.328688",
-          "last_mentioned": "2025-12-06T18:47:48.360458",
-          "mention_count": 1,
-          "context": "Applied fix to tower-auth. Monitoring for stability",
-          "aliases": [
-            "tower-auth"
-          ]
-        },
-        "stability": {
-          "name": "stability",
-          "entity_type": "error",
-          "value": "instability",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:47:48.360379",
-          "last_mentioned": "2025-12-06T18:47:48.360458",
-          "mention_count": 1,
-          "context": "Applied fix to tower-auth. Monitoring for stability",
-          "aliases": []
-        },
-        "8307": {
-          "name": "8307",
-          "entity_type": "port",
-          "value": "8307",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:47:48.374179",
-          "last_mentioned": "2025-12-06T18:48:16.643282",
-          "mention_count": 1,
-          "context": "Service tower-kb on port 8307 is experiencing Network error",
-          "aliases": []
-        },
-        "network error": {
-          "name": "network error",
-          "entity_type": "error",
-          "value": "Network error",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:48:16.643187",
-          "last_mentioned": "2025-12-06T18:48:16.643282",
-          "mention_count": 1,
-          "context": "Service tower-kb on port 8307 is experiencing Network error",
-          "aliases": []
-        },
-        "Service tower-kb": {
-          "name": "Service tower-kb",
-          "entity_type": "service",
-          "value": "Service tower-kb",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:48:16.643194",
-          "last_mentioned": "2025-12-06T18:48:16.643282",
-          "mention_count": 1,
-          "context": "Service tower-kb on port 8307 is experiencing Network error",
-          "aliases": []
-        },
-        "Auth": {
-          "name": "Auth",
-          "entity_type": "system",
-          "value": "",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:48:42.122749",
-          "last_mentioned": "2025-12-06T18:48:42.122838",
-          "mention_count": 1,
-          "context": "Investigating tower-apple-music. Found correlation with Auth failure in system logs",
-          "aliases": []
-        }
-      },
-      "turn_count": 0
-    },
-    "stress_1": {
-      "conversation_id": "stress_1",
-      "started_at": "2025-12-06T18:46:39.298865",
-      "last_activity": "2025-12-06T18:48:07.607181",
-      "session_summary": "",
-      "entities": {
-        "tower-auth": {
-          "name": "tower-auth",
-          "entity_type": "service",
-          "value": "tower-auth",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:46:39.298887",
-          "last_mentioned": "2025-12-06T18:46:51.153678",
-          "mention_count": 1,
-          "context": "Service tower-auth on port 5432 is experiencing OOM",
-          "aliases": []
-        },
-        "5432": {
-          "name": "5432",
-          "entity_type": "port",
-          "value": "5432",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:46:39.298934",
-          "last_mentioned": "2025-12-06T18:46:51.153678",
-          "mention_count": 1,
-          "context": "Service tower-auth on port 5432 is experiencing OOM",
-          "aliases": []
-        },
-        "tower-auth service": {
-          "name": "tower-auth service",
-          "entity_type": "service",
-          "value": "Service tower-auth on port 5432",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:46:51.153560",
-          "last_mentioned": "2025-12-06T18:46:51.153678",
-          "mention_count": 1,
-          "context": "Service tower-auth on port 5432 is experiencing OOM",
-          "aliases": []
-        },
-        "port 5432": {
-          "name": "port 5432",
-          "entity_type": "system",
-          "value": "5432",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:46:51.153567",
-          "last_mentioned": "2025-12-06T18:46:51.153678",
-          "mention_count": 1,
-          "context": "Service tower-auth on port 5432 is experiencing OOM",
-          "aliases": []
-        },
-        "tower-anime-production": {
-          "name": "tower-anime-production",
-          "entity_type": "service",
-          "value": "tower-anime-production",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:46:51.167326",
-          "last_mentioned": "2025-12-06T18:47:15.579468",
-          "mention_count": 1,
-          "context": "Investigating tower-anime-production. Found correlation with OOM in system logs",
-          "aliases": []
-        },
-        "OOM": {
-          "name": "OOM",
-          "entity_type": "error",
-          "value": "oom",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:47:15.579367",
-          "last_mentioned": "2025-12-06T18:47:15.579468",
-          "mention_count": 1,
-          "context": "Investigating tower-anime-production. Found correlation with OOM in system logs",
-          "aliases": []
-        },
-        "system logs": {
-          "name": "system logs",
-          "entity_type": "service",
-          "value": "system logs",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:47:15.579375",
-          "last_mentioned": "2025-12-06T18:47:15.579468",
-          "mention_count": 1,
-          "context": "Investigating tower-anime-production. Found correlation with OOM in system logs",
-          "aliases": []
-        },
-        "tower-kb": {
-          "name": "tower-kb",
-          "entity_type": "service",
-          "value": "tower-kb",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:47:15.606934",
-          "last_mentioned": "2025-12-06T18:48:07.607181",
-          "mention_count": 3,
-          "context": "Applied fix to tower-kb. Monitoring for stability",
-          "aliases": []
-        },
-        "8328": {
-          "name": "8328",
-          "entity_type": "port",
-          "value": "8328",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:47:15.619979",
-          "last_mentioned": "2025-12-06T18:47:42.455793",
-          "mention_count": 1,
-          "context": "Service tower-crypto-trader on port 8328 is experiencing Auth failure",
-          "aliases": []
-        },
-        "connection timeout": {
-          "name": "connection timeout",
-          "entity_type": "error",
-          "value": "connection timeout",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:47:42.469726",
-          "last_mentioned": "2025-12-06T18:48:07.579704",
-          "mention_count": 1,
-          "context": "Investigating tower-kb. Found correlation with Connection timeout in system logs",
-          "aliases": []
-        },
-        "system": {
-          "name": "system",
-          "entity_type": "system",
-          "value": "tower",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:48:07.579617",
-          "last_mentioned": "2025-12-06T18:48:07.579704",
-          "mention_count": 1,
-          "context": "Investigating tower-kb. Found correlation with Connection timeout in system logs",
-          "aliases": []
-        },
-        "error": {
-          "name": "error",
-          "entity_type": "error",
-          "value": "Connection timeout",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:48:07.579623",
-          "last_mentioned": "2025-12-06T18:48:07.579704",
-          "mention_count": 1,
-          "context": "Investigating tower-kb. Found correlation with Connection timeout in system logs",
-          "aliases": []
-        }
-      },
-      "turn_count": 0
-    },
-    "stress_2": {
-      "conversation_id": "stress_2",
-      "started_at": "2025-12-06T18:46:39.309783",
-      "last_activity": "2025-12-06T18:48:21.285451",
-      "session_summary": "",
-      "entities": {
-        "tower-kb": {
-          "name": "tower-kb",
-          "entity_type": "service",
-          "value": "tower-kb",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:46:39.309804",
-          "last_mentioned": "2025-12-06T18:48:21.270311",
-          "mention_count": 3,
-          "context": "Service tower-kb on port 8088 is experiencing Connection timeout",
-          "aliases": []
-        },
-        "8088": {
-          "name": "8088",
-          "entity_type": "port",
-          "value": "8088",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:46:39.309838",
-          "last_mentioned": "2025-12-06T18:47:04.886624",
-          "mention_count": 1,
-          "context": "Service tower-kb on port 8088 is experiencing Connection timeout",
-          "aliases": []
-        },
-        "connection timeout": {
-          "name": "connection timeout",
-          "entity_type": "error",
-          "value": "connection timeout",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:46:39.309845",
-          "last_mentioned": "2025-12-06T18:47:04.886624",
-          "mention_count": 1,
-          "context": "Service tower-kb on port 8088 is experiencing Connection timeout",
-          "aliases": []
-        },
-        "tower-apple-music": {
-          "name": "tower-apple-music",
-          "entity_type": "service",
-          "value": "tower-apple-music",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:47:04.900108",
-          "last_mentioned": "2025-12-06T18:47:30.325973",
-          "mention_count": 1,
-          "context": "Investigating tower-apple-music. Found correlation with Auth failure in system logs",
-          "aliases": []
-        },
-        "8328": {
-          "name": "8328",
-          "entity_type": "port",
-          "value": "8328",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:47:30.367098",
-          "last_mentioned": "2025-12-06T18:47:52.739107",
-          "mention_count": 1,
-          "context": "Service tower-crypto-trader on port 8328 is experiencing Network error",
-          "aliases": []
-        },
-        "Service tower-crypto-trader": {
-          "name": "Service tower-crypto-trader",
-          "entity_type": "service",
-          "value": "crypto-trader",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:47:52.739009",
-          "last_mentioned": "2025-12-06T18:47:52.739107",
-          "mention_count": 1,
-          "context": "Service tower-crypto-trader on port 8328 is experiencing Network error",
-          "aliases": []
-        },
-        "port 8328": {
-          "name": "port 8328",
-          "entity_type": "system",
-          "value": "8328",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:47:52.739015",
-          "last_mentioned": "2025-12-06T18:47:52.739107",
-          "mention_count": 1,
-          "context": "Service tower-crypto-trader on port 8328 is experiencing Network error",
-          "aliases": []
-        },
-        "tower": {
-          "name": "tower",
-          "entity_type": "system",
-          "value": "tower",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:48:21.270201",
-          "last_mentioned": "2025-12-06T18:48:21.270311",
-          "mention_count": 1,
-          "context": "Investigating tower-kb. Found correlation with Disk space in system logs",
-          "aliases": []
-        },
-        "disk space": {
-          "name": "disk space",
-          "entity_type": "file",
-          "value": "Disk space",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:48:21.270208",
-          "last_mentioned": "2025-12-06T18:48:21.270311",
-          "mention_count": 1,
-          "context": "Investigating tower-kb. Found correlation with Disk space in system logs",
-          "aliases": []
-        }
-      },
-      "turn_count": 0
-    },
-    "stress_3": {
-      "conversation_id": "stress_3",
-      "started_at": "2025-12-06T18:46:39.320688",
-      "last_activity": "2025-12-06T18:48:23.507359",
-      "session_summary": "",
-      "entities": {
-        "tower-auth": {
-          "name": "tower-auth",
-          "entity_type": "service",
-          "value": "tower-auth",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:46:39.320705",
-          "last_mentioned": "2025-12-06T18:47:31.873072",
-          "mention_count": 2,
-          "context": "Service tower-auth on port 8307 is experiencing Disk space",
-          "aliases": []
-        },
-        "8307": {
-          "name": "8307",
-          "entity_type": "port",
-          "value": "8307",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:46:39.320736",
-          "last_mentioned": "2025-12-06T18:46:44.638734",
-          "mention_count": 1,
-          "context": "Service tower-auth on port 8307 is experiencing Disk space",
-          "aliases": []
-        },
-        "tower-anime-production": {
-          "name": "tower-anime-production",
-          "entity_type": "service",
-          "value": "tower-anime-production",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:46:44.651291",
-          "last_mentioned": "2025-12-06T18:48:23.493422",
-          "mention_count": 3,
-          "context": "Investigating tower-anime-production. Found correlation with Connection timeout in system logs",
-          "aliases": []
-        },
-        "connection timeout": {
-          "name": "connection timeout",
-          "entity_type": "error",
-          "value": "connection timeout",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:46:44.651366",
-          "last_mentioned": "2025-12-06T18:48:23.493422",
-          "mention_count": 2,
-          "context": "Investigating tower-anime-production. Found correlation with Connection timeout in system logs",
-          "aliases": [
-            "Connection timeout",
-            "connection timeout"
-          ]
-        },
-        "system logs": {
-          "name": "system logs",
-          "entity_type": "system",
-          "value": "system logs",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:47:07.171241",
-          "last_mentioned": "2025-12-06T18:48:23.493422",
-          "mention_count": 2,
-          "context": "Investigating tower-anime-production. Found correlation with Connection timeout in system logs",
-          "aliases": []
-        },
-        "6379": {
-          "name": "6379",
-          "entity_type": "port",
-          "value": "6379",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:47:31.886627",
-          "last_mentioned": "2025-12-06T18:47:54.811900",
-          "mention_count": 1,
-          "context": "Service tower-anime-production on port 6379 is experiencing Network error",
-          "aliases": []
-        }
-      },
-      "turn_count": 0
-    },
-    "stress_4": {
-      "conversation_id": "stress_4",
-      "started_at": "2025-12-06T18:46:39.331912",
-      "last_activity": "2025-12-06T18:48:39.162780",
-      "session_summary": "",
-      "entities": {
-        "tower-auth": {
-          "name": "tower-auth",
-          "entity_type": "service",
-          "value": "tower-auth",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:46:39.331930",
-          "last_mentioned": "2025-12-06T18:46:56.545133",
-          "mention_count": 1,
-          "context": "Service tower-auth on port 8309 is experiencing Disk space",
-          "aliases": []
-        },
-        "8309": {
-          "name": "8309",
-          "entity_type": "port",
-          "value": "8309",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:46:39.331962",
-          "last_mentioned": "2025-12-06T18:46:56.545133",
-          "mention_count": 1,
-          "context": "Service tower-auth on port 8309 is experiencing Disk space",
-          "aliases": []
-        },
-        "Service tower-auth": {
-          "name": "Service tower-auth",
-          "entity_type": "service",
-          "value": "that",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:46:56.545022",
-          "last_mentioned": "2025-12-06T18:46:56.545133",
-          "mention_count": 1,
-          "context": "Service tower-auth on port 8309 is experiencing Disk space",
-          "aliases": []
-        },
-        "port": {
-          "name": "port",
-          "entity_type": "system",
-          "value": "8309",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:46:56.545029",
-          "last_mentioned": "2025-12-06T18:48:14.660447",
-          "mention_count": 2,
-          "context": "Service tower-auth on port 8309 is experiencing Disk space",
-          "aliases": []
-        },
-        "Disk space": {
-          "name": "Disk space",
-          "entity_type": "generic",
-          "value": "",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:46:56.545034",
-          "last_mentioned": "2025-12-06T18:46:56.545133",
-          "mention_count": 1,
-          "context": "Service tower-auth on port 8309 is experiencing Disk space",
-          "aliases": []
-        },
-        "connection timeout": {
-          "name": "connection timeout",
-          "entity_type": "error",
-          "value": "connection timeout",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:46:56.562369",
-          "last_mentioned": "2025-12-06T18:47:18.869203",
-          "mention_count": 1,
-          "context": "Investigating tower-crypto-trader. Found correlation with Connection timeout in system logs",
-          "aliases": [
-            "Connection timeout"
-          ]
-        },
-        "tower": {
-          "name": "tower",
-          "entity_type": "system",
-          "value": "tower",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:47:18.869063",
-          "last_mentioned": "2025-12-06T18:47:18.869203",
-          "mention_count": 1,
-          "context": "Investigating tower-crypto-trader. Found correlation with Connection timeout in system logs",
-          "aliases": []
-        },
-        "crypto-trader": {
-          "name": "crypto-trader",
-          "entity_type": "system",
-          "value": "tower-crypto-trader",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:47:18.869071",
-          "last_mentioned": "2025-12-06T18:47:18.869203",
-          "mention_count": 1,
-          "context": "Investigating tower-crypto-trader. Found correlation with Connection timeout in system logs",
-          "aliases": []
-        },
-        "tower-apple-music": {
-          "name": "tower-apple-music",
-          "entity_type": "service",
-          "value": "tower-apple-music",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:47:18.896326",
-          "last_mentioned": "2025-12-06T18:48:39.148636",
-          "mention_count": 2,
-          "context": "Applied fix to tower-apple-music. Monitoring for stability",
-          "aliases": [
-            "tower-apple-music"
-          ]
-        },
-        "stability": {
-          "name": "stability",
-          "entity_type": "error",
-          "value": "stability",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:47:46.865008",
-          "last_mentioned": "2025-12-06T18:47:46.865107",
-          "mention_count": 1,
-          "context": "Applied fix to tower-apple-music. Monitoring for stability",
-          "aliases": []
-        },
-        "tower-kb": {
-          "name": "tower-kb",
-          "entity_type": "service",
-          "value": "tower-kb",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:47:46.878774",
-          "last_mentioned": "2025-12-06T18:48:14.660447",
-          "mention_count": 1,
-          "context": "Service tower-kb on port 8088 is experiencing Network error",
-          "aliases": []
-        },
-        "8088": {
-          "name": "8088",
-          "entity_type": "port",
-          "value": "8088",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:47:46.878805",
-          "last_mentioned": "2025-12-06T18:48:14.660447",
-          "mention_count": 1,
-          "context": "Service tower-kb on port 8088 is experiencing Network error",
-          "aliases": []
-        },
-        "Service Tower": {
-          "name": "Service Tower",
-          "entity_type": "service",
-          "value": "kb",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:48:14.660346",
-          "last_mentioned": "2025-12-06T18:48:14.660447",
-          "mention_count": 1,
-          "context": "Service tower-kb on port 8088 is experiencing Network error",
-          "aliases": []
-        },
-        "Auth": {
-          "name": "Auth",
-          "entity_type": "system",
-          "value": "auth failure",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:48:39.148534",
-          "last_mentioned": "2025-12-06T18:48:39.148636",
-          "mention_count": 1,
-          "context": "Investigating tower-apple-music. Found correlation with Auth failure in system logs",
-          "aliases": []
-        },
-        "system logs": {
-          "name": "system logs",
-          "entity_type": "system",
-          "value": "",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:48:39.148542",
-          "last_mentioned": "2025-12-06T18:48:39.148636",
-          "mention_count": 1,
-          "context": "Investigating tower-apple-music. Found correlation with Auth failure in system logs",
-          "aliases": []
-        }
-      },
-      "turn_count": 0
-    },
-    "stress_5": {
-      "conversation_id": "stress_5",
-      "started_at": "2025-12-06T18:46:39.344035",
-      "last_activity": "2025-12-06T18:48:36.849368",
-      "session_summary": "",
-      "entities": {
-        "tower-kb": {
-          "name": "tower-kb",
-          "entity_type": "service",
-          "value": "tower-kb",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:46:39.344254",
-          "last_mentioned": "2025-12-06T18:46:54.162203",
-          "mention_count": 1,
-          "context": "Service tower-kb on port 8088 is experiencing Connection timeout",
-          "aliases": []
-        },
-        "8088": {
-          "name": "8088",
-          "entity_type": "port",
-          "value": "8088",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:46:39.344293",
-          "last_mentioned": "2025-12-06T18:46:54.162203",
-          "mention_count": 1,
-          "context": "Service tower-kb on port 8088 is experiencing Connection timeout",
-          "aliases": []
-        },
-        "connection timeout": {
-          "name": "connection timeout",
-          "entity_type": "error",
-          "value": "connection timeout",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:46:39.344299",
-          "last_mentioned": "2025-12-06T18:46:54.162203",
-          "mention_count": 1,
-          "context": "Service tower-kb on port 8088 is experiencing Connection timeout",
-          "aliases": []
-        },
-        "Service tower-kb": {
-          "name": "Service tower-kb",
-          "entity_type": "service",
-          "value": "Service tower-kb",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:46:54.162105",
-          "last_mentioned": "2025-12-06T18:46:54.162203",
-          "mention_count": 1,
-          "context": "Service tower-kb on port 8088 is experiencing Connection timeout",
-          "aliases": []
-        },
-        "port 8088": {
-          "name": "port 8088",
-          "entity_type": "generic",
-          "value": "port 8088",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:46:54.162111",
-          "last_mentioned": "2025-12-06T18:46:54.162203",
-          "mention_count": 1,
-          "context": "Service tower-kb on port 8088 is experiencing Connection timeout",
-          "aliases": []
-        },
-        "tower-apple-music": {
-          "name": "tower-apple-music",
-          "entity_type": "service",
-          "value": "tower-apple-music",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:46:54.175553",
-          "last_mentioned": "2025-12-06T18:47:16.366563",
-          "mention_count": 1,
-          "context": "Investigating tower-apple-music. Found correlation with Auth failure in system logs",
-          "aliases": []
-        },
-        "tower-auth": {
-          "name": "tower-auth",
-          "entity_type": "service",
-          "value": "tower-auth",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:47:16.393478",
-          "last_mentioned": "2025-12-06T18:48:36.835013",
-          "mention_count": 2,
-          "context": "Applied fix to tower-auth. Monitoring for stability",
-          "aliases": [
-            "tower-auth"
-          ]
-        },
-        "stability": {
-          "name": "stability",
-          "entity_type": "generic",
-          "value": "None",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:47:45.058529",
-          "last_mentioned": "2025-12-06T18:47:45.058620",
-          "mention_count": 1,
-          "context": "Applied fix to tower-auth. Monitoring for stability",
-          "aliases": []
-        },
-        "8307": {
-          "name": "8307",
-          "entity_type": "port",
-          "value": "8307",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:47:45.072547",
-          "last_mentioned": "2025-12-06T18:48:11.667509",
-          "mention_count": 1,
-          "context": "Service tower-crypto-trader on port 8307 is experiencing Auth failure",
-          "aliases": []
-        }
-      },
-      "turn_count": 0
-    },
-    "stress_6": {
-      "conversation_id": "stress_6",
-      "started_at": "2025-12-06T18:46:39.356636",
-      "last_activity": "2025-12-06T18:48:18.881423",
-      "session_summary": "",
-      "entities": {
-        "tower-auth": {
-          "name": "tower-auth",
-          "entity_type": "service",
-          "value": "tower-auth",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:46:39.356656",
-          "last_mentioned": "2025-12-06T18:48:18.865813",
-          "mention_count": 2,
-          "context": "Service tower-auth on port 8315 is experiencing Network error",
-          "aliases": [
-            "tower-auth"
-          ]
-        },
-        "8315": {
-          "name": "8315",
-          "entity_type": "port",
-          "value": "8315",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:46:39.356689",
-          "last_mentioned": "2025-12-06T18:47:03.078672",
-          "mention_count": 1,
-          "context": "Service tower-auth on port 8315 is experiencing Network error",
-          "aliases": []
-        },
-        "Service tower-auth": {
-          "name": "Service tower-auth",
-          "entity_type": "service",
-          "value": "Service tower-auth",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:47:03.078581",
-          "last_mentioned": "2025-12-06T18:47:03.078672",
-          "mention_count": 1,
-          "context": "Service tower-auth on port 8315 is experiencing Network error",
-          "aliases": []
-        },
-        "port": {
-          "name": "port",
-          "entity_type": "system",
-          "value": "8315",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:47:03.078587",
-          "last_mentioned": "2025-12-06T18:47:03.078672",
-          "mention_count": 1,
-          "context": "Service tower-auth on port 8315 is experiencing Network error",
-          "aliases": []
-        },
-        "connection timeout": {
-          "name": "connection timeout",
-          "entity_type": "error",
-          "value": "connection timeout",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:47:03.092115",
-          "last_mentioned": "2025-12-06T18:47:24.620926",
-          "mention_count": 1,
-          "context": "Investigating tower-crypto-trader. Found correlation with Connection timeout in system logs",
-          "aliases": [
-            "Connection timeout"
-          ]
-        },
-        "tower-crypto-trader": {
-          "name": "tower-crypto-trader",
-          "entity_type": "service",
-          "value": "tower-crypto-trader",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:47:24.620800",
-          "last_mentioned": "2025-12-06T18:47:24.620926",
-          "mention_count": 1,
-          "context": "Investigating tower-crypto-trader. Found correlation with Connection timeout in system logs",
-          "aliases": []
-        },
-        "tower-kb": {
-          "name": "tower-kb",
-          "entity_type": "service",
-          "value": "tower-kb",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:47:24.647867",
-          "last_mentioned": "2025-12-06T18:47:24.647923",
-          "mention_count": 1,
-          "context": "Applied fix to tower-kb. Monitoring for stability",
-          "aliases": []
-        },
-        "5432": {
-          "name": "5432",
-          "entity_type": "port",
-          "value": "5432",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:47:24.660839",
-          "last_mentioned": "2025-12-06T18:47:50.447955",
-          "mention_count": 1,
-          "context": "Service tower-crypto-trader on port 5432 is experiencing OOM",
-          "aliases": []
-        },
-        "Service tower-crypto-trader": {
-          "name": "Service tower-crypto-trader",
-          "entity_type": "service",
-          "value": " Service tower-crypto-trader",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:47:50.447847",
-          "last_mentioned": "2025-12-06T18:47:50.447955",
-          "mention_count": 1,
-          "context": "Service tower-crypto-trader on port 5432 is experiencing OOM",
-          "aliases": []
-        },
-        "port 5432": {
-          "name": "port 5432",
-          "entity_type": "system",
-          "value": "5432",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:47:50.447853",
-          "last_mentioned": "2025-12-06T18:47:50.447955",
-          "mention_count": 1,
-          "context": "Service tower-crypto-trader on port 5432 is experiencing OOM",
-          "aliases": []
-        },
-        "Network error": {
-          "name": "Network error",
-          "entity_type": "error",
-          "value": "Network error",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:48:18.865714",
-          "last_mentioned": "2025-12-06T18:48:18.865813",
-          "mention_count": 1,
-          "context": "Investigating tower-auth. Found correlation with Network error in system logs",
-          "aliases": []
-        },
-        "system logs": {
-          "name": "system logs",
-          "entity_type": "system",
-          "value": "system logs",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:48:18.865718",
-          "last_mentioned": "2025-12-06T18:48:18.865813",
-          "mention_count": 1,
-          "context": "Investigating tower-auth. Found correlation with Network error in system logs",
-          "aliases": []
-        }
-      },
-      "turn_count": 0
-    },
-    "stress_7": {
-      "conversation_id": "stress_7",
-      "started_at": "2025-12-06T18:46:39.368120",
-      "last_activity": "2025-12-06T18:48:26.006628",
-      "session_summary": "",
-      "entities": {
-        "tower-anime-production": {
-          "name": "tower-anime-production",
-          "entity_type": "service",
-          "value": "tower-anime-production",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:46:39.368139",
-          "last_mentioned": "2025-12-06T18:46:45.582669",
-          "mention_count": 1,
-          "context": "Service tower-anime-production on port 8309 is experiencing Network error",
-          "aliases": []
-        },
-        "8309": {
-          "name": "8309",
-          "entity_type": "port",
-          "value": "8309",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:46:39.368180",
-          "last_mentioned": "2025-12-06T18:46:45.582669",
-          "mention_count": 1,
-          "context": "Service tower-anime-production on port 8309 is experiencing Network error",
-          "aliases": []
-        },
-        "tower-auth": {
-          "name": "tower-auth",
-          "entity_type": "service",
-          "value": "tower-auth",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:46:45.597023",
-          "last_mentioned": "2025-12-06T18:48:25.992299",
-          "mention_count": 3,
-          "context": "Investigating tower-auth. Found correlation with OOM in system logs",
-          "aliases": [
-            "tower-auth"
-          ]
-        },
-        "OOM": {
-          "name": "OOM",
-          "entity_type": "error",
-          "value": "OOM",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:47:09.378408",
-          "last_mentioned": "2025-12-06T18:47:09.378506",
-          "mention_count": 1,
-          "context": "Investigating tower-auth. Found correlation with OOM in system logs",
-          "aliases": []
-        },
-        "stability": {
-          "name": "stability",
-          "entity_type": "generic",
-          "value": "stability",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:47:35.411609",
-          "last_mentioned": "2025-12-06T18:47:35.411713",
-          "mention_count": 1,
-          "context": "Applied fix to tower-auth. Monitoring for stability",
-          "aliases": []
-        },
-        "tower-apple-music": {
-          "name": "tower-apple-music",
-          "entity_type": "service",
-          "value": "tower-apple-music",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:47:35.425616",
-          "last_mentioned": "2025-12-06T18:47:58.404756",
-          "mention_count": 1,
-          "context": "Service tower-apple-music on port 8328 is experiencing Auth failure",
-          "aliases": []
-        },
-        "8328": {
-          "name": "8328",
-          "entity_type": "port",
-          "value": "8328",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:47:35.425664",
-          "last_mentioned": "2025-12-06T18:47:58.404756",
-          "mention_count": 1,
-          "context": "Service tower-apple-music on port 8328 is experiencing Auth failure",
-          "aliases": []
-        },
-        "tower": {
-          "name": "tower",
-          "entity_type": "service",
-          "value": "apple-music",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:47:58.404642",
-          "last_mentioned": "2025-12-06T18:47:58.404756",
-          "mention_count": 1,
-          "context": "Service tower-apple-music on port 8328 is experiencing Auth failure",
-          "aliases": []
-        },
-        "port": {
-          "name": "port",
-          "entity_type": "system",
-          "value": "8328",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:47:58.404650",
-          "last_mentioned": "2025-12-06T18:47:58.404756",
-          "mention_count": 1,
-          "context": "Service tower-apple-music on port 8328 is experiencing Auth failure",
-          "aliases": []
-        },
-        "Disk space": {
-          "name": "Disk space",
-          "entity_type": "generic",
-          "value": "disk space",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:48:25.992194",
-          "last_mentioned": "2025-12-06T18:48:25.992299",
-          "mention_count": 1,
-          "context": "Investigating tower-auth. Found correlation with Disk space in system logs",
-          "aliases": []
-        }
-      },
-      "turn_count": 0
-    },
-    "stress_8": {
-      "conversation_id": "stress_8",
-      "started_at": "2025-12-06T18:46:39.379614",
-      "last_activity": "2025-12-06T18:48:30.648024",
-      "session_summary": "",
-      "entities": {
-        "tower-auth": {
-          "name": "tower-auth",
-          "entity_type": "service",
-          "value": "tower-auth",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:46:39.379634",
-          "last_mentioned": "2025-12-06T18:46:49.056754",
-          "mention_count": 1,
-          "context": "Service tower-auth on port 8328 is experiencing OOM",
-          "aliases": [
-            "tower-auth"
-          ]
-        },
-        "8328": {
-          "name": "8328",
-          "entity_type": "port",
-          "value": "8328",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:46:39.379664",
-          "last_mentioned": "2025-12-06T18:46:49.056754",
-          "mention_count": 1,
-          "context": "Service tower-auth on port 8328 is experiencing OOM",
-          "aliases": []
-        },
-        "oom": {
-          "name": "oom",
-          "entity_type": "error",
-          "value": "Out Of Memory error",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:46:49.056657",
-          "last_mentioned": "2025-12-06T18:46:49.056754",
-          "mention_count": 1,
-          "context": "Service tower-auth on port 8328 is experiencing OOM",
-          "aliases": []
-        },
-        "tower-kb": {
-          "name": "tower-kb",
-          "entity_type": "service",
-          "value": "tower-kb",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:46:49.070753",
-          "last_mentioned": "2025-12-06T18:48:05.479866",
-          "mention_count": 4,
-          "context": "Investigating tower-kb. Found correlation with Disk space in system logs",
-          "aliases": []
-        },
-        "Disk space": {
-          "name": "Disk space",
-          "entity_type": "system",
-          "value": "",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:47:14.139842",
-          "last_mentioned": "2025-12-06T18:48:05.479866",
-          "mention_count": 2,
-          "context": "Investigating tower-kb. Found correlation with Disk space in system logs",
-          "aliases": []
-        },
-        "system logs": {
-          "name": "system logs",
-          "entity_type": "system",
-          "value": "",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:47:14.139851",
-          "last_mentioned": "2025-12-06T18:47:14.140035",
-          "mention_count": 1,
-          "context": "Investigating tower-kb. Found correlation with Disk space in system logs",
-          "aliases": []
-        },
-        "5432": {
-          "name": "5432",
-          "entity_type": "port",
-          "value": "5432",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:47:14.178745",
-          "last_mentioned": "2025-12-06T18:47:39.414210",
-          "mention_count": 1,
-          "context": "Service tower-kb on port 5432 is experiencing Auth failure",
-          "aliases": []
-        },
-        "Service Tower": {
-          "name": "Service Tower",
-          "entity_type": "system",
-          "value": "kb",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:47:39.414127",
-          "last_mentioned": "2025-12-06T18:47:39.414210",
-          "mention_count": 1,
-          "context": "Service tower-kb on port 5432 is experiencing Auth failure",
-          "aliases": []
-        },
-        "port": {
-          "name": "port",
-          "entity_type": "generic",
-          "value": "5432",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:47:39.414132",
-          "last_mentioned": "2025-12-06T18:47:39.414210",
-          "mention_count": 1,
-          "context": "Service tower-kb on port 5432 is experiencing Auth failure",
-          "aliases": []
-        },
-        "tower": {
-          "name": "tower",
-          "entity_type": "system",
-          "value": "kb",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:48:05.479757",
-          "last_mentioned": "2025-12-06T18:48:05.479866",
-          "mention_count": 1,
-          "context": "Investigating tower-kb. Found correlation with Disk space in system logs",
-          "aliases": []
-        },
-        "tower-anime-production": {
-          "name": "tower-anime-production",
-          "entity_type": "service",
-          "value": "tower-anime-production",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:48:05.507838",
-          "last_mentioned": "2025-12-06T18:48:30.648024",
-          "mention_count": 1,
-          "context": "Applied fix to tower-anime-production. Monitoring for stability",
-          "aliases": []
-        },
-        "tower-production": {
-          "name": "tower-production",
-          "entity_type": "system",
-          "value": "anime",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:48:30.647944",
-          "last_mentioned": "2025-12-06T18:48:30.648024",
-          "mention_count": 1,
-          "context": "Applied fix to tower-anime-production. Monitoring for stability",
-          "aliases": []
-        },
-        "stability": {
-          "name": "stability",
-          "entity_type": "error",
-          "value": "condition",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:48:30.647950",
-          "last_mentioned": "2025-12-06T18:48:30.648024",
-          "mention_count": 1,
-          "context": "Applied fix to tower-anime-production. Monitoring for stability",
-          "aliases": []
-        }
-      },
-      "turn_count": 0
-    },
-    "stress_9": {
-      "conversation_id": "stress_9",
-      "started_at": "2025-12-06T18:46:39.392929",
-      "last_activity": "2025-12-06T18:48:28.286987",
-      "session_summary": "",
-      "entities": {
-        "tower-apple-music": {
-          "name": "tower-apple-music",
-          "entity_type": "service",
-          "value": "tower-apple-music",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:46:39.392961",
-          "last_mentioned": "2025-12-06T18:47:37.042466",
-          "mention_count": 2,
-          "context": "Service tower-apple-music on port 8088 is experiencing Auth failure",
-          "aliases": [
-            "tower-apple-music"
-          ]
-        },
-        "8088": {
-          "name": "8088",
-          "entity_type": "port",
-          "value": "8088",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:46:39.392992",
-          "last_mentioned": "2025-12-06T18:46:46.846999",
-          "mention_count": 1,
-          "context": "Service tower-apple-music on port 8088 is experiencing Auth failure",
-          "aliases": []
-        },
-        "port 8088": {
-          "name": "port 8088",
-          "entity_type": "system",
-          "value": "port 8088",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:46:46.846899",
-          "last_mentioned": "2025-12-06T18:46:46.846999",
-          "mention_count": 1,
-          "context": "Service tower-apple-music on port 8088 is experiencing Auth failure",
-          "aliases": []
-        },
-        "tower-anime-production": {
-          "name": "tower-anime-production",
-          "entity_type": "service",
-          "value": "tower-anime-production",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:46:46.860301",
-          "last_mentioned": "2025-12-06T18:48:28.272650",
-          "mention_count": 3,
-          "context": "Investigating tower-anime-production. Found correlation with Disk space in system logs",
-          "aliases": []
-        },
-        "system": {
-          "name": "system",
-          "entity_type": "system",
-          "value": "tower-anime-production",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:47:11.998375",
-          "last_mentioned": "2025-12-06T18:47:11.998468",
-          "mention_count": 1,
-          "context": "Investigating tower-anime-production. Found correlation with Disk space in system logs",
-          "aliases": []
-        },
-        "system logs": {
-          "name": "system logs",
-          "entity_type": "system",
-          "value": "Disk space",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:47:11.998382",
-          "last_mentioned": "2025-12-06T18:47:11.998468",
-          "mention_count": 1,
-          "context": "Investigating tower-anime-production. Found correlation with Disk space in system logs",
-          "aliases": []
-        },
-        "stability": {
-          "name": "stability",
-          "entity_type": "error",
-          "value": "stability",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:47:37.042371",
-          "last_mentioned": "2025-12-06T18:47:37.042466",
-          "mention_count": 1,
-          "context": "Applied fix to tower-apple-music. Monitoring for stability",
-          "aliases": []
-        },
-        "6379": {
-          "name": "6379",
-          "entity_type": "port",
-          "value": "6379",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:47:37.056735",
-          "last_mentioned": "2025-12-06T18:48:01.833987",
-          "mention_count": 1,
-          "context": "Service tower-anime-production on port 6379 is experiencing Network error",
-          "aliases": []
-        },
-        "port": {
-          "name": "port",
-          "entity_type": "service",
-          "value": "6379",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:48:01.833858",
-          "last_mentioned": "2025-12-06T18:48:01.833987",
-          "mention_count": 1,
-          "context": "Service tower-anime-production on port 6379 is experiencing Network error",
-          "aliases": []
-        },
-        "Network error": {
-          "name": "Network error",
-          "entity_type": "error",
-          "value": "",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:48:01.833865",
-          "last_mentioned": "2025-12-06T18:48:01.833987",
-          "mention_count": 1,
-          "context": "Service tower-anime-production on port 6379 is experiencing Network error",
-          "aliases": []
-        },
-        "Service tower": {
-          "name": "Service tower",
-          "entity_type": "system",
-          "value": "",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:48:01.833869",
-          "last_mentioned": "2025-12-06T18:48:01.833987",
-          "mention_count": 1,
-          "context": "Service tower-anime-production on port 6379 is experiencing Network error",
-          "aliases": []
-        },
-        "Auth system": {
-          "name": "Auth system",
-          "entity_type": "system",
-          "value": "auth",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:48:28.272553",
-          "last_mentioned": "2025-12-06T18:48:28.272650",
-          "mention_count": 1,
-          "context": "Investigating tower-anime-production. Found correlation with Auth failure in system logs",
-          "aliases": []
-        },
-        "System logs": {
-          "name": "System logs",
-          "entity_type": "generic",
-          "value": "system logs",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:48:28.272560",
-          "last_mentioned": "2025-12-06T18:48:28.272650",
-          "mention_count": 1,
-          "context": "Investigating tower-anime-production. Found correlation with Auth failure in system logs",
-          "aliases": []
-        }
-      },
-      "turn_count": 0
-    },
-    "stress_10": {
-      "conversation_id": "stress_10",
-      "started_at": "2025-12-06T18:48:07.620426",
-      "last_activity": "2025-12-06T18:48:33.519530",
-      "session_summary": "",
-      "entities": {
-        "8307": {
-          "name": "8307",
-          "entity_type": "port",
-          "value": "8307",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:48:07.620496",
-          "last_mentioned": "2025-12-06T18:48:33.519530",
-          "mention_count": 1,
-          "context": "Service tower-crypto-trader on port 8307 is experiencing Disk space",
-          "aliases": []
-        },
-        "Service tower": {
-          "name": "Service tower",
-          "entity_type": "service",
-          "value": "tower",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:48:33.519447",
-          "last_mentioned": "2025-12-06T18:48:33.519530",
-          "mention_count": 1,
-          "context": "Service tower-crypto-trader on port 8307 is experiencing Disk space",
-          "aliases": []
-        },
-        "crypto-trader": {
-          "name": "crypto-trader",
-          "entity_type": "service",
-          "value": "trader",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:48:33.519453",
-          "last_mentioned": "2025-12-06T18:48:33.519530",
-          "mention_count": 1,
-          "context": "Service tower-crypto-trader on port 8307 is experiencing Disk space",
-          "aliases": []
-        },
-        "Disk space": {
-          "name": "Disk space",
-          "entity_type": "error",
-          "value": "space",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:48:33.519456",
-          "last_mentioned": "2025-12-06T18:48:33.519530",
-          "mention_count": 1,
-          "context": "Service tower-crypto-trader on port 8307 is experiencing Disk space",
-          "aliases": []
-        }
-      },
-      "turn_count": 0
-    },
-    "stress_11": {
-      "conversation_id": "stress_11",
-      "started_at": "2025-12-06T18:48:30.661951",
-      "last_activity": "2025-12-06T18:48:30.661952",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 0
-    },
-    "validation_core": {
-      "conversation_id": "validation_core",
-      "started_at": "2025-12-06T18:49:18.781557",
-      "last_activity": "2025-12-06T18:49:21.874358",
-      "session_summary": "Here is a summary of the conversation:\n\nThe user inquired about the services broken on the Tower system, specifically requesting information on any anime-production-related issues. The assistant reported that two services were affected: an anime-production service experiencing slow generation times and an auth service currently bypassed mode. No further details or actions were taken in this exchange.",
-      "entities": {
-        "anime-production": {
-          "name": "anime-production",
-          "entity_type": "service",
-          "value": "anime-production",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:49:18.785640",
-          "last_mentioned": "2025-12-06T18:49:21.874358",
-          "mention_count": 1,
-          "context": "The anime-production service on port 8328 is failing with 8+ minute generation times, and the auth s",
-          "aliases": []
-        },
-        "auth service": {
-          "name": "auth service",
-          "entity_type": "service",
-          "value": "auth service",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:49:18.785647",
-          "last_mentioned": "2025-12-06T18:49:21.874358",
-          "mention_count": 1,
-          "context": "The anime-production service on port 8328 is failing with 8+ minute generation times, and the auth s",
-          "aliases": [
-            "auth service"
-          ]
-        },
-        "8328": {
-          "name": "8328",
-          "entity_type": "port",
-          "value": "8328",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:49:18.785689",
-          "last_mentioned": "2025-12-06T18:49:21.874358",
-          "mention_count": 1,
-          "context": "The anime-production service on port 8328 is failing with 8+ minute generation times, and the auth s",
-          "aliases": []
-        },
-        "anime-production service": {
-          "name": "anime-production service",
-          "entity_type": "service",
-          "value": "port 8328",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:49:21.874239",
-          "last_mentioned": "2025-12-06T18:49:21.874358",
-          "mention_count": 1,
-          "context": "The anime-production service on port 8328 is failing with 8+ minute generation times, and the auth s",
-          "aliases": []
-        }
-      },
-      "turn_count": 2
-    },
-    "validation_multi": {
-      "conversation_id": "validation_multi",
-      "started_at": "2025-12-06T18:49:21.878814",
-      "last_activity": "2025-12-06T18:49:30.755963",
-      "session_summary": "",
-      "entities": {
-        "tower-kb": {
-          "name": "tower-kb",
-          "entity_type": "service",
-          "value": "tower-kb",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:49:21.878830",
-          "last_mentioned": "2025-12-06T18:49:30.755964",
-          "mention_count": 2,
-          "context": "The tower-kb service and ComfyUI are both having issues",
-          "aliases": []
-        },
-        "comfyui": {
-          "name": "comfyui",
-          "entity_type": "service",
-          "value": "comfyui",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:49:21.878835",
-          "last_mentioned": "2025-12-06T18:49:30.755964",
-          "mention_count": 2,
-          "context": "The tower-kb service and ComfyUI are both having issues",
-          "aliases": [
-            "ComfyUI"
-          ]
-        },
-        "tower-kb service": {
-          "name": "tower-kb service",
-          "entity_type": "service",
-          "value": "having issues",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:49:24.831674",
-          "last_mentioned": "2025-12-06T18:49:24.831769",
-          "mention_count": 1,
-          "context": "The tower-kb service and ComfyUI are both having issues",
-          "aliases": []
-        },
-        "connection pool exhaustion": {
-          "name": "connection pool exhaustion",
-          "entity_type": "error",
-          "value": "tower-kb",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:49:30.755864",
-          "last_mentioned": "2025-12-06T18:49:30.755964",
-          "mention_count": 1,
-          "context": "Found connection pool exhaustion in tower-kb and GPU memory leak in ComfyUI",
-          "aliases": []
-        },
-        "GPU memory leak": {
-          "name": "GPU memory leak",
-          "entity_type": "error",
-          "value": "ComfyUI",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:49:30.755870",
-          "last_mentioned": "2025-12-06T18:49:30.755964",
-          "mention_count": 1,
-          "context": "Found connection pool exhaustion in tower-kb and GPU memory leak in ComfyUI",
-          "aliases": []
-        }
-      },
-      "turn_count": 2
-    },
-    "validation_perf": {
-      "conversation_id": "validation_perf",
-      "started_at": "2025-12-06T18:49:30.760289",
-      "last_activity": "2025-12-06T18:49:32.322021",
-      "session_summary": "",
-      "entities": {
-        "tower-anime-production": {
-          "name": "tower-anime-production",
-          "entity_type": "service",
-          "value": "tower-anime-production",
-          "confidence": 0.9,
-          "first_mentioned": "2025-12-06T18:49:30.760302",
-          "last_mentioned": "2025-12-06T18:49:32.322021",
-          "mention_count": 1,
-          "context": "The tower-anime-production service needs emergency restart with memory optimization",
-          "aliases": []
-        },
-        "memory": {
-          "name": "memory",
-          "entity_type": "generic",
-          "value": "optimization",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:49:32.321917",
-          "last_mentioned": "2025-12-06T18:49:32.322021",
-          "mention_count": 1,
-          "context": "The tower-anime-production service needs emergency restart with memory optimization",
-          "aliases": []
-        },
-        "services": {
-          "name": "services",
-          "entity_type": "system",
-          "value": "tower-anime-production",
-          "confidence": 0.8,
-          "first_mentioned": "2025-12-06T18:49:32.321926",
-          "last_mentioned": "2025-12-06T18:49:32.322021",
-          "mention_count": 1,
-          "context": "The tower-anime-production service needs emergency restart with memory optimization",
-          "aliases": []
-        }
-      },
-      "turn_count": 1
-    },
-    "edge_0": {
-      "conversation_id": "edge_0",
-      "started_at": "2025-12-06T18:49:32.326624",
-      "last_activity": "2025-12-06T18:49:32.326649",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 1
-    },
-    "edge_1": {
-      "conversation_id": "edge_1",
-      "started_at": "2025-12-06T18:49:32.330728",
-      "last_activity": "2025-12-06T18:49:32.330756",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 1
-    },
-    "edge_2": {
-      "conversation_id": "edge_2",
-      "started_at": "2025-12-06T18:49:32.333536",
-      "last_activity": "2025-12-06T18:49:32.333575",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 1
-    },
-    "edge_3": {
-      "conversation_id": "edge_3",
-      "started_at": "2025-12-06T18:49:32.337405",
-      "last_activity": "2025-12-06T18:49:32.337460",
-      "session_summary": "",
-      "entities": {},
-      "turn_count": 1
     }
   },
   "global_entities": {
@@ -3753,10 +861,10 @@
       "entity_type": "port",
       "value": "8309",
       "confidence": 0.9,
-      "first_mentioned": "2025-12-06T18:46:39.331962",
-      "last_mentioned": "2025-12-06T18:46:56.545133",
+      "first_mentioned": "2025-12-07T23:38:44.966608",
+      "last_mentioned": "2025-12-07T23:38:48.146084",
       "mention_count": 1,
-      "context": "Service tower-auth on port 8309 is experiencing Disk space",
+      "context": "The tower-echo-brain service on port 8309 is having connection issues",
       "aliases": []
     },
     "echo brain": {
@@ -3775,21 +883,23 @@
       "entity_type": "service",
       "value": "tower-anime-production",
       "confidence": 0.9,
-      "first_mentioned": "2025-12-06T18:49:30.760302",
-      "last_mentioned": "2025-12-06T18:49:32.322021",
+      "first_mentioned": "2025-12-07T23:38:51.826937",
+      "last_mentioned": "2025-12-07T23:38:52.622570",
       "mention_count": 1,
-      "context": "The tower-anime-production service needs emergency restart with memory optimization",
-      "aliases": []
+      "context": "I'll help you debug tower-anime-production. First, let's check the GPU status",
+      "aliases": [
+        "tower-anime-production"
+      ]
     },
     "tower-auth": {
       "name": "tower-auth",
       "entity_type": "service",
       "value": "tower-auth",
       "confidence": 0.9,
-      "first_mentioned": "2025-12-06T18:47:21.328688",
-      "last_mentioned": "2025-12-06T18:47:48.360458",
+      "first_mentioned": "2025-12-07T23:38:49.142860",
+      "last_mentioned": "2025-12-07T23:38:49.944169",
       "mention_count": 1,
-      "context": "Applied fix to tower-auth. Monitoring for stability",
+      "context": "vault.json has the OAuth credentials for tower-auth",
       "aliases": [
         "tower-auth"
       ]
@@ -3799,13 +909,11 @@
       "entity_type": "service",
       "value": "authentication",
       "confidence": 0.9,
-      "first_mentioned": "2025-12-06T18:46:00.363920",
-      "last_mentioned": "2025-12-06T18:46:10.377423",
+      "first_mentioned": "2025-12-07T23:38:54.010363",
+      "last_mentioned": "2025-12-07T23:38:54.741903",
       "mention_count": 1,
-      "context": "Check the container registry credentials and authentication",
-      "aliases": [
-        "authentication"
-      ]
+      "context": "The authentication service is showing bypass mode warnings",
+      "aliases": []
     },
     "8328": {
       "name": "8328",
@@ -3823,8 +931,8 @@
       "entity_type": "service",
       "value": "tower-echo-brain",
       "confidence": 0.9,
-      "first_mentioned": "2025-12-06T18:25:38.660572",
-      "last_mentioned": "2025-12-06T18:25:38.695637",
+      "first_mentioned": "2025-12-07T23:38:44.965561",
+      "last_mentioned": "2025-12-07T23:38:48.146084",
       "mention_count": 1,
       "context": "The tower-echo-brain service on port 8309 is having connection issues",
       "aliases": []
@@ -3847,21 +955,24 @@
       "entity_type": "service",
       "value": "vault",
       "confidence": 0.9,
-      "first_mentioned": "2025-12-06T18:25:38.713055",
-      "last_mentioned": "2025-12-06T18:25:38.714682",
+      "first_mentioned": "2025-12-07T23:38:54.743594",
+      "last_mentioned": "2025-12-07T23:38:57.026306",
       "mention_count": 2,
       "context": "I need to check the OAuth configuration in the vault",
-      "aliases": []
+      "aliases": [
+        "Vault",
+        "vault"
+      ]
     },
     "anime production": {
       "name": "anime production",
       "entity_type": "service",
       "value": "anime production",
       "confidence": 0.9,
-      "first_mentioned": "2025-12-06T18:44:09.240524",
-      "last_mentioned": "2025-12-06T18:44:19.463851",
+      "first_mentioned": "2025-12-07T23:38:51.825910",
+      "last_mentioned": "2025-12-07T23:38:51.825957",
       "mention_count": 1,
-      "context": "Let's discuss Project Quantum timeline for anime production",
+      "context": "I need to debug the anime production pipeline",
       "aliases": []
     },
     "25": {
@@ -3891,10 +1002,10 @@
       "entity_type": "service",
       "value": "anime-production",
       "confidence": 0.9,
-      "first_mentioned": "2025-12-06T18:49:18.785640",
-      "last_mentioned": "2025-12-06T18:49:21.874358",
+      "first_mentioned": "2025-12-07T23:38:48.147081",
+      "last_mentioned": "2025-12-07T23:38:49.140138",
       "mention_count": 1,
-      "context": "The anime-production service on port 8328 is failing with 8+ minute generation times, and the auth s",
+      "context": "Check the anime-production API and restart the authentication service",
       "aliases": []
     },
     "vault.js": {
@@ -3902,8 +1013,8 @@
       "entity_type": "file",
       "value": "vault.js",
       "confidence": 0.9,
-      "first_mentioned": "2025-12-06T18:25:38.700958",
-      "last_mentioned": "2025-12-06T18:25:38.705512",
+      "first_mentioned": "2025-12-07T23:38:49.142877",
+      "last_mentioned": "2025-12-07T23:38:49.944169",
       "mention_count": 1,
       "context": "vault.json has the OAuth credentials for tower-auth",
       "aliases": []
@@ -3913,21 +1024,23 @@
       "entity_type": "file",
       "value": "vault.json",
       "confidence": 0.9,
-      "first_mentioned": "2025-12-06T18:25:38.700964",
-      "last_mentioned": "2025-12-06T18:25:38.705512",
+      "first_mentioned": "2025-12-07T23:38:49.142884",
+      "last_mentioned": "2025-12-07T23:38:49.944169",
       "mention_count": 1,
       "context": "vault.json has the OAuth credentials for tower-auth",
-      "aliases": []
+      "aliases": [
+        "vault.json"
+      ]
     },
     "auth service": {
       "name": "auth service",
       "entity_type": "service",
       "value": "auth service",
       "confidence": 0.9,
-      "first_mentioned": "2025-12-06T18:49:18.785647",
-      "last_mentioned": "2025-12-06T18:49:21.874358",
+      "first_mentioned": "2025-12-07T23:38:56.179830",
+      "last_mentioned": "2025-12-07T23:38:57.026306",
       "mention_count": 1,
-      "context": "The anime-production service on port 8328 is failing with 8+ minute generation times, and the auth s",
+      "context": "Now restart both the auth service and vault to apply changes",
       "aliases": [
         "auth service"
       ]
@@ -3937,8 +1050,8 @@
       "entity_type": "service",
       "value": "knowledge base",
       "confidence": 0.9,
-      "first_mentioned": "2025-12-06T18:25:38.707646",
-      "last_mentioned": "2025-12-06T18:25:38.707721",
+      "first_mentioned": "2025-12-07T23:38:51.019133",
+      "last_mentioned": "2025-12-07T23:38:51.824468",
       "mention_count": 1,
       "context": "Also check the auth service and the knowledge base API",
       "aliases": []
@@ -3948,10 +1061,10 @@
       "entity_type": "service",
       "value": "comfyui",
       "confidence": 0.9,
-      "first_mentioned": "2025-12-06T18:49:21.878835",
-      "last_mentioned": "2025-12-06T18:49:30.755964",
-      "mention_count": 2,
-      "context": "The tower-kb service and ComfyUI are both having issues",
+      "first_mentioned": "2025-12-07T23:38:52.627481",
+      "last_mentioned": "2025-12-07T23:38:53.572629",
+      "mention_count": 1,
+      "context": "High GPU usage detected. Checking ComfyUI workflows for memory leaks",
       "aliases": [
         "ComfyUI"
       ]
@@ -3981,10 +1094,10 @@
     "tower-echo-brain service": {
       "name": "tower-echo-brain service",
       "entity_type": "service",
-      "value": "tower-echo-brain service",
+      "value": "tower-echo-brain",
       "confidence": 0.8,
-      "first_mentioned": "2025-12-06T18:32:02.838858",
-      "last_mentioned": "2025-12-06T18:32:02.839067",
+      "first_mentioned": "2025-12-07T23:38:48.145980",
+      "last_mentioned": "2025-12-07T23:38:48.146084",
       "mention_count": 1,
       "context": "The tower-echo-brain service on port 8309 is having connection issues",
       "aliases": []
@@ -4002,55 +1115,55 @@
     },
     "authentication service": {
       "name": "authentication service",
-      "entity_type": "service",
-      "value": "authentication service",
+      "entity_type": "system",
+      "value": "the authentication service",
       "confidence": 0.8,
-      "first_mentioned": "2025-12-06T18:45:19.385095",
-      "last_mentioned": "2025-12-06T18:45:19.385190",
+      "first_mentioned": "2025-12-07T23:38:54.741804",
+      "last_mentioned": "2025-12-07T23:38:54.741903",
       "mention_count": 1,
-      "context": "Now check the authentication service too - users can't login",
+      "context": "The authentication service is showing bypass mode warnings",
       "aliases": []
     },
     "anime-production API": {
       "name": "anime-production API",
-      "entity_type": "generic",
-      "value": "API",
+      "entity_type": "service",
+      "value": "anime-production API",
       "confidence": 0.8,
-      "first_mentioned": "2025-12-06T18:32:13.030954",
-      "last_mentioned": "2025-12-06T18:32:13.031061",
+      "first_mentioned": "2025-12-07T23:38:49.140032",
+      "last_mentioned": "2025-12-07T23:38:49.140138",
       "mention_count": 1,
       "context": "Check the anime-production API and restart the authentication service",
       "aliases": []
     },
     "GPU": {
       "name": "GPU",
-      "entity_type": "system",
-      "value": "Graphics Processing Unit",
+      "entity_type": "generic",
+      "value": "GPU status",
       "confidence": 0.8,
-      "first_mentioned": "2025-12-06T18:32:37.037599",
-      "last_mentioned": "2025-12-06T18:32:37.037694",
-      "mention_count": 1,
-      "context": "The tower-anime-production service is failing with GPU errors",
+      "first_mentioned": "2025-12-07T23:38:52.622485",
+      "last_mentioned": "2025-12-07T23:38:53.572629",
+      "mention_count": 2,
+      "context": "I'll help you debug tower-anime-production. First, let's check the GPU status",
       "aliases": []
     },
     "tower-anime-production service": {
       "name": "tower-anime-production service",
-      "entity_type": "service",
-      "value": "",
+      "entity_type": "system",
+      "value": "tower-anime-production service",
       "confidence": 0.8,
-      "first_mentioned": "2025-12-06T18:34:12.946668",
-      "last_mentioned": "2025-12-06T18:34:12.946795",
+      "first_mentioned": "2025-12-07T23:38:51.017863",
+      "last_mentioned": "2025-12-07T23:38:51.017948",
       "mention_count": 1,
-      "context": "The tower-anime-production service on port 8328 is failing with GPU memory issues",
+      "context": "The tower-anime-production service is failing with GPU errors",
       "aliases": []
     },
     "knowledge base API": {
       "name": "knowledge base API",
-      "entity_type": "system",
-      "value": "knowledge base API",
+      "entity_type": "service",
+      "value": "",
       "confidence": 0.8,
-      "first_mentioned": "2025-12-06T18:32:39.047363",
-      "last_mentioned": "2025-12-06T18:32:39.047467",
+      "first_mentioned": "2025-12-07T23:38:51.824363",
+      "last_mentioned": "2025-12-07T23:38:51.824468",
       "mention_count": 1,
       "context": "Also check the auth service and the knowledge base API",
       "aliases": []
@@ -4080,21 +1193,21 @@
     "bypass mode": {
       "name": "bypass mode",
       "entity_type": "generic",
-      "value": "None",
+      "value": "warnings",
       "confidence": 0.8,
-      "first_mentioned": "2025-12-06T18:33:19.499592",
-      "last_mentioned": "2025-12-06T18:33:19.499675",
+      "first_mentioned": "2025-12-07T23:38:54.741811",
+      "last_mentioned": "2025-12-07T23:38:54.741903",
       "mention_count": 1,
       "context": "The authentication service is showing bypass mode warnings",
       "aliases": []
     },
     "OAuth configuration": {
       "name": "OAuth configuration",
-      "entity_type": "service",
+      "entity_type": "generic",
       "value": "vault",
       "confidence": 0.8,
-      "first_mentioned": "2025-12-06T18:33:33.000307",
-      "last_mentioned": "2025-12-06T18:33:33.000393",
+      "first_mentioned": "2025-12-07T23:38:56.162871",
+      "last_mentioned": "2025-12-07T23:38:56.162964",
       "mention_count": 1,
       "context": "I need to check the OAuth configuration in the vault",
       "aliases": []
@@ -4104,8 +1217,8 @@
       "entity_type": "service",
       "value": "service_12",
       "confidence": 0.8,
-      "first_mentioned": "2025-12-06T18:33:46.857593",
-      "last_mentioned": "2025-12-06T18:33:46.857703",
+      "first_mentioned": "2025-12-07T23:39:07.202219",
+      "last_mentioned": "2025-12-07T23:39:07.202328",
       "mention_count": 1,
       "context": "Turn 0: Discussing service_12 status and performance metrics",
       "aliases": []
@@ -4148,10 +1261,10 @@
       "entity_type": "task",
       "value": "performance metrics",
       "confidence": 0.8,
-      "first_mentioned": "2025-12-06T18:33:59.049936",
-      "last_mentioned": "2025-12-06T18:33:59.050026",
+      "first_mentioned": "2025-12-07T23:39:13.755609",
+      "last_mentioned": "2025-12-07T23:39:13.755711",
       "mention_count": 1,
-      "context": "Turn 0: Discussing service_13 status and performance metrics",
+      "context": "Turn 0: Discussing service_18 status and performance metrics",
       "aliases": []
     },
     "service_07": {
@@ -4167,11 +1280,11 @@
     },
     "service_16": {
       "name": "service_16",
-      "entity_type": "system",
-      "value": "service 16",
+      "entity_type": "service",
+      "value": "service_16",
       "confidence": 0.8,
-      "first_mentioned": "2025-12-06T18:33:56.553810",
-      "last_mentioned": "2025-12-06T18:33:56.553921",
+      "first_mentioned": "2025-12-07T23:39:08.540753",
+      "last_mentioned": "2025-12-07T23:39:08.540843",
       "mention_count": 1,
       "context": "Turn 0: Discussing service_16 status and performance metrics",
       "aliases": []
@@ -4989,7 +2102,150 @@
       "mention_count": 1,
       "context": "The tower-anime-production service needs emergency restart with memory optimization",
       "aliases": []
+    },
+    "connection issues": {
+      "name": "connection issues",
+      "entity_type": "error",
+      "value": "connection issues",
+      "confidence": 0.8,
+      "first_mentioned": "2025-12-07T23:38:48.145986",
+      "last_mentioned": "2025-12-07T23:38:48.146084",
+      "mention_count": 1,
+      "context": "The tower-echo-brain service on port 8309 is having connection issues",
+      "aliases": []
+    },
+    "GPU errors": {
+      "name": "GPU errors",
+      "entity_type": "generic",
+      "value": "GPU errors",
+      "confidence": 0.8,
+      "first_mentioned": "2025-12-07T23:38:51.017860",
+      "last_mentioned": "2025-12-07T23:38:51.017948",
+      "mention_count": 1,
+      "context": "The tower-anime-production service is failing with GPU errors",
+      "aliases": []
+    },
+    "video generation": {
+      "name": "video generation",
+      "entity_type": "service",
+      "value": "taking",
+      "confidence": 0.8,
+      "first_mentioned": "2025-12-07T23:38:54.008885",
+      "last_mentioned": "2025-12-07T23:38:54.009141",
+      "mention_count": 1,
+      "context": "Also the video generation is taking 8+ minutes per scene",
+      "aliases": []
+    },
+    "service_02": {
+      "name": "service_02",
+      "entity_type": "service",
+      "value": "service_02",
+      "confidence": 0.8,
+      "first_mentioned": "2025-12-07T23:38:58.202622",
+      "last_mentioned": "2025-12-07T23:38:58.202719",
+      "mention_count": 1,
+      "context": "Turn 0: Discussing service_02 status and performance metrics",
+      "aliases": []
+    },
+    "service_06": {
+      "name": "service_06",
+      "entity_type": "system",
+      "value": "service_06",
+      "confidence": 0.8,
+      "first_mentioned": "2025-12-07T23:38:59.041357",
+      "last_mentioned": "2025-12-07T23:38:59.041453",
+      "mention_count": 1,
+      "context": "Turn 0: Discussing service_06 status and performance metrics",
+      "aliases": []
+    },
+    "service_05": {
+      "name": "service_05",
+      "entity_type": "service",
+      "value": "status",
+      "confidence": 0.8,
+      "first_mentioned": "2025-12-07T23:38:59.915276",
+      "last_mentioned": "2025-12-07T23:38:59.915380",
+      "mention_count": 1,
+      "context": "Turn 0: Discussing service_05 status and performance metrics",
+      "aliases": []
+    },
+    "service_10": {
+      "name": "service_10",
+      "entity_type": "service",
+      "value": "service_10",
+      "confidence": 0.8,
+      "first_mentioned": "2025-12-07T23:39:00.687122",
+      "last_mentioned": "2025-12-07T23:39:00.687228",
+      "mention_count": 1,
+      "context": "Turn 0: Discussing service_10 status and performance metrics",
+      "aliases": []
+    },
+    "service_04": {
+      "name": "service_04",
+      "entity_type": "service",
+      "value": "service_04",
+      "confidence": 0.8,
+      "first_mentioned": "2025-12-07T23:39:03.014520",
+      "last_mentioned": "2025-12-07T23:39:03.014642",
+      "mention_count": 1,
+      "context": "Turn 0: Discussing service_04 status and performance metrics",
+      "aliases": []
+    },
+    "service_11 status": {
+      "name": "service_11 status",
+      "entity_type": "system",
+      "value": "",
+      "confidence": 0.8,
+      "first_mentioned": "2025-12-07T23:39:05.262638",
+      "last_mentioned": "2025-12-07T23:39:05.262729",
+      "mention_count": 1,
+      "context": "Turn 0: Discussing service_11 status and performance metrics",
+      "aliases": []
+    },
+    "service_08": {
+      "name": "service_08",
+      "entity_type": "service",
+      "value": "service_08",
+      "confidence": 0.8,
+      "first_mentioned": "2025-12-07T23:39:05.978531",
+      "last_mentioned": "2025-12-07T23:39:05.978615",
+      "mention_count": 1,
+      "context": "Turn 0: Discussing service_08 status and performance metrics",
+      "aliases": []
+    },
+    "file paths": {
+      "name": "file paths",
+      "entity_type": "system",
+      "value": "",
+      "confidence": 0.8,
+      "first_mentioned": "2025-12-07T23:39:11.205745",
+      "last_mentioned": "2025-12-07T23:39:11.205824",
+      "mention_count": 1,
+      "context": "Turn 0: Discussing service_15 status and performance metrics",
+      "aliases": []
+    },
+    "service_14": {
+      "name": "service_14",
+      "entity_type": "service",
+      "value": "service_14",
+      "confidence": 0.8,
+      "first_mentioned": "2025-12-07T23:39:12.432392",
+      "last_mentioned": "2025-12-07T23:39:12.432488",
+      "mention_count": 1,
+      "context": "Turn 0: Discussing service_14 status and performance metrics",
+      "aliases": []
+    },
+    "service_18": {
+      "name": "service_18",
+      "entity_type": "service",
+      "value": "service_18",
+      "confidence": 0.8,
+      "first_mentioned": "2025-12-07T23:39:13.755600",
+      "last_mentioned": "2025-12-07T23:39:13.755711",
+      "mention_count": 1,
+      "context": "Turn 0: Discussing service_18 status and performance metrics",
+      "aliases": []
     }
   },
-  "last_updated": "2025-12-06T18:49:43.902678"
+  "last_updated": "2025-12-07T23:39:13.755719"
 }

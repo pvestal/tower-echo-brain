@@ -37,6 +37,16 @@ from veteran_guardian_endpoints import veteran_router
 from telegram_general_chat import general_telegram_router
 from telegram_integration import telegram_router
 
+# Enhanced Telegram Executor
+try:
+    from src.integrations.telegram_echo_executor import telegram_executor_router
+    telegram_executor_available = True
+    print("✅ Telegram executor router imported successfully")
+except ImportError as e:
+    telegram_executor_available = False
+    print(f"❌ Failed to import telegram executor: {e}")
+    telegram_executor_router = None
+
 # Resilient model management
 try:
     from src.managers.echo_integration import router as resilient_router
@@ -96,6 +106,11 @@ def create_app() -> FastAPI:
     app.include_router(veteran_router, prefix="", tags=["veteran"])
     app.include_router(general_telegram_router, prefix="", tags=["telegram"])
     app.include_router(telegram_router, prefix="", tags=["telegram"])
+
+    # Enhanced Telegram Executor
+    if telegram_executor_available and telegram_executor_router:
+        app.include_router(telegram_executor_router, prefix="", tags=["telegram-executor"])
+        print("✅ Telegram executor routes added to app")
 
     # Resilient model management
     if resilient_available and resilient_router:

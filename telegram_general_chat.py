@@ -52,13 +52,28 @@ async def send_telegram_message(chat_id: int, text: str, reply_to_message_id: Op
         raise
 
 async def query_echo_brain(message: str, conversation_id: str, user_id: str = "telegram_user") -> Dict:
-    """Query Echo Brain's main chat endpoint with conversation context"""
+    """Query Echo Brain's main chat endpoint with conversation context and execution support"""
     try:
+        # Check if this is an execution command
+        request_type = "conversation"  # Default
+
+        # Detect execution commands
+        execution_keywords = [
+            "/execute", "/exec", "/run", "/shell", "/bash",
+            "/test", "/unittest", "/refactor", "/fix", "/repair",
+            "/monitor", "/analyze"
+        ]
+
+        if any(message.startswith(cmd) for cmd in execution_keywords):
+            request_type = "system_command"
+            logger.info(f"🔨 Detected execution command: {message[:50]}")
+
         payload = {
             "query": message,
             "conversation_id": conversation_id,
             "user_id": user_id,
-            "intelligence_level": "auto",  # Let Echo's cognitive system decide
+            "intelligence_level": "auto" if request_type == "conversation" else "system",
+            "request_type": request_type,
             "enable_board_consultation": True  # Enable Board of Directors if needed
         }
         
@@ -149,9 +164,17 @@ async def process_general_message(
         model_used = echo_response.get('model_used', 'unknown')
         intelligence_level = echo_response.get('intelligence_level', 'unknown')
         processing_time = echo_response.get('processing_time', 0)
-        
-        # Add metadata footer (optional, can be disabled)
-        footer = f"\n\n_Model: {model_used} ({intelligence_level}) | {processing_time:.2f}s_"
+
+        # Format execution results better
+        if intelligence_level == 'system_command' or 'direct_executor' in model_used:
+            # Format as code block for execution results
+            if not response_text.startswith('```'):
+                response_text = f"⚙️ **Execution Result**\n```\n{response_text}\n```"
+            footer = f"\n_Executed in {processing_time:.2f}s_"
+        else:
+            # Add metadata footer for normal responses
+            footer = f"\n\n_Model: {model_used} ({intelligence_level}) | {processing_time:.2f}s_"
+
         full_response = response_text + footer
         
         # Send response via Telegram

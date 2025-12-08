@@ -8,15 +8,19 @@ import asyncio
 import json
 import logging
 import os
+import subprocess
 import sys
 import uuid
 from datetime import datetime
+
 import aiohttp
-import subprocess
 
 # Set up logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
+
 
 class SimpleVideoGenerator:
     """Simplified video generator for testing"""
@@ -29,14 +33,19 @@ class SimpleVideoGenerator:
     async def generate_video_from_character(self, character_image_path: str):
         """Generate video from character image using ComfyUI"""
         try:
-            logger.info(f"🎬 Starting video generation for: {character_image_path}")
+            logger.info(
+                f"🎬 Starting video generation for: {character_image_path}")
 
             if not os.path.exists(character_image_path):
-                raise FileNotFoundError(f"Character image not found: {character_image_path}")
+                raise FileNotFoundError(
+                    f"Character image not found: {character_image_path}"
+                )
 
             # Load the working workflow
-            workflow_path = "/mnt/1TB-storage/ComfyUI/goblin_slayer_animation_working.json"
-            with open(workflow_path, 'r') as f:
+            workflow_path = (
+                "/mnt/1TB-storage/ComfyUI/goblin_slayer_animation_working.json"
+            )
+            with open(workflow_path, "r") as f:
                 workflow = json.load(f)
 
             # Customize workflow for cyberpunk character
@@ -49,25 +58,20 @@ class SimpleVideoGenerator:
             output_files = await self._find_recent_outputs()
 
             if output_files:
-                logger.info(f"✅ Video generation completed! Files: {output_files}")
+                logger.info(
+                    f"✅ Video generation completed! Files: {output_files}")
                 return {
-                    'success': True,
-                    'output_files': output_files,
-                    'workflow_result': result
+                    "success": True,
+                    "output_files": output_files,
+                    "workflow_result": result,
                 }
             else:
                 logger.error("❌ No output files found")
-                return {
-                    'success': False,
-                    'error': 'No output files generated'
-                }
+                return {"success": False, "error": "No output files generated"}
 
         except Exception as e:
             logger.error(f"❌ Video generation failed: {e}")
-            return {
-                'success': False,
-                'error': str(e)
-            }
+            return {"success": False, "error": str(e)}
 
     def _customize_workflow_for_cyberpunk(self, workflow):
         """Customize workflow for cyberpunk character"""
@@ -82,21 +86,24 @@ class SimpleVideoGenerator:
             static, still image, no movement, multiple characters, background focus only"""
 
             # Update text prompts in the workflow
-            for node_id, node in workflow.get('prompt', {}).items():
-                if node.get('class_type') == 'CLIPTextEncode':
-                    title = node.get('_meta', {}).get('title', '').lower()
-                    if 'positive' in title or 'prompt' in title:
-                        node['inputs']['text'] = cyberpunk_prompt
-                        logger.info("Updated positive prompt for cyberpunk theme")
-                    elif 'negative' in title:
-                        node['inputs']['text'] = negative_prompt
+            for node_id, node in workflow.get("prompt", {}).items():
+                if node.get("class_type") == "CLIPTextEncode":
+                    title = node.get("_meta", {}).get("title", "").lower()
+                    if "positive" in title or "prompt" in title:
+                        node["inputs"]["text"] = cyberpunk_prompt
+                        logger.info(
+                            "Updated positive prompt for cyberpunk theme")
+                    elif "negative" in title:
+                        node["inputs"]["text"] = negative_prompt
                         logger.info("Updated negative prompt")
 
                 # Update generation parameters for better quality
-                elif node.get('class_type') == 'KSampler':
-                    node['inputs']['steps'] = 30  # More steps for better quality
-                    node['inputs']['cfg'] = 8.5   # Slightly higher CFG
-                    node['inputs']['seed'] = 42   # Fixed seed for reproducibility
+                elif node.get("class_type") == "KSampler":
+                    # More steps for better quality
+                    node["inputs"]["steps"] = 30
+                    node["inputs"]["cfg"] = 8.5  # Slightly higher CFG
+                    # Fixed seed for reproducibility
+                    node["inputs"]["seed"] = 42
                     logger.info("Updated sampling parameters")
 
         except Exception as e:
@@ -105,23 +112,29 @@ class SimpleVideoGenerator:
     async def _execute_comfyui_workflow(self, workflow):
         """Execute workflow via ComfyUI API"""
         try:
-            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=600)) as session:
+            async with aiohttp.ClientSession(
+                timeout=aiohttp.ClientTimeout(total=600)
+            ) as session:
                 logger.info("Submitting workflow to ComfyUI...")
 
                 # Submit workflow
-                async with session.post(f"{self.comfyui_url}/prompt",
-                                      json={"prompt": workflow["prompt"]}) as response:
+                async with session.post(
+                    f"{self.comfyui_url}/prompt", json={"prompt": workflow["prompt"]}
+                ) as response:
                     if response.status != 200:
                         error_text = await response.text()
-                        raise Exception(f"ComfyUI API error {response.status}: {error_text}")
+                        raise Exception(
+                            f"ComfyUI API error {response.status}: {error_text}"
+                        )
 
                     result = await response.json()
-                    prompt_id = result.get('prompt_id')
+                    prompt_id = result.get("prompt_id")
 
                     if not prompt_id:
                         raise Exception("No prompt_id returned from ComfyUI")
 
-                    logger.info(f"Workflow submitted with prompt_id: {prompt_id}")
+                    logger.info(
+                        f"Workflow submitted with prompt_id: {prompt_id}")
 
                 # Wait for completion (poll every 10 seconds)
                 max_wait = 600  # 10 minutes max
@@ -133,18 +146,22 @@ class SimpleVideoGenerator:
 
                     logger.info(f"Checking progress... ({wait_time}s elapsed)")
 
-                    async with session.get(f"{self.comfyui_url}/history/{prompt_id}") as hist_response:
+                    async with session.get(
+                        f"{self.comfyui_url}/history/{prompt_id}"
+                    ) as hist_response:
                         if hist_response.status == 200:
                             history = await hist_response.json()
                             if prompt_id in history:
-                                logger.info(f"✅ Workflow completed in {wait_time}s")
+                                logger.info(
+                                    f"✅ Workflow completed in {wait_time}s")
                                 return {
-                                    'prompt_id': prompt_id,
-                                    'execution_time': wait_time,
-                                    'history': history[prompt_id]
+                                    "prompt_id": prompt_id,
+                                    "execution_time": wait_time,
+                                    "history": history[prompt_id],
                                 }
 
-                raise Exception(f"ComfyUI execution timeout after {max_wait} seconds")
+                raise Exception(
+                    f"ComfyUI execution timeout after {max_wait} seconds")
 
         except Exception as e:
             logger.error(f"ComfyUI execution failed: {e}")
@@ -154,19 +171,18 @@ class SimpleVideoGenerator:
         """Find recently generated output files"""
         try:
             # Check ComfyUI output directory for recent files
-            output_dirs = [
-                "/mnt/1TB-storage/ComfyUI/output",
-                self.output_dir
-            ]
+            output_dirs = ["/mnt/1TB-storage/ComfyUI/output", self.output_dir]
 
             recent_files = []
-            cutoff_time = datetime.now().timestamp() - 600  # Files created in last 10 minutes
+            cutoff_time = (
+                datetime.now().timestamp() - 600
+            )  # Files created in last 10 minutes
 
             for output_dir in output_dirs:
                 if os.path.exists(output_dir):
                     for root, dirs, files in os.walk(output_dir):
                         for file in files:
-                            if file.endswith(('.mp4', '.gif', '.avi', '.mov')):
+                            if file.endswith((".mp4", ".gif", ".avi", ".mov")):
                                 file_path = os.path.join(root, file)
                                 if os.path.getctime(file_path) > cutoff_time:
                                     recent_files.append(file_path)
@@ -186,14 +202,18 @@ class SimpleVideoGenerator:
                 async with session.get(f"{self.comfyui_url}/system_stats") as response:
                     if response.status == 200:
                         stats = await response.json()
-                        logger.info(f"✅ ComfyUI connected - {stats.get('system', {}).get('comfyui_version', 'Unknown version')}")
+                        logger.info(
+                            f"✅ ComfyUI connected - {stats.get('system', {}).get('comfyui_version', 'Unknown version')}"
+                        )
                         return True
                     else:
-                        logger.error(f"ComfyUI connection failed: {response.status}")
+                        logger.error(
+                            f"ComfyUI connection failed: {response.status}")
                         return False
         except Exception as e:
             logger.error(f"ComfyUI connection test failed: {e}")
             return False
+
 
 async def main():
     """Main test function"""
@@ -207,7 +227,9 @@ async def main():
         return
 
     # Test with cyberpunk character
-    cyberpunk_path = "/mnt/1TB-storage/ComfyUI/output/cyberpunk_goblin_slayer_crawl_00001_.png"
+    cyberpunk_path = (
+        "/mnt/1TB-storage/ComfyUI/output/cyberpunk_goblin_slayer_crawl_00001_.png"
+    )
 
     if not os.path.exists(cyberpunk_path):
         logger.error(f"❌ Test image not found: {cyberpunk_path}")
@@ -219,17 +241,19 @@ async def main():
     result = await generator.generate_video_from_character(cyberpunk_path)
 
     # Report results
-    if result['success']:
+    if result["success"]:
         logger.info("🎉 AUTONOMOUS VIDEO GENERATION TEST SUCCESSFUL!")
         logger.info(f"Generated files: {result['output_files']}")
 
         # Show file details
-        for output_file in result['output_files']:
+        for output_file in result["output_files"]:
             if os.path.exists(output_file):
                 file_size = os.path.getsize(output_file) / (1024 * 1024)  # MB
                 logger.info(f"  📁 {output_file} ({file_size:.1f} MB)")
     else:
-        logger.error(f"❌ AUTONOMOUS VIDEO GENERATION TEST FAILED: {result['error']}")
+        logger.error(
+            f"❌ AUTONOMOUS VIDEO GENERATION TEST FAILED: {result['error']}")
+
 
 if __name__ == "__main__":
     asyncio.run(main())
