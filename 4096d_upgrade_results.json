@@ -1,0 +1,26 @@
+{
+  "timestamp": "2025-12-09T06:37:19.523268",
+  "results": {
+    "successful": [
+      "gpu_accelerated_media",
+      "claude_conversations",
+      "unified_media_memory",
+      "google_media_memory",
+      "agent_memories",
+      "learning_facts"
+    ],
+    "failed": [],
+    "skipped": [
+      "gpu_accelerated_media_4096d",
+      "unified_media_memory_4096d",
+      "agent_memories_4096d",
+      "google_media_memory_4096d"
+    ]
+  },
+  "summary": {
+    "total_collections": 10,
+    "upgraded": 6,
+    "failed": 0,
+    "skipped": 4
+  }
+}
