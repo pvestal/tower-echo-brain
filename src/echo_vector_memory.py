@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Echo Vector Memory Module - Proper integration with AMD GPU services
+Echo Vector Memory Module - 4096D Enhanced with AMD GPU services
 This module adds persistent memory and learning capabilities to Echo
 """
 
@@ -11,6 +11,10 @@ import json
 import hashlib
 from typing import List, Dict, Optional, Any
 from datetime import datetime
+import sys
+import os
+sys.path.append('/opt/tower-echo-brain/src')
+from config.qdrant_4096d_config import COLLECTION_MAPPING, QDRANT_CONFIG, get_4096d_collection
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +33,10 @@ class VectorMemory:
         # Use Ollama for embeddings (since custom service isn't working)
         self.ollama_url = "http://127.0.0.1:11434"
 
-        self.collection_name = "echo_real_knowledge"
+        # Use 4096D collection if available
+        base_collection = "echo_real_knowledge"
+        self.collection_name = get_4096d_collection(base_collection)
+        self.vector_dimensions = QDRANT_CONFIG['vector_size']  # 4096D
         self.embedding_model = "nomic-embed-text:latest"
 
         # Initialize collection on startup
@@ -49,8 +56,8 @@ class VectorMemory:
                         f"{self.vector_db_url}/collections/{self.collection_name}",
                         json={
                             "vectors": {
-                                "size": 768,  # nomic-embed-text dimension
-                                "distance": "Cosine"
+                                "size": self.vector_dimensions,  # 4096D enhanced
+                                "distance": QDRANT_CONFIG['distance']
                             }
                         }
                     )
