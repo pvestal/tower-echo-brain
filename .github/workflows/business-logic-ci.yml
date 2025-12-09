@@ -83,110 +83,36 @@ jobs:
       env:
         PGPASSWORD: tower_echo_brain_secret_key_2025
     
-    - name: Extract test data
+    - name: Verify test data
       run: |
-        # Run data extraction to create test datasets
-        # This uses mock data generators instead of real ML
+        # Test data files are already committed to the repository
+        # Just verify they exist
         python -c "
         import json
         from pathlib import Path
-        
-        # Create test data directory
+
+        # Verify test data files exist
         test_dir = Path('tests/data')
-        test_dir.mkdir(exist_ok=True)
-        
-        # Create minimal test datasets
-        kb_test = {
-          'total_articles': 411,
-          'categories': ['anime', 'financial', 'technical', 'echo_brain'],
-          'sample_articles': [
-            {
-              'id': 1,
-              'title': 'Anime Production System Status',
-              'content': 'System takes 8+ minute generation times, broken job status API, needs redesign',
-              'category': 'anime'
-            },
-            {
-              'id': 2,
-              'title': 'Echo Brain Learning Architecture',
-              'content': 'Uses KB articles, Claude conversations, 4096D embeddings for learning',
-              'category': 'echo_brain'
-            },
-            {
-              'id': 3,
-              'title': 'Plaid Financial Integration',
-              'content': 'Plaid webhooks configured, MFA support, bank connections working',
-              'category': 'financial'
-            }
-          ]
-        }
-        
-        claude_test = {
-          'total_conversations': 667,
-          'total_claude_memories': 12228,
-          'sample_conversations': [
-            {
-              'conversation_id': 'test-1',
-              'query': 'be more proactive',
-              'response': 'I will implement proactive solutions',
-              'timestamp': '2025-12-09'
-            }
-          ],
-          'sample_user_queries': ['fix this', 'check status', 'why is this broken'],
-          'patrick_patterns': {
-            'technical_terms': ['Tower', 'Echo Brain', 'properly', 'idc'],
-            'preferences': {
-              'wants_honesty': True,
-              'hates_fake_progress': True,
-              'prefers_direct_answers': True,
-              'wants_proactive_solutions': True,
-              'technical_not_explanatory': True
-            }
-          }
-        }
-        
-        work_test = {
-          'work_conversations': [
-            {
-              'query': 'setup trust planning',
-              'response': 'configuring trust and estate planning system',
-              'timestamp': '2025-12-09'
-            }
-          ],
-          'project_types': ['trust_estate', 'federal_training', 'financial', 'anime'],
-          'integration_points': ['Plaid', 'PostgreSQL', 'Qdrant', 'Ollama']
-        }
-        
-        recall_test = {
-          'kb_recall_tests': [
-            {
-              'query': 'What is the anime production status?',
-              'should_recall': ['8+ minute generation', 'broken job status', 'needs redesign']
-            },
-            {
-              'query': 'How does Echo Brain learn?',
-              'should_recall': ['KB articles', 'Claude conversations', '4096D embeddings']
-            },
-            {
-              'query': 'What financial integrations exist?',
-              'should_recall': ['Plaid', 'webhooks', 'MFA', 'bank connections']
-            }
-          ]
-        }
-        
-        # Save test data files
-        with open(test_dir / 'kb_articles_test.json', 'w') as f:
-          json.dump(kb_test, f)
-        with open(test_dir / 'claude_conversations_test.json', 'w') as f:
-          json.dump(claude_test, f)
-        with open(test_dir / 'work_projects_test.json', 'w') as f:
-          json.dump(work_test, f)
-        with open(test_dir / 'expected_recalls_test.json', 'w') as f:
-          json.dump(recall_test, f)
-        with open(test_dir / 'vector_semantic_test.json', 'w') as f:
-          json.dump({'collections': {}, 'semantic_queries': []}, f)
-        
-        print('Test data extracted successfully')
+        required_files = [
+          'kb_articles_test.json',
+          'claude_conversations_test.json',
+          'work_projects_test.json',
+          'expected_recalls_test.json',
+          'vector_semantic_test.json'
+        ]
+
+        print('Verifying test data files...')
+        for file in required_files:
+          file_path = test_dir / file
+          if file_path.exists():
+            with open(file_path, 'r') as f:
+              data = json.load(f)
+              print(f'✓ {file}: {len(str(data))} bytes')
+          else:
+            print(f'✗ {file}: MISSING!')
+            exit(1)
+
+        print('✅ All test data files verified')
         "
     
     - name: Run business logic tests
