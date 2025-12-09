@@ -30,6 +30,7 @@ from src.api.coordination_routes import router as coordination_router
 from src.api.integration_testing_routes import integration_router
 from src.api.task_routes import router as task_router
 from src.photo_comparison import router as photo_router
+from src.api.improvement_metrics import router as improvement_router
 
 # External integrations
 from agent_development_endpoints import agent_dev_router
@@ -100,6 +101,7 @@ def create_app() -> FastAPI:
     app.include_router(integration_router, prefix="", tags=["testing"])
     app.include_router(task_router, prefix="", tags=["tasks"])
     app.include_router(photo_router, prefix="", tags=["vision"])
+    app.include_router(improvement_router, prefix="/api/echo", tags=["improvement"])
 
     # External routers
     app.include_router(agent_dev_router, prefix="", tags=["agents"])

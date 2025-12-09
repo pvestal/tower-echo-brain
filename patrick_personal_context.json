@@ -1,0 +1,72 @@
+{
+  "user_profile": {
+    "name": "Patrick",
+    "role": "Senior Full-Stack Developer",
+    "expertise": [
+      "Python",
+      "FastAPI",
+      "Docker",
+      "Kubernetes",
+      "PostgreSQL",
+      "React"
+    ],
+    "current_projects": [
+      "Tower AI System",
+      "Financial Automation",
+      "DevOps Optimization"
+    ],
+    "communication_style": "Direct, technical, solution-focused",
+    "work_environment": "Home office, Linux primary, terminal-heavy workflow"
+  },
+  "technical_intelligence": {
+    "browser_profile_size": "709M",
+    "browsing_patterns": "Developer-focused technical research",
+    "frequent_domains": [
+      "github.com",
+      "stackoverflow.com",
+      "documentation sites"
+    ],
+    "search_patterns": [
+      "Python async programming",
+      "Docker optimization",
+      "PostgreSQL performance"
+    ],
+    "session_style": "Extended technical deep dives (2-4 hours)"
+  },
+  "google_ecosystem": {
+    "takeout_files": 725,
+    "youtube_preferences": "Technical tutorials, long-form educational content",
+    "content_completion_rate": "High for technical content",
+    "learning_style": "Hands-on experimentation with comprehensive documentation"
+  },
+  "financial_profile": {
+    "document_categories": [
+      "Banking",
+      "Investment",
+      "Tax",
+      "Real Estate"
+    ],
+    "investment_philosophy": "Index fund heavy with crypto allocation",
+    "financial_goals": [
+      "Property investment",
+      "Financial independence"
+    ],
+    "risk_profile": "Moderate-aggressive with emergency fund"
+  },
+  "personal_files": {
+    "total_files": 523789,
+    "code_projects": [
+      "Web applications",
+      "DevOps automation",
+      "Data analysis"
+    ],
+    "documentation_style": "README-heavy, comprehensive documentation",
+    "organization": "Project-based directory structure with Git version control"
+  },
+  "communication_preferences": {
+    "response_style": "Technical detail matching expertise level",
+    "explanation_depth": "Assume advanced technical knowledge",
+    "code_examples": "Always include when relevant",
+    "conversation_flow": "Direct answers, minimal small talk"
+  }
+}
