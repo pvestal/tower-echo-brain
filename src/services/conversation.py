@@ -190,37 +190,21 @@ class ConversationManager:
 
     def search_semantic_memory(self, query: str) -> list:
         """ACTUALLY SEARCH QDRANT VECTORS FOR RELEVANT MEMORIES"""
-        if not self.qdrant:
+        if not self.vector_search:
             return []
 
         results = []
         try:
-            # Search Claude conversations
-            claude_results = self.qdrant.search(
-                collection_name="claude_conversations_4096d",
-                query_vector=[0.1] * 4096,  # Simple vector for now
-                limit=5
-            )
-            for r in claude_results:
-                if r.payload:
-                    results.append({
-                        "source": "claude_conversation",
-                        "content": r.payload.get("query", ""),
-                        "score": r.score
-                    })
+            # Use REAL vector search across all collections
+            search_results = self.vector_search.search_all_collections(query, limit_per_collection=3)
 
-            # Search learning facts
-            fact_results = self.qdrant.search(
-                collection_name="learning_facts_4096d",
-                query_vector=[0.1] * 4096,
-                limit=5
-            )
-            for r in fact_results:
-                if r.payload:
+            for collection_name, hits in search_results.items():
+                for hit in hits:
                     results.append({
-                        "source": "learning_fact",
-                        "content": r.payload.get("content", ""),
-                        "score": r.score
+                        "source": collection_name,
+                        "content": str(hit.get("payload", {}))[:200],
+                        "score": hit.get("score", 0.0),
+                        "id": hit.get("id", "unknown")
                     })
 
             logger.info(f"🔍 Found {len(results)} semantic matches for query")

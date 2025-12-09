@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 
 # Import interfaces
-from ..interfaces.ml_model_interface import MLModelInterface
+# Removed mock interfaces - using real implementations
 from ..interfaces.llm_interface import (
     LLMInterface, OllamaLLMInterface, CodeLLMInterface, ConversationalLLMInterface
 )
