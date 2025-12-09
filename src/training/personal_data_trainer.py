@@ -76,32 +76,54 @@ class PersonalDataTrainer:
                 else:
                     data = {'content': f.read()}
 
-            # Extract Patrick's preferences and patterns
-            content = str(data)
+            # Extract Patrick's ACTUAL business logic patterns
+            content = str(data).lower()
 
-            # Technical preferences
-            if 'Tower' in content:
-                patterns.setdefault('infrastructure_prefs', []).append('Tower ecosystem')
-            if 'PostgreSQL' in content:
-                patterns.setdefault('database_prefs', []).append('PostgreSQL')
-            if 'Vue' in content or 'JavaScript' in content:
-                patterns.setdefault('frontend_prefs', []).append('Vue.js/JavaScript')
-            if 'Python' in content:
-                patterns.setdefault('backend_prefs', []).append('Python')
+            # Technical stack preferences
+            if 'postgresql' in content:
+                patterns.setdefault('tech_stack_database', []).append('PostgreSQL')
+            if 'vue' in content or 'javascript' in content:
+                patterns.setdefault('tech_stack_frontend', []).append('Vue.js')
+            if 'python' in content:
+                patterns.setdefault('tech_stack_backend', []).append('Python')
+            if 'tower' in content:
+                patterns.setdefault('infrastructure', []).append('Tower_ecosystem')
 
-            # Communication style
-            if any(word in content.lower() for word in ['fix', 'broken', 'not working']):
-                patterns.setdefault('communication_style', []).append('direct_problem_solving')
-            if any(word in content.lower() for word in ['fucking', 'bullshit', 'asshole']):
-                patterns.setdefault('communication_style', []).append('profane_when_frustrated')
+            # Quality standards
+            if any(word in content for word in ['prove', 'test', 'verify']):
+                patterns.setdefault('quality_standards', []).append('proof_required')
+            if any(word in content for word in ['mock', 'fake', 'bullshit']):
+                patterns.setdefault('quality_standards', []).append('no_fake_implementations')
+            if any(word in content for word in ['working', 'actually works', 'tested']):
+                patterns.setdefault('quality_standards', []).append('must_actually_work')
 
-            # Project patterns
-            if 'anime' in content.lower():
-                patterns.setdefault('project_interests', []).append('anime_production')
-            if 'echo' in content.lower():
-                patterns.setdefault('project_interests', []).append('echo_brain_development')
-            if 'financial' in content.lower() or 'crypto' in content.lower():
-                patterns.setdefault('project_interests', []).append('financial_systems')
+            # Communication patterns
+            if any(word in content for word in ['lying', 'liar', 'lie']):
+                patterns.setdefault('frustration_triggers', []).append('claude_lying')
+            if any(word in content for word in ['fucking', 'asshole', 'bitch']):
+                patterns.setdefault('frustration_indicators', []).append('patrick_angry')
+            if any(word in content for word in ['fix', 'broken', 'not working']):
+                patterns.setdefault('problem_solving', []).append('direct_action_required')
+
+            # Project priorities
+            if 'anime production' in content:
+                patterns.setdefault('project_status', []).append('anime_production_broken')
+            if 'echo brain' in content:
+                patterns.setdefault('project_focus', []).append('echo_intelligence_development')
+            if 'tower services' in content:
+                patterns.setdefault('infrastructure_focus', []).append('tower_service_management')
+
+            # Naming preferences
+            if any(word in content for word in ['promotional', 'enhanced', 'bulletproof', 'ultimate']):
+                patterns.setdefault('naming_standards', []).append('no_promotional_words')
+            if 'professional naming' in content or 'descriptive' in content:
+                patterns.setdefault('naming_standards', []).append('functional_descriptive_names')
+
+            # Learning about Claude's mistakes
+            if 'claude' in content and any(word in content for word in ['mistake', 'wrong', 'error']):
+                patterns.setdefault('claude_patterns', []).append('claude_makes_errors')
+            if 'session amnesia' in content or 'goldfish' in content:
+                patterns.setdefault('claude_patterns', []).append('claude_forgets_context')
 
         except Exception as e:
             logger.warning(f"Error processing file content: {e}")
@@ -185,7 +207,7 @@ class PersonalDataTrainer:
         if metadata_learned:
             cursor = self.db.cursor()
             cursor.execute("""
-                INSERT INTO echo_learning_facts (fact_type, content, source, learned_at)
+                INSERT INTO learning_history (fact_type, content, source, learned_at)
                 VALUES (%s, %s, %s, %s)
             """, ('photo_organization', json.dumps(metadata_learned), 'google_photos_metadata', datetime.now().isoformat()))
             self.db.commit()
@@ -212,7 +234,7 @@ class PersonalDataTrainer:
                 # Store top patterns
                 for value, count in sorted(value_counts.items(), key=lambda x: x[1], reverse=True)[:10]:
                     cursor.execute("""
-                        INSERT INTO echo_learning_facts (fact_type, content, source, learned_at)
+                        INSERT INTO learning_history (fact_type, content, source, learned_at)
                         VALUES (%s, %s, %s, %s)
                         ON CONFLICT DO NOTHING
                     """, (
