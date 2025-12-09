@@ -26,6 +26,9 @@ try:
 except ImportError:
     agentic_persona = None
 
+# Import business logic middleware for centralized pattern application
+from .business_logic_middleware import business_logic_middleware, apply_business_logic_to_response
+
 # Import memory components for conversation context
 from src.memory.context_retrieval import ConversationContextRetriever
 from src.memory.pronoun_resolver import PronounResolver
@@ -48,6 +51,61 @@ def get_memory_components():
         _pronoun_resolver = PronounResolver()
         _entity_extractor = EntityExtractor()
     return _context_retriever, _pronoun_resolver, _entity_extractor
+
+# Initialize business logic middleware with conversation manager
+business_logic_middleware.initialize(conversation_manager)
+
+def build_debug_info(query: str, intent: str, confidence: float,
+                    semantic_results: list, patterns_applied: list,
+                    processing_times: dict) -> dict:
+    """Build comprehensive debug information for response"""
+
+    # Get memory access info
+    memory_accessed = []
+    for collection_name, hits in semantic_results.items() if isinstance(semantic_results, dict) else []:
+        for hit in hits[:3]:  # Top 3 per collection
+            memory_accessed.append({
+                "collection": collection_name,
+                "content_preview": str(hit.get("payload", {}))[:100],
+                "relevance_score": hit.get("score", 0.0),
+                "id": str(hit.get("id", "unknown"))
+            })
+
+    # Intent classification reasoning
+    reasoning = {
+        "intent_classification": {
+            "selected_intent": intent,
+            "confidence_score": confidence,
+            "classification_factors": conversation_manager.thought_log[-5:] if conversation_manager.thought_log else [],
+            "clarification_needed": confidence < 0.7
+        },
+        "semantic_search": {
+            "collections_searched": len(semantic_results) if isinstance(semantic_results, dict) else 0,
+            "total_memories_found": sum(len(hits) for hits in semantic_results.values()) if isinstance(semantic_results, dict) else 0,
+            "relevance_threshold": 0.7
+        },
+        "business_logic": {
+            "patterns_considered": len(patterns_applied),
+            "patterns_applied": patterns_applied,
+            "application_success": len(patterns_applied) > 0
+        }
+    }
+
+    return {
+        "debug_info": {
+            "query_analysis": {
+                "query_length": len(query),
+                "query_complexity": "high" if len(query.split()) > 10 else "low",
+                "contains_technical_terms": any(term in query.lower() for term in ['api', 'database', 'service', 'error', 'code'])
+            },
+            "timestamp": datetime.now().isoformat(),
+            "processing_path": "standard_query_flow"
+        },
+        "reasoning": reasoning,
+        "memory_accessed": memory_accessed,
+        "business_logic_applied": patterns_applied,
+        "processing_breakdown": processing_times
+    }
 
 @router.post("/api/echo/query", response_model=QueryResponse)
 @router.post("/api/echo/chat", response_model=QueryResponse)
@@ -309,10 +367,15 @@ async def query_echo(request: QueryRequest):
                 clarifying_questions = conversation_manager.get_clarifying_questions(intent, request.query)
                 response_text = "I'd like to better understand your request. Could you help clarify?"
 
+            # APPLY BUSINESS LOGIC PATTERNS TO CLARIFICATION RESPONSES VIA MIDDLEWARE
+            response_text_with_patterns = apply_business_logic_to_response(
+                request.query, response_text, "clarification"
+            )
+
             processing_time = time.time() - start_time
 
             response = QueryResponse(
-                response=response_text,
+                response=response_text_with_patterns,
                 model_used="conversation_manager",
                 intelligence_level="clarification",
                 processing_time=processing_time,
@@ -408,6 +471,11 @@ async def query_echo(request: QueryRequest):
         elif intent in ['service_testing', 'service_debugging', 'service_monitoring', 'agent_delegation', 'inter_service_communication', 'image_generation', 'voice_generation', 'music_generation', 'code_review', 'code_refactor', 'code_modification']:
             response = await handle_capability_intent(intent, intent_params, request, request.conversation_id, start_time)
 
+            # APPLY BUSINESS LOGIC PATTERNS TO CAPABILITY RESPONSES VIA MIDDLEWARE
+            response.response = apply_business_logic_to_response(
+                request.query, response.response, "capability"
+            )
+
             conversation_manager.update_conversation(
                 request.conversation_id, request.query, intent, response.response, False
             )
@@ -466,15 +534,35 @@ async def query_echo(request: QueryRequest):
         if result["success"]:
             processing_time = time.time() - start_time
 
+            # APPLY PATRICK'S BUSINESS LOGIC PATTERNS TO RESPONSE VIA MIDDLEWARE
+            response_with_patterns = apply_business_logic_to_response(
+                request.query, result["response"], "llm_response"
+            )
+
+            # GET DEBUG INFO FOR VERBOSE RESPONSE
+            patterns_applied = business_logic_middleware.get_middleware_stats().get('patterns_applied', 0)
+            processing_times = {
+                "total_processing": processing_time,
+                "semantic_search": 0.1,  # Placeholder - we'll instrument this later
+                "pattern_application": 0.05,  # Placeholder
+                "llm_inference": processing_time - 0.15
+            }
+
+            debug_data = build_debug_info(
+                request.query, intent, confidence, semantic_results,
+                [f"Applied {patterns_applied} business logic patterns"], processing_times
+            )
+
             response = QueryResponse(
-                response=result["response"],
+                response=response_with_patterns,
                 model_used=result["model"],
                 intelligence_level=result.get("intelligence_level", "standard"),
                 processing_time=processing_time,
                 escalation_path=result.get("escalation_path", []),
                 conversation_id=request.conversation_id,
                 intent=intent,
-                confidence=confidence
+                confidence=confidence,
+                **debug_data  # Include all debug information
             )
 
             conversation_manager.update_conversation(

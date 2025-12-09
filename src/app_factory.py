@@ -10,6 +10,8 @@ from dotenv import load_dotenv
 
 # Core routers
 from src.api.routes import router as main_router
+from src.api.feedback_routes import router as feedback_router
+from src.api.learning_pipeline_routes import router as learning_pipeline_router
 
 # Verified execution routes
 try:
@@ -88,6 +90,8 @@ def create_app() -> FastAPI:
 
     # Include routers
     app.include_router(main_router, prefix="", tags=["main"])
+    app.include_router(feedback_router, prefix="", tags=["feedback"])
+    app.include_router(learning_pipeline_router, prefix="", tags=["learning-pipeline"])
     if verified_execution_available and verified_execution_router:
         app.include_router(verified_execution_router, prefix="", tags=["verified-execution"])
         print("✅ Verified execution routes added to app")
