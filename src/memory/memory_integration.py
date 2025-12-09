@@ -29,49 +29,47 @@ async def save_conversation_with_entities(
     """
     Save conversation with extracted entities to database.
 
-    This extends the standard log_interaction to also save entities.
+    This saves directly to echo_unified_interactions with entities in metadata.
     """
     try:
-        # First log the standard interaction
-        await database.log_interaction(
-            query, response, model_used or "unknown",
-            processing_time, escalation_path or [],
-            conversation_id, user_id,
-            intent, confidence,
-            requires_clarification,
-            clarifying_questions,
-            complexity_score,
-            tier
+        import psycopg2
+        import psycopg2.extras
+
+        # Build metadata with entities
+        metadata = {"entities": entities} if entities else {}
+        if complexity_score is not None:
+            metadata["complexity_score"] = complexity_score
+        if tier is not None:
+            metadata["tier"] = tier
+
+        conn = psycopg2.connect(
+            host="localhost",
+            database="echo_brain",
+            user="patrick",
+            password="tower_echo_brain_secret_key_2025"
         )
+        cursor = conn.cursor()
 
-        # Now update with entities if we have any
+        cursor.execute("""
+            INSERT INTO echo_unified_interactions
+            (query, response, model_used, processing_time, escalation_path,
+             conversation_id, user_id, intent, confidence, requires_clarification,
+             clarifying_questions, metadata)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, (query, response, model_used or "unknown", processing_time,
+              psycopg2.extras.Json(escalation_path or []), conversation_id or "", user_id or "default",
+              intent or "", confidence, requires_clarification,
+              psycopg2.extras.Json(clarifying_questions or []),
+              psycopg2.extras.Json(metadata)))
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+
         if entities:
-            try:
-                # Connect directly to update entities
-                import asyncpg
-                conn = await asyncpg.connect(
-                    host="localhost",
-                    database="echo_brain",
-                    user="patrick",
-                    password="tower_echo_brain_secret_key_2025"
-                )
-
-                await conn.execute("""
-                    UPDATE echo_conversations
-                    SET entities_mentioned = $1
-                    WHERE conversation_id = $2
-                    AND created_at = (
-                        SELECT MAX(created_at)
-                        FROM echo_conversations
-                        WHERE conversation_id = $2
-                    )
-                """, json.dumps(entities), conversation_id)
-
-                await conn.close()
-                logger.info(f"✅ Saved entities: {entities}")
-
-            except Exception as e:
-                logger.error(f"Failed to save entities: {e}")
+            logger.info(f"✅ Saved conversation with entities: {entities}")
+        else:
+            logger.info(f"✅ Saved conversation for {conversation_id}")
 
     except Exception as e:
-        logger.error(f"Failed to save conversation: {e}")
+        logger.error(f"Failed to save conversation with entities: {e}")
