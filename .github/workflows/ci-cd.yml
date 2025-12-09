@@ -1,10 +1,9 @@
-name: Echo Brain CI/CD Pipeline
+name: Echo Brain CI/CD Pipeline (DISABLED)
 
+# DISABLED: This workflow has persistent issues with disk space and dependencies
+# Use ci-simple.yml instead
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch:  # Only run manually
 
 jobs:
   code-quality:
