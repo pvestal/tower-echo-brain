@@ -7,6 +7,24 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta
 import asyncpg
 import logging
+import os
+import sys
+
+# Add config path
+sys.path.append('/opt/tower-echo-brain')
+
+# Try to load configuration
+try:
+    from config.memory_config import (
+        MAX_HISTORY_MESSAGES,
+        MAX_HISTORY_AGE_DAYS,
+        MAX_ENTITY_LOOKBACK
+    )
+except ImportError:
+    # Fallback defaults if config not found
+    MAX_HISTORY_MESSAGES = 50
+    MAX_HISTORY_AGE_DAYS = None  # Indefinite retention
+    MAX_ENTITY_LOOKBACK = 10
 
 logger = logging.getLogger(__name__)
 
@@ -18,11 +36,14 @@ class ConversationContextRetriever:
     If it exists but isn't called, the memory system is theater.
     """
 
-    def __init__(self, db_pool: asyncpg.Pool = None):
+    def __init__(self, db_pool: asyncpg.Pool = None, max_history_messages: int = None, max_history_age_days: int = None):
         self.db_pool = db_pool
-        self.max_history_messages = 10
-        self.max_history_age_hours = 24
+        # Use config values or provided overrides
+        self.max_history_messages = max_history_messages or MAX_HISTORY_MESSAGES
+        self.max_history_age_days = max_history_age_days if max_history_age_days is not None else MAX_HISTORY_AGE_DAYS
         self._connection_string = None
+
+        logger.info(f"ConversationContextRetriever initialized: max_messages={self.max_history_messages}, max_age_days={self.max_history_age_days or 'indefinite'}")
 
     async def _get_connection(self):
         """Get a database connection from pool or create one"""
@@ -47,18 +68,33 @@ class ConversationContextRetriever:
         if not conversation_id:
             return []
 
-        query = """
-            SELECT
-                query_text,
-                response_text,
-                entities_mentioned,
-                created_at
-            FROM echo_conversations
-            WHERE conversation_id = $1
-              AND created_at > NOW() - INTERVAL '24 hours'
-            ORDER BY created_at DESC
-            LIMIT $2
-        """
+        # Build query with optional time constraint
+        if self.max_history_age_days:
+            query = f"""
+                SELECT
+                    query AS query_text,
+                    response AS response_text,
+                    metadata AS entities_mentioned,
+                    timestamp AS created_at
+                FROM echo_unified_interactions
+                WHERE conversation_id = $1
+                  AND timestamp > NOW() - INTERVAL '{self.max_history_age_days} days'
+                ORDER BY timestamp DESC
+                LIMIT $2
+            """
+        else:
+            # No time limit - get all history for this conversation
+            query = """
+                SELECT
+                    query AS query_text,
+                    response AS response_text,
+                    metadata AS entities_mentioned,
+                    timestamp AS created_at
+                FROM echo_unified_interactions
+                WHERE conversation_id = $1
+                ORDER BY timestamp DESC
+                LIMIT $2
+            """
 
         try:
             if self.db_pool:
@@ -112,14 +148,15 @@ class ConversationContextRetriever:
 
         Used for pronoun resolution: "it" → most recent entity
         """
-        query = """
-            SELECT entities_mentioned, created_at
-            FROM echo_conversations
+        # Get recent entities - no time limit, just most recent N entries
+        query = f"""
+            SELECT metadata AS entities_mentioned, timestamp AS created_at
+            FROM echo_unified_interactions
             WHERE conversation_id = $1
-              AND entities_mentioned IS NOT NULL
-              AND entities_mentioned != '{}'::jsonb
-            ORDER BY created_at DESC
-            LIMIT 5
+              AND metadata IS NOT NULL
+              AND metadata != '{{}}'::jsonb
+            ORDER BY timestamp DESC
+            LIMIT {MAX_ENTITY_LOOKBACK}
         """
 
         try:
@@ -146,7 +183,11 @@ class ConversationContextRetriever:
                         except:
                             continue
                     if isinstance(entity_data, dict):
-                        entities.update(entity_data)
+                        # Extract entities from metadata structure
+                        if "entities" in entity_data:
+                            entities.update(entity_data["entities"])
+                        else:
+                            entities.update(entity_data)
 
             return entities
 
