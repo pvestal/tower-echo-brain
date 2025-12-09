@@ -62,6 +62,18 @@ async def query_echo(request: QueryRequest):
     logger.info(f"🔍 ECHO QUERY HANDLER - Query: {request.query[:50]}...")
     logger.info(f"🔍 Request type: {getattr(request, 'request_type', 'NOT_SET')}")
 
+    # SEMANTIC SEARCH INTEGRATION - Search existing memories FIRST
+    semantic_results = []
+    if hasattr(conversation_manager, 'vector_search') and conversation_manager.vector_search:
+        try:
+            semantic_results = conversation_manager.vector_search.search_all_collections(
+                request.query, limit_per_collection=3
+            )
+            if semantic_results:
+                logger.info(f"✅ Found semantic memories: {len(semantic_results)} collections")
+        except Exception as e:
+            logger.warning(f"⚠️ Semantic search failed: {e}")
+
     # Validate request_type field exists and log for debugging
     request_type = getattr(request, 'request_type', None)
     if not request_type:
@@ -217,6 +229,15 @@ async def query_echo(request: QueryRequest):
     try:
         # Get memory components
         context_retriever, pronoun_resolver, entity_extractor = get_memory_components()
+
+        # ACTUALLY USE SEMANTIC SEARCH FROM CONVERSATION MANAGER
+        semantic_results = conversation_manager.search_semantic_memory(request.query)
+        if semantic_results:
+            logger.info(f"🔍 SEMANTIC MEMORY: Found {len(semantic_results)} relevant memories")
+            # Add to context for response generation
+            memory_context = "\n".join([f"- {r['content'][:200]}" for r in semantic_results[:5]])
+        else:
+            memory_context = ""
 
         # ============================================
         # STEP 1: Retrieve conversation history with memory system

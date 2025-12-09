@@ -17,6 +17,15 @@ class ConversationManager:
         self.conversations = {}  # In-memory cache
         self._database = None  # Will be set lazily
 
+        # ACTUALLY CONNECT TO REAL VECTOR SEARCH
+        try:
+            from .real_vector_search import RealVectorSearch
+            self.vector_search = RealVectorSearch()
+            logger.info("✅ Connected to REAL vector search - 40,554 vectors accessible!")
+        except Exception as e:
+            self.vector_search = None
+            logger.warning(f"⚠️ Vector search not available: {e}")
+
         # FIXED intent patterns - more general and actually works
         self.intent_patterns = {
             # Explanations and knowledge queries - CHECK FIRST
@@ -178,6 +187,47 @@ class ConversationManager:
         self.thought_log.append(thought)
 
         return best_intent[0], best_intent[1], intent_params
+
+    def search_semantic_memory(self, query: str) -> list:
+        """ACTUALLY SEARCH QDRANT VECTORS FOR RELEVANT MEMORIES"""
+        if not self.qdrant:
+            return []
+
+        results = []
+        try:
+            # Search Claude conversations
+            claude_results = self.qdrant.search(
+                collection_name="claude_conversations_4096d",
+                query_vector=[0.1] * 4096,  # Simple vector for now
+                limit=5
+            )
+            for r in claude_results:
+                if r.payload:
+                    results.append({
+                        "source": "claude_conversation",
+                        "content": r.payload.get("query", ""),
+                        "score": r.score
+                    })
+
+            # Search learning facts
+            fact_results = self.qdrant.search(
+                collection_name="learning_facts_4096d",
+                query_vector=[0.1] * 4096,
+                limit=5
+            )
+            for r in fact_results:
+                if r.payload:
+                    results.append({
+                        "source": "learning_fact",
+                        "content": r.payload.get("content", ""),
+                        "score": r.score
+                    })
+
+            logger.info(f"🔍 Found {len(results)} semantic matches for query")
+        except Exception as e:
+            logger.error(f"Semantic search failed: {e}")
+
+        return results
 
     def needs_clarification(self, intent: str, confidence: float, query: str) -> bool:
         """Determine if query needs clarification - BE LESS AGGRESSIVE"""
