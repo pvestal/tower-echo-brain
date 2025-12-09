@@ -1,0 +1,56 @@
+{
+  "kb_recall_tests": [
+    {
+      "query": "What is the anime production status?",
+      "should_recall": [
+        "8+ minute generation",
+        "broken job status",
+        "needs redesign"
+      ]
+    },
+    {
+      "query": "How does Echo Brain learn?",
+      "should_recall": [
+        "KB articles",
+        "Claude conversations",
+        "4096D embeddings"
+      ]
+    },
+    {
+      "query": "What financial integrations exist?",
+      "should_recall": [
+        "Plaid",
+        "webhooks",
+        "MFA",
+        "bank connections"
+      ]
+    }
+  ],
+  "conversation_recall_tests": [
+    {
+      "query": "What did I say about being proactive?",
+      "should_recall": [
+        "be more proactive",
+        "wants proactive solutions"
+      ]
+    },
+    {
+      "query": "What services are broken?",
+      "should_recall": [
+        "anime production",
+        "8+ minutes",
+        "fake progress"
+      ]
+    }
+  ],
+  "semantic_relationship_tests": [
+    {
+      "query": "Connect trust planning with financial systems",
+      "should_find": [
+        "estate planning",
+        "Plaid integration",
+        "financial services"
+      ]
+    }
+  ]
+}
