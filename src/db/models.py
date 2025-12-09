@@ -3,8 +3,8 @@
 Database models and Pydantic schemas for Echo Brain system
 """
 
-from typing import Dict, List, Optional
-from pydantic import BaseModel
+from typing import Dict, List, Optional, Any
+from pydantic import BaseModel, Field
 from datetime import datetime
 
 # Request/Response Models
@@ -27,6 +27,13 @@ class QueryResponse(BaseModel):
     conversation_id: str
     intent: Optional[str] = None
     confidence: float = 0.0
+
+    # VERBOSE DEBUGGING FIELDS
+    debug_info: Optional[Dict[str, Any]] = Field(default_factory=dict)
+    reasoning: Optional[Dict[str, Any]] = Field(default_factory=dict)
+    business_logic_applied: Optional[List[str]] = Field(default_factory=list)
+    memory_accessed: Optional[List[Dict]] = Field(default_factory=list)
+    processing_breakdown: Optional[Dict[str, float]] = Field(default_factory=dict)
 
 class ExecuteRequest(BaseModel):
     command: str
@@ -59,6 +66,20 @@ class VoiceNotificationRequest(BaseModel):
 
 class VoiceStatusRequest(BaseModel):
     user_id: Optional[str] = "default"
+
+# FEEDBACK CAPTURE MODELS
+class FeedbackRequest(BaseModel):
+    conversation_id: str
+    response_id: Optional[str] = None  # For tracking specific responses
+    feedback_type: str  # "thumbs_up", "thumbs_down", "correction", "pattern_feedback"
+    feedback_data: Dict[str, Any]  # Flexible structure for different feedback types
+    user_id: Optional[str] = "default"
+    timestamp: Optional[datetime] = None
+
+class FeedbackResponse(BaseModel):
+    feedback_id: str
+    status: str  # "received", "processed", "applied"
+    impact: Optional[Dict[str, Any]] = None  # What changed based on feedback
 
 # Database Connection Models
 class DatabaseConfig:

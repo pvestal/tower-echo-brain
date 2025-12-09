@@ -26,6 +26,21 @@ class ConversationManager:
             self.vector_search = None
             logger.warning(f"⚠️ Vector search not available: {e}")
 
+        # CONNECT TO BUSINESS LOGIC COMPONENTS (SEPARATED FOR BETTER ARCHITECTURE)
+        try:
+            from .business_logic_matcher import BusinessLogicPatternMatcher
+            from .business_logic_applicator import BusinessLogicApplicator
+
+            self.pattern_matcher = BusinessLogicPatternMatcher()
+            self.logic_applicator = BusinessLogicApplicator()
+
+            stats = self.pattern_matcher.get_pattern_stats()
+            logger.info(f"✅ Business logic components loaded - {stats['total_patterns']} patterns, {stats['high_confidence']} high-confidence")
+        except Exception as e:
+            self.pattern_matcher = None
+            self.logic_applicator = None
+            logger.warning(f"⚠️ Business logic components not available: {e}")
+
         # FIXED intent patterns - more general and actually works
         self.intent_patterns = {
             # Explanations and knowledge queries - CHECK FIRST
@@ -212,6 +227,34 @@ class ConversationManager:
             logger.error(f"Semantic search failed: {e}")
 
         return results
+
+    def apply_business_logic(self, query: str, base_response: str) -> str:
+        """Apply Patrick's learned business logic patterns to response using separated components"""
+        if not self.pattern_matcher or not self.logic_applicator:
+            return base_response
+
+        try:
+            # Step 1: Get relevant patterns for this query (pattern matching responsibility)
+            raw_patterns = self.pattern_matcher.get_relevant_patterns(query)
+
+            if raw_patterns:
+                # Step 2: Transform patterns into format for applicator
+                patterns_for_application = self.pattern_matcher.transform_patterns_for_application(raw_patterns)
+
+                logger.info(f"🧠 Applying {len(patterns_for_application)} business logic patterns")
+
+                # Step 3: Apply patterns to modify the response (application responsibility)
+                response_with_patterns = self.logic_applicator.apply_patterns_to_response(
+                    query, base_response, patterns_for_application
+                )
+                return response_with_patterns
+            else:
+                logger.info("🧠 No relevant business logic patterns found")
+
+        except Exception as e:
+            logger.error(f"Business logic application failed: {e}")
+
+        return base_response
 
     def needs_clarification(self, intent: str, confidence: float, query: str) -> bool:
         """Determine if query needs clarification - BE LESS AGGRESSIVE"""
