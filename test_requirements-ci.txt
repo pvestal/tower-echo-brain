@@ -19,3 +19,6 @@ faker>=20.0.0
 
 # Coverage
 coverage>=7.3.0
+
+# Memory profiling (needed by tests)
+memory-profiler>=0.61.0
