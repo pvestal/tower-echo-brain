@@ -373,6 +373,21 @@ class TowerKnowledgeGraph:
         self.redis.hset('echo:knowledge_graph', 'services', len(self.service_map))
         self.redis.hset('echo:knowledge_graph', 'last_update', datetime.now().isoformat())
 
+    def _convert_numpy_types(self, obj):
+        """Convert numpy types to regular Python types for JSON serialization."""
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        elif isinstance(obj, (np.float32, np.float64)):
+            return float(obj)
+        elif isinstance(obj, (np.int32, np.int64)):
+            return int(obj)
+        elif isinstance(obj, dict):
+            return {k: self._convert_numpy_types(v) for k, v in obj.items()}
+        elif isinstance(obj, (list, tuple)):
+            return [self._convert_numpy_types(item) for item in obj]
+        else:
+            return obj
+
     def save_to_postgres(self):
         """Save graph to PostgreSQL for persistence."""
         cursor = self.db_conn.cursor()
@@ -394,7 +409,16 @@ class TowerKnowledgeGraph:
         for node in self.graph.nodes():
             node_data = self.graph.nodes[node]
             edges = list(self.graph.edges(node))
-            position = node_data.get('position', [0, 0, 0])
+            position_raw = node_data.get('position', [0, 0, 0])
+
+            # Convert numpy types to regular Python types
+            if hasattr(position_raw, '__iter__'):
+                position = [float(p) for p in position_raw]
+            else:
+                position = [0.0, 0.0, 0.0]
+
+            # Clean node_data of numpy types for JSON serialization
+            clean_node_data = self._convert_numpy_types(node_data)
 
             cursor.execute("""
                 INSERT INTO tower_knowledge_graph (node_id, node_type, node_data, edges, position)
@@ -405,8 +429,8 @@ class TowerKnowledgeGraph:
                     position = EXCLUDED.position
             """, (
                 node,
-                node_data.get('type', 'unknown'),
-                Json(node_data),
+                clean_node_data.get('type', 'unknown'),
+                Json(clean_node_data),
                 Json(edges),
                 position
             ))
