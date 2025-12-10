@@ -276,26 +276,26 @@ const recentQueries = computed(() => {
 async function fetchMetrics() {
   try {
     // Fetch improvement metrics
-    const metricsRes = await fetch('http://192.168.50.135:8309/api/echo/improvement/metrics')
+    const metricsRes = await fetch('/api/echo/improvement/metrics')
     if (metricsRes.ok) {
       metrics.value = await metricsRes.json()
     }
 
     // Fetch status
-    const statusRes = await fetch('http://192.168.50.135:8309/api/echo/improvement/status')
+    const statusRes = await fetch('/api/echo/improvement/status')
     if (statusRes.ok) {
       status.value = await statusRes.json()
     }
 
     // Fetch knowledge graph
-    const graphRes = await fetch('http://192.168.50.135:8309/api/echo/improvement/knowledge-graph')
+    const graphRes = await fetch('/api/echo/improvement/knowledge-graph')
     if (graphRes.ok) {
       knowledgeGraph.value = await graphRes.json()
       drawKnowledgeGraph()
     }
 
     // Fetch database stats
-    const dbRes = await fetch('http://192.168.50.135:8309/api/echo/db/stats')
+    const dbRes = await fetch('/api/echo/db/stats')
     if (dbRes.ok) {
       const data = await dbRes.json()
       dbStats.value = {
@@ -405,7 +405,7 @@ function drawKnowledgeGraph() {
 
 async function triggerImprovement() {
   try {
-    const res = await fetch('http://192.168.50.135:8309/api/echo/improvement/trigger', {
+    const res = await fetch('/api/echo/improvement/trigger', {
       method: 'POST'
     })
     if (res.ok) {

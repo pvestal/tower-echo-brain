@@ -202,3 +202,23 @@ async def get_knowledge_graph() -> Dict[str, Any]:
         graph["error"] = str(e)
 
     return graph
+
+@router.get("/vector/collections")
+async def get_vector_collections() -> Dict[str, Any]:
+    """Get Qdrant vector collections info."""
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get("http://localhost:6333/collections")
+            return response.json()
+    except Exception as e:
+        return {"error": str(e), "result": {"collections": []}}
+
+@router.get("/vector/collections/{collection_name}")
+async def get_vector_collection_info(collection_name: str) -> Dict[str, Any]:
+    """Get specific Qdrant collection info."""
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(f"http://localhost:6333/collections/{collection_name}")
+            return response.json()
+    except Exception as e:
+        return {"error": str(e), "result": {}}
