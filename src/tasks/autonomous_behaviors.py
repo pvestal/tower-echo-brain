@@ -57,7 +57,8 @@ class AutonomousBehaviors:
             # Start behavior loops (non-blocking)
             asyncio.create_task(self._service_monitoring_loop())
             asyncio.create_task(self._system_monitoring_loop())
-            asyncio.create_task(self._code_quality_loop())
+            # TEMPORARILY DISABLED - blocking startup with pylint timeouts
+            # asyncio.create_task(self._code_quality_loop())
             asyncio.create_task(self._scheduled_task_loop())
 
         except Exception as e:
