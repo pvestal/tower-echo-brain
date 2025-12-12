@@ -23,6 +23,7 @@ except ImportError as e:
     print(f"❌ Failed to import verified execution router: {e}")
     verified_execution_router = None
 from src.api.system_metrics import router as system_metrics_router
+from src.api.takeout_routes import router as takeout_router
 from src.api.enhanced_system_metrics import router as enhanced_system_metrics_router
 from src.api.gpu_monitor import router as gpu_monitor_router
 from src.api.neural_metrics import router as neural_metrics_router
@@ -126,6 +127,8 @@ def create_app() -> FastAPI:
         app.include_router(verified_execution_router, prefix="", tags=["verified-execution"])
         print("✅ Verified execution routes added to app")
     app.include_router(system_metrics_router, prefix="", tags=["metrics"])
+    app.include_router(takeout_router, prefix="", tags=["takeout"])
+    print("✅ Takeout processing routes added to app")
     app.include_router(enhanced_system_metrics_router, prefix="", tags=["enhanced-metrics"])
     app.include_router(gpu_monitor_router, prefix="", tags=["gpu-monitoring"])
     app.include_router(neural_metrics_router, prefix="", tags=["neural"])

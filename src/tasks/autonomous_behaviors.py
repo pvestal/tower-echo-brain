@@ -15,6 +15,7 @@ from .code_quality_monitor import CodeQualityMonitor
 from .code_refactor_executor import CodeRefactorExecutor
 from .multi_language_linter import MultiLanguageLinter
 from .scheduler import BehaviorScheduler
+from .knowledge_graph_builder import KnowledgeGraphBuilder
 
 logger = logging.getLogger(__name__)
 
@@ -32,13 +33,25 @@ class AutonomousBehaviors:
         self.code_refactor_executor = CodeRefactorExecutor()
         self.multi_language_linter = MultiLanguageLinter()
         self.scheduler = BehaviorScheduler(task_queue)
+        self.knowledge_graph_builder = KnowledgeGraphBuilder()
 
         # Behavior loop intervals (seconds)
         self.intervals = {
             'service_monitoring': 60,      # Check services every minute
             'system_monitoring': 300,      # Check system every 5 minutes
             'code_quality': 86400,         # Check code quality daily
-            'scheduled_tasks': 60          # Process schedules every minute
+            'scheduled_tasks': 60,         # Process schedules every minute
+            'knowledge_graph': 86400       # Build knowledge graph daily (24 hours)
+        }
+
+        # Track last knowledge graph run
+        self.last_kg_run = None
+        self.kg_stats = {
+            'total_runs': 0,
+            'last_relationship_count': 0,
+            'last_location_count': 0,
+            'last_event_count': 0,
+            'last_topic_count': 0
         }
 
     async def start(self):
@@ -60,6 +73,9 @@ class AutonomousBehaviors:
             # TEMPORARILY DISABLED - blocking startup with pylint timeouts
             # asyncio.create_task(self._code_quality_loop())
             asyncio.create_task(self._scheduled_task_loop())
+            asyncio.create_task(self._knowledge_graph_loop())
+
+            logger.info("✅ All autonomous behavior loops started")
 
         except Exception as e:
             logger.error(f"❌ Autonomous behaviors startup failed: {e}")
@@ -132,6 +148,38 @@ class AutonomousBehaviors:
                 logger.error(f"Code quality loop error: {e}")
                 await asyncio.sleep(3600)  # Error recovery delay
 
+    async def _knowledge_graph_loop(self):
+        """Knowledge graph building and persona updating behavior loop"""
+        while self.running:
+            try:
+                logger.info("🔗 Starting knowledge graph construction...")
+
+                # Build knowledge graph from Takeout data
+                graph_data = await self.knowledge_graph_builder.run()
+
+                if graph_data:
+                    # Update stats
+                    self.kg_stats['total_runs'] += 1
+                    self.kg_stats['last_relationship_count'] = graph_data.get('relationship_count', 0)
+                    self.kg_stats['last_location_count'] = len(graph_data.get('significant_locations', []))
+                    self.kg_stats['last_event_count'] = len(graph_data.get('events', []))
+                    self.kg_stats['last_topic_count'] = sum(len(topics) for topics in graph_data.get('topics', {}).values())
+                    self.last_kg_run = datetime.now()
+
+                    logger.info(f"✅ Knowledge graph built successfully!")
+                    logger.info(f"   Relationships: {self.kg_stats['last_relationship_count']}")
+                    logger.info(f"   Locations: {self.kg_stats['last_location_count']}")
+                    logger.info(f"   Events: {self.kg_stats['last_event_count']}")
+                    logger.info(f"   Topics: {self.kg_stats['last_topic_count']}")
+                else:
+                    logger.warning("⚠️ Knowledge graph construction returned no data")
+
+                await asyncio.sleep(self.intervals['knowledge_graph'])
+
+            except Exception as e:
+                logger.error(f"Knowledge graph loop error: {e}")
+                await asyncio.sleep(3600)  # Error recovery delay (1 hour)
+
     async def _scheduled_task_loop(self):
         """Scheduled task processing loop"""
         while self.running:
@@ -152,6 +200,14 @@ class AutonomousBehaviors:
             'code_quality': self.code_quality_monitor.get_quality_stats(),
             'code_refactor_tools': self.code_refactor_executor.tools_available,
             'scheduler': self.scheduler.get_schedule_info(),
+            'knowledge_graph': {
+                'total_runs': self.kg_stats['total_runs'],
+                'last_run': self.last_kg_run.isoformat() if self.last_kg_run else None,
+                'last_relationship_count': self.kg_stats['last_relationship_count'],
+                'last_location_count': self.kg_stats['last_location_count'],
+                'last_event_count': self.kg_stats['last_event_count'],
+                'last_topic_count': self.kg_stats['last_topic_count']
+            },
             'timestamp': datetime.now().isoformat()
         }
 
@@ -168,6 +224,10 @@ class AutonomousBehaviors:
                 await self.code_quality_monitor.analyze_code_quality("/opt/tower-echo-brain/src")
                 # Also trigger immediate refactoring if needed
                 await self.code_quality_monitor.trigger_emergency_refactoring(details.get('file_path'))
+            elif issue_type == "knowledge_graph_rebuild":
+                # Trigger immediate knowledge graph rebuild
+                logger.info("🔗 Emergency knowledge graph rebuild triggered")
+                await self.knowledge_graph_builder.run()
 
         except Exception as e:
             logger.error(f"Emergency behavior failed: {e}")
@@ -186,5 +246,6 @@ class AutonomousBehaviors:
             'service_monitor': hasattr(self.service_monitor, 'last_checked'),
             'system_monitor': bool(self.system_monitor.last_stats),
             'code_quality_monitor': len(self.code_quality_monitor.monitored_projects) > 0,
-            'scheduler': len(self.scheduler.get_schedule_info()['jobs']) > 0
+            'scheduler': len(self.scheduler.get_schedule_info()['jobs']) > 0,
+            'knowledge_graph': self.last_kg_run is not None
         }
