@@ -70,6 +70,36 @@ except ImportError as e:
     print(f"❌ Failed to import conversation memory router: {e}")
     memory_router = None
 
+# Anime semantic search
+try:
+    from src.api.anime_search import router as anime_search_router
+    anime_search_available = True
+    print("✅ Anime semantic search router imported successfully")
+except ImportError as e:
+    anime_search_available = False
+    print(f"❌ Failed to import anime search router: {e}")
+    anime_search_router = None
+
+# Anime character integration
+try:
+    from src.api.anime_integration import router as anime_integration_router
+    anime_integration_available = True
+    print("✅ Anime character integration router imported successfully")
+except ImportError as e:
+    anime_integration_available = False
+    print(f"❌ Failed to import anime integration router: {e}")
+    anime_integration_router = None
+
+# Semantic integration for intelligent creative orchestration
+try:
+    from src.api.semantic_integration_routes import router as semantic_integration_router
+    semantic_integration_available = True
+    print("✅ Semantic integration router imported successfully")
+except ImportError as e:
+    semantic_integration_available = False
+    print(f"❌ Failed to import semantic integration router: {e}")
+    semantic_integration_router = None
+
 def create_app() -> FastAPI:
     """Create and configure FastAPI application"""
     # Load environment variables
@@ -127,6 +157,21 @@ def create_app() -> FastAPI:
     if memory_available and memory_router:
         app.include_router(memory_router, prefix="", tags=["conversation-memory"])
         print("✅ Conversation memory routes added to app")
+
+    # Anime semantic search
+    if anime_search_available and anime_search_router:
+        app.include_router(anime_search_router, prefix="", tags=["anime-search"])
+        print("✅ Anime semantic search routes added to app")
+
+    # Anime character integration
+    if anime_integration_available and anime_integration_router:
+        app.include_router(anime_integration_router, prefix="", tags=["anime-integration"])
+        print("✅ Anime character integration routes added to app")
+
+    # Semantic integration for intelligent creative orchestration
+    if semantic_integration_available and semantic_integration_router:
+        app.include_router(semantic_integration_router, prefix="", tags=["semantic-integration"])
+        print("✅ Semantic integration routes added to app")
 
     # Static files
     static_dir = "/opt/tower-echo-brain/static"
