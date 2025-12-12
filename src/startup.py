@@ -12,6 +12,9 @@ from routing.service_registry import ServiceRegistry
 from routing.request_logger import RequestLogger
 from routing.knowledge_manager import create_simple_knowledge_manager
 
+
+from src.tasks.persona_trainer import PersonaTrainer
+
 logger = logging.getLogger(__name__)
 
 class EchoBrainStartup:
@@ -25,6 +28,7 @@ class EchoBrainStartup:
         self.service_registry = None
         self.request_logger = None
         self.knowledge_manager = None
+        self.persona_trainer = None
 
     async def initialize_services(self):
         """Initialize all Echo Brain services"""
@@ -44,6 +48,11 @@ class EchoBrainStartup:
             # Initialize knowledge manager
             self.knowledge_manager = create_simple_knowledge_manager(database.db_config)
             logger.info("✅ Knowledge manager initialized")
+
+            # Initialize persona trainer
+            self.persona_trainer = PersonaTrainer()
+            await self.persona_trainer.initialize()
+            logger.info("✅ Persona trainer initialized")
 
             # Initialize task queue
             self.task_queue = TaskQueue()
@@ -78,6 +87,10 @@ class EchoBrainStartup:
             # Start autonomous behaviors - TEMPORARILY DISABLED FOR DEBUGGING
             asyncio.create_task(self.autonomous_behaviors.start())
             logger.info("🤖 Autonomous behaviors ENABLED - monitoring mode")
+
+            # Start persona trainer learning loop
+            asyncio.create_task(self.persona_trainer.autonomous_self_improvement())
+            logger.info("🧠 Persona trainer learning loop STARTED")
 
         except Exception as e:
             logger.error(f"❌ Background service startup failed: {e}")
