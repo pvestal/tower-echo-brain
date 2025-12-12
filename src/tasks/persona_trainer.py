@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 class PersonaTrainer:
     """Trains and evolves Echo's Agentic Persona based on interactions"""
 
-    def __init__(self, db_url: str = "postgresql://patrick@localhost/echo_brain"):
+    def __init__(self, db_url: str = "postgresql://patrick:tower_echo_brain_secret_key_2025@localhost/echo_brain"):
         self.db_url = db_url
         self.pool = None
         self.current_persona = {}
@@ -307,9 +307,9 @@ class PersonaTrainer:
                 async with self.pool.acquire() as conn:
                     recent = await conn.fetch("""
                         SELECT * FROM echo_unified_interactions
-                        WHERE created_at > CURRENT_TIMESTAMP - INTERVAL '1 hour'
+                        WHERE timestamp > CURRENT_TIMESTAMP - INTERVAL '1 hour'
                         AND response IS NOT NULL
-                        ORDER BY created_at DESC
+                        ORDER BY timestamp DESC
                         LIMIT 10
                     """)
 

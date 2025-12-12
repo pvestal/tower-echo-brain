@@ -232,23 +232,26 @@ class TaskQueue:
             
             cursor.execute("""
                 INSERT INTO echo_tasks (
-                    name, task_type, priority, status, payload,
+                    id, name, task_type, priority, status, payload,
                     created_at, updated_at, scheduled_for, started_at, completed_at,
                     retries, max_retries, timeout, result, error, dependencies, creator
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                RETURNING id
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (id) DO UPDATE SET
+                    status = EXCLUDED.status,
+                    updated_at = EXCLUDED.updated_at,
+                    started_at = EXCLUDED.started_at,
+                    completed_at = EXCLUDED.completed_at,
+                    retries = EXCLUDED.retries,
+                    result = EXCLUDED.result,
+                    error = EXCLUDED.error
             """, (
-                task.name, task.task_type.value, task.priority.value,
+                task.id, task.name, task.task_type.value, task.priority.value,
                 task.status.value, json.dumps(task.payload),
                 task.created_at, task.updated_at, task.scheduled_for,
                 task.started_at, task.completed_at, task.retries, task.max_retries,
                 task.timeout, json.dumps(task.result) if task.result else None,
                 task.error, json.dumps(task.dependencies), task.creator
             ))
-            
-            # Get the database-generated ID
-            db_id = cursor.fetchone()[0]
-            logger.debug(f"Task {task.id} (UUID) persisted with DB ID: {db_id}")
             
             conn.commit()
             cursor.close()
