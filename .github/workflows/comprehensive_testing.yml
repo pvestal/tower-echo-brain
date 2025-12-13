@@ -3,7 +3,6 @@ name: Comprehensive Testing Pipeline (DISABLED)
 # DISABLED: This workflow has persistent issues with disk space and dependencies
 # Use ci-simple.yml instead
 on:
-    - cron: '0 2 * * *'
   workflow_dispatch:
     inputs:
       test_type:
