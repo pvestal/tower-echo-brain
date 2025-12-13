@@ -1,0 +1,25 @@
+[Unit]
+Description=Echo Brain Background Worker
+After=network.target postgresql.service redis.service tower-echo-brain.service
+Requires=tower-echo-brain.service
+
+[Service]
+Type=simple
+User=patrick
+Group=patrick
+WorkingDirectory=/opt/tower-echo-brain
+Environment="PATH=/opt/tower-echo-brain/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+Environment="PYTHONPATH=/opt/tower-echo-brain"
+Environment="DB_HOST=localhost"
+Environment="DB_PORT=5432"
+Environment="DB_NAME=echo_brain"
+Environment="DB_USER=patrick"
+Environment="DB_PASSWORD=tower_echo_brain_secret_key_2025"
+ExecStart=/opt/tower-echo-brain/venv/bin/python -m src.tasks.background_worker
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
