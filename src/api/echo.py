@@ -8,14 +8,19 @@ import time
 import uuid
 import logging
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional
-from fastapi import APIRouter, HTTPException, BackgroundTasks
+from typing import Dict, List, Optional, Any
+from fastapi import APIRouter, HTTPException, BackgroundTasks, Request
 
 # Import models and services
 from src.db.models import QueryRequest, QueryResponse
 from src.db.database import database
 from src.core.intelligence import intelligence_router
 from src.services.conversation import conversation_manager
+
+# Import identity and user context systems
+from src.core.echo_identity import get_echo_identity
+from src.core.user_context_manager import get_user_context_manager
+from src.integrations.vault_manager import get_vault_manager
 
 # Import external modules
 from echo_brain_thoughts import echo_brain
@@ -109,13 +114,32 @@ def build_debug_info(query: str, intent: str, confidence: float,
 
 @router.post("/api/echo/query", response_model=QueryResponse)
 @router.post("/api/echo/chat", response_model=QueryResponse)
-async def query_echo(request: QueryRequest):
+async def query_echo(request: QueryRequest, http_request: Request = None):
     """Main query endpoint with intelligent routing and conversation management"""
     start_time = time.time()
 
     # Generate conversation ID if not provided
     if not request.conversation_id:
         request.conversation_id = str(uuid.uuid4())
+
+    # Get username from request (defaults to 'anonymous')
+    username = getattr(request, 'username', None)
+    if not username and http_request:
+        username = http_request.headers.get("X-Username", "anonymous")
+    if not username:
+        username = "anonymous"
+
+    # Get user context and identity
+    user_manager = await get_user_context_manager()
+    user_context = await user_manager.get_or_create_context(username)
+    echo_identity = get_echo_identity()
+
+    # Recognize user and apply permissions
+    user_recognition = echo_identity.recognize_user(username)
+    logger.info(f"👤 User: {username} - Access: {user_recognition['access_level']}")
+
+    # Add to user's conversation history
+    await user_manager.add_conversation(username, "user", request.query)
 
     logger.info(f"🔍 ECHO QUERY HANDLER - Query: {request.query[:50]}...")
     logger.info(f"🔍 Request type: {getattr(request, 'request_type', 'NOT_SET')}")
@@ -142,6 +166,22 @@ async def query_echo(request: QueryRequest):
 
     # CHECK REQUEST TYPE FIRST - Route to appropriate handler
     if request_type == 'system_command':
+        # Check if user has permission for system commands
+        if not await user_manager.check_permission(username, "system_commands"):
+            logger.warning(f"⚠️ User {username} attempted system command without permission")
+            return QueryResponse(
+                response="You do not have permission to execute system commands. Only the creator has this access.",
+                model_used="permission_system",
+                intelligence_level="access_control",
+                processing_time=time.time() - start_time,
+                escalation_path=["permission_denied"],
+                conversation_id=request.conversation_id,
+                intent="system_command",
+                confidence=1.0,
+                requires_clarification=False,
+                clarifying_questions=[]
+            )
+
         logger.info("🚨 ROUTING TO DIRECT SYSTEM COMMAND EXECUTION")
 
         # Direct execution with retry logic
@@ -713,6 +753,76 @@ async def get_conversations():
     except Exception as e:
         logger.error(f"Failed to get conversations: {e}")
         raise HTTPException(status_code=500, detail=f"Conversations error: {str(e)}")
+
+@router.get("/api/echo/oversight/dashboard")
+async def get_oversight_dashboard(http_request: Request):
+    """Get creator oversight dashboard"""
+    # Verify creator access
+    username = http_request.headers.get("X-Username", "anonymous")
+    if username != "patrick":
+        raise HTTPException(status_code=403, detail="Creator access required")
+
+    echo_identity = get_echo_identity()
+    user_manager = await get_user_context_manager()
+    vault_manager = await get_vault_manager()
+
+    # Get all user contexts
+    all_users = await user_manager.get_all_users()
+
+    # Get system metrics
+    import psutil
+    cpu_percent = psutil.cpu_percent(interval=1)
+    memory = psutil.virtual_memory()
+    disk = psutil.disk_usage('/')
+
+    return {
+        "identity": echo_identity.get_creator_dashboard(),
+        "system_metrics": {
+            "cpu_percent": cpu_percent,
+            "memory_percent": memory.percent,
+            "disk_percent": disk.percent
+        },
+        "active_users": all_users,
+        "vault_status": "connected" if vault_manager.is_initialized else "disconnected",
+        "capabilities": echo_identity.capabilities,
+        "access_log": vault_manager.get_access_log("patrick")[-20:]
+    }
+
+@router.get("/api/echo/users/{username}")
+async def get_user_context(username: str, http_request: Request):
+    """Get specific user context (creator only)"""
+    # Verify creator access
+    requester = http_request.headers.get("X-Username", "anonymous")
+    if requester != "patrick":
+        raise HTTPException(status_code=403, detail="Creator access required")
+
+    user_manager = await get_user_context_manager()
+    context = await user_manager.get_or_create_context(username)
+
+    return {
+        "user": username,
+        "context": context.get_context_summary(),
+        "memory": await user_manager.get_user_memory(username)
+    }
+
+@router.post("/api/echo/users/{username}/preferences")
+async def update_user_preferences(username: str, preferences: Dict[str, Any], http_request: Request):
+    """Update user preferences (creator only)"""
+    # Verify creator access
+    requester = http_request.headers.get("X-Username", "anonymous")
+    if requester != "patrick":
+        raise HTTPException(status_code=403, detail="Creator access required")
+
+    user_manager = await get_user_context_manager()
+
+    results = {}
+    for key, value in preferences.items():
+        if await user_manager.update_preference(username, key, value):
+            results[key] = "updated"
+        else:
+            results[key] = "failed"
+
+    return {"username": username, "updates": results}
 
 async def handle_capability_intent(intent: str, intent_params: dict, request: QueryRequest, conversation_id: str, start_time: float):
     """Handle capability-based intents"""

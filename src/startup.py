@@ -14,6 +14,9 @@ from routing.knowledge_manager import create_simple_knowledge_manager
 
 
 from src.tasks.persona_trainer import PersonaTrainer
+from src.integrations.vault_manager import get_vault_manager
+from src.core.echo_identity import get_echo_identity
+from src.core.user_context_manager import get_user_context_manager
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +32,9 @@ class EchoBrainStartup:
         self.request_logger = None
         self.knowledge_manager = None
         self.persona_trainer = None
+        self.vault_manager = None
+        self.echo_identity = None
+        self.user_context_manager = None
 
     async def initialize_services(self):
         """Initialize all Echo Brain services"""
@@ -36,6 +42,21 @@ class EchoBrainStartup:
             # Initialize database
             await database.create_tables_if_needed()
             logger.info("✅ Database initialized")
+
+            # Initialize Vault manager for credentials
+            self.vault_manager = await get_vault_manager()
+            if self.vault_manager.is_initialized:
+                logger.info("🔐 Vault manager initialized with credentials")
+            else:
+                logger.warning("⚠️ Vault manager running without Vault connection")
+
+            # Initialize Echo identity system
+            self.echo_identity = get_echo_identity()
+            logger.info("🧠 Echo identity system initialized")
+
+            # Initialize user context manager
+            self.user_context_manager = await get_user_context_manager()
+            logger.info("👥 User context manager initialized")
 
             # Initialize service registry
             self.service_registry = ServiceRegistry()

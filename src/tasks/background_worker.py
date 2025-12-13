@@ -76,7 +76,8 @@ class BackgroundWorker:
         await self._register_builtin_handlers()
         
         # Start main worker loop
-        await self._worker_loop()
+        asyncio.create_task(self._worker_loop())
+        logger.info("✅ Worker loop task created")
         
     async def stop(self):
         """Stop the background worker gracefully"""
@@ -229,6 +230,7 @@ class BackgroundWorker:
                 del self.current_tasks[task.id]
                 
     async def _register_builtin_handlers(self):
+        logger.info("📝 Starting handler registration...")
         """Register built-in task handlers"""
         
         async def handle_monitoring_task(task: Task) -> Dict[str, Any]:
@@ -409,7 +411,17 @@ class BackgroundWorker:
         self.register_handler(TaskType.LEARNING, handle_learning_task)
         self.register_handler(TaskType.MAINTENANCE, handle_maintenance_task)
         self.register_handler(TaskType.CODE_REFACTOR, handle_code_refactor_task)
-        self.register_handler(TaskType.ANALYSIS, handle_analysis_task)
+        self.register_handler(TaskType.ANALYSIS, handle_analysis_task)        
+        # LORA Training Workers
+        from src.workers.lora_generation_worker import handle_lora_generation_task
+        from src.workers.lora_tagging_worker import handle_lora_tagging_task  
+        from src.workers.lora_training_worker import handle_lora_training_task
+        
+        self.register_handler(TaskType.LORA_GENERATION, handle_lora_generation_task)
+        self.register_handler(TaskType.LORA_TAGGING, handle_lora_tagging_task)
+        self.register_handler(TaskType.LORA_TRAINING, handle_lora_training_task)
+        logger.info("✅ LORA handlers registered")
+
         
         logger.info("✅ Built-in task handlers registered")
         

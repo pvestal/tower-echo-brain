@@ -1,0 +1,302 @@
+{
+  "username": "anonymous",
+  "user_id": "2f183a4e64493af3",
+  "created_at": "2025-12-13T02:04:26.175491",
+  "last_interaction": "2025-12-13T02:59:56.999249",
+  "conversation_history": [
+    {
+      "timestamp": "2025-12-13T02:58:46.087536",
+      "role": "user",
+      "content": "Check git repository status for tower-apple-music at /opt/tower-apple-music using: cd /opt/tower-apple-music && git status --porcelain 2>&1"
+    },
+    {
+      "timestamp": "2025-12-13T02:58:46.089278",
+      "role": "user",
+      "content": "Check git repository status for tower-control-api at /opt/tower-control-api using: cd /opt/tower-control-api && git status --porcelain 2>&1"
+    },
+    {
+      "timestamp": "2025-12-13T02:58:47.238221",
+      "role": "user",
+      "content": "Check git repository status for tower-crypto-trader at /opt/tower-crypto-trader using: cd /opt/tower-crypto-trader && git status --porcelain 2>&1"
+    },
+    {
+      "timestamp": "2025-12-13T02:58:47.238340",
+      "role": "user",
+      "content": "Check git repository status for tower-echo-brain at /opt/tower-echo-brain using: cd /opt/tower-echo-brain && git status --porcelain 2>&1"
+    },
+    {
+      "timestamp": "2025-12-13T02:58:47.238426",
+      "role": "user",
+      "content": "Check git repository status for tower-kb at /opt/tower-kb using: cd /opt/tower-kb && git status --porcelain 2>&1"
+    },
+    {
+      "timestamp": "2025-12-13T02:58:50.065348",
+      "role": "user",
+      "content": "Check git repository status for tower-loan-search at /opt/tower-loan-search using: cd /opt/tower-loan-search && git status --porcelain 2>&1"
+    },
+    {
+      "timestamp": "2025-12-13T02:58:50.065498",
+      "role": "user",
+      "content": "Check git repository status for tower-music-production at /opt/tower-music-production using: cd /opt/tower-music-production && git status --porcelain 2>&1"
+    },
+    {
+      "timestamp": "2025-12-13T02:58:50.065612",
+      "role": "user",
+      "content": "Check git repository status for tower-plaid-financial at /opt/tower-plaid-financial using: cd /opt/tower-plaid-financial && git status --porcelain 2>&1"
+    },
+    {
+      "timestamp": "2025-12-13T02:58:50.065716",
+      "role": "user",
+      "content": "Check git repository status for tower-semantic-memory at /opt/tower-semantic-memory using: cd /opt/tower-semantic-memory && git status --porcelain 2>&1"
+    },
+    {
+      "timestamp": "2025-12-13T02:58:50.065846",
+      "role": "user",
+      "content": "Check git repository status for comfyui at /opt/comfyui using: cd /opt/comfyui && git status --porcelain 2>&1"
+    },
+    {
+      "timestamp": "2025-12-13T02:58:50.066197",
+      "role": "user",
+      "content": "Check git repository status for jellyfin at /opt/jellyfin using: cd /opt/jellyfin && git status --porcelain 2>&1"
+    },
+    {
+      "timestamp": "2025-12-13T02:58:50.066374",
+      "role": "user",
+      "content": "Check git repository status for vault at /opt/vault using: cd /opt/vault && git status --porcelain 2>&1"
+    },
+    {
+      "timestamp": "2025-12-13T02:58:56.990416",
+      "role": "user",
+      "content": "Check git repository status for tower-agent-manager at /opt/tower-agent-manager using: cd /opt/tower-agent-manager && git status --porcelain 2>&1"
+    },
+    {
+      "timestamp": "2025-12-13T02:58:56.991075",
+      "role": "user",
+      "content": "Check git repository status for tower-amd-gpu-monitor at /opt/tower-amd-gpu-monitor using: cd /opt/tower-amd-gpu-monitor && git status --porcelain 2>&1"
+    },
+    {
+      "timestamp": "2025-12-13T02:58:56.991305",
+      "role": "user",
+      "content": "Check git repository status for tower-apple-music at /opt/tower-apple-music using: cd /opt/tower-apple-music && git status --porcelain 2>&1"
+    },
+    {
+      "timestamp": "2025-12-13T02:58:56.991482",
+      "role": "user",
+      "content": "Check git repository status for tower-control-api at /opt/tower-control-api using: cd /opt/tower-control-api && git status --porcelain 2>&1"
+    },
+    {
+      "timestamp": "2025-12-13T02:58:56.995934",
+      "role": "user",
+      "content": "Check git repository status for tower-crypto-trader at /opt/tower-crypto-trader using: cd /opt/tower-crypto-trader && git status --porcelain 2>&1"
+    },
+    {
+      "timestamp": "2025-12-13T02:58:56.996327",
+      "role": "user",
+      "content": "Check git repository status for tower-echo-brain at /opt/tower-echo-brain using: cd /opt/tower-echo-brain && git status --porcelain 2>&1"
+    },
+    {
+      "timestamp": "2025-12-13T02:58:56.996576",
+      "role": "user",
+      "content": "Check git repository status for tower-kb at /opt/tower-kb using: cd /opt/tower-kb && git status --porcelain 2>&1"
+    },
+    {
+      "timestamp": "2025-12-13T02:58:56.996747",
+      "role": "user",
+      "content": "Check git repository status for tower-loan-search at /opt/tower-loan-search using: cd /opt/tower-loan-search && git status --porcelain 2>&1"
+    },
+    {
+      "timestamp": "2025-12-13T02:58:56.996912",
+      "role": "user",
+      "content": "Check git repository status for tower-music-production at /opt/tower-music-production using: cd /opt/tower-music-production && git status --porcelain 2>&1"
+    },
+    {
+      "timestamp": "2025-12-13T02:58:56.997028",
+      "role": "user",
+      "content": "Check git repository status for tower-plaid-financial at /opt/tower-plaid-financial using: cd /opt/tower-plaid-financial && git status --porcelain 2>&1"
+    },
+    {
+      "timestamp": "2025-12-13T02:58:56.997117",
+      "role": "user",
+      "content": "Check git repository status for tower-semantic-memory at /opt/tower-semantic-memory using: cd /opt/tower-semantic-memory && git status --porcelain 2>&1"
+    },
+    {
+      "timestamp": "2025-12-13T02:58:56.997228",
+      "role": "user",
+      "content": "Check git repository status for comfyui at /opt/comfyui using: cd /opt/comfyui && git status --porcelain 2>&1"
+    },
+    {
+      "timestamp": "2025-12-13T02:58:56.997322",
+      "role": "user",
+      "content": "Check git repository status for jellyfin at /opt/jellyfin using: cd /opt/jellyfin && git status --porcelain 2>&1"
+    },
+    {
+      "timestamp": "2025-12-13T02:58:56.998298",
+      "role": "user",
+      "content": "Check git repository status for vault at /opt/vault using: cd /opt/vault && git status --porcelain 2>&1"
+    },
+    {
+      "timestamp": "2025-12-13T02:59:46.132585",
+      "role": "user",
+      "content": "Check git repository status for tower-agent-manager at /opt/tower-agent-manager using: cd /opt/tower-agent-manager && git status --porcelain 2>&1"
+    },
+    {
+      "timestamp": "2025-12-13T02:59:46.133358",
+      "role": "user",
+      "content": "Check git repository status for tower-amd-gpu-monitor at /opt/tower-amd-gpu-monitor using: cd /opt/tower-amd-gpu-monitor && git status --porcelain 2>&1"
+    },
+    {
+      "timestamp": "2025-12-13T02:59:46.133926",
+      "role": "user",
+      "content": "Check git repository status for tower-apple-music at /opt/tower-apple-music using: cd /opt/tower-apple-music && git status --porcelain 2>&1"
+    },
+    {
+      "timestamp": "2025-12-13T02:59:46.134288",
+      "role": "user",
+      "content": "Check git repository status for tower-control-api at /opt/tower-control-api using: cd /opt/tower-control-api && git status --porcelain 2>&1"
+    },
+    {
+      "timestamp": "2025-12-13T02:59:46.134465",
+      "role": "user",
+      "content": "Check git repository status for tower-crypto-trader at /opt/tower-crypto-trader using: cd /opt/tower-crypto-trader && git status --porcelain 2>&1"
+    },
+    {
+      "timestamp": "2025-12-13T02:59:46.136110",
+      "role": "user",
+      "content": "Check git repository status for tower-kb at /opt/tower-kb using: cd /opt/tower-kb && git status --porcelain 2>&1"
+    },
+    {
+      "timestamp": "2025-12-13T02:59:46.136496",
+      "role": "user",
+      "content": "Check git repository status for tower-loan-search at /opt/tower-loan-search using: cd /opt/tower-loan-search && git status --porcelain 2>&1"
+    },
+    {
+      "timestamp": "2025-12-13T02:59:46.136649",
+      "role": "user",
+      "content": "Check git repository status for tower-music-production at /opt/tower-music-production using: cd /opt/tower-music-production && git status --porcelain 2>&1"
+    },
+    {
+      "timestamp": "2025-12-13T02:59:46.136774",
+      "role": "user",
+      "content": "Check git repository status for tower-plaid-financial at /opt/tower-plaid-financial using: cd /opt/tower-plaid-financial && git status --porcelain 2>&1"
+    },
+    {
+      "timestamp": "2025-12-13T02:59:46.137949",
+      "role": "user",
+      "content": "Check git repository status for tower-semantic-memory at /opt/tower-semantic-memory using: cd /opt/tower-semantic-memory && git status --porcelain 2>&1"
+    },
+    {
+      "timestamp": "2025-12-13T02:59:46.138549",
+      "role": "user",
+      "content": "Check git repository status for comfyui at /opt/comfyui using: cd /opt/comfyui && git status --porcelain 2>&1"
+    },
+    {
+      "timestamp": "2025-12-13T02:59:46.138673",
+      "role": "user",
+      "content": "Check git repository status for jellyfin at /opt/jellyfin using: cd /opt/jellyfin && git status --porcelain 2>&1"
+    },
+    {
+      "timestamp": "2025-12-13T02:59:56.996074",
+      "role": "user",
+      "content": "Check git repository status for tower-agent-manager at /opt/tower-agent-manager using: cd /opt/tower-agent-manager && git status --porcelain 2>&1"
+    },
+    {
+      "timestamp": "2025-12-13T02:59:56.996217",
+      "role": "user",
+      "content": "Check git repository status for tower-amd-gpu-monitor at /opt/tower-amd-gpu-monitor using: cd /opt/tower-amd-gpu-monitor && git status --porcelain 2>&1"
+    },
+    {
+      "timestamp": "2025-12-13T02:59:56.996307",
+      "role": "user",
+      "content": "Check git repository status for tower-apple-music at /opt/tower-apple-music using: cd /opt/tower-apple-music && git status --porcelain 2>&1"
+    },
+    {
+      "timestamp": "2025-12-13T02:59:56.997353",
+      "role": "user",
+      "content": "Check git repository status for tower-control-api at /opt/tower-control-api using: cd /opt/tower-control-api && git status --porcelain 2>&1"
+    },
+    {
+      "timestamp": "2025-12-13T02:59:56.997451",
+      "role": "user",
+      "content": "Check git repository status for tower-crypto-trader at /opt/tower-crypto-trader using: cd /opt/tower-crypto-trader && git status --porcelain 2>&1"
+    },
+    {
+      "timestamp": "2025-12-13T02:59:56.997531",
+      "role": "user",
+      "content": "Check git repository status for tower-kb at /opt/tower-kb using: cd /opt/tower-kb && git status --porcelain 2>&1"
+    },
+    {
+      "timestamp": "2025-12-13T02:59:56.997607",
+      "role": "user",
+      "content": "Check git repository status for tower-loan-search at /opt/tower-loan-search using: cd /opt/tower-loan-search && git status --porcelain 2>&1"
+    },
+    {
+      "timestamp": "2025-12-13T02:59:56.997678",
+      "role": "user",
+      "content": "Check git repository status for tower-music-production at /opt/tower-music-production using: cd /opt/tower-music-production && git status --porcelain 2>&1"
+    },
+    {
+      "timestamp": "2025-12-13T02:59:56.997746",
+      "role": "user",
+      "content": "Check git repository status for tower-plaid-financial at /opt/tower-plaid-financial using: cd /opt/tower-plaid-financial && git status --porcelain 2>&1"
+    },
+    {
+      "timestamp": "2025-12-13T02:59:56.997814",
+      "role": "user",
+      "content": "Check git repository status for tower-semantic-memory at /opt/tower-semantic-memory using: cd /opt/tower-semantic-memory && git status --porcelain 2>&1"
+    },
+    {
+      "timestamp": "2025-12-13T02:59:56.998792",
+      "role": "user",
+      "content": "Check git repository status for comfyui at /opt/comfyui using: cd /opt/comfyui && git status --porcelain 2>&1"
+    },
+    {
+      "timestamp": "2025-12-13T02:59:56.999250",
+      "role": "user",
+      "content": "Check git repository status for jellyfin at /opt/jellyfin using: cd /opt/jellyfin && git status --porcelain 2>&1"
+    }
+  ],
+  "knowledge_graph": {},
+  "learned_patterns": [],
+  "personal_facts": {},
+  "preferences": {
+    "response_style": "balanced",
+    "personality": "professional",
+    "temperature": 0.7,
+    "max_tokens": 2048,
+    "preferred_model": "llama3.1:8b",
+    "notification_channels": [
+      "telegram"
+    ],
+    "timezone": "America/New_York",
+    "language": "en",
+    "dark_mode": true
+  },
+  "communication_style": {
+    "greeting_preference": "informal",
+    "emoji_usage": false,
+    "technical_level": "advanced",
+    "verbosity": "normal",
+    "humor_level": "occasional"
+  },
+  "permissions": {
+    "execute_code": false,
+    "system_commands": false,
+    "image_generation": true,
+    "llm_access": true,
+    "file_access": false,
+    "network_access": false,
+    "database_access": false,
+    "service_control": false
+  },
+  "usage_metrics": {
+    "total_interactions": 15893,
+    "total_tokens_used": 0,
+    "images_generated": 0,
+    "tasks_completed": 0,
+    "learning_entries": 0
+  }
+}es_generated": 0,
+    "tasks_completed": 0,
+    "learning_entries": 0
+  }
+}

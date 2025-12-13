@@ -3,8 +3,8 @@ FastAPI Dependency Injection for Echo Brain
 Provides lazy initialization of dependencies to avoid circular imports
 """
 
-from typing import Optional
-from fastapi import Depends
+from typing import Optional, Any
+from fastapi import Depends, Request, HTTPException
 import logging
 
 logger = logging.getLogger(__name__)
@@ -82,3 +82,55 @@ async def execute_ollama_command(command: list):
             "success": False,
             "error": str(e)
         }
+
+# User context dependencies
+def get_current_user(request: Request) -> str:
+    """Get current username from request state (set by middleware)"""
+    if hasattr(request.state, 'username'):
+        return request.state.username
+    return "anonymous"
+
+def get_user_context(request: Request) -> Optional[Any]:
+    """Get user context from request state (set by middleware)"""
+    if hasattr(request.state, 'user_context'):
+        return request.state.user_context
+    return None
+
+def get_user_recognition(request: Request) -> dict:
+    """Get user recognition from request state (set by middleware)"""
+    if hasattr(request.state, 'user_recognition'):
+        return request.state.user_recognition
+    return {"access_level": "none", "recognized": False}
+
+def require_permission(permission: str):
+    """Dependency to require specific permission"""
+    def permission_checker(request: Request):
+        if not hasattr(request.state, 'user_context'):
+            raise HTTPException(status_code=403, detail="No user context available")
+
+        user_context = request.state.user_context
+        if not user_context:
+            raise HTTPException(status_code=403, detail="User not authenticated")
+
+        # Special case for creator permission
+        if permission == "creator":
+            if request.state.username != "patrick":
+                raise HTTPException(status_code=403, detail="Creator access required")
+        elif not user_context.permissions.get(permission, False):
+            raise HTTPException(status_code=403, detail=f"Permission '{permission}' required")
+
+        return True
+
+    return permission_checker
+
+def get_user_manager(request: Request) -> Optional[Any]:
+    """Get user manager from request state"""
+    if hasattr(request.state, 'user_manager'):
+        return request.state.user_manager
+    return None
+
+def get_echo_identity(request: Request) -> Optional[Any]:
+    """Get echo identity from request state"""
+    if hasattr(request.state, 'echo_identity'):
+        return request.state.echo_identity
+    return None

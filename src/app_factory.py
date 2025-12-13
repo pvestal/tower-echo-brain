@@ -119,6 +119,15 @@ def create_app() -> FastAPI:
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
 
+    # Add middleware for user context and permissions
+    try:
+        from src.middleware.user_context_middleware import UserContextMiddleware, PermissionMiddleware
+        app.add_middleware(UserContextMiddleware)
+        app.add_middleware(PermissionMiddleware)
+        logging.info("✅ User context and permission middleware added")
+    except ImportError as e:
+        logging.warning(f"⚠️ Could not load user context middleware: {e}")
+
     # Include routers
     app.include_router(main_router, prefix="", tags=["main"])
     app.include_router(feedback_router, prefix="", tags=["feedback"])

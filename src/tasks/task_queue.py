@@ -45,6 +45,9 @@ class TaskType(Enum):
     ANALYSIS = "analysis"
     CODE_REFACTOR = "code_refactor"
     BACKUP = "backup"
+    LORA_GENERATION = "LORA_GENERATION"
+    LORA_TAGGING = "LORA_TAGGING" 
+    LORA_TRAINING = "LORA_TRAINING"
 
 @dataclass
 class Task:

@@ -1,0 +1,59 @@
+{
+  "username": "patrick",
+  "user_id": "23ddda4810068cc4",
+  "created_at": "2025-12-12T19:14:36.847594",
+  "last_interaction": "2025-12-12T19:14:36.849698",
+  "conversation_history": [
+    {
+      "timestamp": "2025-12-12T19:14:36.849367",
+      "role": "user",
+      "content": "Test message"
+    }
+  ],
+  "knowledge_graph": {},
+  "learned_patterns": [],
+  "personal_facts": {
+    "favorite_model": {
+      "value": "llama3.1:70b",
+      "timestamp": "2025-12-12T19:14:36.849012",
+      "confidence": 1.0
+    }
+  },
+  "preferences": {
+    "response_style": "technical",
+    "personality": "professional",
+    "temperature": 0.7,
+    "max_tokens": 2048,
+    "preferred_model": "llama3.1:8b",
+    "notification_channels": [
+      "telegram"
+    ],
+    "timezone": "America/New_York",
+    "language": "en",
+    "dark_mode": true
+  },
+  "communication_style": {
+    "greeting_preference": "informal",
+    "emoji_usage": false,
+    "technical_level": "expert",
+    "verbosity": "normal",
+    "humor_level": "occasional"
+  },
+  "permissions": {
+    "execute_code": true,
+    "system_commands": true,
+    "image_generation": true,
+    "llm_access": true,
+    "file_access": true,
+    "network_access": true,
+    "database_access": true,
+    "service_control": true
+  },
+  "usage_metrics": {
+    "total_interactions": 6,
+    "total_tokens_used": 0,
+    "images_generated": 0,
+    "tasks_completed": 0,
+    "learning_entries": 1
+  }
+}
