@@ -941,6 +941,18 @@ class ResilientModelManager:
 
         Tries models in fallback chain order until one succeeds.
         """
+        # MEMORY AUGMENTATION - Add stored memories to prompt
+        try:
+            import sys
+            sys.path.insert(0, '/opt/tower-echo-brain')
+            from src.middleware.memory_augmentation_middleware import augment_with_memories
+            original_prompt = prompt
+            prompt = augment_with_memories(prompt)
+            if prompt != original_prompt:
+                logger.info(f"📚 Resilient: Query augmented with stored memories")
+        except Exception as e:
+            logger.debug(f"Memory augmentation skipped: {e}")
+
         chain = self.fallback_chains.get(task_type)
         if not chain:
             # Try general fallback

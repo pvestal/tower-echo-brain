@@ -39,6 +39,14 @@ class EchoBrainStartup:
     async def initialize_services(self):
         """Initialize all Echo Brain services"""
         try:
+            # Install memory wrapper for Ollama FIRST
+            try:
+                from src.ollama_memory_wrapper import install_memory_wrapper
+                install_memory_wrapper()
+                logger.info("✅ Memory augmentation wrapper installed")
+            except Exception as e:
+                logger.warning(f"Could not install memory wrapper: {e}")
+
             # Initialize database
             await database.create_tables_if_needed()
             logger.info("✅ Database initialized")

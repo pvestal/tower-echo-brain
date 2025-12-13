@@ -129,6 +129,7 @@ def create_app() -> FastAPI:
         logging.warning(f"⚠️ Could not load user context middleware: {e}")
 
     # Include routers
+    print(f"🔍 Including main_router with routes: {[r.path for r in main_router.routes if hasattr(r, 'path')]}")
     app.include_router(main_router, prefix="", tags=["main"])
     app.include_router(feedback_router, prefix="", tags=["feedback"])
     app.include_router(learning_pipeline_router, prefix="", tags=["learning-pipeline"])

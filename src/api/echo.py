@@ -67,14 +67,24 @@ def build_debug_info(query: str, intent: str, confidence: float,
 
     # Get memory access info
     memory_accessed = []
-    for collection_name, hits in semantic_results.items() if isinstance(semantic_results, dict) else []:
-        for hit in hits[:3]:  # Top 3 per collection
+    # Handle semantic_results as a list (our new format)
+    if isinstance(semantic_results, list):
+        for result in semantic_results[:5]:
             memory_accessed.append({
-                "collection": collection_name,
-                "content_preview": str(hit.get("payload", {}))[:100],
-                "relevance_score": hit.get("score", 0.0),
-                "id": str(hit.get("id", "unknown"))
+                "source": result.get('metadata', {}).get('source', 'unknown'),
+                "content_preview": result.get('content', '')[:100],
+                "relevance_score": result.get('metadata', {}).get('confidence', 0.7)
             })
+    # Handle semantic_results as a dict (old format)
+    elif isinstance(semantic_results, dict):
+        for collection_name, hits in semantic_results.items():
+            for hit in hits[:3]:  # Top 3 per collection
+                memory_accessed.append({
+                    "collection": collection_name,
+                    "content_preview": str(hit.get("payload", {}))[:100],
+                    "relevance_score": hit.get("score", 0.0),
+                    "id": str(hit.get("id", "unknown"))
+                })
 
     # Intent classification reasoning
     reasoning = {
@@ -85,8 +95,8 @@ def build_debug_info(query: str, intent: str, confidence: float,
             "clarification_needed": confidence < 0.7
         },
         "semantic_search": {
-            "collections_searched": len(semantic_results) if isinstance(semantic_results, dict) else 0,
-            "total_memories_found": sum(len(hits) for hits in semantic_results.values()) if isinstance(semantic_results, dict) else 0,
+            "collections_searched": len(semantic_results) if isinstance(semantic_results, dict) else 1 if semantic_results else 0,
+            "total_memories_found": len(semantic_results) if isinstance(semantic_results, list) else sum(len(hits) for hits in semantic_results.values()) if isinstance(semantic_results, dict) else 0,
             "relevance_threshold": 0.7
         },
         "business_logic": {
@@ -118,6 +128,16 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
     """Main query endpoint with intelligent routing and conversation management"""
     start_time = time.time()
 
+    # MEMORY AUGMENTATION - Add memory context to ALL queries
+    try:
+        from src.middleware.memory_augmentation_middleware import augment_with_memories
+        original_query = request.query
+        request.query = augment_with_memories(request.query)
+        if request.query != original_query:
+            logger.info(f"📚 Query augmented with memory context")
+    except Exception as e:
+        logger.warning(f"Memory augmentation failed: {e}")
+
     # Generate conversation ID if not provided
     if not request.conversation_id:
         request.conversation_id = str(uuid.uuid4())
@@ -146,6 +166,47 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
 
     # SEMANTIC SEARCH INTEGRATION - Search existing memories FIRST
     semantic_results = []
+
+    # Import and use memory search
+    try:
+        print(f"🔍 MEMORY SEARCH: Starting search for '{request.query}'")
+        from src.managers.echo_integration import MemorySearch
+        memory_search = MemorySearch()
+        memories = memory_search.search_all(request.query)
+        total_memories = sum(len(v) for v in memories.values())
+        print(f"📚 MEMORY SEARCH: Found {total_memories} memories")
+        logger.info(f"📚 Found {total_memories} memories for query")
+
+        # Convert to semantic_results format
+        if total_memories > 0:
+            # Add learned patterns
+            if memories.get('learned_patterns'):
+                for pattern in memories['learned_patterns'][:3]:
+                    semantic_results.append({
+                        'content': pattern['text'],
+                        'metadata': {'source': 'learned_patterns', 'confidence': pattern.get('confidence', 0.8)}
+                    })
+
+            # Add conversations
+            if memories.get('conversations'):
+                for conv in memories['conversations'][:2]:
+                    semantic_results.append({
+                        'content': f"Previous Q: {conv['query']}\nA: {conv['response']}",
+                        'metadata': {'source': 'conversations', 'date': str(conv.get('date', ''))}
+                    })
+
+            # Add takeout insights
+            if memories.get('takeout'):
+                for item in memories['takeout'][:2]:
+                    semantic_results.append({
+                        'content': item['content'],
+                        'metadata': {'source': 'takeout', 'type': item.get('type', '')}
+                    })
+
+            logger.info(f"📚 Added {len(semantic_results)} memory results to context")
+    except Exception as e:
+        logger.error(f"Memory search error: {e}")
+
     if hasattr(conversation_manager, 'vector_search') and conversation_manager.vector_search:
         try:
             semantic_results = conversation_manager.vector_search.search_all_collections(
@@ -556,20 +617,32 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
         if request.intelligence_level and request.intelligence_level != "auto":
             context["requested_level"] = request.intelligence_level
 
+        # Build augmented query with memory context
+        augmented_query = request.query
+        if semantic_results:
+            memory_context_parts = ["\n📚 Relevant memories:"]
+            for result in semantic_results[:5]:
+                source = result.get('metadata', {}).get('source', 'unknown')
+                content = result.get('content', '')[:200]
+                memory_context_parts.append(f"[{source}]: {content}...")
+
+            augmented_query = "\n".join(memory_context_parts) + f"\n\n🔍 Current query: {request.query}"
+            logger.info(f"📚 Augmented query with {len(semantic_results)} memory results")
+
         # FIXED: Always use direct query_model instead of broken progressive_escalation
         if selected_model:
             logger.info(f"🧠 Using cognitively selected model: {selected_model} - {selection_reason}")
-            result = await intelligence_router.query_model(selected_model, request.query, context)
+            result = await intelligence_router.query_model(selected_model, augmented_query, context)
             if result["success"]:
                 result["intelligence_level"] = intelligence_level
                 result["escalation_path"] = [f"cognitive_selection:{selected_model}"]
                 result["decision_reason"] = selection_reason
             else:
                 logger.warning(f"⚠️ Cognitive model {selected_model} failed, trying fallback model")
-                result = await intelligence_router.query_model("llama3.2:3b", request.query, context)
+                result = await intelligence_router.query_model("llama3.2:3b", augmented_query, context)
         else:
             # Use direct query_model instead of broken progressive_escalation
-            result = await intelligence_router.query_model("llama3.2:3b", request.query, context)
+            result = await intelligence_router.query_model("llama3.2:3b", augmented_query, context)
 
         if result["success"]:
             processing_time = time.time() - start_time
