@@ -6,7 +6,7 @@
     },
     "llama3.2:8b": {
       "is_open": false,
-      "failure_count": 0
+      "failure_count": 4
     },
     "mixtral:8x7b": {
       "is_open": false,
@@ -18,7 +18,7 @@
     },
     "tinyllama:latest": {
       "is_open": false,
-      "failure_count": 0
+      "failure_count": 3
     },
     "llama3.2:3b": {
       "is_open": false,
@@ -37,5 +37,5 @@
       "failure_count": 0
     }
   },
-  "saved_at": "2025-12-10T23:22:35.493787"
+  "saved_at": "2025-12-13T04:38:43.014681"
 }

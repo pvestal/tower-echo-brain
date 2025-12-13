@@ -82,6 +82,16 @@ class EchoIntelligenceRouter:
     async def query_model(self, model: str, prompt: str, context: Dict = None, max_tokens: int = 2048, validate_code: bool = True) -> Dict:
         """Query specific Ollama model with conversation context and automatic validation"""
         try:
+            # MEMORY AUGMENTATION - Add stored memories to prompt
+            try:
+                from src.middleware.memory_augmentation_middleware import augment_with_memories
+                original_prompt = prompt
+                prompt = augment_with_memories(prompt)
+                if prompt != original_prompt:
+                    logger.info(f"📚 Query augmented with stored memories")
+            except Exception as e:
+                logger.debug(f"Memory augmentation skipped: {e}")
+
             # Construct full prompt with Echo system prompt and conversation history
             system_prompt = get_echo_system_prompt()
 

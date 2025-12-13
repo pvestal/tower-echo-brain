@@ -1,327 +1,230 @@
 #!/usr/bin/env python3
 """
-MEMORY-INTEGRATED Echo Brain Integration Layer
-THIS VERSION ACTUALLY USES MEMORY!
+Memory integration for Echo - connects 134k+ existing memories
 """
 
+import psycopg2
 import logging
-from typing import Optional, Dict, Any, List
-from fastapi import APIRouter, HTTPException
+from typing import Dict, List, Any, Optional
+from fastapi import APIRouter
 from pydantic import BaseModel
 
-# EXISTING IMPORTS
-from .resilient_model_manager import (
-    ResilientModelManager,
-    TaskUrgency,
-    ExecutionResult,
-    get_resilient_manager
-)
-
-# CRITICAL NEW IMPORTS - THE MISSING MEMORY COMPONENTS!
-from .knowledge_retrieval import KnowledgeRetrieval
-import sys
-sys.path.append('/opt/tower-echo-brain/src')
-from echo_vector_memory import VectorMemory
-from memory.context_retrieval import ConversationContextRetriever
-
 logger = logging.getLogger(__name__)
-
-# API Router
 router = APIRouter(prefix="/api/echo/resilient", tags=["resilient-models"])
 
 
-class MemoryOrchestrator:
-    """
-    CENTRAL MEMORY SERVICE - The foundation Echo was missing!
-    ALL queries go through memory FIRST
-    """
+class MemorySearch:
+    """Search Echo's existing memory tables"""
 
     def __init__(self):
-        # Initialize ALL memory systems
-        self.knowledge_retrieval = KnowledgeRetrieval()  # PostgreSQL semantic search
-        self.vector_memory = VectorMemory()  # Qdrant 4096D vectors
-        self.context_retriever = ConversationContextRetriever()  # Conversation context
-
-        logger.info("🧠 MEMORY ORCHESTRATOR INITIALIZED - Echo can now remember!")
-
-    async def retrieve_all_memories(self, query: str, conversation_id: str = None) -> Dict[str, Any]:
-        """
-        Retrieve memories from ALL sources before processing
-        THIS IS WHAT WAS MISSING!
-        """
-        memories = {
-            "knowledge_items": [],
-            "vector_memories": [],
-            "conversation_context": [],
-            "learned_patterns": []
+        self.db_config = {
+            'host': 'localhost',
+            'database': 'echo_brain',
+            'user': 'patrick',
+            'password': 'tower_echo_brain_secret_key_2025'
         }
 
-        # 1. Search knowledge_items table (PostgreSQL)
-        try:
-            knowledge = self.knowledge_retrieval.search_knowledge(query, limit=5)
-            if knowledge:
-                memories["knowledge_items"] = knowledge
-                logger.info(f"✅ Retrieved {len(knowledge)} knowledge items")
-        except Exception as e:
-            logger.warning(f"Knowledge retrieval error: {e}")
+    def search_all(self, query: str) -> Dict[str, List]:
+        """Search all memory sources"""
+        memories = {}
 
-        # 2. Search vector memories (Qdrant)
+        # Search conversations
         try:
-            vector_results = await self.vector_memory.recall(query, limit=5)
-            if vector_results:
-                memories["vector_memories"] = vector_results
-                logger.info(f"✅ Retrieved {len(vector_results)} vector memories")
-        except Exception as e:
-            logger.warning(f"Vector memory error: {e}")
-
-        # 3. Get conversation context
-        if conversation_id:
-            try:
-                context = self.context_retriever.get_context(conversation_id)
-                if context:
-                    memories["conversation_context"] = context
-                    logger.info("✅ Retrieved conversation context")
-            except Exception as e:
-                logger.warning(f"Context retrieval error: {e}")
-
-        # 4. Search learned patterns (direct PostgreSQL)
-        try:
-            import psycopg2
-            conn = psycopg2.connect(
-                host='localhost',
-                database='echo_brain',
-                user='patrick',
-                password='tower_echo_brain_secret_key_2025'
-            )
+            conn = psycopg2.connect(**self.db_config)
             cur = conn.cursor()
             cur.execute("""
-                SELECT pattern_text, confidence, frequency
-                FROM echo_learned_patterns
-                WHERE pattern_text ILIKE %s
-                ORDER BY confidence DESC, frequency DESC
+                SELECT user_query, response, timestamp
+                FROM conversations
+                WHERE user_query ILIKE %s OR response ILIKE %s
+                ORDER BY timestamp DESC
                 LIMIT 5
-            """, (f'%{query[:50]}%',))
-            patterns = cur.fetchall()
-            if patterns:
-                memories["learned_patterns"] = [
-                    {"text": p[0], "confidence": p[1], "frequency": p[2]}
-                    for p in patterns
-                ]
-                logger.info(f"✅ Retrieved {len(patterns)} learned patterns")
+            """, (f'%{query}%', f'%{query}%'))
+
+            memories['conversations'] = []
+            for row in cur.fetchall():
+                memories['conversations'].append({
+                    'query': row[0][:200] if row[0] else '',
+                    'response': row[1][:200] if row[1] else '',
+                    'date': row[2]
+                })
             cur.close()
             conn.close()
         except Exception as e:
-            logger.warning(f"Pattern retrieval error: {e}")
+            logger.error(f"Conversation search error: {e}")
+            memories['conversations'] = []
+
+        # Search learned patterns (Work documents)
+        try:
+            conn = psycopg2.connect(**self.db_config)
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT pattern_text, confidence
+                FROM echo_learned_patterns
+                WHERE pattern_text ILIKE %s
+                ORDER BY confidence DESC
+                LIMIT 5
+            """, (f'%{query}%',))
+
+            memories['learned_patterns'] = []
+            for row in cur.fetchall():
+                memories['learned_patterns'].append({
+                    'text': row[0][:500] if row[0] else '',
+                    'confidence': row[1]
+                })
+            cur.close()
+            conn.close()
+        except Exception as e:
+            logger.error(f"Pattern search error: {e}")
+            memories['learned_patterns'] = []
+
+        # Search photos
+        try:
+            conn = psycopg2.connect(**self.db_config)
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT filename, file_path, metadata
+                FROM photo_index
+                WHERE filename ILIKE %s OR metadata::text ILIKE %s
+                LIMIT 5
+            """, (f'%{query}%', f'%{query}%'))
+
+            memories['photos'] = []
+            for row in cur.fetchall():
+                memories['photos'].append({
+                    'name': row[0],
+                    'path': row[1],
+                    'metadata': row[2]
+                })
+            cur.close()
+            conn.close()
+        except Exception as e:
+            logger.error(f"Photo search error: {e}")
+            memories['photos'] = []
+
+        # Search takeout insights
+        try:
+            conn = psycopg2.connect(**self.db_config)
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT context, insight_type, file_id
+                FROM takeout_insights
+                WHERE context::text ILIKE %s
+                LIMIT 5
+            """, (f'%{query}%',))
+
+            memories['takeout'] = []
+            for row in cur.fetchall():
+                memories['takeout'].append({
+                    'content': str(row[0])[:300] if row[0] else '',
+                    'type': row[1],
+                    'source': str(row[2]) if row[2] else ''
+                })
+            cur.close()
+            conn.close()
+        except Exception as e:
+            logger.error(f"Takeout search error: {e}")
+            memories['takeout'] = []
 
         return memories
 
-    def augment_query_with_memories(self, query: str, memories: Dict[str, Any]) -> str:
-        """
-        Augment the query with retrieved memories
-        This creates the context-aware prompt!
-        """
-        augmented_parts = []
 
-        # Add knowledge items
-        if memories["knowledge_items"]:
-            augmented_parts.append("\n📚 Relevant Knowledge:")
-            for item in memories["knowledge_items"][:3]:
-                augmented_parts.append(f"- {item.get('title', '')}: {item.get('content', '')[:200]}...")
-
-        # Add vector memories
-        if memories["vector_memories"]:
-            augmented_parts.append("\n🧠 Related Memories:")
-            for mem in memories["vector_memories"][:3]:
-                augmented_parts.append(f"- {mem.get('text', '')[:200]}... (relevance: {mem.get('score', 0):.2f})")
-
-        # Add learned patterns
-        if memories["learned_patterns"]:
-            augmented_parts.append("\n📊 Learned Patterns:")
-            for pattern in memories["learned_patterns"][:2]:
-                augmented_parts.append(f"- {pattern['text'][:150]}... (confidence: {pattern['confidence']})")
-
-        # Add conversation context
-        if memories["conversation_context"]:
-            augmented_parts.append("\n💬 Previous Context:")
-            for ctx in memories["conversation_context"][-2:]:
-                augmented_parts.append(f"- {ctx[:150]}...")
-
-        # Combine with original query
-        if augmented_parts:
-            memory_context = "\n".join(augmented_parts)
-            return f"""Based on my memory and knowledge:
-{memory_context}
-
-Now answering your query: {query}"""
-
-        return query
-
-    async def store_interaction(self, query: str, response: str, metadata: Dict = None):
-        """
-        Store the interaction in memory for future recall
-        CONTINUOUS LEARNING!
-        """
-        # Store in vector memory
-        try:
-            await self.vector_memory.remember(
-                f"Q: {query}\nA: {response}",
-                metadata=metadata
-            )
-            logger.info("✅ Stored interaction in vector memory")
-        except Exception as e:
-            logger.warning(f"Failed to store in vector memory: {e}")
-
-
-class TaskTypeClassifier:
-    """Task classification (existing code)"""
-    def __init__(self):
-        self.patterns = {
-            "code_generation": ["write", "create", "implement", "build", "function"],
-            "code_review": ["review", "check", "analyze code", "find bugs"],
-            "reasoning": ["why", "explain", "reason", "think", "logic"],
-            "complex": ["design", "architect", "plan", "strategy"],
-            "analysis": ["analyze", "examine", "investigate", "study"],
-            "creative": ["imagine", "create story", "fiction", "poem"],
-            "technical": ["technical", "engineering", "system", "database"],
-            "simple": ["what is", "define", "simple", "basic"],
-            "fast_response": ["quick", "fast", "brief", "short"]
-        }
-
-    def classify(self, query: str) -> str:
-        query_lower = query.lower()
-        scores = {}
-        for task_type, patterns in self.patterns.items():
-            score = sum(1 for pattern in patterns if pattern in query_lower)
-            if score > 0:
-                scores[task_type] = score
-        if scores:
-            return max(scores.items(), key=lambda x: x[1])[0]
-        return "general"
-
-
-class EchoBrainIntegration:
-    """
-    MEMORY-INTEGRATED Echo Brain
-    Now with memory as the foundation!
-    """
+class EchoMemoryIntegration:
+    """Echo with memory integration"""
 
     def __init__(self):
-        self.classifier = TaskTypeClassifier()
-        self.manager: Optional[ResilientModelManager] = None
-
-        # INITIALIZE MEMORY ORCHESTRATOR - THE CORE!
-        self.memory = MemoryOrchestrator()
-        logger.info("✅ Echo Brain initialized WITH MEMORY INTEGRATION")
+        self.memory_search = MemorySearch()
+        self.manager = None
+        logger.info("✅ Echo initialized with memory search")
 
     async def initialize(self):
-        """Initialize the integration"""
+        """Initialize model manager"""
+        from .resilient_model_manager import get_resilient_manager
         self.manager = await get_resilient_manager()
-        logger.info("✅ Resilient model manager initialized")
 
-    async def process_query(
-        self,
-        query: str,
-        task_type: Optional[str] = None,
-        urgency: TaskUrgency = TaskUrgency.BACKGROUND,
-        system_prompt: str = "",
-        conversation_id: Optional[str] = None
-    ) -> Dict[str, Any]:
-        """
-        Process query WITH MEMORY RETRIEVAL FIRST!
-        Memory → Context → LLM → Store → Response
-        """
+    async def process_with_memory(self, query: str, conversation_id: str = None) -> Dict[str, Any]:
+        """Process query with memory search first"""
+        print(f"[MEMORY] process_with_memory called for: {query}")
+
         if not self.manager:
             await self.initialize()
 
-        # Classify task
-        if not task_type:
-            task_type = self.classifier.classify(query)
-            logger.info(f"Classified as: {task_type}")
+        # SEARCH MEMORIES FIRST
+        print(f"[MEMORY] Searching memories for: {query}")
+        memories = self.memory_search.search_all(query)
+        print(f"[MEMORY] Raw memories found: {memories.keys()}")
 
-        # ========== MEMORY RETRIEVAL (THE MISSING PIECE!) ==========
-        logger.info("🔍 RETRIEVING MEMORIES BEFORE PROCESSING...")
-        memories = await self.memory.retrieve_all_memories(query, conversation_id)
+        # Count total memories found
+        total_memories = sum(len(v) for v in memories.values())
+        logger.info(f"📚 Found {total_memories} memories for query")
 
-        # Count total memories retrieved
-        total_memories = sum(len(v) if isinstance(v, list) else 0 for v in memories.values())
-        logger.info(f"📚 Retrieved {total_memories} total memories")
+        # Build augmented query with memory context
+        augmented_query = query
+        if total_memories > 0:
+            context_parts = ["\nRelevant memories:"]
 
-        # AUGMENT QUERY WITH MEMORIES
-        augmented_query = self.memory.augment_query_with_memories(query, memories)
-        if augmented_query != query:
-            logger.info("✅ Query augmented with memory context")
+            # Add learned patterns (Work docs)
+            if memories.get('learned_patterns'):
+                context_parts.append("\n📄 From documents:")
+                for pattern in memories['learned_patterns'][:2]:
+                    context_parts.append(f"- {pattern['text'][:200]}...")
 
-        # Execute with augmented query
+            # Add previous conversations
+            if memories.get('conversations'):
+                context_parts.append("\n💬 Previous conversations:")
+                for conv in memories['conversations'][:2]:
+                    context_parts.append(f"- Q: {conv['query'][:100]}")
+                    context_parts.append(f"  A: {conv['response'][:100]}")
+
+            # Add photos if relevant
+            if memories.get('photos'):
+                context_parts.append(f"\n📸 Found {len(memories['photos'])} related photos")
+
+            # Add takeout insights
+            if memories.get('takeout'):
+                context_parts.append("\n📧 From personal data:")
+                for item in memories['takeout'][:2]:
+                    context_parts.append(f"- {item['content'][:150]}...")
+
+            augmented_query = query + "\n".join(context_parts) + f"\n\nNow answering: {query}"
+
+        # Process with model
+        from .resilient_model_manager import TaskUrgency
         result = await self.manager.complete_with_fallback(
-            task_type=task_type,
-            prompt=augmented_query,  # USE AUGMENTED QUERY!
-            system=system_prompt or self._get_memory_aware_system_prompt(),
-            urgency=urgency
+            task_type="general",
+            prompt=augmented_query,
+            system="You are Echo Brain with access to stored memories. Use the provided context when relevant.",
+            urgency=TaskUrgency.BACKGROUND
         )
 
-        # Store interaction for future recall
         if result.success:
-            await self.memory.store_interaction(
-                query,
-                result.value,
-                metadata={
-                    "model": result.model_used,
-                    "task_type": task_type,
-                    "conversation_id": conversation_id
-                }
-            )
-
-            response = {
+            return {
                 "success": True,
                 "response": result.value,
                 "model_used": result.model_used,
-                "task_type": task_type,
-                "memories_retrieved": total_memories,  # NEW!
-                "memory_sources": {  # NEW!
-                    "knowledge_items": len(memories["knowledge_items"]),
-                    "vector_memories": len(memories["vector_memories"]),
-                    "learned_patterns": len(memories["learned_patterns"]),
-                    "conversation_context": len(memories["conversation_context"])
+                "memories_retrieved": total_memories,
+                "memory_breakdown": {
+                    "patterns": len(memories.get('learned_patterns', [])),
+                    "conversations": len(memories.get('conversations', [])),
+                    "photos": len(memories.get('photos', [])),
+                    "takeout": len(memories.get('takeout', []))
                 },
-                "fallback_used": result.fallback_used,
-                "attempts": result.attempts,
-                "latency_ms": result.total_latency_ms,
                 "conversation_id": conversation_id
             }
-
-            logger.info(f"✅ Query processed with {total_memories} memories")
         else:
-            response = {
+            return {
                 "success": False,
                 "error": result.error,
                 "memories_retrieved": total_memories
             }
 
-        return response
 
-    def _get_memory_aware_system_prompt(self) -> str:
-        """System prompt that acknowledges memory"""
-        return """You are Echo Brain, an AI with persistent memory.
-I have access to my stored knowledge, learned patterns, and conversation history.
-When answering, I will use relevant memories to provide informed, contextual responses.
-I continuously learn from our interactions."""
+# Initialize
+echo_memory = EchoMemoryIntegration()
 
-
-# Initialize integration
-echo_integration = EchoBrainIntegration()
-
-# API endpoints
 @router.post("/query")
 async def query_with_memory(request: Dict[str, Any]):
-    """Process query with full memory integration"""
-    return await echo_integration.process_query(
+    """Query endpoint with memory search"""
+    return await echo_memory.process_with_memory(
         query=request.get("query", ""),
-        task_type=request.get("task_type"),
         conversation_id=request.get("conversation_id")
     )
-
-@router.get("/memory/stats")
-async def get_memory_stats():
-    """Get memory system statistics"""
-    # Implementation for memory stats
-    return {"status": "Memory system active"}
