@@ -538,27 +538,32 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
                 request.conversation_id, request.query, intent, response.response, True
             )
 
-            # Log to database for learning WITH entities
+            # Use unified conversation system for complete memory persistence
             try:
-                await save_conversation_with_entities(
-                    database,
-                    original_query,  # Use original query for database
-                    response.response,
-                    request.conversation_id,
-                    all_entities,  # Include extracted and historical entities
-                    response.model_used,
-                    response.processing_time,
-                    response.escalation_path,
-                    request.user_id,
-                    intent,
-                    confidence,
-                    True,  # requires_clarification
-                    clarifying_questions,
-                    complexity_score,
-                    tier
+                await save_unified_response(
+                    conversation_id=request.conversation_id,
+                    response=response.response,
+                    metadata={
+                        "user_query": original_query,
+                        "user_id": request.user_id,
+                        "username": username,
+                        "platform": "api",
+                        "model_used": response.model_used,
+                        "processing_time": response.processing_time,
+                        "escalation_path": response.escalation_path,
+                        "intent": intent,
+                        "confidence": confidence,
+                        "requires_clarification": True,
+                        "clarifying_questions": clarifying_questions,
+                        "complexity_score": complexity_score,
+                        "tier": tier,
+                        "entities": all_entities,
+                        "conversation_context": conversation_context
+                    }
                 )
+                logger.info(f"✅ Unified conversation saved for {request.conversation_id}")
             except Exception as e:
-                logger.error(f"❌ Clarification save_conversation FAILED: {e}")
+                logger.error(f"❌ Clarification save_unified_response FAILED: {e}")
 
             return response
 
@@ -626,26 +631,31 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
             )
 
             try:
-                # Save with entities
-                await save_conversation_with_entities(
-                    database,
-                    original_query,  # Use original, not resolved query
-                    response.response,
-                    request.conversation_id,
-                    all_entities,  # Include all extracted entities
-                    response.model_used,
-                    response.processing_time,
-                    response.escalation_path,
-                    request.user_id,
-                    intent,
-                    confidence,
-                    False,
-                    None,
-                    complexity_score,
-                    tier
+                # Use unified conversation system for complete memory persistence
+                await save_unified_response(
+                    conversation_id=request.conversation_id,
+                    response=response.response,
+                    metadata={
+                        "user_query": original_query,
+                        "user_id": request.user_id,
+                        "username": username,
+                        "platform": "api",
+                        "model_used": response.model_used,
+                        "processing_time": response.processing_time,
+                        "escalation_path": response.escalation_path,
+                        "intent": intent,
+                        "confidence": confidence,
+                        "requires_clarification": False,
+                        "clarifying_questions": None,
+                        "complexity_score": complexity_score,
+                        "tier": tier,
+                        "entities": all_entities,
+                        "conversation_context": conversation_context
+                    }
                 )
+                logger.info(f"✅ Unified conversation saved for {request.conversation_id}")
             except Exception as e:
-                logger.error(f"❌ log_interaction FAILED: {e}")
+                logger.error(f"❌ log_interaction unified save FAILED: {e}")
 
             return response
 
@@ -727,26 +737,31 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
             )
 
             try:
-                # Save with entities
-                await save_conversation_with_entities(
-                    database,
-                    original_query,  # Use original, not resolved query
-                    response.response,
-                    request.conversation_id,
-                    all_entities,  # Include all extracted entities
-                    response.model_used,
-                    response.processing_time,
-                    response.escalation_path,
-                    request.user_id,
-                    intent,
-                    confidence,
-                    False,
-                    None,
-                    complexity_score,
-                    tier
+                # Use unified conversation system for complete memory persistence
+                await save_unified_response(
+                    conversation_id=request.conversation_id,
+                    response=response.response,
+                    metadata={
+                        "user_query": original_query,
+                        "user_id": request.user_id,
+                        "username": username,
+                        "platform": "api",
+                        "model_used": response.model_used,
+                        "processing_time": response.processing_time,
+                        "escalation_path": response.escalation_path,
+                        "intent": intent,
+                        "confidence": confidence,
+                        "requires_clarification": False,
+                        "clarifying_questions": None,
+                        "complexity_score": complexity_score,
+                        "tier": tier,
+                        "entities": all_entities,
+                        "conversation_context": conversation_context
+                    }
                 )
+                logger.info(f"✅ Unified conversation saved for {request.conversation_id}")
             except Exception as e:
-                logger.error(f"❌ log_interaction FAILED: {e}")
+                logger.error(f"❌ log_interaction unified save FAILED: {e}")
 
             return response
         else:

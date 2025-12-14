@@ -163,7 +163,7 @@ class UnifiedConversationSystem:
 
             # 3. Get learning history
             cur.execute("""
-                SELECT learned_output, quality_score, metadata
+                SELECT learned_fact, confidence, metadata
                 FROM learning_history
                 WHERE input_text LIKE %s OR input_text = %s
                 ORDER BY created_at DESC
@@ -172,8 +172,8 @@ class UnifiedConversationSystem:
 
             learning = cur.fetchall()
             for item in learning:
-                if item["learned_output"]:
-                    context["learned_facts"].append(item["learned_output"])
+                if item["learned_fact"]:
+                    context["learned_facts"].append(item["learned_fact"])
 
             # 4. Extract entities and topics from metadata
             for msg in history:
@@ -258,12 +258,16 @@ class UnifiedConversationSystem:
             if metadata:
                 full_metadata.update(metadata)
 
-            # 1. Save to conversations table
+            # 1. Save to echo_conversations table
             cur.execute("""
-                INSERT INTO conversations
-                (conversation_id, user_query, response, user_id, metadata, timestamp)
-                VALUES (%s, %s, %s, %s, %s, NOW())
-                ON CONFLICT (conversation_id, timestamp) DO NOTHING
+                INSERT INTO echo_conversations
+                (conversation_id, query_text, response_text, user_id, metadata, created_at, last_activity)
+                VALUES (%s, %s, %s, %s, %s, NOW(), NOW())
+                ON CONFLICT (conversation_id) DO UPDATE SET
+                    query_text = EXCLUDED.query_text,
+                    response_text = EXCLUDED.response_text,
+                    metadata = EXCLUDED.metadata,
+                    last_activity = NOW()
             """, (
                 conversation_id,
                 original_query,
@@ -295,14 +299,14 @@ class UnifiedConversationSystem:
             if importance > 0.5:
                 cur.execute("""
                     INSERT INTO learning_history
-                    (input_text, learned_output, model_used, quality_score, created_at, metadata)
+                    (conversation_id, learned_fact, fact_type, confidence, created_at, metadata)
                     VALUES (%s, %s, %s, %s, NOW(), %s)
                 """, (
-                    original_query,
+                    conversation_id,
                     self._extract_key_fact(original_query),
-                    "unified_system",
+                    "conversation",
                     importance,
-                    Json({"source": "conversation", "conversation_id": conversation_id})
+                    Json({"source": "unified_system", "query": original_query})
                 ))
 
             conn.commit()
@@ -439,14 +443,15 @@ class UnifiedConversationSystem:
 
             # Update conversations table with response
             cur.execute("""
-                UPDATE conversations
-                SET response = %s,
+                UPDATE echo_conversations
+                SET response_text = %s,
                     model_used = %s,
                     processing_time = %s,
-                    confidence = %s
+                    confidence = %s,
+                    last_activity = NOW()
                 WHERE conversation_id = %s
-                  AND response = ''
-                ORDER BY timestamp DESC
+                  AND (response_text = '' OR response_text IS NULL)
+                ORDER BY created_at DESC
                 LIMIT 1
             """, (
                 response,
