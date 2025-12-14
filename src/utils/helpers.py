@@ -135,6 +135,62 @@ class SafeShellExecutor:
                 'safety_checks': safety_checks
             }
 
+    async def execute_capability(self, intent: str, intent_params: dict, query: str) -> dict:
+        """
+        Execute capability-based intents like image generation
+
+        Args:
+            intent: The intent type (e.g., 'image_generation')
+            intent_params: Parameters for the intent
+            query: The original user query
+
+        Returns:
+            Dictionary with execution results
+        """
+        if intent == "image_generation" or intent == "anime_generation":
+            # Call anime generation API
+            prompt = intent_params.get('prompt', query)
+            prompt = prompt.replace('generate image', '').replace('create image', '').replace('generate anime', '').strip()
+
+            try:
+                async with aiohttp.ClientSession() as session:
+                    payload = {"prompt": prompt, "style": "anime", "quality": "high"}
+                    async with session.post("http://localhost:8328/api/anime/generate",
+                                           json=payload, timeout=30) as resp:
+                        if resp.status == 200:
+                            result = await resp.json()
+                            job_id = result.get("job_id", "unknown")
+                            return {
+                                "response": f"✅ Image generation started!\n🎬 Job ID: {job_id}\n🎭 Prompt: {prompt}",
+                                "model": "anime_generator",
+                                "success": True
+                            }
+                        else:
+                            error = await resp.text()
+                            return {
+                                "response": f"❌ Image generation failed: {error}",
+                                "model": "anime_generator",
+                                "success": False
+                            }
+            except asyncio.TimeoutError:
+                return {
+                    "response": "❌ Image generation timed out. The anime service may be busy.",
+                    "model": "anime_generator",
+                    "success": False
+                }
+            except Exception as e:
+                return {
+                    "response": f"❌ Image generation error: {str(e)}",
+                    "model": "anime_generator",
+                    "success": False
+                }
+        else:
+            return {
+                "response": f"❌ Capability '{intent}' not implemented",
+                "model": "capability_handler",
+                "success": False
+            }
+
     async def execute_python(self, code: str, timeout: int = 30) -> dict:
         """Execute Python code safely"""
         # Write code to temporary file
