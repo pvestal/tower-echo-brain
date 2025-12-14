@@ -148,39 +148,73 @@ class SafeShellExecutor:
             Dictionary with execution results
         """
         if intent == "image_generation" or intent == "anime_generation":
-            # Call anime generation API
+            # Extract prompt and clean it
             prompt = intent_params.get('prompt', query)
-            prompt = prompt.replace('generate image', '').replace('create image', '').replace('generate anime', '').strip()
+            # Clean common prefixes and generation commands
+            prompt = prompt.replace('[Current message]:', '').replace('Generate image of', '')
+            prompt = prompt.replace('generate anime', '').replace('create', '')
+            prompt = prompt.replace('Generate anime image of', '').replace('Generate an image of', '')
+            prompt = prompt.strip()
+
+            logger.info(f"🎨 Generating anime image with prompt: {prompt}")
 
             try:
                 async with aiohttp.ClientSession() as session:
-                    payload = {"prompt": prompt, "style": "anime", "quality": "high"}
+                    # Use the correct API format that's actually working
+                    payload = {
+                        "prompt": prompt,
+                        "character": "original",
+                        "style": "anime",
+                        "generation_type": "image",  # Specifically request image generation
+                        "type": "professional",
+                        "duration": 3  # Not used for images but required field
+                    }
+
+                    # Call the main generate endpoint which is verified working
                     async with session.post("http://localhost:8328/api/anime/generate",
-                                           json=payload, timeout=30) as resp:
+                                           json=payload, timeout=60) as resp:
                         if resp.status == 200:
                             result = await resp.json()
                             job_id = result.get("job_id", "unknown")
+                            status = result.get("status", "processing")
+
+                            # Build response with job tracking info
+                            response_text = f"✅ Anime image generation started!\n"
+                            response_text += f"🎬 Job ID: {job_id}\n"
+                            response_text += f"🎭 Prompt: {prompt}\n"
+                            response_text += f"📊 Status: {status}\n"
+
+                            if result.get("comfyui_job_id"):
+                                response_text += f"🖼️ ComfyUI Job: {result['comfyui_job_id']}\n"
+
+                            response_text += f"🔍 Check status: http://localhost:8328/api/anime/jobs/{job_id}"
+
                             return {
-                                "response": f"✅ Image generation started!\n🎬 Job ID: {job_id}\n🎭 Prompt: {prompt}",
+                                "response": response_text,
                                 "model": "anime_generator",
-                                "success": True
+                                "success": True,
+                                "job_id": job_id,
+                                "metadata": result
                             }
                         else:
                             error = await resp.text()
+                            logger.error(f"Anime generation failed with status {resp.status}: {error}")
                             return {
-                                "response": f"❌ Image generation failed: {error}",
+                                "response": f"❌ Image generation failed (status {resp.status}): {error[:200]}",
                                 "model": "anime_generator",
                                 "success": False
                             }
             except asyncio.TimeoutError:
+                logger.error("Anime generation timed out after 60 seconds")
                 return {
-                    "response": "❌ Image generation timed out. The anime service may be busy.",
+                    "response": "⏱️ Image generation timed out. The anime service may be processing. Try checking job status later.",
                     "model": "anime_generator",
                     "success": False
                 }
             except Exception as e:
+                logger.error(f"Anime generation error: {e}")
                 return {
-                    "response": f"❌ Image generation error: {str(e)}",
+                    "response": f"❌ Image generation error: {str(e)[:200]}",
                     "model": "anime_generator",
                     "success": False
                 }
