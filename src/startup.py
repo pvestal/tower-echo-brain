@@ -113,9 +113,9 @@ class EchoBrainStartup:
             asyncio.create_task(self.background_worker.start())
             logger.info("🔄 Background worker started")
 
-            # Start autonomous behaviors - TEMPORARILY DISABLED FOR DEBUGGING
-            asyncio.create_task(self.autonomous_behaviors.start())
-            logger.info("🤖 Autonomous behaviors ENABLED - monitoring mode")
+            # Start autonomous behaviors - DISABLED due to blocking issues
+            # asyncio.create_task(self.autonomous_behaviors.start())
+            logger.info("🤖 Autonomous behaviors DISABLED - preventing startup blocking")
 
             # Start persona trainer learning loop
             asyncio.create_task(self.persona_trainer.autonomous_self_improvement())

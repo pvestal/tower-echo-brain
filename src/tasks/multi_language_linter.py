@@ -223,6 +223,13 @@ class MultiLanguageLinter:
         all_scores = []
 
         for root, _, files in os.walk(project_path):
+            # Skip virtual environments and other non-code directories
+            if any(skip in root for skip in ['venv', 'node_modules', '.git', '__pycache__',
+                                              '.venv', 'env', '.env', 'dist', 'build',
+                                              '.pytest_cache', '.mypy_cache', '.ruff_cache',
+                                              'site-packages', 'lib/python']):
+                continue
+
             for file in files:
                 filepath = os.path.join(root, file)
 

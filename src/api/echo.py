@@ -40,6 +40,13 @@ from src.memory.pronoun_resolver import PronounResolver
 from src.memory.entity_extractor import EntityExtractor
 from src.memory.memory_integration import save_conversation_with_entities
 
+# Import unified conversation system
+from src.core.unified_conversation import (
+    unified_conversation,
+    process_unified_message,
+    save_unified_response
+)
+
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
@@ -128,13 +135,16 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
     """Main query endpoint with intelligent routing and conversation management"""
     start_time = time.time()
 
+    print(f"\n🎯 ECHO QUERY HANDLER CALLED: {request.query[:50]}...\n")
+    logger.info(f"🎯 ECHO QUERY HANDLER CALLED: {request.query[:50]}...")
+
     # MEMORY AUGMENTATION - Add memory context to ALL queries
     try:
         from src.middleware.memory_augmentation_middleware import augment_with_memories
-        original_query = request.query
-        request.query = augment_with_memories(request.query)
-        if request.query != original_query:
+        augmented = augment_with_memories(request.query)
+        if augmented != request.query:
             logger.info(f"📚 Query augmented with memory context")
+            request.query = augmented
     except Exception as e:
         logger.warning(f"Memory augmentation failed: {e}")
 
@@ -161,8 +171,43 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
     # Add to user's conversation history
     await user_manager.add_conversation(username, "user", request.query)
 
+    # RETRIEVE CONVERSATION CONTEXT
+    try:
+        from src.middleware.conversation_context import conversation_context, inject_context
+        # Inject conversation history into the request
+        request_dict = request.dict()
+        request_dict = await inject_context(request_dict)
+        # Update query with context if available
+        if 'query' in request_dict and request_dict['query'] != request.query:
+            logger.info(f"📚 Injected conversation context for {request.conversation_id}")
+            request.query = request_dict['query']
+    except Exception as e:
+        logger.warning(f"Could not inject conversation context: {e}")
+
     logger.info(f"🔍 ECHO QUERY HANDLER - Query: {request.query[:50]}...")
     logger.info(f"🔍 Request type: {getattr(request, 'request_type', 'NOT_SET')}")
+
+    # Store original query for database logging
+    original_query = request.query
+
+    # UNIFIED CONVERSATION SYSTEM - Process through unified pipeline
+    try:
+        unified_result = await process_unified_message(
+            conversation_id=request.conversation_id,
+            user_query=request.query,
+            user_id=request.user_id,
+            metadata={
+                "intelligence_level": request.intelligence_level,
+                "request_type": getattr(request, 'request_type', 'query')
+            }
+        )
+
+        # Use enhanced query from unified system
+        if unified_result.get("enhanced_query"):
+            logger.info(f"🔄 Using unified enhanced query")
+            request.query = unified_result["enhanced_query"]
+    except Exception as e:
+        logger.warning(f"Unified conversation processing failed: {e}")
 
     # SEMANTIC SEARCH INTEGRATION - Search existing memories FIRST
     semantic_results = []
@@ -422,7 +467,6 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
         # ============================================
         # STEP 3: Resolve pronouns using context
         # ============================================
-        original_query = request.query
         resolved_query, resolved_entity = pronoun_resolver.resolve(
             original_query,
             all_entities  # Use merged entities for resolution
