@@ -3,6 +3,7 @@
 Echo Brain Main Entry Point - Refactored with Factory Pattern
 """
 import uvicorn
+import asyncio
 import logging
 from src.app_factory import create_app
 from src.startup import startup
@@ -16,8 +17,9 @@ app = create_app()
 async def startup_event():
     """Initialize services on startup"""
     logger.info("Echo Brain starting up...")
-    await startup.initialize_services()
-    logger.info("Echo Brain startup complete")
+    # Run initialization in background to not block uvicorn
+    asyncio.create_task(startup.initialize_services())
+    logger.info("Echo Brain startup initiated")
 
 @app.on_event("shutdown")
 async def shutdown_event():

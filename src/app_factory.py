@@ -51,6 +51,16 @@ except ImportError as e:
     print(f"❌ Failed to import telegram executor: {e}")
     telegram_executor_router = None
 
+# Enhanced Telegram Image Handler
+try:
+    from telegram_image_handler import enhanced_telegram_router
+    telegram_image_available = True
+    print("✅ Telegram image handler imported successfully")
+except ImportError as e:
+    telegram_image_available = False
+    print(f"❌ Failed to import telegram image handler: {e}")
+    enhanced_telegram_router = None
+
 # Resilient model management
 try:
     from src.managers.echo_integration import router as resilient_router
@@ -78,6 +88,16 @@ try:
     print("✅ Anime semantic search router imported successfully")
 except ImportError as e:
     anime_search_available = False
+
+# Media search endpoints
+try:
+    from src.api.media_search import router as media_search_router
+    media_search_available = True
+    print("✅ Media search router imported successfully")
+except ImportError as e:
+    media_search_available = False
+    print(f"❌ Failed to import media search router: {e}")
+    media_search_router = None
     print(f"❌ Failed to import anime search router: {e}")
     anime_search_router = None
 
@@ -161,6 +181,11 @@ def create_app() -> FastAPI:
         app.include_router(telegram_executor_router, prefix="", tags=["telegram-executor"])
         print("✅ Telegram executor routes added to app")
 
+    # Enhanced Telegram Image Handler
+    if telegram_image_available and enhanced_telegram_router:
+        app.include_router(enhanced_telegram_router, prefix="", tags=["telegram-images"])
+        print("✅ Telegram image handler routes added to app")
+
     # Resilient model management
     if resilient_available and resilient_router:
         app.include_router(resilient_router, prefix="", tags=["resilient-models"])
@@ -175,6 +200,11 @@ def create_app() -> FastAPI:
     if anime_search_available and anime_search_router:
         app.include_router(anime_search_router, prefix="", tags=["anime-search"])
         print("✅ Anime semantic search routes added to app")
+
+    # Media search endpoints
+    if media_search_available and media_search_router:
+        app.include_router(media_search_router, prefix="/api/echo", tags=["media-search"])
+        print("✅ Media search routes added to app at /api/echo/search/*")
 
     # Anime character integration
     if anime_integration_available and anime_integration_router:
