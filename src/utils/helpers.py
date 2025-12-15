@@ -166,13 +166,19 @@ class SafeShellExecutor:
                         "character": "original",
                         "style": "anime",
                         "generation_type": "image",  # Specifically request image generation
-                        "type": "professional",
+                        "type": "image",  # Changed from "professional" to "image"
                         "duration": 3  # Not used for images but required field
                     }
 
                     # Call the main generate endpoint which is verified working
+                    # Create a simple JWT token for internal service communication
+                    headers = {
+                        "Authorization": "Bearer internal_echo_service_token_2025",
+                        "Content-Type": "application/json"
+                    }
+
                     async with session.post("http://localhost:8328/api/anime/generate",
-                                           json=payload, timeout=60) as resp:
+                                           json=payload, headers=headers, timeout=60) as resp:
                         if resp.status == 200:
                             result = await resp.json()
                             job_id = result.get("job_id", "unknown")
