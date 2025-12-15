@@ -1,103 +1,171 @@
 {
-  "timestamp": "2025-12-09T06:10:11.550810",
-  "tests_passed": 8,
-  "tests_failed": 0,
-  "claims_verified": [
-    "INDEFINITE_MEMORY",
-    "CLAUDE_INDEXING",
-    "KNOWLEDGE_GRAPH",
-    "MEMORY_RECALL",
-    "IMPROVEMENT_METRICS",
-    "VECTOR_SEARCH",
-    "API_ENDPOINTS",
-    "CONTINUOUS_IMPROVEMENT"
-  ],
-  "claims_false": [],
-  "evidence": {
-    "oldest_memory": {
-      "count": 1847,
-      "oldest": "2025-12-05 17:03:59.926355",
-      "age_days": 3
-    },
-    "claude_indexing": {
-      "vectors_indexed": 12228,
-      "total_files": 12248,
-      "progress": "99.8%",
-      "process_running": false
-    },
-    "knowledge_graph": {
-      "process_running": true,
-      "checkpoint_exists": true,
-      "postgres_nodes": 0,
-      "redis_nodes": "30454",
-      "redis_edges": "17608"
-    },
-    "memory_recall": {
-      "fact_stored": "The secret test code is ECHO_1765260611",
-      "fact_recalled": true,
-      "response_preview": "The secret test code is the password \"ECHO_1765260611\". Is there anything else I can assist you with regarding the secret test code or would you like to explore other options on Tower?"
-    },
-    "improvement_metrics": {
-      "status": "running",
-      "metrics": {
-        "conversations_indexed": 10,
-        "files_analyzed": 0,
-        "patterns_learned": 0,
-        "improvements_deployed": 0,
-        "last_update": "2025-12-09T05:37:07.059871"
-      },
-      "knowledge_sources": {
-        "claude_conversations": 12228,
-        "learning_facts": 5887
-      },
-      "improvements": [],
-      "repeated_queries": [
-        {
-          "query": "Check git repository status for tower-music-production at /opt/tower-music-production using: cd /opt/tower-music-production && git status --porcelain 2>&1",
-          "frequency": 80
-        },
-        {
-          "query": "Check git repository status for vault at /opt/vault using: cd /opt/vault && git status --porcelain 2>&1",
-          "frequency": 79
-        },
-        {
-          "query": "Check git repository status for comfyui at /opt/comfyui using: cd /opt/comfyui && git status --porcelain 2>&1",
-          "frequency": 79
-        },
-        {
-          "query": "Check git repository status for jellyfin at /opt/jellyfin using: cd /opt/jellyfin && git status --porcelain 2>&1",
-          "frequency": 79
-        },
-        {
-          "query": "Check git repository status for tower-plaid-financial at /opt/tower-plaid-financial using: cd /opt/tower-plaid-financial && git status --porcelain 2>&1",
-          "frequency": 79
+  "timestamp": "2025-12-15T14:40:57.849751",
+  "passed": 2,
+  "failed": 10,
+  "tests": [
+    {
+      "name": "Health Check",
+      "status": "passed",
+      "duration": 0.007809162139892578,
+      "details": {
+        "success": true,
+        "status_code": 200,
+        "response": {
+          "status": "healthy",
+          "service": "echo-brain",
+          "version": "1.0.0",
+          "architecture": "modular",
+          "database": "connected",
+          "timestamp": "2025-12-15T14:40:57.856690",
+          "modules": {
+            "intelligence_router": true,
+            "conversation_manager": true,
+            "testing_framework": true,
+            "database": true,
+            "safe_executor": true
+          }
         }
-      ],
-      "performance": {
-        "error_rate": 0.0025779424796584225,
-        "avg_response_time": 0.050859811076506056
       }
     },
-    "vector_search": {
-      "collection": "learning_facts",
-      "vectors_count": 5887,
-      "search_results": 5
+    {
+      "name": "Basic Query",
+      "status": "failed",
+      "duration": 0.0015327930450439453,
+      "details": {
+        "success": false,
+        "status_code": 422,
+        "response_length": 0
+      }
     },
-    "api_endpoints": {
-      "working": [
-        "/api/echo/improvement/metrics",
-        "/api/echo/improvement/status",
-        "/api/echo/improvement/knowledge-graph",
-        "/api/echo/db/stats",
-        "/api/echo/health"
-      ],
-      "failed": []
+    {
+      "name": "Model Listing",
+      "status": "failed",
+      "duration": 0.013242483139038086,
+      "details": {
+        "success": false,
+        "model_count": 0,
+        "status_code": 200
+      }
     },
-    "continuous_improvement": {
-      "service_active": true,
-      "process_running": true,
-      "log_exists": true,
-      "recent_activity": true
+    {
+      "name": "Conversation History",
+      "status": "failed",
+      "duration": 0.001148223876953125,
+      "details": {
+        "success": false,
+        "status_code": 422,
+        "has_conversations": false
+      }
+    },
+    {
+      "name": "Complex Query",
+      "status": "failed",
+      "duration": 0.0010073184967041016,
+      "details": {
+        "success": false,
+        "model_used": "unknown",
+        "intelligence_level": "unknown",
+        "processing_time": 0
+      }
+    },
+    {
+      "name": "Memory Search",
+      "status": "failed",
+      "duration": 0.0009336471557617188,
+      "details": {
+        "success": false,
+        "status_code": 405,
+        "memories_found": 0
+      }
+    },
+    {
+      "name": "Brain Visualization",
+      "status": "failed",
+      "duration": 0.0008480548858642578,
+      "details": {
+        "success": false,
+        "has_neural_data": false
+      }
+    },
+    {
+      "name": "Task Creation",
+      "status": "failed",
+      "duration": 0.000980377197265625,
+      "details": {
+        "success": false,
+        "status_code": 404
+      }
+    },
+    {
+      "name": "Code Execution",
+      "status": "failed",
+      "duration": 0.0011858940124511719,
+      "details": {
+        "success": false,
+        "output_received": false
+      }
+    },
+    {
+      "name": "Multimedia Status",
+      "status": "passed",
+      "duration": 0.005414485931396484,
+      "details": {
+        "success": true,
+        "services_available": {
+          "endpoint": "/api/echo/multimedia/services/status",
+          "overall_health": "degraded",
+          "timestamp": "2025-12-15T14:40:57.883415",
+          "services": {
+            "comfyui": {
+              "service": "comfyui",
+              "success": false,
+              "status": "unhealthy",
+              "url": "http://localhost:8188",
+              "http_status": 404
+            },
+            "voice": {
+              "service": "voice",
+              "success": false,
+              "status": "unhealthy",
+              "url": "http://localhost:8312",
+              "http_status": 404
+            },
+            "music": {
+              "service": "music",
+              "success": false,
+              "status": "unhealthy",
+              "url": "http://localhost:8308",
+              "http_status": 404
+            },
+            "anime": {
+              "service": "anime",
+              "success": false,
+              "status": "unhealthy",
+              "url": "http://localhost:8328",
+              "http_status": 404
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "User Preferences",
+      "status": "failed",
+      "duration": 0.0007548332214355469,
+      "details": {
+        "success": false,
+        "status_code": 403
+      }
+    },
+    {
+      "name": "Parallel Queries",
+      "status": "failed",
+      "duration": 0.005631685256958008,
+      "details": {
+        "success": false,
+        "successful_queries": 0,
+        "total_queries": 5
+      }
     }
-  }
+  ]
 }

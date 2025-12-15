@@ -326,7 +326,7 @@ class TestModularDesign:
 
     def test_dependency_injection_pattern(self):
         """Test that dependencies can be injected"""
-        from src.api.echo_clean import query_echo
+        from src.api.legacy.echo_clean import query_echo
 
         # Check that the function uses dependencies
         import inspect

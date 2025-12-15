@@ -18,7 +18,7 @@ import httpx
 import psycopg2
 from PIL import Image
 
-from ..visual.visual_validator import VisualValidator, ValidationResult
+from tests.visual.visual_validator import VisualValidator, ValidationResult
 
 
 class CharacterGenerationTest:

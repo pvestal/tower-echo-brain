@@ -1,0 +1,36 @@
+================================================================================
+ECHO BRAIN COMPREHENSIVE TEST REPORT
+Timestamp: 2025-12-15T14:40:57.849751
+================================================================================
+
+📊 SUMMARY
+Total Tests: 12
+✅ Passed: 2
+❌ Failed: 10
+Pass Rate: 16.7%
+
+📋 TEST RESULTS
+----------------------------------------
+✅ Health Check: passed (0.01s)
+❌ Basic Query: failed (0.00s)
+❌ Model Listing: failed (0.01s)
+❌ Conversation History: failed (0.00s)
+❌ Complex Query: failed (0.00s)
+❌ Memory Search: failed (0.00s)
+❌ Brain Visualization: failed (0.00s)
+❌ Task Creation: failed (0.00s)
+❌ Code Execution: failed (0.00s)
+✅ Multimedia Status: passed (0.01s)
+❌ User Preferences: failed (0.00s)
+❌ Parallel Queries: failed (0.01s)
+
+🚨 CRITICAL ISSUES
+----------------------------------------
+- Basic Query: Failed
+- Model Listing: Failed
+
+💡 RECOMMENDATIONS
+----------------------------------------
+⚠️ System has major issues - immediate attention required
+
+================================================================================

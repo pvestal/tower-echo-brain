@@ -6,7 +6,7 @@ Uses symlinked database at /opt/echo/echo_resilient.db -> /opt/tower-echo-brain/
 import sys
 sys.path.insert(0, '/opt/echo')
 
-from echo_resilient_service import app
+from src.legacy.echo_resilient_service import app
 import uvicorn
 
 if __name__ == '__main__':

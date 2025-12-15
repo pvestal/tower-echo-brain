@@ -30,8 +30,8 @@ import logging
 import pytest
 import numpy as np
 
-from .test_framework_core import TestFrameworkCore, TestMetrics
-from .performance_testing import PerformanceMetrics
+from tests.framework.test_framework_core import TestFrameworkCore, TestMetrics
+from tests.framework.performance_testing import PerformanceMetrics
 
 
 @dataclass

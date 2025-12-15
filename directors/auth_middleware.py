@@ -10,7 +10,7 @@ import aiohttp
 import json
 from typing import Optional, Dict, Any
 from fastapi import HTTPException, Request, Depends
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from src.security import HTTPBearer, HTTPAuthorizationCredentials
 import jwt
 from datetime import datetime, timedelta
 

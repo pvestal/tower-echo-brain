@@ -387,5 +387,5 @@ class ApprovalWorkflowOrchestrator:
         return {"response": "I generate characters for approval FIRST, then create videos"}
 
 # Global orchestrator - Use inquisitive conversation flow
-from inquisitive_orchestrator import InquisitiveOrchestrator
+from src.misc.inquisitive_orchestrator import InquisitiveOrchestrator
 orchestrator = InquisitiveOrchestrator()

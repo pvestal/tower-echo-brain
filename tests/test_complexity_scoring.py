@@ -8,7 +8,7 @@ import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from engines.persona_threshold_engine import PersonaThresholdEngine
+from src.engines.persona_threshold_engine import PersonaThresholdEngine
 
 def test_complexity_scoring():
     """Test the improved complexity scoring algorithm"""

@@ -172,6 +172,14 @@ def create_app() -> FastAPI:
     app.include_router(improvement_router, prefix="/api/echo", tags=["improvement"])
     app.include_router(delegation_router, prefix="/api/echo", tags=["delegation"])
 
+    # Training status router
+    try:
+        from src.api.training_status import router as training_router
+        app.include_router(training_router, prefix="", tags=["training"])
+        print("✅ Training status routes added to app")
+    except ImportError as e:
+        print(f"❌ Failed to import training status router: {e}")
+
     # External routers
     app.include_router(agent_dev_router, prefix="", tags=["agents"])
     app.include_router(veteran_router, prefix="", tags=["veteran"])

@@ -13,7 +13,7 @@ def integrate_character_evolution():
     # Character evolution imports to add
     character_imports = '''
 # Character Evolution imports
-from character_evolution_service import (
+from bin.character_evolution_service import (
     CharacterEvolutionCreate, CharacterStateCreate, RelationshipDynamicsCreate,
     EmotionalImpactCreate, CharacterEvolutionResponse, CharacterTimelineResponse,
     CharacterEvolutionService
