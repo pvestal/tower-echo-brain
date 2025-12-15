@@ -25,7 +25,7 @@ with patch('directors.request_logger.DecisionTracker'), \
      patch('directors.service_registry.DirectorRegistry'), \
      patch('directors.db_pool.DatabasePool'):
 
-    from echo_board_integration import EchoBoardOfDirectors
+    from src.core.echo.echo_board_integration import EchoBoardOfDirectors
 
 
 class TestEchoBoardIntegration:

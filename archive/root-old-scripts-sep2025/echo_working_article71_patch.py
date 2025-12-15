@@ -10,7 +10,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import aiohttp
 import logging
-from article71_compliant_workflow import Article71Workflow
+from src.misc.article71_compliant_workflow import Article71Workflow
 
 app = FastAPI()
 logging.basicConfig(level=logging.INFO)

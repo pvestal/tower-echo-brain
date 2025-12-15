@@ -1,7 +1,5 @@
-name: Comprehensive Testing Pipeline (DISABLED)
+name: Comprehensive Testing Pipeline
 
-# DISABLED: This workflow has persistent issues with disk space and dependencies
-# Use ci-simple.yml instead
 on:
   workflow_dispatch:
     inputs:

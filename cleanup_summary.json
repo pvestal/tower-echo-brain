@@ -1,0 +1,12 @@
+{
+  "backup_files_removed": 8,
+  "root_files_found": 215,
+  "modules_created": [
+    "conversation",
+    "memory",
+    "learning",
+    "generation",
+    "infrastructure"
+  ],
+  "llm_model": "qwen2.5-coder:7b"
+}

@@ -160,7 +160,7 @@ class TestSecurityDirector:
         """Test that secure code gets approved."""
         safe_code = """
 def authenticate_user(username, password):
-    from werkzeug.security import check_password_hash
+    from src.security import check_password_hash
     user = User.query.filter_by(username=username).first()
     if user and check_password_hash(user.password_hash, password):
         return user

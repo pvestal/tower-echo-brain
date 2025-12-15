@@ -18,13 +18,13 @@ Author: Development Testing Framework Agent
 Created: 2025-11-06
 """
 
-from .test_framework_core import (
+from tests.framework.test_framework_core import (
     TestFrameworkCore,
     TestMetrics,
     TestSuiteConfig
 )
 
-from .integration_testing import (
+from tests.framework.integration_testing import (
     IntegrationTestPipeline,
     ServiceManager,
     DatabaseManager,
@@ -33,7 +33,7 @@ from .integration_testing import (
     IntegrationTestResult
 )
 
-from .performance_testing import (
+from tests.framework.performance_testing import (
     PerformanceTestSuite,
     LoadTester,
     StressTester,
@@ -43,7 +43,7 @@ from .performance_testing import (
     PerformanceMetrics
 )
 
-from .ai_testing_framework import (
+from tests.framework.ai_testing_framework import (
     AITestingSuite,
     ModelAccuracyTester,
     LearningConvergenceTester,
@@ -55,7 +55,7 @@ from .ai_testing_framework import (
     ConsensusTestConfig
 )
 
-from .test_data_management import (
+from tests.framework.test_data_management import (
     TestDataManager,
     FixtureManager,
     DatabaseManager as DataDatabaseManager,
@@ -67,7 +67,7 @@ from .test_data_management import (
     DatabaseSnapshot
 )
 
-from .regression_testing import (
+from tests.framework.regression_testing import (
     RegressionTester,
     PerformanceRegressionDetector,
     FunctionalRegressionDetector,

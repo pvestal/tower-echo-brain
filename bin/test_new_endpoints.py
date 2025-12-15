@@ -4,7 +4,7 @@
 def test_imports():
     """Test that all required modules can be imported"""
     try:
-        from echo_enhanced_service_updated import VaultClient, WebSearchService, CreditMonitoringService
+        from bin.echo_enhanced_service_updated import VaultClient, WebSearchService, CreditMonitoringService
         print("✅ All classes import successfully")
         return True
     except ImportError as e:
@@ -36,7 +36,7 @@ def test_endpoint_definitions():
 def test_class_initialization():
     """Test that new classes can be instantiated"""
     try:
-        from echo_enhanced_service_updated import VaultClient, WebSearchService, CreditMonitoringService
+        from bin.echo_enhanced_service_updated import VaultClient, WebSearchService, CreditMonitoringService
         
         vault_client = VaultClient()
         print("✅ VaultClient instantiated successfully")

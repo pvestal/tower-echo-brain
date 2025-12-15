@@ -34,7 +34,7 @@ import logging
 import pytest
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support, confusion_matrix
 
-from .test_framework_core import TestFrameworkCore, TestMetrics
+from tests.framework.test_framework_core import TestFrameworkCore, TestMetrics
 
 
 @dataclass

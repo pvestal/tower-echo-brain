@@ -36,7 +36,7 @@ import httpx
 import numpy as np
 from memory_profiler import profile
 
-from .test_framework_core import TestFrameworkCore, TestMetrics
+from tests.framework.test_framework_core import TestFrameworkCore, TestMetrics
 
 
 @dataclass

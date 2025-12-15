@@ -25,7 +25,7 @@ from typing import Union
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 try:
-    from echo_self_analysis import echo_self_analysis, AnalysisDepth, SelfAnalysisResult
+    from src.core.echo.echo_self_analysis import echo_self_analysis, AnalysisDepth, SelfAnalysisResult
     SELF_ANALYSIS_AVAILABLE = True
 except ImportError as e:
     logging.warning(f"Self-analysis module not available: {e}")
@@ -33,7 +33,7 @@ except ImportError as e:
 
 # Import database fallback manager
 try:
-    from echo_database_fallback import EchoDatabaseManager
+    from src.core.echo.echo_database_fallback import EchoDatabaseManager
     DATABASE_FALLBACK_AVAILABLE = True
 except ImportError as e:
     logging.warning(f"Database fallback not available: {e}")
@@ -41,7 +41,7 @@ except ImportError as e:
 
 # Import git integration for autonomous improvements
 try:
-    from echo_git_integration import EchoGitManager
+    from src.core.echo.echo_git_integration import EchoGitManager
     GIT_INTEGRATION_AVAILABLE = True
 except ImportError as e:
     logging.warning(f"Git integration not available: {e}")

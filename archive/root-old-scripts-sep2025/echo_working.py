@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from article71_compliant_workflow import Article71Workflow
+from src.misc.article71_compliant_workflow import Article71Workflow
 """
 WORKING Echo Brain Service - ACTUALLY generates images through ComfyUI
 Requirements:
@@ -457,7 +457,7 @@ if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8309)
 
 # Video Generation Addition
-from echo_video_module import EchoVideoGenerator, handle_video_request
+from src.core.echo.echo_video_module import EchoVideoGenerator, handle_video_request
 
 @app.post("/api/echo/generate_video")
 async def generate_video(request: dict):

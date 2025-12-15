@@ -33,7 +33,7 @@ import httpx
 import psycopg2
 from fastapi.testclient import TestClient
 
-from .test_framework_core import TestFrameworkCore, TestMetrics
+from tests.framework.test_framework_core import TestFrameworkCore, TestMetrics
 
 
 @dataclass

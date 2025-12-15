@@ -34,7 +34,7 @@ import pytest
 import psycopg2
 from faker import Faker
 
-from .test_framework_core import TestFrameworkCore
+from tests.framework.test_framework_core import TestFrameworkCore
 
 
 @dataclass
