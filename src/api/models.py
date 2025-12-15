@@ -1,3 +1,4 @@
+import asyncio
 #!/usr/bin/env python3
 """
 Model management API routes for Echo Brain
@@ -9,7 +10,7 @@ import time
 from datetime import datetime
 from fastapi import APIRouter, HTTPException, BackgroundTasks
 from src.db.models import QueryRequest
-from model_manager import get_model_manager
+from src.misc.model_manager import get_model_manager
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -92,8 +93,8 @@ async def get_model_operation_status(request_id: str):
     """Get status of a model operation"""
     try:
         # Initialize dependencies if not available
-        from routing.service_registry import ServiceRegistry
-        from routing.request_logger import RequestLogger
+        from src.routing.service_registry import ServiceRegistry
+        from src.routing.request_logger import RequestLogger
         board_registry = ServiceRegistry()
         request_logger = RequestLogger()
         model_manager = get_model_manager(board_registry, request_logger)
@@ -106,7 +107,7 @@ async def get_model_operation_status(request_id: str):
 @router.post("/api/echo/code")
 async def generate_code_only(request: QueryRequest):
     """Code generation endpoint - forces code output"""
-    from .echo import query_echo
+    from src.api.echo import query_echo
 
     # Modify query to force code generation
     code_request = QueryRequest(
@@ -119,3 +120,33 @@ async def generate_code_only(request: QueryRequest):
     response = await query_echo(code_request)
     response.mode = "code_only"
     return response
+# Add missing model definitions
+from pydantic import BaseModel
+from typing import Optional
+
+class FeedbackRequest(BaseModel):
+    feedback: str
+    rating: Optional[int] = None
+
+class FeedbackResponse(BaseModel):
+    success: bool
+    message: str
+
+
+# Add Filter class
+class Filter(BaseModel):
+    field: str
+    value: str
+
+
+# Add missing model definitions
+from pydantic import BaseModel
+from typing import Optional
+
+class FeedbackRequest(BaseModel):
+    feedback: str
+    rating: Optional[int] = None
+
+class FeedbackResponse(BaseModel):
+    success: bool
+    message: str

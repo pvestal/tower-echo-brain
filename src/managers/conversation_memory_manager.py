@@ -25,7 +25,7 @@ from collections import defaultdict
 from enum import Enum
 
 # Database and LLM integration
-from ..db.database import database
+from src.db.database import database
 # Direct Ollama API integration for LLM calls
 
 logger = logging.getLogger(__name__)

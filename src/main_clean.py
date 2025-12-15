@@ -23,7 +23,7 @@ from fastapi.responses import StreamingResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
 # Import modular components
-from src.db.models import (
+from src.api.models import (
     QueryRequest, QueryResponse, ExecuteRequest, ExecuteResponse,
     TestRequest, VoiceNotificationRequest, VoiceStatusRequest
 )
@@ -41,23 +41,23 @@ from src.tasks.task_implementation_executor import get_task_implementation_execu
 from src.tasks.task_queue import Task, TaskType, TaskPriority, TaskStatus
 
 # Import existing modules that remain external
-from echo_brain_thoughts import echo_brain
-from routing.service_registry import ServiceRegistry
-from routing.request_logger import RequestLogger
-from routing.feedback_system import FeedbackProcessor, UserFeedback, FeedbackType
-from routing.user_preferences import UserPreferences, PreferenceType
-from routing.knowledge_manager import KnowledgeManager, create_simple_knowledge_manager
-from routing.sandbox_executor import SandboxExecutor, create_strict_sandbox
+from src.core.echo.echo_brain_thoughts import echo_brain
+from src.routing.service_registry import ServiceRegistry
+from src.routing.request_logger import RequestLogger
+from src.routing.feedback_system import FeedbackProcessor, UserFeedback, FeedbackType
+from src.routing.user_preferences import UserPreferences, PreferenceType
+from src.routing.knowledge_manager import KnowledgeManager, create_simple_knowledge_manager
+from src.routing.sandbox_executor import SandboxExecutor, create_strict_sandbox
 from board_api import create_board_api
-from model_manager import (
+from src.misc.model_manager import (
     get_model_manager, ModelManagementRequest, ModelManagementResponse,
     ModelOperation, ModelInfo
 )
-from routing.auth_middleware import get_current_user
-from model_decision_engine import get_decision_engine
-from telegram_integration import telegram_router
-from veteran_guardian_endpoints import veteran_router
-from agent_development_endpoints import agent_dev_router
+from src.routing.auth_middleware import get_current_user
+from src.misc.model_decision_engine import get_decision_engine
+from src.misc.telegram_integration import telegram_router
+from src.misc.veteran_guardian_endpoints import veteran_router
+from src.modules.agents.agent_development_endpoints import agent_dev_router
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -66,7 +66,7 @@ logger = logging.getLogger(__name__)
 # Import cognitive model selector for intelligent model selection
 model_selector = None
 try:
-    from fixed_model_selector import ModelSelector
+    from archive.fixed-naming-cleanup-20251030.fixed_model_selector import ModelSelector
     model_selector = ModelSelector()
     logger.info("✅ Cognitive model selector loaded")
 except ImportError:
@@ -117,13 +117,13 @@ except Exception as e:
 from src.api.routes import router as api_router
 app.include_router(api_router)
 # Include system metrics routes
-from src.api.system_metrics import router as system_metrics_router
+from src.api.legacy.system_metrics import router as system_metrics_router
 app.include_router(system_metrics_router)
 logger.info("📊 System metrics API routes loaded")
 
 
 # Include resilient orchestration routes (optional extra endpoints)
-from src.api.resilient_routes import resilient_router
+from src.api.legacy.resilient_routes import resilient_router
 app.include_router(resilient_router)
 logger.info("🔗 Echo Brain API routes loaded")
 
@@ -139,7 +139,7 @@ logger.info("🤖 Agent Development System enabled")
 
 # Include control endpoints
 try:
-    from src.api.control_endpoints import control_router
+    from src.api.legacy.control_endpoints import control_router
     app.include_router(control_router)
     logger.info("✅ Control endpoints router included")
 except Exception as e:
@@ -147,7 +147,7 @@ except Exception as e:
 
 # Include multi-LLM collaboration routes
 try:
-    from src.api.collaboration_routes import router as collaboration_router
+    from src.api.legacy.collaboration_routes import router as collaboration_router
     app.include_router(collaboration_router)
     logger.info("🤝 Multi-LLM collaboration routes included")
 except Exception as e:
@@ -674,7 +674,7 @@ async def get_all_service_status():
     return status
 
 # Video Generation Endpoint
-from modules.video_generator import VideoGenerator
+from src.modules.video_generator import VideoGenerator
 
 video_gen = VideoGenerator()
 

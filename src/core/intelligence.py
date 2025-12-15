@@ -7,11 +7,11 @@ import asyncio
 import aiohttp
 import logging
 import time
-from .echo_system_prompt import get_echo_system_prompt
+from src.core.echo_system_prompt import get_echo_system_prompt
 from src.core.complexity_analyzer import ComplexityAnalyzer
 from typing import Dict, List, Optional
-from echo_brain_thoughts import echo_brain
-from model_decision_engine import get_decision_engine
+from src.core.echo.echo_brain_thoughts import echo_brain
+from src.misc.model_decision_engine import get_decision_engine
 from src.db.database import database
 from src.core.resilient_context import get_resilient_omniscient_context
 
@@ -44,7 +44,7 @@ class EchoIntelligenceRouter:
 
         # Import fixed model selector
         try:
-            from .model_selector_fix import model_selector
+            from src.core.model_selector_fix import model_selector
             self.model_selector = model_selector
         except ImportError:
             self.model_selector = None

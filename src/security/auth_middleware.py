@@ -5,7 +5,7 @@ Secures autonomous execution with JWT token validation
 """
 
 from fastapi import HTTPException, Request, Depends
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from src.security import HTTPBearer, HTTPAuthorizationCredentials
 import jwt
 import httpx
 import os

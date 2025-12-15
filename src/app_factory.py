@@ -10,36 +10,37 @@ from dotenv import load_dotenv
 
 # Core routers
 from src.api.routes import router as main_router
-from src.api.feedback_routes import router as feedback_router
-from src.api.learning_pipeline_routes import router as learning_pipeline_router
+from src.api.legacy.feedback_routes import router as feedback_router
+from src.api.legacy.learning_pipeline_routes import router as learning_pipeline_router
 
 # Verified execution routes
 try:
-    from src.api.verified_execution_routes import router as verified_execution_router
+    from src.api.legacy.verified_execution_routes import router as verified_execution_router
     verified_execution_available = True
     print("✅ Verified execution router imported successfully")
 except ImportError as e:
     verified_execution_available = False
     print(f"❌ Failed to import verified execution router: {e}")
     verified_execution_router = None
-from src.api.system_metrics import router as system_metrics_router
-from src.api.takeout_routes import router as takeout_router
-from src.api.enhanced_system_metrics import router as enhanced_system_metrics_router
-from src.api.gpu_monitor import router as gpu_monitor_router
-from src.api.neural_metrics import router as neural_metrics_router
-from src.api.learning_routes import router as learning_router
-from src.api.autonomous_routes import router as autonomous_router
-from src.api.coordination_routes import router as coordination_router
-from src.api.integration_testing_routes import integration_router
-from src.api.task_routes import router as task_router
+from src.api.legacy.system_metrics import router as system_metrics_router
+from src.api.legacy.takeout_routes import router as takeout_router
+from src.api.legacy.enhanced_system_metrics import router as enhanced_system_metrics_router
+from src.api.legacy.gpu_monitor import router as gpu_monitor_router
+from src.api.legacy.neural_metrics import router as neural_metrics_router
+from src.api.legacy.learning_routes import router as learning_router
+from src.api.legacy.autonomous_routes import router as autonomous_router
+from src.api.legacy.coordination_routes import router as coordination_router
+from src.api.legacy.integration_testing_routes import integration_router
+from src.api.legacy.task_routes import router as task_router
 from src.photo_comparison import router as photo_router
-from src.api.improvement_metrics import router as improvement_router
+from src.api.legacy.improvement_metrics import router as improvement_router
+from src.api.delegation_routes import router as delegation_router
 
 # External integrations
-from agent_development_endpoints import agent_dev_router
-from veteran_guardian_endpoints import veteran_router
-from telegram_general_chat import general_telegram_router
-from telegram_integration import telegram_router
+from src.modules.agents.agent_development_endpoints import agent_dev_router
+from src.misc.veteran_guardian_endpoints import veteran_router
+from src.misc.telegram_general_chat import general_telegram_router
+from src.misc.telegram_integration import telegram_router
 
 # Enhanced Telegram Executor
 try:
@@ -53,7 +54,7 @@ except ImportError as e:
 
 # Enhanced Telegram Image Handler
 try:
-    from telegram_image_handler import enhanced_telegram_router
+    from src.misc.telegram_image_handler import enhanced_telegram_router
     telegram_image_available = True
     print("✅ Telegram image handler imported successfully")
 except ImportError as e:
@@ -73,7 +74,7 @@ except ImportError as e:
 
 # Conversation memory management
 try:
-    from src.api.conversation_memory_routes import router as memory_router
+    from src.api.legacy.conversation_memory_routes import router as memory_router
     memory_available = True
     print("✅ Conversation memory router imported successfully")
 except ImportError as e:
@@ -83,7 +84,7 @@ except ImportError as e:
 
 # Anime semantic search
 try:
-    from src.api.anime_search import router as anime_search_router
+    from src.api.legacy.anime_search import router as anime_search_router
     anime_search_available = True
     print("✅ Anime semantic search router imported successfully")
 except ImportError as e:
@@ -91,7 +92,7 @@ except ImportError as e:
 
 # Media search endpoints
 try:
-    from src.api.media_search import router as media_search_router
+    from src.api.legacy.media_search import router as media_search_router
     media_search_available = True
     print("✅ Media search router imported successfully")
 except ImportError as e:
@@ -103,7 +104,7 @@ except ImportError as e:
 
 # Anime character integration
 try:
-    from src.api.anime_integration import router as anime_integration_router
+    from src.api.legacy.anime_integration import router as anime_integration_router
     anime_integration_available = True
     print("✅ Anime character integration router imported successfully")
 except ImportError as e:
@@ -113,7 +114,7 @@ except ImportError as e:
 
 # Semantic integration for intelligent creative orchestration
 try:
-    from src.api.semantic_integration_routes import router as semantic_integration_router
+    from src.api.legacy.semantic_integration_routes import router as semantic_integration_router
     semantic_integration_available = True
     print("✅ Semantic integration router imported successfully")
 except ImportError as e:
@@ -169,6 +170,7 @@ def create_app() -> FastAPI:
     app.include_router(task_router, prefix="", tags=["tasks"])
     app.include_router(photo_router, prefix="", tags=["vision"])
     app.include_router(improvement_router, prefix="/api/echo", tags=["improvement"])
+    app.include_router(delegation_router, prefix="/api/echo", tags=["delegation"])
 
     # External routers
     app.include_router(agent_dev_router, prefix="", tags=["agents"])

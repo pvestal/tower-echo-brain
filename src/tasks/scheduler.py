@@ -62,7 +62,7 @@ class BehaviorScheduler:
             # Create tasks for behaviors that should run
             for behavior_name in behaviors_to_run:
                 if self.task_queue:
-                    from .task_queue import Task, TaskType, TaskPriority
+                    from src.tasks.task_queue import Task, TaskType, TaskPriority
 
                     # Map behavior names to task types
                     task_type_map = {

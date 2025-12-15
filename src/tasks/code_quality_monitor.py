@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, Any, List, Optional
 from src.tasks.task_queue import Task, TaskType, TaskPriority
-from .code_refactor_executor import code_refactor_executor
+from src.tasks.code_refactor_executor import code_refactor_executor
 
 logger = logging.getLogger(__name__)
 

@@ -35,7 +35,7 @@ class EmailManager:
             'fallback_to_log': True
         }
 
-        # Try to load from config file
+        # Try to load from src.config file
         config_file = Path("/opt/tower-echo-brain/config/email_config.json")
         if config_file.exists():
             try:

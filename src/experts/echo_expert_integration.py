@@ -6,7 +6,7 @@ import sys
 import os
 sys.path.append('/opt/tower-echo-brain/src')
 
-from experts.echo_expert_system import EchoExpertSystem, ExpertType
+from src.experts.echo_expert_system import EchoExpertSystem, ExpertType
 from typing import Dict, Optional
 import asyncio
 import logging

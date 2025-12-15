@@ -15,7 +15,7 @@ sys.path.append('/opt/tower-echo-brain')
 
 # Try to load configuration
 try:
-    from config.memory_config import (
+    from src.config.memory_config import (
         MAX_HISTORY_MESSAGES,
         MAX_HISTORY_AGE_DAYS,
         MAX_ENTITY_LOOKBACK

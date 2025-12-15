@@ -46,7 +46,7 @@ class ServiceMonitor:
                         failed_services.append(service_name)
                         if self.task_queue:
                             # Create repair task
-                            from .task_queue import Task, TaskType, TaskPriority, TaskStatus
+                            from src.tasks.task_queue import Task, TaskType, TaskPriority, TaskStatus
                             repair_task = Task(
                                 id=str(__import__('uuid').uuid4()),
                                 name=f"Restart failed service: {service_name}",
@@ -94,7 +94,7 @@ class ServiceMonitor:
             if proc.returncode in [1, 2] and "Sealed" in stdout.decode() and ("true" in stdout.decode() or "Sealed          true" in stdout.decode()):
                 # Vault is sealed, create unseal task
                 if self.task_queue:
-                    from .task_queue import Task, TaskType, TaskPriority, TaskStatus
+                    from src.tasks.task_queue import Task, TaskType, TaskPriority, TaskStatus
                     from datetime import datetime
                     import uuid
 

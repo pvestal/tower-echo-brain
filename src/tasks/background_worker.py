@@ -21,7 +21,7 @@ import psutil
 import json
 import os
 
-from .task_queue import TaskQueue, Task, TaskStatus, TaskType, TaskPriority
+from src.tasks.task_queue import TaskQueue, Task, TaskStatus, TaskType, TaskPriority
 
 logger = logging.getLogger(__name__)
 
@@ -349,7 +349,7 @@ class BackgroundWorker:
                 logger.info(f"🔧 Processing code refactor task: {action} on {project_path}")
 
                 # Import code refactor executor
-                from .code_refactor_executor import code_refactor_executor
+                from src.tasks.code_refactor_executor import code_refactor_executor
 
                 if action == "analyze":
                     # Analyze code quality

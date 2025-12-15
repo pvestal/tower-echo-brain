@@ -138,7 +138,7 @@ class EchoMemoryIntegration:
 
     async def initialize(self):
         """Initialize model manager"""
-        from .resilient_model_manager import get_resilient_manager
+        from src.managers.resilient_model_manager import get_resilient_manager
         self.manager = await get_resilient_manager()
 
     async def process_with_memory(self, query: str, conversation_id: str = None) -> Dict[str, Any]:
@@ -188,7 +188,7 @@ class EchoMemoryIntegration:
             augmented_query = query + "\n".join(context_parts) + f"\n\nNow answering: {query}"
 
         # Process with model
-        from .resilient_model_manager import TaskUrgency
+        from src.managers.resilient_model_manager import TaskUrgency
         result = await self.manager.complete_with_fallback(
             task_type="general",
             prompt=augmented_query,

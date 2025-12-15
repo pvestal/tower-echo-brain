@@ -2,17 +2,17 @@
 
 # Import modules as they become available
 try:
-    from .context_retrieval import ConversationContextRetriever
+    from src.memory.context_retrieval import ConversationContextRetriever
 except ImportError:
     ConversationContextRetriever = None
 
 try:
-    from .pronoun_resolver import PronounResolver
+    from src.memory.pronoun_resolver import PronounResolver
 except ImportError:
     PronounResolver = None
 
 try:
-    from .entity_extractor import EntityExtractor
+    from src.memory.entity_extractor import EntityExtractor
 except ImportError:
     EntityExtractor = None
 

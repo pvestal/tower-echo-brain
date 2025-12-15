@@ -9,13 +9,13 @@ from typing import Dict, Any
 from src.tasks.task_queue import TaskQueue
 
 # Import behavior modules
-from .service_monitor import ServiceMonitor
+from src.behaviors.service_monitor import ServiceMonitor
 from src.behaviors.system_monitor import SystemMonitor
-from .code_quality_monitor import CodeQualityMonitor
-from .code_refactor_executor import CodeRefactorExecutor
-from .multi_language_linter import MultiLanguageLinter
-from .scheduler import BehaviorScheduler
-from .knowledge_graph_builder import KnowledgeGraphBuilder
+from src.behaviors.code_quality_monitor import CodeQualityMonitor
+from src.tasks.code_refactor_executor import CodeRefactorExecutor
+from src.tasks.multi_language_linter import MultiLanguageLinter
+from src.behaviors.scheduler import BehaviorScheduler
+from src.tasks.knowledge_graph_builder import KnowledgeGraphBuilder
 
 logger = logging.getLogger(__name__)
 
