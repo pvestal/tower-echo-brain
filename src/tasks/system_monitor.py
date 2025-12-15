@@ -35,7 +35,7 @@ class SystemMonitor:
             if cpu_percent > 90:
                 issues.append(f"High CPU usage: {cpu_percent}%")
                 if self.task_queue:
-                    from .task_queue import Task, TaskType, TaskPriority
+                    from src.tasks.task_queue import Task, TaskType, TaskPriority
                     task = Task(
                         type=TaskType.OPTIMIZATION,
                         priority=TaskPriority.HIGH,
@@ -47,7 +47,7 @@ class SystemMonitor:
             if memory.percent > 90:
                 issues.append(f"High memory usage: {memory.percent}%")
                 if self.task_queue:
-                    from .task_queue import Task, TaskType, TaskPriority
+                    from src.tasks.task_queue import Task, TaskType, TaskPriority
                     task = Task(
                         type=TaskType.MAINTENANCE,
                         priority=TaskPriority.HIGH,
@@ -59,7 +59,7 @@ class SystemMonitor:
             if disk.percent > 90:
                 issues.append(f"High disk usage: {disk.percent}%")
                 if self.task_queue:
-                    from .task_queue import Task, TaskType, TaskPriority
+                    from src.tasks.task_queue import Task, TaskType, TaskPriority
                     task = Task(
                         type=TaskType.MAINTENANCE,
                         priority=TaskPriority.URGENT,

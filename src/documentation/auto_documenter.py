@@ -464,7 +464,7 @@ Edit `config/settings.yaml` to configure:
 
 ## Usage
 ```python
-from echo_brain import EchoBrain
+from src.core.echo.echo_brain import EchoBrain
 
 echo = EchoBrain()
 result = await echo.execute_task("refactor code for better performance")

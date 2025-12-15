@@ -1,6 +1,6 @@
 """Orchestrator modules for Echo Brain"""
 
-from .resilient_orchestrator import (
+from src.orchestrators.resilient_orchestrator import (
     ResilientOrchestrator,
     initialize_orchestrator,
     ComputeLocation,

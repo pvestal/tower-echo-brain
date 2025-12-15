@@ -12,7 +12,7 @@ from datetime import datetime
 import json
 import traceback
 
-from services.semantic_memory_client import SemanticEnhancedOrchestrator
+from src.services.semantic_memory_client import SemanticEnhancedOrchestrator
 
 logger = logging.getLogger(__name__)
 

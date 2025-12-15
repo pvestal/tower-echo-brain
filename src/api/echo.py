@@ -23,7 +23,7 @@ from src.core.user_context_manager import get_user_context_manager
 from src.integrations.vault_manager import get_vault_manager
 
 # Import external modules
-from echo_brain_thoughts import echo_brain
+from src.core.echo.echo_brain_thoughts import echo_brain
 
 # Import agentic persona for collaborative interaction
 try:
@@ -32,7 +32,7 @@ except ImportError:
     agentic_persona = None
 
 # Import business logic middleware for centralized pattern application
-from .business_logic_middleware import business_logic_middleware, apply_business_logic_to_response
+from src.api.legacy.business_logic_middleware import business_logic_middleware, apply_business_logic_to_response
 
 # Import memory components for conversation context
 from src.memory.context_retrieval import ConversationContextRetriever
@@ -40,12 +40,31 @@ from src.memory.pronoun_resolver import PronounResolver
 from src.memory.entity_extractor import EntityExtractor
 from src.memory.memory_integration import save_conversation_with_entities
 
-# Import unified conversation system
-from src.core.unified_conversation import (
-    unified_conversation,
-    process_unified_message,
-    save_unified_response
+# Import conversation management system
+from src.core.conversation_manager import (
+    conversation_handler,
+    process_message,
+    save_response
 )
+
+# Import Tower LLM Executor for delegation
+from src.core.tower_llm_executor import tower_executor
+
+
+def handle_errors(func):
+    """Decorator to handle errors gracefully."""
+    from functools import wraps
+    @wraps(func)
+    async def wrapper(*args, **kwargs):
+        try:
+            return await func(*args, **kwargs)
+        except asyncio.TimeoutError:
+            logger.error(f"Timeout in {func.__name__}")
+            return {"error": "Request timeout", "status": "timeout"}
+        except Exception as e:
+            logger.error(f"Error in {func.__name__}: {e}")
+            return {"error": str(e), "status": "error"}
+    return wrapper
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -131,6 +150,7 @@ def build_debug_info(query: str, intent: str, confidence: float,
 
 @router.post("/api/echo/query", response_model=QueryResponse)
 @router.post("/api/echo/chat", response_model=QueryResponse)
+@handle_errors
 async def query_echo(request: QueryRequest, http_request: Request = None):
     """Main query endpoint with intelligent routing and conversation management"""
     start_time = time.time()
@@ -173,7 +193,7 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
 
     # RETRIEVE CONVERSATION CONTEXT
     try:
-        from src.middleware.conversation_context import conversation_context, inject_context
+        from src.intelligence.conversation_context import conversation_context, inject_context
         # Inject conversation history into the request
         request_dict = request.dict()
         request_dict = await inject_context(request_dict)
@@ -190,9 +210,9 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
     # Store original query for database logging
     original_query = request.query
 
-    # UNIFIED CONVERSATION SYSTEM - Process through unified pipeline
+    # CONVERSATION MANAGER - Process through conversation pipeline
     try:
-        unified_result = await process_unified_message(
+        unified_result = await process_message(
             conversation_id=request.conversation_id,
             user_query=request.query,
             user_id=request.user_id,
@@ -419,14 +439,16 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
     tier = None
     selection_reason = "default"
     try:
-        from fixed_model_selector import ModelSelector
-        selector = ModelSelector()
-        selected_model, intelligence_level, selection_reason, complexity_score, tier = selector.select_model(
-            request.query,
-            request.intelligence_level if request.intelligence_level != "auto" else None
-        )
-        logger.info(f"🎯 Cognitive selection: {selected_model} ({intelligence_level}) - {selection_reason}")
-        request.intelligence_level = intelligence_level
+        # Disabled: archive path with hyphens can't be imported
+        # from archive.fixed-naming-cleanup-20251030.fixed_model_selector import ModelSelector
+        # selector = ModelSelector()
+        # selected_model, intelligence_level, selection_reason, complexity_score, tier = selector.select_model(
+        #     request.query,
+        #     request.intelligence_level if request.intelligence_level != "auto" else None
+        # )
+        # logger.info(f"🎯 Cognitive selection: {selected_model} ({intelligence_level}) - {selection_reason}")
+        # request.intelligence_level = intelligence_level
+        pass
     except ImportError:
         logger.debug("Cognitive selector not available, using default routing")
 
@@ -540,7 +562,7 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
 
             # Use unified conversation system for complete memory persistence
             try:
-                await save_unified_response(
+                await save_response(
                     conversation_id=request.conversation_id,
                     response=response.response,
                     metadata={
@@ -563,7 +585,7 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
                 )
                 logger.info(f"✅ Unified conversation saved for {request.conversation_id}")
             except Exception as e:
-                logger.error(f"❌ Clarification save_unified_response FAILED: {e}")
+                logger.error(f"❌ Clarification save_response FAILED: {e}")
 
             return response
 
@@ -632,7 +654,7 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
 
             try:
                 # Use unified conversation system for complete memory persistence
-                await save_unified_response(
+                await save_response(
                     conversation_id=request.conversation_id,
                     response=response.response,
                     metadata={
@@ -738,7 +760,7 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
 
             try:
                 # Use unified conversation system for complete memory persistence
-                await save_unified_response(
+                await save_response(
                     conversation_id=request.conversation_id,
                     response=response.response,
                     metadata={
@@ -799,6 +821,7 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
         return response
 
 @router.get("/api/echo/brain")
+@handle_errors
 async def get_brain_activity():
     """Get current brain activity and neural state"""
     try:
@@ -812,6 +835,7 @@ async def get_brain_activity():
         raise HTTPException(status_code=500, detail=f"Brain activity error: {str(e)}")
 
 @router.get("/api/echo/thoughts/recent")
+@handle_errors
 async def get_recent_thoughts():
     """Get recent thought activity"""
     try:
@@ -842,6 +866,7 @@ async def get_recent_thoughts():
         return []
 
 @router.get("/api/echo/thoughts/{thought_id}")
+@handle_errors
 async def get_thought(thought_id: str):
     """Get specific thought by ID"""
     try:
@@ -860,6 +885,7 @@ async def get_thought(thought_id: str):
         raise HTTPException(status_code=500, detail=f"Thought retrieval error: {str(e)}")
 
 @router.get("/api/echo/conversation/{conversation_id}")
+@handle_errors
 async def get_conversation(conversation_id: str):
     """Get conversation history"""
     try:
@@ -874,6 +900,7 @@ async def get_conversation(conversation_id: str):
         raise HTTPException(status_code=500, detail=f"Conversation error: {str(e)}")
 
 @router.get("/api/echo/conversations")
+@handle_errors
 async def get_conversations():
     """Get all conversations"""
     try:
@@ -887,6 +914,7 @@ async def get_conversations():
         raise HTTPException(status_code=500, detail=f"Conversations error: {str(e)}")
 
 @router.get("/api/echo/oversight/dashboard")
+@handle_errors
 async def get_oversight_dashboard(http_request: Request):
     """Get creator oversight dashboard"""
     # Verify creator access
@@ -921,6 +949,7 @@ async def get_oversight_dashboard(http_request: Request):
     }
 
 @router.get("/api/echo/users/{username}")
+@handle_errors
 async def get_user_context(username: str, http_request: Request):
     """Get specific user context (creator only)"""
     # Verify creator access
@@ -938,6 +967,7 @@ async def get_user_context(username: str, http_request: Request):
     }
 
 @router.post("/api/echo/users/{username}/preferences")
+@handle_errors
 async def update_user_preferences(username: str, preferences: Dict[str, Any], http_request: Request):
     """Update user preferences (creator only)"""
     # Verify creator access

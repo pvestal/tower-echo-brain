@@ -6,12 +6,12 @@ import logging
 from fastapi import APIRouter
 
 # Import domain-specific routers
-from .health import router as health_router
-from .echo import router as echo_router
-from .models import router as models_router
-from .multimedia import router as multimedia_router
-from .testing import router as testing_router
-from .tower import router as tower_router
+from src.api.health import router as health_router
+from src.api.echo import router as echo_router
+from src.api.models import router as models_router
+from src.api.legacy.multimedia import router as multimedia_router
+from src.services.testing import router as testing_router
+from src.api.legacy.tower import router as tower_router
 
 logger = logging.getLogger(__name__)
 

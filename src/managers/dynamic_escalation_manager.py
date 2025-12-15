@@ -11,7 +11,7 @@ import logging
 from datetime import datetime
 import sys
 sys.path.append('/opt/tower-echo-brain/src')
-from engines.persona_threshold_engine import PersonaThresholdEngine
+from src.engines.persona_threshold_engine import PersonaThresholdEngine
 
 logger = logging.getLogger(__name__)
 

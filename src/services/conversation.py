@@ -19,7 +19,7 @@ class ConversationManager:
 
         # ACTUALLY CONNECT TO REAL VECTOR SEARCH
         try:
-            from .real_vector_search import RealVectorSearch
+            from src.services.real_vector_search import RealVectorSearch
             self.vector_search = RealVectorSearch()
             logger.info("✅ Connected to REAL vector search - 40,554 vectors accessible!")
         except Exception as e:
@@ -28,8 +28,8 @@ class ConversationManager:
 
         # CONNECT TO BUSINESS LOGIC COMPONENTS (SEPARATED FOR BETTER ARCHITECTURE)
         try:
-            from .business_logic_matcher import BusinessLogicPatternMatcher
-            from .business_logic_applicator import BusinessLogicApplicator
+            from src.services.business_logic_matcher import BusinessLogicPatternMatcher
+            from src.services.business_logic_applicator import BusinessLogicApplicator
 
             self.pattern_matcher = BusinessLogicPatternMatcher()
             self.logic_applicator = BusinessLogicApplicator()

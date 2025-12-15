@@ -25,7 +25,7 @@ def get_service_registry():
     """Dependency provider for ServiceRegistry"""
     if _service_registry is None:
         # Fallback: create new instance if not initialized
-        from routing.service_registry import ServiceRegistry
+        from src.routing.service_registry import ServiceRegistry
         return ServiceRegistry()
     return _service_registry
 
@@ -33,7 +33,7 @@ def get_request_logger():
     """Dependency provider for RequestLogger"""
     if _request_logger is None:
         # Fallback: create new instance if not initialized
-        from routing.request_logger import RequestLogger
+        from src.routing.request_logger import RequestLogger
         return RequestLogger()
     return _request_logger
 
@@ -45,7 +45,7 @@ def get_model_manager_instance(
     global _model_manager
 
     if _model_manager is None:
-        from model_manager import get_model_manager
+        from src.misc.model_manager import get_model_manager
         try:
             _model_manager = get_model_manager(service_registry, request_logger)
             logger.info("✅ Model manager initialized via dependency injection")

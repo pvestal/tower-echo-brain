@@ -54,7 +54,7 @@ class CoordinationWebSocketManager:
         """Send initial dashboard state to new connection"""
         try:
             # Get current system state
-            from ..api.coordination_routes import agents_state, system_alerts, coordination_log
+            from src.api.legacy.coordination_routes import agents_state, system_alerts, coordination_log
 
             initial_data = {
                 'type': 'initial_state',

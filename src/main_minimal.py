@@ -5,28 +5,28 @@ Echo Brain Unified Service - Refactored Main Entry Point with Autonomous Task Sy
 
 from src.modules.video_generator import VideoGenerator
 from src.vision_capabilities import EchoVision
-from src.api.resilient_routes import resilient_router
-from src.api.system_metrics import router as system_metrics_router
+from src.api.legacy.resilient_routes import resilient_router
+from src.api.legacy.system_metrics import router as system_metrics_router
 from src.api.routes import router as api_router
-from src.api.learning_routes import router as learning_router
+from src.api.legacy.learning_routes import router as learning_router
 # from src.api.director_routes import router as director_router  # TEMPORARILY DISABLED - missing file
 # from src.api.soundtrack_routes import router as soundtrack_router  # TEMPORARILY DISABLED - missing file
-from src.api.autonomous_routes import router as autonomous_router
+from src.api.legacy.autonomous_routes import router as autonomous_router
 from src.photo_comparison import router as photo_router
 import requests
-from agent_development_endpoints import agent_dev_router
-from veteran_guardian_endpoints import veteran_router
-from telegram_general_chat import general_telegram_router
-from telegram_integration import telegram_router
-from model_manager import (
+from src.modules.agents.agent_development_endpoints import agent_dev_router
+from src.misc.veteran_guardian_endpoints import veteran_router
+from src.misc.telegram_general_chat import general_telegram_router
+from src.misc.telegram_integration import telegram_router
+from src.misc.model_manager import (
     get_model_manager,
     ModelManagementRequest,
     ModelOperation,
 )
 # from board_api import create_board_api  # TEMPORARILY DISABLED - missing file
-from routing.knowledge_manager import create_simple_knowledge_manager
-from routing.request_logger import RequestLogger
-from routing.service_registry import ServiceRegistry
+from src.routing.knowledge_manager import create_simple_knowledge_manager
+from src.routing.request_logger import RequestLogger
+from src.routing.service_registry import ServiceRegistry
 from src.tasks.task_queue import Task, TaskType, TaskPriority, TaskStatus
 from src.tasks import TaskQueue, BackgroundWorker, AutonomousBehaviors
 from src.board_integration import BoardIntegration
@@ -114,7 +114,7 @@ logger.info("✅ CODE CAPABILITIES LOADED - Echo can now review and refactor cod
 # Import cognitive model selector for intelligent model selection
 model_selector = None
 try:
-    from fixed_model_selector import ModelSelector
+    from archive.fixed-naming-cleanup-20251030.fixed_model_selector import ModelSelector
 
     model_selector = ModelSelector()
     logger.info("✅ Cognitive model selector loaded")
@@ -206,7 +206,7 @@ logger.info("🤖 Agent Development System enabled")
 
 # Include control endpoints
 try:
-    from src.api.control_endpoints import control_router
+    from src.api.legacy.control_endpoints import control_router
 
     app.include_router(control_router)
     logger.info("✅ Control endpoints router included")
@@ -215,7 +215,7 @@ except Exception as e:
 
 # Include multi-LLM collaboration routes
 try:
-    from src.api.collaboration_routes import router as collaboration_router
+    from src.api.legacy.collaboration_routes import router as collaboration_router
 
     app.include_router(collaboration_router)
     logger.info("🤝 Multi-LLM collaboration routes included")

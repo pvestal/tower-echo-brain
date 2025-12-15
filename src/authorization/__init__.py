@@ -1,4 +1,4 @@
-from .autonomous_auth import (
+from src.authorization.autonomous_auth import (
     AutonomousAuthorization,
     RiskLevel,
     ApprovalMode,

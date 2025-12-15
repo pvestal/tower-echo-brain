@@ -14,7 +14,7 @@ from datetime import datetime
 import sys
 import os
 sys.path.append('/opt/tower-echo-brain/src')
-from config.qdrant_4096d_config import COLLECTION_MAPPING, QDRANT_CONFIG, get_4096d_collection
+from src.config.qdrant_4096d_config import COLLECTION_MAPPING, QDRANT_CONFIG, get_4096d_collection
 
 logger = logging.getLogger(__name__)
 
@@ -282,7 +282,7 @@ class EchoWithMemory:
 # Example integration code for Echo's main.py
 INTEGRATION_CODE = '''
 # Add to Echo's main.py imports:
-from echo_vector_memory import VectorMemory, EchoWithMemory
+from src.echo_vector_memory import VectorMemory, EchoWithMemory
 
 # Initialize memory system at startup:
 vector_memory = VectorMemory()

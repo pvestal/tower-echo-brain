@@ -8,9 +8,9 @@ from src.db.database import database
 from src.tasks.task_queue import TaskQueue
 from src.tasks import BackgroundWorker, AutonomousBehaviors
 from src.board_integration import BoardIntegration
-from routing.service_registry import ServiceRegistry
-from routing.request_logger import RequestLogger
-from routing.knowledge_manager import create_simple_knowledge_manager
+from src.routing.service_registry import ServiceRegistry
+from src.routing.request_logger import RequestLogger
+from src.routing.knowledge_manager import create_simple_knowledge_manager
 
 
 from src.tasks.persona_trainer import PersonaTrainer

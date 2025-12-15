@@ -78,3 +78,14 @@ class TestingFramework:
 
 # Global instance
 testing_framework = TestingFramework()
+# Create router for compatibility
+from fastapi import APIRouter
+
+router = APIRouter()
+testing_framework = TestingFramework()
+
+@router.post("/test/{service}")
+async def test_service(service: str):
+    """Test a service"""
+    return await testing_framework.run_universal_test(service)
+

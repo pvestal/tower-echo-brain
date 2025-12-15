@@ -170,13 +170,13 @@ class LearningMiddleware:
 
             cur.execute("""
                 INSERT INTO learning_history
-                (input_text, learned_output, model_used, quality_score, created_at, metadata)
+                (conversation_id, learned_fact, fact_type, confidence, created_at, metadata)
                 VALUES (%s, %s, %s, %s, NOW(), %s)
             """, (
                 conversation_id,
                 facts,
-                "learning_middleware",
-                0.8,  # Default quality score
+                "auto_extracted",
+                0.8,  # Default confidence score
                 Json({"source": "conversation", "auto_extracted": True})
             ))
 
@@ -211,19 +211,23 @@ class LearningMiddleware:
 
             summary += ", ".join(topics) if topics else "general information"
 
+            # Need conversation_id - extract from query or generate
+            conv_id = query[:100] if len(query) <= 100 else query[:100]
+
             cur.execute("""
                 INSERT INTO learning_history
-                (input_text, learned_output, model_used, quality_score, created_at, metadata)
+                (conversation_id, learned_fact, fact_type, confidence, created_at, metadata)
                 VALUES (%s, %s, %s, %s, NOW(), %s)
             """, (
-                query[:500],
+                conv_id,
                 summary,
-                "auto_learning",
+                "conversation_summary",
                 importance,
                 Json({
                     "type": "conversation_summary",
                     "response_length": len(response),
-                    "topics": topics
+                    "topics": topics,
+                    "original_query": query[:500]
                 })
             ))
 

@@ -12,9 +12,9 @@ from typing import Dict, Any, Optional
 from pathlib import Path
 import json
 
-from .code_writer import get_code_writer
-from .code_reviewer import get_code_reviewer
-from .service_tester import get_service_tester
+from src.tasks.code_writer import get_code_writer
+from src.tasks.code_reviewer import get_code_reviewer
+from src.tasks.service_tester import get_service_tester
 
 logger = logging.getLogger(__name__)
 

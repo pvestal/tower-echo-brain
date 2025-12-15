@@ -18,8 +18,8 @@ from enum import Enum
 from pathlib import Path
 import json
 
-from .resilient_model_manager import ResilientModelManager, TaskUrgency, get_resilient_manager
-from ..execution.verified_executor import ExecutionStatus, ExecutionResult, VerifiedAction
+from src.managers.resilient_model_manager import ResilientModelManager, TaskUrgency, get_resilient_manager
+from src.execution.verified_executor import ExecutionStatus, ExecutionResult, VerifiedAction
 
 logger = logging.getLogger(__name__)
 

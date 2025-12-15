@@ -27,7 +27,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 try:
     import sys
     sys.path.append("/opt/tower-echo-brain")
-    from echo_expert_personas import EchoPersonalityIntegration
+    from src.core.echo.echo_expert_personas import EchoPersonalityIntegration
     persona_system_available = True
 except Exception as e:
     logger.warning(f"Persona system not available: {e}")
@@ -631,7 +631,7 @@ async def chat(request: ChatRequest):
             # Import and use the orchestrator
             import sys
             sys.path.append('/opt/tower-echo-brain')
-            from orchestrator_integration import orchestrator
+            from archive.root-old-scripts-sep2025.orchestrator_integration import orchestrator
             
             # Actually call orchestration services with conversation flow
             # Extract user from message context or use default

@@ -5,11 +5,11 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 from datetime import datetime
 
-from .vision_quality_checker import VisionQualityChecker
-from .music_quality_checker import MusicQualityChecker
-from .voice_quality_checker import VoiceQualityChecker
-from .cross_modal_sync import CrossModalSync
-from .kb_video_verifier import KBVideoVerifier
+from src.modules.vision_quality_checker import VisionQualityChecker
+from src.modules.music_quality_checker import MusicQualityChecker
+from src.modules.voice_quality_checker import VoiceQualityChecker
+from src.modules.cross_modal_sync import CrossModalSync
+from src.modules.kb_video_verifier import KBVideoVerifier
 
 class UnifiedMultimediaPipeline:
     """Unified pipeline for all multimedia generation"""

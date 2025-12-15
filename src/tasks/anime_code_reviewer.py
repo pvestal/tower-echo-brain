@@ -137,7 +137,7 @@ class AnimeCodeReviewer:
 
         # Import Echo's task system
         try:
-            from src.components.task_queue import TaskQueueManager
+            from src.tasks.task_queue import TaskQueueManager
 
             task_manager = TaskQueueManager()
 

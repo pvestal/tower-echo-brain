@@ -378,7 +378,7 @@ class EchoVideoGenerator:
 # Import AnimateDiff workflow
 import sys
 sys.path.append('/opt/tower-echo-brain')
-from animatediff_workflow import create_animatediff_workflow
+from src.misc.animatediff_workflow import create_animatediff_workflow
 
 def generate_quality_video(prompt, duration=5, fps=24):
     '''Generate actual quality video with AnimateDiff'''

@@ -59,7 +59,7 @@ async def board_deliberation(request: BoardDecisionRequest, background_tasks: Ba
         # Import the Board implementation
         import sys
         sys.path.append('/opt/tower-echo-brain/src')
-        from cicd.echo_cicd_board_implementation import BoardOfDirectors
+        from src.cicd.echo_cicd_board_implementation import BoardOfDirectors
 
         # Start MLflow run
         with mlflow.start_run() as run:
@@ -372,7 +372,7 @@ logger.info("🏛️ Board of Directors API integrated")
         # Test locally first
         import sys
         sys.path.append('/opt/tower-echo-brain/src')
-        from cicd.echo_cicd_board_implementation import BoardOfDirectors
+        from src.cicd.echo_cicd_board_implementation import BoardOfDirectors
 
         board = BoardOfDirectors()
         result = await board.deliberate(test_request, {"test": True})
