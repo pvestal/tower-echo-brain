@@ -50,7 +50,7 @@ async def get_cached_session_context():
         async with pool.acquire() as conn:
             # Get recent conversations
             recent_conversations = await conn.fetch("""
-                SELECT user_query, response, intent, timestamp
+                SELECT query_text, response_text, intent, timestamp
                 FROM conversations
                 WHERE timestamp >= NOW() - INTERVAL '24 hours'
                 ORDER BY timestamp DESC
@@ -73,7 +73,7 @@ async def get_cached_session_context():
                 },
                 "recent_activity": [
                     {
-                        "topic": row['user_query'][:80] if row['user_query'] else "System query",
+                        "topic": row['query_text'][:80] if row['query_text'] else "System query",
                         "intent": row['intent'],
                         "when": row['timestamp'].strftime("%H:%M") if row['timestamp'] else "unknown"
                     }
@@ -216,7 +216,7 @@ async def optimized_query(request: QueryRequest):
         pool = await get_connection_pool()
         async with pool.acquire() as conn:
             await conn.execute("""
-                INSERT INTO conversations (conversation_id, user_query, response, intent, timestamp)
+                INSERT INTO conversations (conversation_id, query_text, response, intent, timestamp)
                 VALUES ($1, $2, $3, $4, $5)
             """, conversation_id, request.query, response_text, "simple", datetime.now())
     except Exception as e:

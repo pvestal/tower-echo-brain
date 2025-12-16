@@ -101,8 +101,8 @@ class EchoIntelligenceRouter:
                 logger.info(f"🧠 CONTEXT: Found {len(context['conversation_history'])} previous messages")
                 conversation_context = "\n\nPREVIOUS CONVERSATION:\n"
                 for i, msg in enumerate(context["conversation_history"][-5:]):  # Last 5 messages for context
-                    logger.info(f"🧠 MESSAGE {i}: {msg.get('user_query', '')[:50]}...")
-                    conversation_context += f"User: {msg.get('user_query', '')}\nEcho: {msg.get('response', '')}\n"
+                    logger.info(f"🧠 MESSAGE {i}: {msg.get('query_text', '')[:50]}...")
+                    conversation_context += f"User: {msg.get('query_text', '')}\nEcho: {msg.get('response', '')}\n"
                 conversation_context += "\nCURRENT CONVERSATION:"
             else:
                 logger.warning("🧠 NO CONTEXT: conversation_history not found in context")

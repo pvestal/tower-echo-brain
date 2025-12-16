@@ -141,7 +141,7 @@ class LearningMiddleware:
             cur.execute("""
                 INSERT INTO echo_episodic_memory
                 (conversation_id, memory_type, content, emotional_valence, importance,
-                 user_query, echo_response, model_used, learned_fact, created_at, access_count)
+                 query_text, echo_response, model_used, learned_fact, created_at, access_count)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), 1)
             """, (
                 conversation_id,

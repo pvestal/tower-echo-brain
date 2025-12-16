@@ -138,7 +138,7 @@ class EchoSystemTester:
             conn = psycopg2.connect(**self.db_config)
             cursor = conn.cursor()
             cursor.execute("""
-                SELECT user_query, response, conversation_id
+                SELECT query_text, response_text, conversation_id
                 FROM conversations
                 WHERE conversation_id = %s
             """, (test_conversation_id,))

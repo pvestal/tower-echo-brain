@@ -131,17 +131,17 @@ class RefactoredLearningSystem:
             for result in results
         ]
 
-    async def generate_insight(self, user_query: str) -> str:
+    async def generate_insight(self, query_text: str) -> str:
         """
         Generate insights based on learned patterns.
 
         BEFORE: Complex manual model orchestration
         AFTER: Clean interface-based approach
         """
-        print(f"💡 Generating insight for: {user_query}")
+        print(f"💡 Generating insight for: {query_text}")
 
         # Find relevant patterns
-        similar_patterns = await self.find_similar_patterns(user_query)
+        similar_patterns = await self.find_similar_patterns(query_text)
 
         # Create context from patterns
         context_parts = []
@@ -154,7 +154,7 @@ class RefactoredLearningSystem:
         insight_prompt = f"""Based on these learned patterns:
 {context}
 
-User query: {user_query}
+User query: {query_text}
 
 Provide a personalized insight:"""
 

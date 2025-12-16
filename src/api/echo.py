@@ -214,7 +214,7 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
     try:
         unified_result = await process_message(
             conversation_id=request.conversation_id,
-            user_query=request.query,
+            query_text=request.query,
             user_id=request.user_id,
             metadata={
                 "intelligence_level": request.intelligence_level,
@@ -566,7 +566,7 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
                     conversation_id=request.conversation_id,
                     response=response.response,
                     metadata={
-                        "user_query": original_query,
+                        "query_text": original_query,
                         "user_id": request.user_id,
                         "username": username,
                         "platform": "api",
@@ -658,7 +658,7 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
                     conversation_id=request.conversation_id,
                     response=response.response,
                     metadata={
-                        "user_query": original_query,
+                        "query_text": original_query,
                         "user_id": request.user_id,
                         "username": username,
                         "platform": "api",
@@ -764,7 +764,7 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
                     conversation_id=request.conversation_id,
                     response=response.response,
                     metadata={
-                        "user_query": original_query,
+                        "query_text": original_query,
                         "user_id": request.user_id,
                         "username": username,
                         "platform": "api",

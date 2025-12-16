@@ -18,13 +18,13 @@ async def debug_prompt_construction():
     await context_manager.connect()
     omniscient_context = await context_manager.build_context_summary_resilient("List all running services")
 
-    user_query = "List all running services"
+    query_text = "List all running services"
 
     # 2. Build the full prompt exactly like intelligence.py does
     conversation_context = ""  # No conversation history for this test
     user_prefix = "\n\nUser: "
     echo_suffix = "\n\nEcho:"
-    full_prompt = system_prompt + conversation_context + omniscient_context + user_prefix + user_query + echo_suffix
+    full_prompt = system_prompt + conversation_context + omniscient_context + user_prefix + query_text + echo_suffix
 
     # 3. Debug the prompt
     print("=== PROMPT DEBUGGING ===")

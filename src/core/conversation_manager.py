@@ -47,7 +47,7 @@ class ConversationManager:
 
         logger.info("🔄 Conversation Manager initialized")
 
-    async def process_message(self, conversation_id: str, user_query: str,
+    async def process_message(self, conversation_id: str, query_text: str,
                              user_id: str = None, metadata: Dict = None) -> Dict:
         """
         Main entry point for all conversation processing
@@ -55,14 +55,14 @@ class ConversationManager:
         """
 
         start_time = datetime.now()
-        print(f"\n🔄🔄🔄 UNIFIED CONVERSATION CALLED: {conversation_id}: {user_query[:50]}...\n")
-        logger.info(f"🔄 UNIFIED CONVERSATION: Processing message for {conversation_id}: {user_query[:50]}")
+        print(f"\n🔄🔄🔄 UNIFIED CONVERSATION CALLED: {conversation_id}: {query_text[:50]}...\n")
+        logger.info(f"🔄 UNIFIED CONVERSATION: Processing message for {conversation_id}: {query_text[:50]}")
 
         # Step 1: Load or create unified conversation context
         context = await self._get_unified_context(conversation_id, user_id)
 
         # Step 2: Enhance query with context
-        enhanced_query = await self._enhance_with_context(user_query, context)
+        enhanced_query = await self._enhance_with_context(query_text, context)
 
         # Step 3: Process query through intelligence system
         # (This would integrate with existing Echo intelligence)
@@ -71,7 +71,7 @@ class ConversationManager:
         await self._save_complete_turn(
             conversation_id,
             user_id,
-            user_query,
+            query_text,
             enhanced_query,
             context,
             metadata
@@ -81,7 +81,7 @@ class ConversationManager:
         await self._update_all_memories(
             conversation_id,
             user_id,
-            user_query,
+            query_text,
             context
         )
 
@@ -124,7 +124,7 @@ class ConversationManager:
 
             # 1. Get conversation history
             cur.execute("""
-                SELECT user_query, response, timestamp, model_used, confidence, metadata
+                SELECT query_text, response_text, timestamp, model_used, confidence, metadata
                 FROM conversations
                 WHERE conversation_id = %s
                 ORDER BY timestamp DESC
@@ -134,7 +134,7 @@ class ConversationManager:
             history = cur.fetchall()
             for msg in reversed(history):
                 context["conversation_history"].append({
-                    "user": msg["user_query"],
+                    "user": msg["query_text"],
                     "assistant": msg["response"],
                     "timestamp": msg["timestamp"].isoformat() if msg["timestamp"] else None,
                     "model": msg["model_used"],
@@ -284,7 +284,7 @@ class ConversationManager:
 
             cur.execute("""
                 INSERT INTO echo_episodic_memory
-                (conversation_id, memory_type, content, importance, user_query,
+                (conversation_id, memory_type, content, importance, query_text,
                  echo_response, model_used, learned_fact, created_at, access_count)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW(), 1)
             """, (
@@ -492,11 +492,11 @@ conversation_handler = ConversationManager()
 
 
 # Helper functions for easy integration
-async def process_message(conversation_id: str, user_query: str,
+async def process_message(conversation_id: str, query_text: str,
                          user_id: str = None, metadata: Dict = None) -> Dict:
     """Process a message through the conversation system"""
     return await conversation_handler.process_message(
-        conversation_id, user_query, user_id, metadata
+        conversation_id, query_text, user_id, metadata
     )
 
 
