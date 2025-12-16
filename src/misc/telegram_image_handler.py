@@ -203,7 +203,7 @@ class TelegramImageProcessor:
 
             cur.execute("""
                 INSERT INTO echo_episodic_memory
-                (conversation_id, memory_type, content, user_query, echo_response,
+                (conversation_id, memory_type, content, query_text, echo_response,
                  model_used, learned_fact, created_at, importance, access_count)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, NOW(), %s, 1)
             """, (

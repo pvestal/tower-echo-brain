@@ -77,7 +77,7 @@ class ConversationContextManager:
 
             # Get recent messages for this conversation
             cur.execute("""
-                SELECT id, user_query, response, model_used, timestamp,
+                SELECT id, query_text, response, model_used, timestamp,
                        intent, confidence, metadata, escalation_path
                 FROM conversations
                 WHERE conversation_id = %s
@@ -96,7 +96,7 @@ class ConversationContextManager:
             for msg in reversed(messages):  # Reverse to get chronological order
                 processed_msg = {
                     "id": msg['id'],
-                    "user": msg['user_query'],
+                    "user": msg['query_text'],
                     "assistant": msg['response'],
                     "timestamp": msg['timestamp'].isoformat() if msg['timestamp'] else None,
                     "model": msg['model_used'],
@@ -186,7 +186,7 @@ class ConversationContextManager:
 
         return "\n".join(context_parts)
 
-    async def save_conversation_turn(self, conversation_id: str, user_query: str,
+    async def save_conversation_turn(self, conversation_id: str, query_text: str,
                                     response: str, metadata: Dict = None) -> None:
         """Save a conversation turn to the database and cache"""
         try:
@@ -204,13 +204,13 @@ class ConversationContextManager:
             # Save to conversations table
             cur.execute("""
                 INSERT INTO conversations
-                (conversation_id, user_query, response, model_used, processing_time,
+                (conversation_id, query_text, response, model_used, processing_time,
                  timestamp, intent, confidence, requires_clarification, user_id, metadata)
                 VALUES (%s, %s, %s, %s, %s, NOW(), %s, %s, %s, %s, %s)
                 RETURNING id
             """, (
                 conversation_id,
-                user_query,
+                query_text,
                 response,
                 model_used,
                 processing_time,
@@ -237,7 +237,7 @@ class ConversationContextManager:
             # Add to cached messages
             self.context_cache[conversation_id]['messages'].append({
                 "id": conversation_row_id,
-                "user": user_query,
+                "user": query_text,
                 "assistant": response,
                 "timestamp": datetime.now().isoformat(),
                 "model": model_used,
@@ -269,9 +269,9 @@ class ConversationContextManager:
 
             # Simple similarity search (could be enhanced with embeddings)
             cur.execute("""
-                SELECT DISTINCT conversation_id, user_query, response, timestamp
+                SELECT DISTINCT conversation_id, query_text, response, timestamp
                 FROM conversations
-                WHERE user_query ILIKE %s
+                WHERE query_text ILIKE %s
                    OR response ILIKE %s
                 ORDER BY timestamp DESC
                 LIMIT %s

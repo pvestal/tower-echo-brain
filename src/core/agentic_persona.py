@@ -100,12 +100,12 @@ class AgenticPersona:
         # General clarification
         return self.context_questions["clarification"][0]
 
-    def learn_from_response(self, user_query: str, user_response: str, context: Dict):
+    def learn_from_response(self, query_text: str, user_response: str, context: Dict):
         """Learn from user's response to improve future interactions"""
 
         learning_entry = {
             "timestamp": datetime.now().isoformat(),
-            "original_query": user_query,
+            "original_query": query_text,
             "echo_question": context.get("question_asked", ""),
             "user_response": user_response,
             "intent_learned": context.get("intent", ""),

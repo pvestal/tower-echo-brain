@@ -43,9 +43,9 @@ class MemoryAugmentationMiddleware:
 
             # Search previous conversations
             cur.execute("""
-                SELECT user_query, response
+                SELECT query_text, response
                 FROM conversations
-                WHERE user_query ILIKE %s OR response ILIKE %s
+                WHERE query_text ILIKE %s OR response ILIKE %s
                 ORDER BY timestamp DESC
                 LIMIT 2
             """, (f'%{query}%', f'%{query}%'))

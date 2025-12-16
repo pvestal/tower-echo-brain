@@ -1045,7 +1045,7 @@ class ConversationManager:
         # Limit to 2-3 most relevant questions to avoid overwhelming
         return questions[:3]
     
-    def update_conversation(self, conversation_id: str, user_query: str, 
+    def update_conversation(self, conversation_id: str, query_text: str, 
                           intent: str, response: str, requires_clarification: bool):
         """Update conversation history"""
         if conversation_id not in self.conversations:
@@ -1056,7 +1056,7 @@ class ConversationManager:
             }
         
         self.conversations[conversation_id]["history"].append({
-            "user_query": user_query,
+            "query_text": query_text,
             "intent": intent,
             "response": response,
             "requires_clarification": requires_clarification,
@@ -2005,7 +2005,7 @@ async def list_conversations(user_id: str = "default", limit: int = 10):
                     "created_at": conv_data["created_at"].isoformat(),
                     "last_intent": conv_data.get("last_intent"),
                     "interaction_count": len(conv_data["history"]),
-                    "last_query": conv_data["history"][-1]["user_query"][:100] + "..." if conv_data["history"] else ""
+                    "last_query": conv_data["history"][-1]["query_text"][:100] + "..." if conv_data["history"] else ""
                 })
         
         # Sort by creation date and limit

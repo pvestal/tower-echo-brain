@@ -47,7 +47,7 @@ async def get_session_context():
 
         # Get recent conversations
         cursor.execute("""
-            SELECT user_query, response, intent, timestamp
+            SELECT query_text, response_text, intent, timestamp
             FROM conversations
             WHERE timestamp >= NOW() - INTERVAL '24 hours'
             ORDER BY timestamp DESC
@@ -125,7 +125,7 @@ async def simple_query(request: QueryRequest):
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("""
-            INSERT INTO conversations (conversation_id, user_query, response, intent, timestamp)
+            INSERT INTO conversations (conversation_id, query_text, response, intent, timestamp)
             VALUES (%s, %s, %s, %s, %s)
         """, (conversation_id, request.query, response_text, "simple", datetime.now()))
         conn.commit()

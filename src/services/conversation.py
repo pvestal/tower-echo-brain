@@ -279,7 +279,7 @@ class ConversationManager:
         ])
         return questions[:2]  # Only 2 questions max
 
-    def update_conversation(self, conversation_id: str, user_query: str,
+    def update_conversation(self, conversation_id: str, query_text: str,
                           intent: str, response: str, requires_clarification: bool):
         """Update conversation history in memory"""
         if conversation_id not in self.conversations:
@@ -291,7 +291,7 @@ class ConversationManager:
             }
 
         self.conversations[conversation_id]["history"].append({
-            "user_query": user_query,
+            "query_text": query_text,
             "intent": intent,
             "response": response,
             "requires_clarification": requires_clarification,
@@ -336,7 +336,7 @@ class ConversationManager:
 
                 for record in db_history:
                     history.append({
-                        "user_query": record["query"],
+                        "query_text": record["query"],
                         "intent": record["intent"] or "general",
                         "response": record["response"],
                         "requires_clarification": False,  # Assume completed conversations
