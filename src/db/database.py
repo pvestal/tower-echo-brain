@@ -54,7 +54,7 @@ class EchoDatabase:
 
         # Fallback to environment variables
         return {
-            "database": os.environ.get("DB_NAME", "tower_consolidated"),
+            "database": os.environ.get("DB_NAME", "echo_brain"),
             "user": os.environ.get("DB_USER", "patrick"),
             "host": os.environ.get("DB_HOST", "localhost"),
             "password": os.environ.get("DB_PASSWORD", "***REMOVED***"),
