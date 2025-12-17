@@ -135,7 +135,7 @@ class ConversationManager:
             for msg in reversed(history):
                 context["conversation_history"].append({
                     "user": msg["query_text"],
-                    "assistant": msg["response"],
+                    "assistant": msg["response_text"],
                     "timestamp": msg["timestamp"].isoformat() if msg["timestamp"] else None,
                     "model": msg["model_used"],
                     "confidence": msg["confidence"]
@@ -166,9 +166,9 @@ class ConversationManager:
 
             # 3. Get learning history
             cur.execute("""
-                SELECT learned_fact, confidence, metadata
-                FROM learning_history
-                WHERE conversation_id = %s
+                SELECT content->>'fact' as learned_fact, confidence, content as metadata
+                FROM echo_learnings
+                WHERE source_conversation_id = %s
                 ORDER BY created_at DESC
                 LIMIT 5
             """, (conversation_id,))
@@ -261,21 +261,31 @@ class ConversationManager:
             if metadata:
                 full_metadata.update(metadata)
 
-            # 1. Save to echo_conversations table
+            # 1. Save/update conversation record
             cur.execute("""
                 INSERT INTO echo_conversations
-                (conversation_id, query_text, response_text, user_id, metadata, created_at, last_activity)
-                VALUES (%s, %s, %s, %s, %s, NOW(), NOW())
+                (conversation_id, user_id, context, last_interaction)
+                VALUES (%s, %s, %s, NOW())
                 ON CONFLICT (conversation_id) DO UPDATE SET
-                    query_text = EXCLUDED.query_text,
-                    response_text = EXCLUDED.response_text,
-                    metadata = EXCLUDED.metadata,
-                    last_activity = NOW()
+                    context = EXCLUDED.context,
+                    last_interaction = NOW(),
+                    message_count = echo_conversations.message_count + 1
             """, (
                 conversation_id,
+                user_id,
+                Json(full_metadata)
+            ))
+
+            # 2. Save the actual message to echo_unified_interactions
+            cur.execute("""
+                INSERT INTO echo_unified_interactions
+                (conversation_id, user_id, query, response, metadata, timestamp)
+                VALUES (%s, %s, %s, %s, %s, NOW())
+            """, (
+                conversation_id,
+                user_id,
                 original_query,
                 "",  # Response will be updated later
-                user_id,
                 Json(full_metadata)
             ))
 
@@ -298,18 +308,18 @@ class ConversationManager:
                 self._extract_key_fact(original_query)
             ))
 
-            # 3. Save to learning history if important
+            # 3. Save to learnings if important
             if importance > 0.5:
                 cur.execute("""
-                    INSERT INTO learning_history
-                    (conversation_id, learned_fact, fact_type, confidence, created_at, metadata)
-                    VALUES (%s, %s, %s, %s, NOW(), %s)
+                    INSERT INTO echo_learnings
+                    (source_conversation_id, learning_type, content, confidence, user_id, created_at)
+                    VALUES (%s, %s, %s, %s, %s, NOW())
                 """, (
                     conversation_id,
-                    self._extract_key_fact(original_query),
-                    "conversation",
+                    "pattern",
+                    Json({"fact": self._extract_key_fact(original_query), "source": "unified_system", "query": original_query}),
                     importance,
-                    Json({"source": "unified_system", "query": original_query})
+                    user_id
                 ))
 
             conn.commit()
@@ -444,18 +454,20 @@ class ConversationManager:
             conn = psycopg2.connect(**self.db_config)
             cur = conn.cursor()
 
-            # Update conversations table with response
+            # Update the most recent interaction with response
             cur.execute("""
-                UPDATE echo_conversations
-                SET response_text = %s,
+                UPDATE echo_unified_interactions
+                SET response = %s,
                     model_used = %s,
                     processing_time = %s,
-                    confidence = %s,
-                    last_activity = NOW()
-                WHERE conversation_id = %s
-                  AND (response_text = '' OR response_text IS NULL)
-                ORDER BY created_at DESC
-                LIMIT 1
+                    confidence = %s
+                WHERE id = (
+                    SELECT id FROM echo_unified_interactions
+                    WHERE conversation_id = %s
+                      AND (response = '' OR response IS NULL)
+                    ORDER BY timestamp DESC
+                    LIMIT 1
+                )
             """, (
                 response,
                 metadata.get("model_used", "unified_system"),

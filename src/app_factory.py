@@ -10,30 +10,48 @@ from dotenv import load_dotenv
 
 # Core routers
 from src.api.routes import router as main_router
-from src.api.legacy.feedback_routes import router as feedback_router
-from src.api.legacy.learning_pipeline_routes import router as learning_pipeline_router
+from src.api.takeout_stub import router as takeout_stub_router
+
+# Try to import real metrics, fall back to stub if fails
+try:
+    from src.api.system_metrics import router as system_metrics_router
+except ImportError:
+    from src.api.system_stub import router as system_metrics_router
+    print("⚠️ Using stub system metrics")
+# TODO: Fix legacy imports after restructuring
+# from src.api.legacy.feedback_routes import router as feedback_router
+# from src.api.legacy.learning_pipeline_routes import router as learning_pipeline_router
+feedback_router = None
+learning_pipeline_router = None
 
 # Verified execution routes
-try:
-    from src.api.legacy.verified_execution_routes import router as verified_execution_router
-    verified_execution_available = True
-    print("✅ Verified execution router imported successfully")
-except ImportError as e:
-    verified_execution_available = False
-    print(f"❌ Failed to import verified execution router: {e}")
-    verified_execution_router = None
-from src.api.legacy.system_metrics import router as system_metrics_router
-from src.api.legacy.takeout_routes import router as takeout_router
-from src.api.legacy.enhanced_system_metrics import router as enhanced_system_metrics_router
-from src.api.legacy.gpu_monitor import router as gpu_monitor_router
-from src.api.legacy.neural_metrics import router as neural_metrics_router
-from src.api.legacy.learning_routes import router as learning_router
-from src.api.legacy.autonomous_routes import router as autonomous_router
-from src.api.legacy.coordination_routes import router as coordination_router
-from src.api.legacy.integration_testing_routes import integration_router
-from src.api.legacy.task_routes import router as task_router
+# TODO: Fix legacy imports after restructuring
+verified_execution_available = False
+verified_execution_router = None
+# TODO: Fix legacy imports after restructuring
+# from src.api.legacy.system_metrics import router as legacy_system_metrics_router
+# from src.api.legacy.takeout_routes import router as takeout_router
+# from src.api.legacy.enhanced_system_metrics import router as enhanced_system_metrics_router
+# from src.api.legacy.gpu_monitor import router as gpu_monitor_router
+# from src.api.legacy.neural_metrics import router as neural_metrics_router
+# from src.api.legacy.learning_routes import router as learning_router
+# Note: system_metrics_router is already imported above from src.api.system_metrics or system_stub
+takeout_router = None
+enhanced_system_metrics_router = None
+gpu_monitor_router = None
+neural_metrics_router = None
+learning_router = None
+# from src.api.legacy.autonomous_routes import router as autonomous_router
+autonomous_router = None
+# from src.api.legacy.coordination_routes import router as coordination_router
+coordination_router = None
+# from src.api.legacy.integration_testing_routes import integration_router
+integration_router = None
+# from src.api.legacy.task_routes import router as task_router
+task_router = None
 from src.photo_comparison import router as photo_router
-from src.api.legacy.improvement_metrics import router as improvement_router
+# from src.api.legacy.improvement_metrics import router as improvement_router
+improvement_router = None
 from src.api.delegation_routes import router as delegation_router
 
 # External integrations
@@ -73,14 +91,9 @@ except ImportError as e:
     resilient_router = None
 
 # Conversation memory management
-try:
-    from src.api.legacy.conversation_memory_routes import router as memory_router
-    memory_available = True
-    print("✅ Conversation memory router imported successfully")
-except ImportError as e:
-    memory_available = False
-    print(f"❌ Failed to import conversation memory router: {e}")
-    memory_router = None
+# TODO: Fix legacy imports after restructuring
+memory_available = False
+memory_router = None
 
 # Anime semantic search
 try:
@@ -152,24 +165,28 @@ def create_app() -> FastAPI:
     # Include routers
     print(f"🔍 Including main_router with routes: {[r.path for r in main_router.routes if hasattr(r, 'path')]}")
     app.include_router(main_router, prefix="", tags=["main"])
-    app.include_router(feedback_router, prefix="", tags=["feedback"])
-    app.include_router(learning_pipeline_router, prefix="", tags=["learning-pipeline"])
-    if verified_execution_available and verified_execution_router:
-        app.include_router(verified_execution_router, prefix="", tags=["verified-execution"])
-        print("✅ Verified execution routes added to app")
-    app.include_router(system_metrics_router, prefix="", tags=["metrics"])
-    app.include_router(takeout_router, prefix="", tags=["takeout"])
-    print("✅ Takeout processing routes added to app")
-    app.include_router(enhanced_system_metrics_router, prefix="", tags=["enhanced-metrics"])
-    app.include_router(gpu_monitor_router, prefix="", tags=["gpu-monitoring"])
-    app.include_router(neural_metrics_router, prefix="", tags=["neural"])
-    app.include_router(learning_router, prefix="", tags=["learning"])
-    app.include_router(autonomous_router, prefix="", tags=["autonomous"])
-    app.include_router(coordination_router, prefix="", tags=["coordination"])
-    app.include_router(integration_router, prefix="", tags=["testing"])
-    app.include_router(task_router, prefix="", tags=["tasks"])
+    app.include_router(takeout_stub_router, prefix="", tags=["takeout"])
+    app.include_router(system_metrics_router, prefix="", tags=["system"])
+    # TODO: Fix legacy router inclusions after restructuring
+    # app.include_router(feedback_router, prefix="", tags=["feedback"])
+    # app.include_router(learning_pipeline_router, prefix="", tags=["learning-pipeline"])
+    # if verified_execution_available and verified_execution_router:
+    #     app.include_router(verified_execution_router, prefix="", tags=["verified-execution"])
+    #     print("✅ Verified execution routes added to app")
+    # app.include_router(system_metrics_router, prefix="", tags=["metrics"])
+    # app.include_router(takeout_router, prefix="", tags=["takeout"])
+    # print("✅ Takeout processing routes added to app")
+    # app.include_router(enhanced_system_metrics_router, prefix="", tags=["enhanced-metrics"])
+    # app.include_router(gpu_monitor_router, prefix="", tags=["gpu-monitoring"])
+    # app.include_router(neural_metrics_router, prefix="", tags=["neural"])
+    # app.include_router(learning_router, prefix="", tags=["learning"])
+    # TODO: Fix legacy router inclusions after restructuring
+    # app.include_router(autonomous_router, prefix="", tags=["autonomous"])
+    # app.include_router(coordination_router, prefix="", tags=["coordination"])
+    # app.include_router(integration_router, prefix="", tags=["testing"])
+    # app.include_router(task_router, prefix="", tags=["tasks"])
     app.include_router(photo_router, prefix="", tags=["vision"])
-    app.include_router(improvement_router, prefix="/api/echo", tags=["improvement"])
+    # app.include_router(improvement_router, prefix="/api/echo", tags=["improvement"])
     app.include_router(delegation_router, prefix="/api/echo", tags=["delegation"])
 
     # Training status router
