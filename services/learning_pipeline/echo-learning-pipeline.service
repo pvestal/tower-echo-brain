@@ -1,0 +1,42 @@
+[Unit]
+Description=Echo Brain Learning Pipeline
+Documentation=https://tower.local/kb
+After=network.target postgresql.service qdrant.service
+Wants=postgresql.service qdrant.service
+
+[Service]
+Type=oneshot
+User=patrick
+Group=patrick
+WorkingDirectory=/opt/tower-echo-brain/services/learning_pipeline
+Environment=PATH=/opt/tower-echo-brain/venv/bin:/usr/local/bin:/usr/bin:/bin
+Environment=PYTHONPATH=/opt/tower-echo-brain/services/learning_pipeline
+Environment=ECHO_BRAIN_DB_PASSWORD=***REMOVED***
+ExecStartPre=/bin/bash -c 'source /opt/tower-echo-brain/venv/bin/activate'
+ExecStart=/opt/tower-echo-brain/venv/bin/python /opt/tower-echo-brain/services/learning_pipeline/run_pipeline.py
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=echo-learning-pipeline
+
+# Timeout settings
+TimeoutStartSec=300
+TimeoutStopSec=30
+
+# Resource limits
+MemoryMax=2G
+CPUQuota=200%
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/opt/tower-echo-brain/logs
+ReadOnlyPaths=/home/patrick/.claude/conversations
+
+# Restart on failure
+Restart=no
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
