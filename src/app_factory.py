@@ -80,6 +80,16 @@ except ImportError as e:
     print(f"❌ Failed to import telegram image handler: {e}")
     enhanced_telegram_router = None
 
+# Git Operations for Echo Brain Automation
+try:
+    from src.api.git_operations import router as git_operations_router
+    git_operations_available = True
+    print("✅ Git operations router imported successfully")
+except ImportError as e:
+    git_operations_available = False
+    print(f"❌ Failed to import git operations router: {e}")
+    git_operations_router = None
+
 # Resilient model management
 try:
     from src.managers.echo_integration import router as resilient_router
@@ -212,6 +222,11 @@ def create_app() -> FastAPI:
     if telegram_image_available and enhanced_telegram_router:
         app.include_router(enhanced_telegram_router, prefix="", tags=["telegram-images"])
         print("✅ Telegram image handler routes added to app")
+
+    # Git Operations for Echo Brain Automation
+    if git_operations_available and git_operations_router:
+        app.include_router(git_operations_router, prefix="/api/echo", tags=["git-operations"])
+        print("✅ Git operations routes added to app at /api/echo/git/*")
 
     # Resilient model management
     if resilient_available and resilient_router:
