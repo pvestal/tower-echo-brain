@@ -32,7 +32,10 @@ except ImportError:
     agentic_persona = None
 
 # Import business logic middleware for centralized pattern application
-from src.api.legacy.business_logic_middleware import business_logic_middleware, apply_business_logic_to_response
+# TODO: Reimplement business logic middleware after fixing import structure
+# from src.services.business_logic_applicator import business_logic_middleware, apply_business_logic_to_response
+business_logic_middleware = None
+apply_business_logic_to_response = None
 
 # Import memory components for conversation context
 from src.memory.context_retrieval import ConversationContextRetriever
@@ -84,7 +87,8 @@ def get_memory_components():
     return _context_retriever, _pronoun_resolver, _entity_extractor
 
 # Initialize business logic middleware with conversation manager
-business_logic_middleware.initialize(conversation_manager)
+# TODO: Fix after reimplementing business logic
+# business_logic_middleware.initialize(conversation_manager)
 
 def build_debug_info(query: str, intent: str, confidence: float,
                     semantic_results: list, patterns_applied: list,
@@ -535,9 +539,11 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
                 response_text = "I'd like to better understand your request. Could you help clarify?"
 
             # APPLY BUSINESS LOGIC PATTERNS TO CLARIFICATION RESPONSES VIA MIDDLEWARE
-            response_text_with_patterns = apply_business_logic_to_response(
-                request.query, response_text, "clarification"
-            )
+            # TODO: Fix after reimplementing business logic
+            # response_text_with_patterns = apply_business_logic_to_response(
+            #     request.query, response_text, "clarification"
+            # )
+            response_text_with_patterns = response_text
 
             processing_time = time.time() - start_time
 
@@ -644,9 +650,11 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
             response = await handle_capability_intent(intent, intent_params, request, request.conversation_id, start_time)
 
             # APPLY BUSINESS LOGIC PATTERNS TO CAPABILITY RESPONSES VIA MIDDLEWARE
-            response.response = apply_business_logic_to_response(
-                request.query, response.response, "capability"
-            )
+            # TODO: Fix after reimplementing business logic
+            # response.response = apply_business_logic_to_response(
+            #     request.query, response.response, "capability"
+            # )
+            pass  # response.response stays as is
 
             conversation_manager.update_conversation(
                 request.conversation_id, request.query, intent, response.response, False
@@ -724,12 +732,15 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
             processing_time = time.time() - start_time
 
             # APPLY PATRICK'S BUSINESS LOGIC PATTERNS TO RESPONSE VIA MIDDLEWARE
-            response_with_patterns = apply_business_logic_to_response(
-                request.query, result["response"], "llm_response"
-            )
+            # TODO: Fix after reimplementing business logic
+            # response_with_patterns = apply_business_logic_to_response(
+            #     request.query, result["response"], "llm_response"
+            # )
+            response_with_patterns = result["response"]
 
             # GET DEBUG INFO FOR VERBOSE RESPONSE
-            patterns_applied = business_logic_middleware.get_middleware_stats().get('patterns_applied', 0)
+            # patterns_applied = business_logic_middleware.get_middleware_stats().get('patterns_applied', 0)
+            patterns_applied = 0
             processing_times = {
                 "total_processing": processing_time,
                 "semantic_search": 0.1,  # Placeholder - we'll instrument this later

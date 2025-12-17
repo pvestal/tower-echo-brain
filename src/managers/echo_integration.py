@@ -33,9 +33,9 @@ class MemorySearch:
             conn = psycopg2.connect(**self.db_config)
             cur = conn.cursor()
             cur.execute("""
-                SELECT query_text, response_text, timestamp
-                FROM conversations
-                WHERE query_text ILIKE %s OR response ILIKE %s
+                SELECT query, response, timestamp
+                FROM echo_unified_interactions
+                WHERE query ILIKE %s OR response ILIKE %s
                 ORDER BY timestamp DESC
                 LIMIT 5
             """, (f'%{query}%', f'%{query}%'))
