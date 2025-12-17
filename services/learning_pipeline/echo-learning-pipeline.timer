@@ -1,0 +1,17 @@
+[Unit]
+Description=Echo Brain Learning Pipeline Timer
+Documentation=https://tower.local/kb
+Requires=echo-learning-pipeline.service
+
+[Timer]
+# Run every 6 hours
+OnCalendar=*-*-* 00,06,12,18:00:00
+# Run 5 minutes after boot
+OnBootSec=5min
+# Run immediately if missed due to system downtime
+Persistent=true
+# Add randomization to prevent resource spikes
+RandomizedDelaySec=600
+
+[Install]
+WantedBy=timers.target
