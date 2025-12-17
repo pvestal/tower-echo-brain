@@ -197,16 +197,12 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
 
     # RETRIEVE CONVERSATION CONTEXT
     try:
-        from src.intelligence.conversation_context import conversation_context, inject_context
-        # Inject conversation history into the request
-        request_dict = request.dict()
-        request_dict = await inject_context(request_dict)
-        # Update query with context if available
-        if 'query' in request_dict and request_dict['query'] != request.query:
-            logger.info(f"📚 Injected conversation context for {request.conversation_id}")
-            request.query = request_dict['query']
+        from src.intelligence.conversation_context import ConversationContext, enhance_query_with_context
+        # For now, skip context injection to prevent timeouts
+        # TODO: Implement proper context injection with ConversationContext class
+        logger.info(f"📚 Context injection disabled for performance - using direct query")
     except Exception as e:
-        logger.warning(f"Could not inject conversation context: {e}")
+        logger.warning(f"Could not load conversation context: {e}")
 
     logger.info(f"🔍 ECHO QUERY HANDLER - Query: {request.query[:50]}...")
     logger.info(f"🔍 Request type: {getattr(request, 'request_type', 'NOT_SET')}")

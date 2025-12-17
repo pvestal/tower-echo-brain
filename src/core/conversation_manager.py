@@ -124,7 +124,7 @@ class ConversationManager:
 
             # 1. Get conversation history
             cur.execute("""
-                SELECT query_text, response_text, timestamp, model_used, confidence, metadata
+                SELECT user_query, response, timestamp, model_used, confidence, metadata
                 FROM conversations
                 WHERE conversation_id = %s
                 ORDER BY timestamp DESC
@@ -134,8 +134,8 @@ class ConversationManager:
             history = cur.fetchall()
             for msg in reversed(history):
                 context["conversation_history"].append({
-                    "user": msg["query_text"],
-                    "assistant": msg["response_text"],
+                    "user": msg["user_query"],
+                    "assistant": msg["response"],
                     "timestamp": msg["timestamp"].isoformat() if msg["timestamp"] else None,
                     "model": msg["model_used"],
                     "confidence": msg["confidence"]
@@ -166,9 +166,9 @@ class ConversationManager:
 
             # 3. Get learning history
             cur.execute("""
-                SELECT content->>'fact' as learned_fact, confidence, content as metadata
-                FROM echo_learnings
-                WHERE source_conversation_id = %s
+                SELECT learned_fact, confidence, metadata
+                FROM learning_history
+                WHERE conversation_id = %s
                 ORDER BY created_at DESC
                 LIMIT 5
             """, (conversation_id,))
@@ -279,13 +279,15 @@ class ConversationManager:
             # 2. Save the actual message to echo_unified_interactions
             cur.execute("""
                 INSERT INTO echo_unified_interactions
-                (conversation_id, user_id, query, response, metadata, timestamp)
-                VALUES (%s, %s, %s, %s, %s, NOW())
+                (conversation_id, user_id, query, response, model_used, processing_time, metadata, timestamp)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, NOW())
             """, (
                 conversation_id,
                 user_id,
                 original_query,
                 "",  # Response will be updated later
+                "unified_system",  # Default model name
+                0.0,  # Default processing time
                 Json(full_metadata)
             ))
 
@@ -294,7 +296,7 @@ class ConversationManager:
 
             cur.execute("""
                 INSERT INTO echo_episodic_memory
-                (conversation_id, memory_type, content, importance, query_text,
+                (conversation_id, memory_type, content, importance, user_query,
                  echo_response, model_used, learned_fact, created_at, access_count)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW(), 1)
             """, (
@@ -311,15 +313,16 @@ class ConversationManager:
             # 3. Save to learnings if important
             if importance > 0.5:
                 cur.execute("""
-                    INSERT INTO echo_learnings
-                    (source_conversation_id, learning_type, content, confidence, user_id, created_at)
-                    VALUES (%s, %s, %s, %s, %s, NOW())
+                    INSERT INTO learning_history
+                    (conversation_id, learned_fact, fact_type, confidence, learning_type, metadata)
+                    VALUES (%s, %s, %s, %s, %s, %s)
                 """, (
                     conversation_id,
+                    self._extract_key_fact(original_query),
                     "pattern",
-                    Json({"fact": self._extract_key_fact(original_query), "source": "unified_system", "query": original_query}),
                     importance,
-                    user_id
+                    "unified_system",
+                    Json({"source": "unified_system", "query": original_query, "user_id": user_id})
                 ))
 
             conn.commit()
