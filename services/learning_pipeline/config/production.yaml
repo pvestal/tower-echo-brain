@@ -1,0 +1,103 @@
+# Production configuration for Echo Brain Learning Pipeline
+
+database:
+  host: "localhost"  # Fixed: was 192.168.50.135
+  port: 5432
+  name: "echo_brain"
+  user: "patrick"
+  password_env: "ECHO_BRAIN_DB_PASSWORD"
+  pool_size: 10
+  max_overflow: 20
+  connection_timeout: 30
+  command_timeout: 300
+
+vector_database:
+  host: "localhost"
+  port: 6333
+  collection_name: "claude_conversations"
+  embedding_dimension: 384
+  batch_size: 100
+  timeout: 60
+
+semantic_memory:
+  host: "localhost"
+  port: 8320
+  timeout: 30
+  fallback_enabled: true
+  fallback_model: "sentence-transformers/all-MiniLM-L6-v2"
+
+pipeline:
+  batch_size: 100
+  max_concurrent_processors: 5
+  processing_timeout: 300
+  min_content_length: 50  # Skip very short content
+  max_content_length: 50000  # Truncate very long content
+
+circuit_breaker:
+  failure_threshold: 5
+  reset_timeout: 60
+  half_open_max_calls: 3
+  timeout: 30.0
+
+monitoring:
+  prometheus_port: 9090
+  metrics_enabled: true
+  health_check_interval: 30
+  enable_detailed_logging: false
+
+logging:
+  level: "INFO"
+  file: "/opt/tower-echo-brain/logs/learning_pipeline.log"
+  max_size: "100MB"
+  backup_count: 5
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+sources:
+  claude_conversations:
+    path: "/home/patrick/.claude/conversations"
+    file_pattern: "*.md"
+    watch_for_changes: true
+    exclude_patterns:
+      - "**/test_*"
+      - "**/.tmp_*"
+    max_file_age_days: 365  # Only process files newer than 1 year
+
+  knowledge_base:
+    enabled: false  # Until KB location is determined
+    database_path: ""
+    table_name: "articles"
+    connection_string: ""
+
+# Content processing settings
+content_processing:
+  extract_code_blocks: true
+  extract_commands: true
+  extract_insights: true
+  extract_solutions: true
+  min_insight_length: 100
+  code_block_languages:
+    - "python"
+    - "bash"
+    - "sql"
+    - "javascript"
+    - "typescript"
+    - "yaml"
+    - "json"
+
+# ML/NLP settings
+nlp:
+  enable_advanced_processing: true
+  category_confidence_threshold: 0.7
+  importance_threshold: 0.5
+  duplicate_similarity_threshold: 0.95
+
+# Security settings
+security:
+  sanitize_content: true
+  exclude_sensitive_patterns:
+    - "password"
+    - "secret"
+    - "token"
+    - "key"
+    - "credential"
+  max_personal_info_score: 0.3
