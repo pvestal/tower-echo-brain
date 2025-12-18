@@ -7,6 +7,8 @@ import logging
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
+# CRITICAL: Load .env BEFORE any application imports
+load_dotenv()
 
 # Core routers
 from src.api.routes import router as main_router
