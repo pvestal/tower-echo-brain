@@ -1,0 +1,107 @@
+# Google Takeout Automation Configuration
+# Tower Echo Brain Integration
+
+# Vault Configuration
+vault:
+  url: "http://127.0.0.1:8200"
+  auth_method: "token"
+  token_path: "/opt/vault/config/vault_token"
+  secret_path: "secret/google/takeout"
+
+# Google APIs Configuration
+google:
+  oauth2:
+    scopes:
+      - "https://www.googleapis.com/auth/takeout"
+      - "https://www.googleapis.com/auth/photoslibrary.readonly"
+      - "https://www.googleapis.com/auth/userinfo.email"
+      - "https://www.googleapis.com/auth/userinfo.profile"
+      - "https://www.googleapis.com/auth/gmail.readonly"
+      - "https://www.googleapis.com/auth/drive.readonly"
+
+  takeout:
+    api_endpoint: "https://takeout.google.com/api/v1"
+    max_retries: 3
+    retry_delay: 60  # seconds
+    timeout: 300     # seconds
+
+# Download Configuration
+download:
+  base_path: "/opt/tower-echo-brain/data/takeout"
+  chunk_size: 8192  # 8KB chunks
+  max_concurrent: 3
+  resume_support: true
+  verify_checksums: true
+  temp_suffix: ".downloading"
+
+# Deduplication Configuration
+deduplication:
+  hash_algorithm: "sha256"
+  chunk_size: 65536  # 64KB for hashing
+  database_batch_size: 1000
+  comparison_paths:
+    - "/mnt/10TB2/"
+    - "/opt/tower-echo-brain/data/takeout/archive/"
+
+# Database Configuration
+database:
+  host: "localhost"
+  port: 5432
+  database: "tower_consolidated"
+  schema: "google_takeout"
+  connection_pool_size: 10
+
+# Echo Brain Integration
+echo_brain:
+  learning_pipeline_path: "/opt/tower-echo-brain/services/learning_pipeline/"
+  qdrant_host: "localhost"
+  qdrant_port: 6333
+  vector_collection: "takeout_memories"
+
+# Logging Configuration
+logging:
+  level: "INFO"
+  file: "/opt/tower-echo-brain/services/google_takeout/logs/takeout.log"
+  max_bytes: 104857600  # 100MB
+  backup_count: 5
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+# Processing Configuration
+processing:
+  supported_formats:
+    images: [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp"]
+    videos: [".mp4", ".avi", ".mov", ".mkv", ".webm", ".m4v"]
+    documents: [".pdf", ".doc", ".docx", ".txt", ".rtf"]
+    emails: [".eml", ".msg"]
+    data: [".json", ".csv", ".xml", ".html"]
+
+  metadata_extraction:
+    enabled: true
+    include_exif: true
+    include_location: true
+    include_timestamp: true
+
+# Backup and Archival
+backup:
+  incremental_enabled: true
+  full_backup_interval: 30  # days
+  compression: "gzip"
+  retention_period: 365  # days
+
+# Security Configuration
+security:
+  credential_rotation_interval: 90  # days
+  api_rate_limits:
+    requests_per_minute: 60
+    requests_per_hour: 1000
+  ssl_verify: true
+  encryption_key_rotation: true
+
+# Monitoring Configuration
+monitoring:
+  health_check_interval: 300  # seconds
+  metrics_enabled: true
+  alerts:
+    webhook_url: null
+    email_notifications: true
+    failure_threshold: 3
