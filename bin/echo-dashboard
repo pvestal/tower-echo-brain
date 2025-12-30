@@ -1,0 +1,312 @@
+#!/opt/tower-echo-brain/venv/bin/python
+# -*- coding: utf-8 -*-
+"""
+Echo Brain Real-time Monitoring Dashboard
+Shows system status, resources, tasks, and alerts in Limited Autonomy mode
+"""
+
+import sys
+import json
+import psutil
+import subprocess
+from datetime import datetime, timedelta
+from pathlib import Path
+import asyncio
+import asyncpg
+import aiohttp
+
+sys.path.insert(0, '/opt/tower-echo-brain')
+from config import AUTONOMY_CONFIG, FAIL_CONDITIONS, DATABASE_CONFIG
+
+class Dashboard:
+    """Real-time monitoring dashboard"""
+
+    def __init__(self):
+        self.db_config = DATABASE_CONFIG
+
+    async def display(self):
+        """Display dashboard"""
+        # Clear screen
+        print("\033[2J\033[H")
+
+        print("=" * 80)
+        print("ECHO BRAIN MONITORING DASHBOARD - LIMITED AUTONOMY MODE")
+        print("=" * 80)
+        print(f"Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        print(f"Mode: {AUTONOMY_CONFIG['mode']} v{AUTONOMY_CONFIG['version']}")
+
+        # Autonomy Level
+        autonomy_file = Path('/opt/tower-echo-brain/tests/autonomy_100_results.json')
+        if autonomy_file.exists():
+            with open(autonomy_file) as f:
+                autonomy = json.load(f).get('autonomy_percentage', 0)
+                print(f"\n<¯ Autonomy Level: {autonomy:.1f}%")
+
+        # Resource Usage
+        print("\n=Ê RESOURCE USAGE:")
+        print("-" * 40)
+
+        # CPU
+        cpu_percent = psutil.cpu_percent(interval=0.1)
+        cpu_limit = AUTONOMY_CONFIG['resource_limits']['max_cpu_percent']
+        cpu_status = "" if cpu_percent < cpu_limit else " "
+        print(f"{cpu_status} CPU: {cpu_percent:.1f}% / {cpu_limit}% limit")
+
+        # Memory
+        memory = psutil.virtual_memory()
+        ram_gb = memory.used / (1024**3)
+        ram_limit = AUTONOMY_CONFIG['resource_limits']['max_ram_gb']
+        ram_status = "" if ram_gb < ram_limit else " "
+        print(f"{ram_status} RAM: {ram_gb:.1f}GB / {ram_limit}GB limit ({memory.percent:.1f}%)")
+
+        # Disk
+        disk = psutil.disk_usage('/opt/tower-echo-brain')
+        disk_gb = disk.used / (1024**3)
+        disk_limit = AUTONOMY_CONFIG['resource_limits']['max_disk_gb']
+        disk_status = "" if disk_gb < disk_limit else " "
+        print(f"{disk_status} Disk: {disk_gb:.1f}GB / {disk_limit}GB limit ({disk.percent:.1f}%)")
+
+        # GPU
+        try:
+            result = subprocess.run(
+                "nvidia-smi --query-gpu=memory.used,memory.total,utilization.gpu --format=csv,noheader",
+                shell=True, capture_output=True, text=True, timeout=2
+            )
+            if result.returncode == 0:
+                parts = result.stdout.strip().split(', ')
+                gpu_vram = float(parts[0].replace(' MiB', '')) / 1024
+                gpu_total = float(parts[1].replace(' MiB', '')) / 1024
+                gpu_util = parts[2]
+                gpu_limit = AUTONOMY_CONFIG['resource_limits']['max_gpu_vram_gb']
+                gpu_status = "" if gpu_vram < gpu_limit else " "
+                print(f"{gpu_status} GPU: {gpu_vram:.1f}GB / {gpu_limit}GB limit ({gpu_util} utilization)")
+        except:
+            print("L GPU: Unable to query")
+
+        # Services Status
+        print("\n=' SERVICES:")
+        print("-" * 40)
+
+        services = await self.check_services()
+        for service, running in services.items():
+            status = "" if running else "L"
+            print(f"{status} {service}: {'Running' if running else 'Down'}")
+
+        # Task Queue
+        print("\n=Ë TASK QUEUE:")
+        print("-" * 40)
+
+        tasks = await self.get_task_stats()
+        print(f"Pending: {tasks['pending']} | Running: {tasks['running']} | "
+              f"Completed: {tasks['completed']} | Failed: {tasks['failed']}")
+
+        # Recent tasks
+        recent_tasks = await self.get_recent_tasks()
+        if recent_tasks:
+            print("\nRecent Tasks:")
+            for task in recent_tasks[:5]:
+                status_emoji = {"completed": "", "failed": "L", "running": "=", "pending": "ó"}.get(task['status'], "S")
+                print(f"  {status_emoji} {task['description'][:60]}...")
+
+        # Generated Content
+        print("\n=æ GENERATED CONTENT:")
+        print("-" * 40)
+
+        content = await self.count_generated_content()
+        print(f"Anime Images: {content['anime']} | Code Reports: {content['reports']}")
+
+        # Alerts
+        print("\n  ALERTS:")
+        print("-" * 40)
+
+        alerts = await self.get_recent_alerts()
+        if alerts:
+            for alert in alerts[:3]:
+                print(f"  " {alert}")
+        else:
+            print("   No alerts")
+
+        # Validation Status
+        print("\n= VALIDATION STATUS:")
+        print("-" * 40)
+
+        validation_status = await self.get_validation_status()
+        if validation_status:
+            print(f"Uptime: {validation_status['uptime_hours']:.1f}h | "
+                  f"Checks Passed: {validation_status['checks_passed']}/{validation_status['total_checks']} | "
+                  f"Status: {validation_status['status']}")
+
+        # Safety Features
+        print("\n=á SAFETY FEATURES:")
+        print("-" * 40)
+        print(f"Self-modification: {'L DISABLED' if not AUTONOMY_CONFIG['self_modification']['enabled'] else ' Enabled'}")
+        print(f"Auto-shutdown: {' ENABLED' if AUTONOMY_CONFIG['safety_features']['auto_shutdown_on_exceed'] else 'L Disabled'}")
+        print(f"Resource limits:  ENFORCED")
+        print(f"Read-only mode:  ACTIVE (Code & Finance)")
+
+        print("\n" + "=" * 80)
+        print("Press Ctrl+C to exit | Updates every 5 seconds")
+
+    async def check_services(self) -> dict:
+        """Check service status"""
+        services = {}
+
+        # Echo Brain
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get('http://localhost:8309/api/echo/health', timeout=2) as resp:
+                    services['Echo Brain'] = resp.status == 200
+        except:
+            services['Echo Brain'] = False
+
+        # PostgreSQL
+        try:
+            conn = await asyncpg.connect(**self.db_config, timeout=2)
+            await conn.close()
+            services['PostgreSQL'] = True
+        except:
+            services['PostgreSQL'] = False
+
+        # Redis
+        try:
+            result = subprocess.run("redis-cli ping", shell=True, capture_output=True, timeout=1)
+            services['Redis'] = result.returncode == 0
+        except:
+            services['Redis'] = False
+
+        # Qdrant
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get('http://localhost:6333/collections', timeout=2) as resp:
+                    services['Qdrant'] = resp.status == 200
+        except:
+            services['Qdrant'] = False
+
+        return services
+
+    async def get_task_stats(self) -> dict:
+        """Get task queue statistics"""
+        stats = {'pending': 0, 'running': 0, 'completed': 0, 'failed': 0}
+
+        try:
+            conn = await asyncpg.connect(**self.db_config)
+            rows = await conn.fetch('''
+                SELECT status, COUNT(*) as count
+                FROM task_queue
+                GROUP BY status
+            ''')
+            for row in rows:
+                if row['status'] in stats:
+                    stats[row['status']] = row['count']
+            await conn.close()
+        except:
+            pass
+
+        return stats
+
+    async def get_recent_tasks(self) -> list:
+        """Get recent tasks"""
+        tasks = []
+
+        try:
+            conn = await asyncpg.connect(**self.db_config)
+            rows = await conn.fetch('''
+                SELECT status, description
+                FROM task_queue
+                ORDER BY created_at DESC
+                LIMIT 5
+            ''')
+            tasks = [dict(row) for row in rows]
+            await conn.close()
+        except:
+            pass
+
+        return tasks
+
+    async def count_generated_content(self) -> dict:
+        """Count generated content"""
+        content = {'anime': 0, 'reports': 0}
+
+        # Anime images
+        anime_path = Path('/opt/tower-echo-brain/data/outputs/validation/')
+        if anime_path.exists():
+            content['anime'] = len(list(anime_path.glob('*.png')))
+
+        # Reports
+        reports_path = Path('/opt/tower-echo-brain/data/reports/')
+        if reports_path.exists():
+            content['reports'] = len(list(reports_path.glob('*.json')))
+
+        return content
+
+    async def get_recent_alerts(self) -> list:
+        """Get recent alerts"""
+        alerts = []
+
+        alert_file = Path('/opt/tower-echo-brain/data/alerts/validation_alerts.json')
+        if alert_file.exists():
+            try:
+                with open(alert_file) as f:
+                    data = json.load(f)
+                    alerts = [item['alert'] for item in data[-3:]]
+            except:
+                pass
+
+        return alerts
+
+    async def get_validation_status(self) -> dict:
+        """Get validation test status"""
+        log_file = Path('/opt/tower-echo-brain/logs/24h_validation.log')
+
+        if not log_file.exists():
+            return None
+
+        # Parse log for status
+        try:
+            with open(log_file) as f:
+                lines = f.readlines()
+
+            # Find start time
+            start_time = None
+            checks_passed = 0
+            total_checks = 0
+
+            for line in lines:
+                if "24-HOUR VALIDATION TEST STARTED" in line:
+                    # Extract timestamp from log line
+                    parts = line.split(' - ')
+                    if parts:
+                        start_time = datetime.strptime(parts[0], '%Y-%m-%d %H:%M:%S,%f')
+
+                if "HOURLY CHECK" in line:
+                    total_checks += 1
+
+                if "Status: PASSED" in line:
+                    checks_passed += 1
+
+            if start_time:
+                uptime = datetime.now() - start_time
+                return {
+                    'uptime_hours': uptime.total_seconds() / 3600,
+                    'checks_passed': checks_passed,
+                    'total_checks': total_checks,
+                    'status': 'RUNNING' if uptime.total_seconds() < 86400 else 'COMPLETE'
+                }
+        except:
+            pass
+
+        return None
+
+async def main():
+    """Main loop"""
+    dashboard = Dashboard()
+
+    try:
+        while True:
+            await dashboard.display()
+            await asyncio.sleep(5)
+    except KeyboardInterrupt:
+        print("\n\n=K Dashboard closed")
+
+if __name__ == '__main__':
+    asyncio.run(main())

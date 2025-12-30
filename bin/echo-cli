@@ -1,0 +1,325 @@
+#!/opt/tower-echo-brain/venv/bin/python
+# -*- coding: utf-8 -*-
+"""
+Echo Brain Management CLI
+Simple command-line interface for managing Echo Brain autonomous operations
+"""
+
+import sys
+import asyncio
+import argparse
+import json
+from datetime import datetime, timedelta
+from pathlib import Path
+import psutil
+import aiohttp
+import asyncpg
+from tabulate import tabulate
+
+# Add parent directory to path
+sys.path.insert(0, '/opt/tower-echo-brain')
+
+from src.consciousness.task_orchestrator import TaskOrchestrator
+from src.capabilities.persistent_memory import PersistentMemorySystem
+
+class EchoCLI:
+    """Echo Brain Management CLI"""
+
+    def __init__(self):
+        self.db_config = {
+            'host': 'localhost',
+            'user': 'patrick',
+            'password': 'tower_echo_brain_secret_key_2025',
+            'database': 'echo_brain'
+        }
+        self.echo_url = "http://localhost:8309"
+
+    async def status(self):
+        """Show system status"""
+        print("\n" + "=" * 70)
+        print("ECHO BRAIN STATUS")
+        print("=" * 70)
+
+        # Check autonomy percentage
+        autonomy_file = Path('/opt/tower-echo-brain/tests/autonomy_100_results.json')
+        if autonomy_file.exists():
+            with open(autonomy_file) as f:
+                results = json.load(f)
+                autonomy = results.get('autonomy_percentage', 0)
+                print(f"\n<� Autonomy Level: {autonomy:.1f}%")
+        else:
+            print("\n� Autonomy level unknown (run verification)")
+
+        # Check service status
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(f"{self.echo_url}/api/echo/health") as resp:
+                    if resp.status == 200:
+                        print(" Echo Brain Service: Running")
+                    else:
+                        print("L Echo Brain Service: Not responding")
+        except:
+            print("L Echo Brain Service: Offline")
+
+        # Show resource usage
+        print("\n=� Resource Usage:")
+        cpu_percent = psutil.cpu_percent(interval=1)
+        memory = psutil.virtual_memory()
+        disk = psutil.disk_usage('/opt/tower-echo-brain')
+
+        print(f"  CPU: {cpu_percent:.1f}%")
+        print(f"  Memory: {memory.percent:.1f}% ({memory.used / (1024**3):.1f}GB / {memory.total / (1024**3):.1f}GB)")
+        print(f"  Disk: {disk.percent:.1f}% ({disk.used / (1024**3):.1f}GB / {disk.total / (1024**3):.1f}GB)")
+
+        # Check GPU
+        try:
+            import subprocess
+            result = subprocess.run(
+                "nvidia-smi --query-gpu=utilization.gpu,memory.used,memory.total --format=csv,noheader",
+                shell=True,
+                capture_output=True,
+                text=True
+            )
+            if result.returncode == 0:
+                parts = result.stdout.strip().split(', ')
+                print(f"  GPU: {parts[0]} utilization, {parts[1]} / {parts[2]} memory")
+        except:
+            pass
+
+        # Show running tasks
+        print("\n=� Task Queue Status:")
+        orchestrator = TaskOrchestrator(self.db_config)
+        await orchestrator.initialize()
+
+        tasks = await orchestrator.list_tasks()
+        running = [t for t in tasks if t['status'] == 'running']
+        pending = [t for t in tasks if t['status'] == 'pending']
+        completed = [t for t in tasks if t['status'] == 'completed'][-5:]  # Last 5
+
+        print(f"  Running: {len(running)}")
+        print(f"  Pending: {len(pending)}")
+        print(f"  Completed (recent): {len(completed)}")
+
+        if running:
+            print("\n  Currently Running:")
+            for task in running:
+                print(f"    - {task['description'][:50]}...")
+
+        await orchestrator.close()
+
+    async def task_add(self, description: str, priority: int = 0, scheduled: str = None, recurring: str = None):
+        """Add a new task to the queue"""
+
+        orchestrator = TaskOrchestrator(self.db_config)
+        await orchestrator.initialize()
+
+        # Parse scheduled time if provided
+        scheduled_time = None
+        if scheduled:
+            if scheduled == 'now':
+                scheduled_time = datetime.now()
+            elif 'h' in scheduled:
+                hours = int(scheduled.replace('h', ''))
+                scheduled_time = datetime.now() + timedelta(hours=hours)
+            elif 'd' in scheduled:
+                days = int(scheduled.replace('d', ''))
+                scheduled_time = datetime.now() + timedelta(days=days)
+            else:
+                try:
+                    scheduled_time = datetime.fromisoformat(scheduled)
+                except:
+                    print(f"� Invalid schedule format: {scheduled}")
+                    return
+
+        task_id = await orchestrator.add_task(
+            description=description,
+            priority=priority,
+            scheduled_time=scheduled_time,
+            recurring=recurring
+        )
+
+        print(f" Task added: {task_id}")
+        print(f"   Description: {description}")
+        print(f"   Priority: {priority}")
+        if scheduled_time:
+            print(f"   Scheduled: {scheduled_time}")
+        if recurring:
+            print(f"   Recurring: {recurring}")
+
+        await orchestrator.close()
+
+    async def task_list(self, status_filter: str = None):
+        """List tasks"""
+
+        orchestrator = TaskOrchestrator(self.db_config)
+        await orchestrator.initialize()
+
+        tasks = await orchestrator.list_tasks(status_filter)
+
+        if not tasks:
+            print("No tasks found")
+            return
+
+        # Prepare table data
+        table_data = []
+        for task in tasks[:20]:  # Show max 20 tasks
+            table_data.append([
+                task['id'][:20] + '...' if len(task['id']) > 20 else task['id'],
+                task['status'],
+                task['priority'],
+                task['description'][:40] + '...' if len(task['description']) > 40 else task['description'],
+                task['created_at'].strftime('%Y-%m-%d %H:%M') if task['created_at'] else ''
+            ])
+
+        print("\n" + tabulate(
+            table_data,
+            headers=['Task ID', 'Status', 'Priority', 'Description', 'Created'],
+            tablefmt='grid'
+        ))
+
+        await orchestrator.close()
+
+    async def logs(self, lines: int = 50):
+        """Show autonomous loop logs"""
+
+        log_file = Path('/opt/tower-echo-brain/logs/autonomous_loop.log')
+
+        if not log_file.exists():
+            # Try to find Echo Brain service logs
+            import subprocess
+            result = subprocess.run(
+                f"sudo journalctl -u tower-echo-brain -n {lines} --no-pager",
+                shell=True,
+                capture_output=True,
+                text=True
+            )
+
+            if result.returncode == 0:
+                print(result.stdout)
+            else:
+                print("No logs available")
+        else:
+            # Show last N lines of log file
+            import subprocess
+            subprocess.run(f"tail -n {lines} {log_file}", shell=True)
+
+    async def restart(self):
+        """Gracefully restart Echo Brain with state preservation"""
+
+        print("= Restarting Echo Brain...")
+
+        # Save current state
+        print("=� Saving state...")
+        memory = PersistentMemorySystem(self.db_config)
+        await memory.connect()
+
+        # Save important context
+        await memory.store_memory(
+            "restart_context",
+            "system_state",
+            {
+                "timestamp": datetime.now().isoformat(),
+                "reason": "Manual restart via CLI",
+                "tasks_pending": "preserved"
+            },
+            importance=0.9
+        )
+
+        # Backup memories
+        backup_file = await memory.backup_to_disk()
+        print(f"   Backed up memories to {backup_file}")
+
+        await memory.close()
+
+        # Restart service
+        import subprocess
+        print("= Restarting service...")
+        result = subprocess.run(
+            "sudo systemctl restart tower-echo-brain",
+            shell=True,
+            capture_output=True
+        )
+
+        if result.returncode == 0:
+            print(" Service restarted successfully")
+
+            # Wait for service to come up
+            await asyncio.sleep(3)
+
+            # Check if service is running
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(f"{self.echo_url}/api/echo/health") as resp:
+                        if resp.status == 200:
+                            print(" Echo Brain is back online")
+                        else:
+                            print("� Service started but not responding yet")
+            except:
+                print("� Service is still starting up...")
+        else:
+            print("L Failed to restart service")
+            print("   Try: sudo systemctl status tower-echo-brain")
+
+async def main():
+    """Main CLI entry point"""
+
+    parser = argparse.ArgumentParser(description='Echo Brain Management CLI')
+    subparsers = parser.add_subparsers(dest='command', help='Available commands')
+
+    # Status command
+    subparsers.add_parser('status', help='Show autonomy %, running tasks, resource usage')
+
+    # Task add command
+    task_add_parser = subparsers.add_parser('task', help='Task management')
+    task_subparsers = task_add_parser.add_subparsers(dest='task_command')
+
+    add_parser = task_subparsers.add_parser('add', help='Add a new task')
+    add_parser.add_argument('description', help='Task description')
+    add_parser.add_argument('-p', '--priority', type=int, default=0, help='Task priority (higher = more important)')
+    add_parser.add_argument('-s', '--scheduled', help='Schedule time (now, 1h, 2d, or ISO format)')
+    add_parser.add_argument('-r', '--recurring', choices=['hourly', 'daily', 'weekly'], help='Make task recurring')
+
+    # Task list command
+    list_parser = task_subparsers.add_parser('list', help='List tasks')
+    list_parser.add_argument('-s', '--status', choices=['pending', 'running', 'completed', 'failed'], help='Filter by status')
+
+    # Logs command
+    logs_parser = subparsers.add_parser('logs', help='Show autonomous loop logs')
+    logs_parser.add_argument('-n', '--lines', type=int, default=50, help='Number of lines to show')
+
+    # Restart command
+    subparsers.add_parser('restart', help='Graceful restart with state preservation')
+
+    args = parser.parse_args()
+
+    cli = EchoCLI()
+
+    if args.command == 'status':
+        await cli.status()
+    elif args.command == 'task':
+        if args.task_command == 'add':
+            await cli.task_add(
+                args.description,
+                args.priority,
+                args.scheduled,
+                args.recurring
+            )
+        elif args.task_command == 'list':
+            await cli.task_list(args.status)
+        else:
+            parser.print_help()
+    elif args.command == 'logs':
+        await cli.logs(args.lines)
+    elif args.command == 'restart':
+        await cli.restart()
+    else:
+        parser.print_help()
+
+if __name__ == '__main__':
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("\n=K Goodbye!")
+    except Exception as e:
+        print(f"L Error: {e}")
+        sys.exit(1)
