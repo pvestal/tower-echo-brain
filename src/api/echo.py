@@ -17,6 +17,12 @@ from src.db.database import database
 from src.core.intelligence import intelligence_router
 from src.services.conversation import conversation_manager
 
+# Import the model router for dynamic model selection
+from src.model_router import ModelRouter
+
+# Import Qdrant memory system for vectorization
+from src.qdrant_client import QdrantMemory
+
 # Import identity and user context systems
 from src.core.echo_identity import get_echo_identity
 from src.core.user_context_manager import get_user_context_manager
@@ -76,6 +82,12 @@ router = APIRouter()
 _context_retriever = None
 _pronoun_resolver = None
 _entity_extractor = None
+
+# Initialize the model router for dynamic model selection
+model_router = ModelRouter()
+
+# Initialize Qdrant memory system
+qdrant_memory = QdrantMemory()
 
 def get_memory_components():
     """Get or create memory components"""
@@ -308,103 +320,99 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
                 clarifying_questions=[]
             )
 
-        logger.info("🚨 ROUTING TO DIRECT SYSTEM COMMAND EXECUTION")
+        logger.info("🔒 ROUTING TO SECURE SYSTEM COMMAND EXECUTION")
 
-        # Direct execution with retry logic
-        max_retries = 3
-        for attempt in range(max_retries):
-            try:
-                logger.info(f"🔄 System command attempt {attempt + 1}/{max_retries}: {request.query}")
+        # Import secure command executor
+        from src.security.safe_command_executor import safe_command_executor
 
-                # Direct subprocess execution - no safety restrictions
-                import subprocess
+        # Execute through secure validator
+        try:
+            logger.info(f"🔒 Secure command execution: {request.query}")
 
-                # Execute the command directly using shell for full command support
-                process = await asyncio.create_subprocess_shell(
-                    request.query,
-                    stdout=asyncio.subprocess.PIPE,
-                    stderr=asyncio.subprocess.PIPE,
-                    cwd="/tmp"  # Execute in /tmp directory
+            # Execute with security validation
+            result = await safe_command_executor.execute_command(
+                command_string=request.query,
+                username=username
+            )
+
+            processing_time = time.time() - start_time
+
+            if result['success']:
+                logger.info(f"✅ Secure command executed successfully: {result['command']}")
+
+                # Format output
+                output_parts = []
+                if result.get('stdout'):
+                    output_parts.append(result['stdout'])
+                if result.get('stderr'):
+                    output_parts.append(f"STDERR: {result['stderr']}")
+
+                output = "\n".join(output_parts) if output_parts else "Command completed successfully"
+
+                return QueryResponse(
+                    response=output,
+                    model_used="secure_command_executor",
+                    intelligence_level="system_command",
+                    processing_time=processing_time,
+                    escalation_path=[f"secure_command:{result['command']}"],
+                    conversation_id=request.conversation_id,
+                    intent="system_command",
+                    confidence=1.0,
+                    requires_clarification=False,
+                    clarifying_questions=[]
                 )
-
-                stdout, stderr = await asyncio.wait_for(
-                    process.communicate(),
-                    timeout=30
-                )
-
-                stdout_text = stdout.decode('utf-8', errors='replace')
-                stderr_text = stderr.decode('utf-8', errors='replace')
-
+            else:
+                logger.warning(f"🚫 Command blocked/failed: {result['error']}")
                 processing_time = time.time() - start_time
 
-                if process.returncode == 0:
-                    logger.info(f"✅ System command executed successfully on attempt {attempt + 1}")
-                    output = stdout_text
-                    if stderr_text:
-                        output += f"\nSTDERR: {stderr_text}"
-                    return QueryResponse(
-                        response=output,
-                        model_used="direct_executor",
-                        intelligence_level="system_command",
-                        processing_time=processing_time,
-                        escalation_path=[f"system_command:{request.query[:20]}"],
-                        conversation_id=request.conversation_id,
-                        intent="system_command",
-                        confidence=1.0,
-                        requires_clarification=False,
-                        clarifying_questions=[]
-                    )
-                else:
-                    logger.warning(f"⚠️ System command failed on attempt {attempt + 1}: {stderr_text}")
-                    if attempt == max_retries - 1:  # Last attempt
-                        processing_time = time.time() - start_time
-                        return QueryResponse(
-                            response=f"Command failed after {max_retries} attempts.\nSTDOUT: {stdout_text}\nSTDERR: {stderr_text}\nExit code: {process.returncode}",
-                            model_used="direct_executor",
-                            intelligence_level="error",
-                            processing_time=processing_time,
-                            escalation_path=["system_command_failed"],
-                            conversation_id=request.conversation_id,
-                            intent="system_command",
-                            confidence=0.0,
-                            requires_clarification=False,
-                            clarifying_questions=[]
-                        )
+                # Provide helpful information about allowed commands
+                allowed_commands = safe_command_executor.get_allowed_commands()
+                allowed_list = "\n".join([
+                    f"• {cmd}: {info['description']}"
+                    for cmd, info in allowed_commands.items()
+                ])
 
-            except asyncio.TimeoutError:
-                logger.error(f"❌ System command timed out on attempt {attempt + 1}")
-                if attempt == max_retries - 1:  # Last attempt
-                    processing_time = time.time() - start_time
-                    return QueryResponse(
-                        response=f"Command timed out after {max_retries} attempts (30s timeout each)",
-                        model_used="direct_executor",
-                        intelligence_level="error",
-                        processing_time=processing_time,
-                        escalation_path=["system_command_timeout"],
-                        conversation_id=request.conversation_id,
-                        intent="system_command",
-                        confidence=0.0,
-                        requires_clarification=False,
-                        clarifying_questions=[]
-                    )
-            except Exception as e:
-                logger.error(f"❌ System command execution error on attempt {attempt + 1}: {e}")
-                if attempt == max_retries - 1:  # Last attempt
-                    processing_time = time.time() - start_time
-                    return QueryResponse(
-                        response=f"System command failed after {max_retries} attempts: {str(e)}",
-                        model_used="direct_executor",
-                        intelligence_level="error",
-                        processing_time=processing_time,
-                        escalation_path=["system_command_error"],
-                        conversation_id=request.conversation_id,
-                        intent="system_command",
-                        confidence=0.0,
-                        requires_clarification=False,
-                        clarifying_questions=[]
-                    )
-                # Wait before retry
-                await asyncio.sleep(0.5 * (attempt + 1))
+                error_response = f"""❌ {result['error']}
+
+🔒 Security Policy: Only whitelisted commands are allowed for security.
+
+📝 Allowed commands:
+{allowed_list}
+
+💡 Example usage:
+• ls -la /tmp
+• ps aux
+• systemctl status nginx
+• df -h"""
+
+                return QueryResponse(
+                    response=error_response,
+                    model_used="secure_command_executor",
+                    intelligence_level="security_policy",
+                    processing_time=processing_time,
+                    escalation_path=["command_blocked"],
+                    conversation_id=request.conversation_id,
+                    intent="system_command",
+                    confidence=1.0,
+                    requires_clarification=False,
+                    clarifying_questions=[]
+                )
+
+        except Exception as e:
+            logger.error(f"❌ Secure command executor failed: {e}")
+            processing_time = time.time() - start_time
+            return QueryResponse(
+                response=f"❌ Command execution system error: {str(e)}",
+                model_used="secure_command_executor",
+                intelligence_level="error",
+                processing_time=processing_time,
+                escalation_path=["executor_error"],
+                conversation_id=request.conversation_id,
+                intent="system_command",
+                confidence=0.0,
+                requires_clarification=False,
+                clarifying_questions=[]
+            )
 
     # CHECK FOR SLASH COMMANDS FIRST
     if request.query.strip().startswith('/'):
@@ -586,6 +594,25 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
                     }
                 )
                 logger.info(f"✅ Unified conversation saved for {request.conversation_id}")
+
+                # Store conversation in Qdrant for vector memory
+                try:
+                    memory_text = f"User: {original_query}\nAssistant: {response.response}"
+                    success = await qdrant_memory.store_memory(
+                        text=memory_text,
+                        metadata={
+                            "conversation_id": request.conversation_id,
+                            "user_id": request.user_id or "default",
+                            "intent": intent,
+                            "model_used": response.model_used,
+                            "timestamp": datetime.now().isoformat()
+                        }
+                    )
+                    if success:
+                        logger.info(f"🧠 Stored memory in Qdrant for conversation {request.conversation_id}")
+                except Exception as qdrant_error:
+                    logger.error(f"❌ Qdrant storage failed: {qdrant_error}")
+
             except Exception as e:
                 logger.error(f"❌ Clarification save_response FAILED: {e}")
 
@@ -709,8 +736,9 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
             augmented_query = "\n".join(memory_context_parts) + f"\n\n🔍 Current query: {request.query}"
             logger.info(f"📚 Augmented query with {len(semantic_results)} memory results")
 
-        # FIXED: Always use direct query_model instead of broken progressive_escalation
+        # Use model router to dynamically select the best model based on query complexity
         if selected_model:
+            # If we already have a selected model from cognitive selection, use it
             logger.info(f"🧠 Using cognitively selected model: {selected_model} - {selection_reason}")
             result = await intelligence_router.query_model(selected_model, augmented_query, context)
             if result["success"]:
@@ -718,11 +746,34 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
                 result["escalation_path"] = [f"cognitive_selection:{selected_model}"]
                 result["decision_reason"] = selection_reason
             else:
-                logger.warning(f"⚠️ Cognitive model {selected_model} failed, trying fallback model")
-                result = await intelligence_router.query_model("llama3.2:3b", augmented_query, context)
+                # Fallback: use model router for dynamic selection
+                logger.warning(f"⚠️ Cognitive model {selected_model} failed, using model router for fallback")
+                routing_result = await model_router.route_query(augmented_query, context)
+                if routing_result["success"]:
+                    result = await intelligence_router.query_model(routing_result["model_used"], augmented_query, context)
+                    result["complexity_details"] = routing_result.get("complexity_details", {})
+                else:
+                    # Last resort: use lightweight llama model
+                    result = await intelligence_router.query_model("llama3.1:8b", augmented_query, context)
         else:
-            # Use direct query_model instead of broken progressive_escalation
-            result = await intelligence_router.query_model("llama3.2:3b", augmented_query, context)
+            # Use model router for dynamic model selection based on query complexity
+            routing_result = await model_router.route_query(augmented_query, context)
+            if routing_result["success"]:
+                logger.info(f"🎯 Model router selected: {routing_result['model_used']} (Tier: {routing_result.get('tier', 'N/A')}, Score: {routing_result.get('complexity_score', 0):.1f})")
+                # Note: Model router already executes the query, so we use its response
+                result = {
+                    "success": True,
+                    "response": routing_result["response"],
+                    "model": routing_result["model_used"],
+                    "tier": routing_result.get("tier", "N/A"),
+                    "complexity_score": routing_result.get("complexity_score", 0),
+                    "complexity_details": routing_result.get("complexity_details", {}),
+                    "specialization": routing_result.get("specialization")
+                }
+            else:
+                # Fallback to lightweight model if router fails
+                logger.warning("⚠️ Model router failed, using fallback llama3.1:8b")
+                result = await intelligence_router.query_model("llama3.1:8b", augmented_query, context)
 
         if result["success"]:
             processing_time = time.time() - start_time
@@ -789,6 +840,34 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
                     }
                 )
                 logger.info(f"✅ Unified conversation saved for {request.conversation_id}")
+
+                # Store conversation in Qdrant for vector memory
+                try:
+                    # Create memory text combining query and response
+                    memory_text = f"User: {original_query}\nAssistant: {response.response}"
+
+                    # Store in Qdrant with metadata
+                    success = await qdrant_memory.store_memory(
+                        text=memory_text,
+                        metadata={
+                            "conversation_id": request.conversation_id,
+                            "user_id": request.user_id or "default",
+                            "intent": intent,
+                            "model_used": response.model_used,
+                            "timestamp": datetime.now().isoformat(),
+                            "confidence": confidence,
+                            "tier": tier if tier else "unknown"
+                        }
+                    )
+
+                    if success:
+                        logger.info(f"🧠 Stored memory in Qdrant for conversation {request.conversation_id}")
+                    else:
+                        logger.warning(f"⚠️ Failed to store memory in Qdrant")
+
+                except Exception as qdrant_error:
+                    logger.error(f"❌ Qdrant storage failed: {qdrant_error}")
+
             except Exception as e:
                 logger.error(f"❌ log_interaction unified save FAILED: {e}")
 
@@ -1025,3 +1104,154 @@ async def handle_capability_intent(intent: str, intent_params: dict, request: Qu
             intent=intent,
             confidence=0.0
         )
+@router.get("/api/echo/status")
+async def get_echo_status():
+    """Get Echo Brain system status with recent activity and persona"""
+    import psycopg2
+    from psycopg2.extras import RealDictCursor
+    
+    try:
+        # Get recent messages from database using psycopg2 directly
+        conn = psycopg2.connect(**database.db_config)
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        
+        cursor.execute("""
+            SELECT conversation_id, query, response, intent, timestamp
+            FROM echo_unified_interactions
+            WHERE conversation_id NOT LIKE 'test_%'
+              AND conversation_id NOT LIKE 'debug_%'
+              AND conversation_id NOT LIKE 'metrics_%'
+            ORDER BY timestamp DESC
+            LIMIT 5
+        """)
+        recent_messages = cursor.fetchall()
+        
+        # Get conversation stats
+        cursor.execute("""
+            SELECT 
+                COUNT(DISTINCT conversation_id) as total_conversations,
+                COUNT(*) as total_messages
+            FROM echo_unified_interactions
+            WHERE timestamp > NOW() - INTERVAL '24 hours'
+        """)
+        stats = cursor.fetchone()
+        
+        cursor.close()
+        conn.close()
+        
+        # Get agentic persona state if available
+        persona_state = "responsive"
+        if agentic_persona:
+            try:
+                persona_state = agentic_persona.current_mode or "responsive"
+            except:
+                pass
+        
+        return {
+            "status": "active",
+            "persona": persona_state,
+            "recent_messages": [
+                {
+                    "conversation_id": msg["conversation_id"],
+                    "query_preview": msg["query"][:100] if msg["query"] else "",
+                    "response_preview": msg["response"][:100] if msg["response"] else "",
+                    "intent": msg["intent"],
+                    "timestamp": msg["timestamp"].isoformat() if msg["timestamp"] else None
+                }
+                for msg in recent_messages
+            ],
+            "stats_24h": {
+                "conversations": stats["total_conversations"] if stats else 0,
+                "messages": stats["total_messages"] if stats else 0
+            },
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Failed to get Echo status: {e}")
+        return {
+            "status": "error",
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        }
+
+async def get_echo_goals():
+    """Get Echo Brain's current system goals"""
+    try:
+        # Get goals from database or configuration
+        goals = await database.fetch_all("""
+            SELECT goal_id, goal_description, priority, status, created_at
+            FROM echo_goals
+            ORDER BY priority ASC, created_at DESC
+            LIMIT 10
+        """)
+        
+        # If no table exists or no goals, return default goals
+        if not goals:
+            default_goals = [
+                {
+                    "goal_id": "assist_patrick",
+                    "goal_description": "Provide helpful assistance to Patrick",
+                    "priority": 1,
+                    "status": "active",
+                    "created_at": None
+                },
+                {
+                    "goal_id": "maintain_tower",
+                    "goal_description": "Monitor and maintain Tower infrastructure",
+                    "priority": 2,
+                    "status": "active",
+                    "created_at": None
+                },
+                {
+                    "goal_id": "learn_improve",
+                    "goal_description": "Continuously learn and improve responses",
+                    "priority": 3,
+                    "status": "active",
+                    "created_at": None
+                }
+            ]
+            return {
+                "goals": default_goals,
+                "timestamp": datetime.now().isoformat()
+            }
+        
+        return {
+            "goals": [
+                {
+                    "goal_id": g["goal_id"],
+                    "description": g["goal_description"],
+                    "priority": g["priority"],
+                    "status": g["status"],
+                    "created_at": g["created_at"].isoformat() if g["created_at"] else None
+                }
+                for g in goals
+            ],
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        # Return default goals if database query fails
+        logger.warning(f"Failed to fetch goals from database, using defaults: {e}")
+        default_goals = [
+            {
+                "goal_id": "assist_patrick",
+                "description": "Provide helpful assistance to Patrick",
+                "priority": 1,
+                "status": "active"
+            },
+            {
+                "goal_id": "maintain_tower",
+                "description": "Monitor and maintain Tower infrastructure",
+                "priority": 2,
+                "status": "active"
+            },
+            {
+                "goal_id": "learn_improve",
+                "description": "Continuously learn and improve responses",
+                "priority": 3,
+                "status": "active"
+            }
+        ]
+        return {
+            "goals": default_goals,
+            "timestamp": datetime.now().isoformat()
+        }
