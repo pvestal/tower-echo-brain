@@ -27,8 +27,8 @@ class VectorMemory:
 
     def __init__(self):
         # AMD GPU Services running on Tower
-        self.vector_db_url = "http://127.0.0.1:8402"
-        self.embeddings_url = "http://127.0.0.1:8403"
+        self.vector_db_url = "http://127.0.0.1:6333"
+        self.embeddings_url = "http://127.0.0.1:6333"
 
         # Use Ollama for embeddings (since custom service isn't working)
         self.ollama_url = "http://127.0.0.1:11434"

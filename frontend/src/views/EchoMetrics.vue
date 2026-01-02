@@ -150,7 +150,6 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { TowerCard } from '@tower/ui-components'
 import axios from 'axios'
 
 // Configure axios base URL

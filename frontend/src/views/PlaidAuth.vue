@@ -25,7 +25,6 @@
 
 <script setup>
 import { ref } from 'vue'
-import { TowerCard, TowerButton } from '@tower/ui-components'
 
 const connected = ref(false)
 

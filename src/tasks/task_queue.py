@@ -22,10 +22,13 @@ logger = logging.getLogger(__name__)
 
 class TaskPriority(Enum):
     URGENT = 1      # System failures, security issues
-    HIGH = 2        # Performance issues, user requests  
+    HIGH = 2        # Performance issues, user requests
     NORMAL = 3      # Regular monitoring, optimization
     LOW = 4         # Background learning, cleanup
     SCHEDULED = 5   # Daily reports, backups
+    BACKGROUND = 6  # Non-urgent background tasks
+    DEFERRED = 7    # Tasks that can wait
+    ULTRA_HIGH = 8  # Critical system tasks
 
 class TaskStatus(Enum):
     PENDING = "pending"
@@ -91,14 +94,26 @@ class Task:
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'Task':
         """Create task from dictionary"""
+        # Handle database column name mappings
+        if 'error_message' in data:
+            data['error'] = data.pop('error_message')  # Map error_message -> error
+        if 'retry_count' in data:
+            data['retries'] = data.pop('retry_count')  # Map retry_count -> retries
+            
         # Convert string values back to enums
         data['task_type'] = TaskType(data['task_type'])
         data['priority'] = TaskPriority(data['priority'])
         data['status'] = TaskStatus(data['status'])
+        
         # Convert ISO strings back to datetime (if not already datetime)
         for field in ['created_at', 'updated_at', 'scheduled_for', 'started_at', 'completed_at']:
-            if data[field] and isinstance(data[field], str):
+            if field in data and data[field] and isinstance(data[field], str):
                 data[field] = datetime.fromisoformat(data[field])
+                
+        # Remove fields that aren't part of the Task dataclass (database-specific fields)
+        valid_fields = {f.name for f in cls.__dataclass_fields__.values()}
+        data = {k: v for k, v in data.items() if k in valid_fields}
+        
         return cls(**data)
 
 class TaskQueue:

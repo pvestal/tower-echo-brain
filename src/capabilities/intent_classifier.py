@@ -170,7 +170,7 @@ class IntentClassifier:
         action_map = {
             'code_generation': {
                 'action': 'generate_code',
-                'model': 'qwen2.5-coder:7b' if complexity == 'complex' else 'deepseek-coder:1.3b',
+                'model': 'deepseek-coder-v2:16b' if complexity == 'complex' else 'qwen2.5-coder:7b',
                 'priority': 5
             },
             'image_generation': {
@@ -200,7 +200,7 @@ class IntentClassifier:
             },
             'query': {
                 'action': 'query',
-                'model': 'llama3.2:3b',
+                'model': 'llama3.1:8b',
                 'priority': 4
             }
         }

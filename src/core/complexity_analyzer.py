@@ -47,11 +47,11 @@ class ComplexityAnalyzer:
 
     # Model mapping (matches complexity_thresholds table)
     TIER_TO_MODEL = {
-        "tiny": "llama3.2:3b",  # FIXED: No more tinyllama for any queries
-        "small": "llama3.2:3b",
-        "medium": "llama3.2:3b",
-        "large": "qwen2.5-coder:32b",
-        "cloud": "llama3.1:70b"
+        "tiny": "llama3.1:8b",  # Good baseline for simple queries
+        "small": "llama3.1:8b",  # Same model, no more 3b
+        "medium": "gemma2:9b",  # Better for moderate complexity
+        "large": "deepseek-coder-v2:16b",  # Best installed model for complex
+        "cloud": "deepseek-coder-v2:16b"  # Same - 70b won't fit in VRAM
     }
 
     # Threshold boundaries

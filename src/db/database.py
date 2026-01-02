@@ -11,55 +11,34 @@ import os
 from typing import Dict, List, Optional
 from datetime import datetime
 
+# Import secure credential manager
+try:
+    from ..security.credential_validator import get_secure_db_config
+except ImportError:
+    # Fallback for development environments
+    def get_secure_db_config():
+        logger.warning("⚠️ Secure credential validator not available, using basic fallback")
+        db_password = os.environ.get("DB_PASSWORD")
+        if not db_password:
+            raise RuntimeError("Database password not configured. Set DB_PASSWORD environment variable.")
+        return {
+            "database": os.environ.get("DB_NAME", "echo_brain"),
+            "user": os.environ.get("DB_USER", "patrick"),
+            "host": os.environ.get("DB_HOST", "localhost"),
+            "password": db_password,
+            "port": int(os.environ.get("DB_PORT", 5432))
+        }
+
 logger = logging.getLogger(__name__)
 
 class EchoDatabase:
     """Unified database manager for Echo learning"""
 
     def __init__(self):
-        # SECURITY: Get database credentials from Vault
-        self.db_config = self._get_db_config_from_vault()
+        # SECURITY: Get database credentials using secure credential manager
+        self.db_config = get_secure_db_config()
+        logger.info("✅ Database connection configured with secure credentials")
 
-    def _get_db_config_from_vault(self):
-        """Get database configuration from HashiCorp Vault or fallback to env"""
-        if os.environ.get("USE_VAULT", "false").lower() == "true":
-            try:
-                import hvac
-                vault_addr = os.environ.get("VAULT_ADDR", "http://127.0.0.1:8200")
-
-                # Try to get vault token from file
-                token_file = os.environ.get("VAULT_TOKEN_FILE", "/opt/tower-echo-brain/.vault-token")
-                if os.path.exists(token_file):
-                    with open(token_file, 'r') as f:
-                        vault_token = f.read().strip()
-                else:
-                    vault_token = os.environ.get("VAULT_TOKEN")
-
-                if vault_token:
-                    client = hvac.Client(url=vault_addr, token=vault_token)
-
-                    # Get database credentials from vault
-                    db_secrets = client.secrets.kv.v2.read_secret_version(path='tower/database')
-                    db_data = db_secrets['data']['data']
-
-                    return {
-                        "database": db_data.get("database", "echo_brain"),
-                        "user": db_data.get("user", "patrick"),
-                        "host": db_data.get("host", "localhost"),
-                        "password": db_data.get("password"),
-                        "port": int(db_data.get("port", 5432))
-                    }
-            except Exception as e:
-                logger.warning(f"Failed to get credentials from Vault: {e}, falling back to env vars")
-
-        # Fallback to environment variables
-        return {
-            "database": os.environ.get("DB_NAME", "echo_brain"),
-            "user": os.environ.get("DB_USER", "patrick"),
-            "host": os.environ.get("DB_HOST", "localhost"),
-            "password": os.environ.get("DB_PASSWORD", "***REMOVED***"),
-            "port": os.environ.get("DB_PORT", 5432)
-        }
 
     async def log_interaction(self, query: str, response: str, model_used: str,
                             processing_time: float, escalation_path: List[str],

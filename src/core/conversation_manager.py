@@ -261,18 +261,20 @@ class ConversationManager:
             if metadata:
                 full_metadata.update(metadata)
 
-            # 1. Save/update conversation record
+            # 1. Save/update conversation record with query_text
             cur.execute("""
                 INSERT INTO echo_conversations
-                (conversation_id, user_id, context, last_interaction)
-                VALUES (%s, %s, %s, NOW())
+                (conversation_id, user_id, query_text, context, last_interaction)
+                VALUES (%s, %s, %s, %s, NOW())
                 ON CONFLICT (conversation_id) DO UPDATE SET
+                    query_text = EXCLUDED.query_text,
                     context = EXCLUDED.context,
                     last_interaction = NOW(),
                     message_count = echo_conversations.message_count + 1
             """, (
                 conversation_id,
                 user_id,
+                original_query,
                 Json(full_metadata)
             ))
 
@@ -476,6 +478,20 @@ class ConversationManager:
                 metadata.get("model_used", "unified_system"),
                 metadata.get("processing_time", 0),
                 metadata.get("confidence", 0.5),
+                conversation_id
+            ))
+
+            # Also update echo_conversations with the response
+            cur.execute("""
+                UPDATE echo_conversations
+                SET response_text = %s,
+                    model_used = %s,
+                    processing_time = %s
+                WHERE conversation_id = %s
+            """, (
+                response,
+                metadata.get("model_used", "unified_system"),
+                metadata.get("processing_time", 0),
                 conversation_id
             ))
 
