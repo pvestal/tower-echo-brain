@@ -26,15 +26,32 @@
               </div>
             </div>
             <div v-if="msg.retry" class="message-meta">
-              <button @click="retryMessage(msg)" class="retry-button">
+              <TowerButton @click="retryMessage(msg)" variant="link" size="sm">
                 Retry
-              </button>
+              </TowerButton>
             </div>
           </div>
         </div>
 
         <div v-if="connectionError" class="error-banner">
           ⚠️ Connection issues detected. Messages will auto-retry.
+        </div>
+
+        <!-- Model Selector -->
+        <div class="model-selector mb-4">
+          <div class="flex gap-4 items-center">
+            <span class="text-sm font-medium text-tower-text-secondary">Model:</span>
+            <TowerSelect
+              v-model="selectedModel"
+              :options="modelOptions"
+              placeholder="Default (Auto-select)"
+              value-key="value"
+              label-key="label"
+            />
+            <TowerButton @click="refreshModels" variant="secondary" size="sm">
+              Refresh
+            </TowerButton>
+          </div>
         </div>
 
         <!-- Request Type Selector -->
@@ -65,7 +82,14 @@
             </label>
             <div class="flex items-center gap-2">
               <span class="text-sm">Timeout:</span>
-              <input type="number" v-model="timeout" min="1" max="300" class="w-16 px-2 py-1 text-sm border rounded bg-tower-bg-card text-tower-text-primary">
+              <TowerInput
+                v-model="timeout"
+                type="number"
+                min="1"
+                max="300"
+                class="w-16"
+                size="sm"
+              />
               <span class="text-sm">sec</span>
             </div>
           </div>
@@ -76,11 +100,11 @@
           <div class="flex gap-4 items-center">
             <div class="flex items-center gap-2">
               <span class="text-sm">Workflow:</span>
-              <select v-model="workflowType" class="px-2 py-1 text-sm border rounded bg-tower-bg-card text-tower-text-primary">
-                <option value="sequential">Sequential</option>
-                <option value="parallel">Parallel</option>
-                <option value="consensus">Consensus</option>
-              </select>
+              <TowerSelect
+                v-model="workflowType"
+                :options="workflowOptions"
+                size="sm"
+              />
             </div>
           </div>
         </div>
@@ -103,8 +127,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { TowerCard, TowerButton, TowerInput } from '@tower/ui-components'
+import { ref, computed } from 'vue'
 import axios from 'axios'
 
 const messages = ref([])
@@ -114,9 +137,26 @@ const connectionError = ref(false)
 
 // Request type controls
 const requestType = ref('conversation')
+const selectedModel = ref('')
+const availableModels = ref([])
 const safeMode = ref(true)
 const timeout = ref(30)
 const workflowType = ref('sequential')
+
+// Options for TowerSelect components
+const modelOptions = computed(() => [
+  { value: '', label: 'Default (Auto-select)' },
+  ...availableModels.value.map(model => ({
+    value: model.name,
+    label: `${model.name} (${model.size})`
+  }))
+])
+
+const workflowOptions = [
+  { value: 'sequential', label: 'Sequential' },
+  { value: 'parallel', label: 'Parallel' },
+  { value: 'consensus', label: 'Consensus' }
+]
 
 // Retry configuration
 const MAX_RETRIES = 3
@@ -245,10 +285,25 @@ const buildRequestPayload = (msg) => {
 }
 
 // Send message with retry logic
+const refreshModels = async () => {
+  try {
+    const response = await axios.get('/api/echo/models/list')
+    availableModels.value = response.data || []
+  } catch (error) {
+    console.error('Failed to fetch models:', error)
+    availableModels.value = []
+  }
+}
+
 const sendMessageWithRetry = async (msg, retryCount = 0) => {
   try {
     const endpoint = getApiEndpoint()
     const payload = buildRequestPayload(msg)
+
+    // Add selected model to payload if specified
+    if (selectedModel.value) {
+      payload.model = selectedModel.value
+    }
 
     const response = await axios.post(endpoint, payload, {
       timeout: (requestType.value === 'system_command' ? timeout.value * 1000 : 30000),
@@ -471,3 +526,4 @@ const retryMessage = async (errorMsg) => {
   white-space: pre-wrap;
 }
 </style>
+

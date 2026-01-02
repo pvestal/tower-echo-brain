@@ -8,16 +8,30 @@ from datetime import datetime
 from typing import Dict, Any
 from src.tasks.task_queue import TaskQueue
 
-# Import behavior modules
-from src.behaviors.service_monitor import ServiceMonitor
-from src.behaviors.system_monitor import SystemMonitor
-from src.behaviors.code_quality_monitor import CodeQualityMonitor
-from src.tasks.code_refactor_executor import CodeRefactorExecutor
-from src.tasks.multi_language_linter import MultiLanguageLinter
-from src.behaviors.scheduler import BehaviorScheduler
-from src.tasks.knowledge_graph_builder import KnowledgeGraphBuilder
-
 logger = logging.getLogger(__name__)
+
+# Import behavior modules with fallbacks
+try:
+    from src.behaviors.service_monitor import ServiceMonitor
+    from src.behaviors.system_monitor import SystemMonitor
+    from src.behaviors.code_quality_monitor import CodeQualityMonitor
+    from src.behaviors.scheduler import BehaviorScheduler
+except ImportError as e:
+    logger.warning(f"Behaviors modules not available: {e}")
+    ServiceMonitor = None
+    SystemMonitor = None
+    CodeQualityMonitor = None
+    BehaviorScheduler = None
+
+try:
+    from src.tasks.code_refactor_executor import CodeRefactorExecutor
+    from src.tasks.multi_language_linter import MultiLanguageLinter
+    from src.tasks.knowledge_graph_builder import KnowledgeGraphBuilder
+except ImportError as e:
+    logger.warning(f"Task modules not available: {e}")
+    CodeRefactorExecutor = None
+    MultiLanguageLinter = None
+    KnowledgeGraphBuilder = None
 
 class AutonomousBehaviors:
     """Refactored autonomous behaviors with modular architecture"""
@@ -26,14 +40,14 @@ class AutonomousBehaviors:
         self.task_queue = task_queue
         self.running = False
 
-        # Initialize behavior modules
-        self.service_monitor = ServiceMonitor(task_queue)
-        self.system_monitor = SystemMonitor(task_queue)
-        self.code_quality_monitor = CodeQualityMonitor(task_queue)
-        self.code_refactor_executor = CodeRefactorExecutor()
-        self.multi_language_linter = MultiLanguageLinter()
-        self.scheduler = BehaviorScheduler(task_queue)
-        self.knowledge_graph_builder = KnowledgeGraphBuilder()
+        # Initialize behavior modules (with None checks)
+        self.service_monitor = ServiceMonitor(task_queue) if ServiceMonitor else None
+        self.system_monitor = SystemMonitor(task_queue) if SystemMonitor else None
+        self.code_quality_monitor = CodeQualityMonitor(task_queue) if CodeQualityMonitor else None
+        self.code_refactor_executor = CodeRefactorExecutor() if CodeRefactorExecutor else None
+        self.multi_language_linter = MultiLanguageLinter() if MultiLanguageLinter else None
+        self.scheduler = BehaviorScheduler(task_queue) if BehaviorScheduler else None
+        self.knowledge_graph_builder = KnowledgeGraphBuilder() if KnowledgeGraphBuilder else None
 
         # Behavior loop intervals (seconds)
         self.intervals = {

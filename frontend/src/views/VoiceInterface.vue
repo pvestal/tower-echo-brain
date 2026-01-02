@@ -35,7 +35,6 @@
 
 <script setup>
 import { ref } from 'vue'
-import { TowerCard, TowerButton } from '@tower/ui-components'
 
 const isRecording = ref(false)
 const transcript = ref('')

@@ -13,6 +13,7 @@ load_dotenv()
 # Core routers
 from src.api.routes import router as main_router
 from src.api.takeout_stub import router as takeout_stub_router
+from src.api.echo_refactored import router as refactored_router
 
 # Try to import real metrics, fall back to stub if fails
 try:
@@ -179,6 +180,8 @@ def create_app() -> FastAPI:
     app.include_router(main_router, prefix="", tags=["main"])
     app.include_router(takeout_stub_router, prefix="", tags=["takeout"])
     app.include_router(system_metrics_router, prefix="", tags=["system"])
+    app.include_router(refactored_router, prefix="", tags=["refactored"])
+    print("✅ Refactored API routes added with proper endpoints")
     # TODO: Fix legacy router inclusions after restructuring
     # app.include_router(feedback_router, prefix="", tags=["feedback"])
     # app.include_router(learning_pipeline_router, prefix="", tags=["learning-pipeline"])

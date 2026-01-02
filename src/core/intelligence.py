@@ -28,7 +28,7 @@ class EchoIntelligenceRouter:
 
         # FIXED hierarchy - no more jumping to 70B
         self.model_hierarchy = {
-            "quick": "tinyllama:latest",        # 1B parameters
+            "quick": "llama3.1:8b",        # Better baseline model
             "standard": "llama3.2:3b",          # 3B parameters
             "professional": "mistral:7b",       # 7B parameters
             "expert": "codellama:13b",          # 13B parameters (was 32B)

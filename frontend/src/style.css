@@ -1,13 +1,14 @@
+/* Import Claude Console Dark Theme */
+@import './claude-console-theme.css';
+
+/* Tailwind imports after theme to allow overrides if needed */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+/* Override Tailwind defaults with Claude Console theme */
+@layer base {
+  body {
+    @apply bg-[#1a1a1a] text-[#e0e0e0];
+  }
 }

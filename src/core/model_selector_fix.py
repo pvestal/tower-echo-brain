@@ -14,7 +14,7 @@ class FixedModelSelector:
     def __init__(self):
         # Proper model tiers (no more jumping to 70B)
         self.model_tiers = {
-            "tiny": ["tinyllama:latest", "llama3.2:3b"],
+            "tiny": ["llama3.1:8b", "llama3.2:3b"],
             "small": ["llama3.2:3b", "mistral:7b"],
             "medium": ["codellama:7b", "mistral:7b"],
             "large": ["codellama:13b", "qwen2.5-coder:7b"],
