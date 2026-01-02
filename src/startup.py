@@ -6,7 +6,7 @@ import asyncio
 import logging
 from src.db.database import database
 from src.tasks.task_queue import TaskQueue
-from src.tasks import BackgroundWorker, AutonomousBehaviors
+from src.tasks import BackgroundWorker, get_autonomous_behaviors
 from src.board_integration import BoardIntegration
 from src.routing.service_registry import ServiceRegistry
 from src.routing.request_logger import RequestLogger
@@ -92,6 +92,7 @@ class EchoBrainStartup:
             logger.info("✅ Background worker initialized")
 
             # Initialize autonomous behaviors
+            AutonomousBehaviors = get_autonomous_behaviors()
             self.autonomous_behaviors = AutonomousBehaviors(self.task_queue)
             logger.info("✅ Autonomous behaviors initialized")
 
