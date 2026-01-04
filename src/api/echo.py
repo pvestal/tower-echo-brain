@@ -171,6 +171,30 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
     """Main query endpoint with intelligent routing and conversation management"""
     start_time = time.time()
 
+    # EMERGENCY FIX: Use minimal router for immediate functionality
+    try:
+        from src.minimal_router import get_simple_route, call_ollama
+        model = get_simple_route(request.query)
+        response_text = call_ollama(model, request.query)
+
+        return QueryResponse(
+            response=response_text,
+            model_used=model,
+            intelligence_level="standard",
+            processing_time=time.time() - start_time,
+            escalation_path=["minimal_router"],
+            conversation_id=request.conversation_id or str(uuid.uuid4()),
+            intent="general",
+            confidence=1.0,
+            requires_clarification=False,
+            clarifying_questions=[]
+        )
+    except Exception as e:
+        logger.error(f"Minimal router failed: {e}")
+        # Fall through to original logic if minimal router fails
+
+    # Original complex logic continues below...
+
     print(f"\n🎯 ECHO QUERY HANDLER CALLED: {request.query[:50]}...\n")
     logger.info(f"🎯 ECHO QUERY HANDLER CALLED: {request.query[:50]}...")
 
@@ -770,7 +794,7 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
                     result["complexity_details"] = routing_result.get("complexity_details", {})
                 else:
                     # Last resort: use lightweight llama model
-                    result = await intelligence_router.query_model("llama3.1:8b", augmented_query, context)
+                    result = await intelligence_router.query_model("llama3.2:latest", augmented_query, context)
         else:
             # Use model router for dynamic model selection based on query complexity
             routing_result = await model_router.route_query(augmented_query, context)
@@ -788,8 +812,8 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
                 }
             else:
                 # Fallback to lightweight model if router fails
-                logger.warning("⚠️ Model router failed, using fallback llama3.1:8b")
-                result = await intelligence_router.query_model("llama3.1:8b", augmented_query, context)
+                logger.warning("⚠️ Model router failed, using fallback llama3.2:latest")
+                result = await intelligence_router.query_model("llama3.2:latest", augmented_query, context)
 
         if result["success"]:
             processing_time = time.time() - start_time
