@@ -1,0 +1,97 @@
+{
+  "api_response": {
+    "/api/echo/health": {
+      "mean_ms": 6.238460633903742,
+      "median_ms": 5.902873468585312,
+      "min_ms": 5.495031829923391,
+      "max_ms": 8.386133005842566,
+      "stdev_ms": 0.9713668840567921
+    },
+    "/api/echo/models/list": {
+      "mean_ms": 12.486824323423207,
+      "median_ms": 12.420471059158444,
+      "min_ms": 11.495637008920312,
+      "max_ms": 13.921311125159264,
+      "stdev_ms": 0.8142900832382173
+    },
+    "/api/echo/brain": {
+      "mean_ms": 0.5119760986417532,
+      "median_ms": 0.4768419312313199,
+      "min_ms": 0.46381191350519657,
+      "max_ms": 0.7036488968878984,
+      "stdev_ms": 0.08111432680444274
+    }
+  },
+  "query_processing": {
+    "simple": {
+      "query": "What is 2+2?",
+      "model": "llama3.2:3b",
+      "mean_ms": 4410.606733290479,
+      "min_ms": 4029.0351710282266,
+      "max_ms": 4994.983152952045
+    },
+    "medium": {
+      "query": "Explain recursion in programming",
+      "model": "llama3.2:3b",
+      "mean_ms": 12459.207345343506,
+      "min_ms": 5541.690428974107,
+      "max_ms": 18295.112044084817
+    },
+    "complex": {
+      "query": "Write a Python function to calculate fibonacci",
+      "model": "qwen2.5-coder:7b",
+      "mean_ms": 9850.953657645732,
+      "min_ms": 5590.690061915666,
+      "max_ms": 13006.322541972622
+    }
+  },
+  "memory_ops": {
+    "store": {
+      "mean_ms": 3.5592457512393594,
+      "median_ms": 2.418159507215023
+    },
+    "retrieve": {
+      "mean_ms": 14.917116379365325,
+      "median_ms": 13.922931044362485
+    },
+    "startup_context_ms": 8.790130028501153
+  },
+  "code_execution": {
+    "error": "cannot import name 'CodeExecutor' from 'src.capabilities.code_executor_fixed' (/opt/tower-echo-brain/src/capabilities/code_executor_fixed.py)"
+  },
+  "comfyui": {
+    "available": true,
+    "workflow_prep_ms": 0.006663147360086441,
+    "note": "Full execution skipped for benchmarking"
+  },
+  "database": {
+    "simple_query_ms": 0.07282387232407928,
+    "complex_query_ms": 0.1997124869376421,
+    "count_query_ms": 0.8682108018547297,
+    "conversation_count": 1342
+  },
+  "resources": {
+    "cpu": {
+      "mean_percent": 1.7,
+      "max_percent": 2.9,
+      "cores": 24
+    },
+    "memory": {
+      "used_gb": 19.00986099243164,
+      "total_gb": 93.38664245605469,
+      "percent": 20.4
+    },
+    "disk_io": {
+      "read_mb_s": 0.0,
+      "write_mb_s": 0.85546875
+    }
+  },
+  "summary": {
+    "ratings": {
+      "api": "Excellent",
+      "database": "Excellent",
+      "resources": "Excellent"
+    },
+    "timestamp": "2025-12-30 01:16:24"
+  }
+}

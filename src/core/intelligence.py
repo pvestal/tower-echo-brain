@@ -26,18 +26,20 @@ class EchoIntelligenceRouter:
         # Initialize decision engine for intelligent model selection
         self.decision_engine = get_decision_engine(database.db_config)
 
-        # FIXED hierarchy - no more jumping to 70B
+        # ENHANCED hierarchy with DeepSeek integration
         self.model_hierarchy = {
-            "quick": "llama3.1:8b",        # Better baseline model
-            "standard": "llama3.2:3b",          # 3B parameters
-            "professional": "mistral:7b",       # 7B parameters
-            "expert": "codellama:13b",          # 13B parameters (was 32B)
-            "genius": "qwen2.5-coder:32b",      # 32B parameters (was 70B)
+            "quick": "llama3.1:8b",                # Fast local model
+            "standard": "deepseek-r1:8b",          # DeepSeek for general queries
+            "professional": "deepseek-r1:8b",      # DeepSeek for professional queries
+            "expert": "deepseek-coder-v2:16b",     # DeepSeek for complex reasoning
+            "genius": "deepseek-coder-v2:16b",     # DeepSeek heavyweight model
         }
         self.specialized_models = {
-            "coding": "codellama:7b",           # Fast code generation
-            "creative": "mistral:7b",           # Creative tasks
-            "analysis": "codellama:13b"         # Code analysis (was 70B)
+            "coding": "deepseek-coder-v2:16b",      # DeepSeek excels at coding
+            "creative": "deepseek-r1:8b",           # DeepSeek for creative tasks
+            "analysis": "deepseek-coder-v2:16b",    # DeepSeek for deep analysis
+            "reasoning": "deepseek-coder-v2:16b",   # Complex reasoning tasks
+            "math": "deepseek-coder-v2:16b"         # Mathematical problem solving
         }
         self.escalation_history = []
         self.decision_history = []  # Track decisions for learning
@@ -142,6 +144,11 @@ class EchoIntelligenceRouter:
                 }
 
                 start_time = asyncio.get_event_loop().time()
+
+                # Handle DeepSeek models via DeepSeek API
+                if model.startswith("deepseek"):
+                    return await self._query_deepseek_via_adapter(model, prompt, max_tokens)
+
                 async with session.post(self.ollama_url, json=payload, timeout=aiohttp.ClientTimeout(total=120)) as response:
                     if response.status == 200:
                         result = await response.json()
@@ -280,36 +287,48 @@ class EchoIntelligenceRouter:
                     "brain_activity": echo_brain.get_brain_state()
                 }
 
-    async def _query_deepseek_api(self, query: str) -> Dict:
-        """Query DeepSeek API for extreme complexity"""
+    async def _query_deepseek_via_adapter(self, model: str, prompt: str, max_tokens: int) -> Dict:
+        """Query DeepSeek using the new adapter with vault integration"""
         try:
-            # Use existing DeepSeek service on port 8306
-            async with aiohttp.ClientSession() as session:
-                payload = {
-                    "prompt": query,
-                    "model": "deepseek-coder",
-                    "max_tokens": 2048
-                }
+            from src.models.deepseek_adapter import create_deepseek_adapter
 
-                async with session.post(
-                    "http://localhost:8306/api/deepseek/chat",
-                    json=payload,
-                    timeout=aiohttp.ClientTimeout(total=60)
-                ) as response:
-                    if response.status == 200:
-                        result = await response.json()
-                        return {
-                            "success": True,
-                            "response": result.get("response", ""),
-                            "processing_time": result.get("processing_time", 0),
-                            "model": "deepseek-api"
-                        }
-                    else:
-                        return {"success": False, "error": f"API returned {response.status}"}
+            start_time = asyncio.get_event_loop().time()
+
+            # Determine adapter type based on model
+            adapter_type = "reasoner" if "reasoner" in model else "chat"
+            adapter = create_deepseek_adapter(adapter_type)
+
+            if not adapter.client:
+                return {"success": False, "error": "DeepSeek adapter initialization failed"}
+
+            # Prepare messages
+            messages = [{"role": "user", "content": prompt}]
+
+            # Call DeepSeek
+            response = adapter.generate(
+                messages=messages,
+                temperature=0.7,
+                max_tokens=max_tokens
+            )
+
+            processing_time = asyncio.get_event_loop().time() - start_time
+
+            return {
+                "success": True,
+                "response": response.content,
+                "processing_time": processing_time,
+                "model": response.model_used,
+                "reasoning_steps": response.reasoning_steps,
+                "token_usage": response.token_usage
+            }
 
         except Exception as e:
-            logger.error(f"DeepSeek API query failed: {e}")
+            logger.error(f"DeepSeek adapter query failed: {e}")
             return {"success": False, "error": str(e)}
+
+    async def _query_deepseek_api(self, query: str) -> Dict:
+        """Legacy DeepSeek API method - replaced by adapter"""
+        return await self._query_deepseek_via_adapter("deepseek-reasoner", query, 2048)
 
 # Global intelligence router instance
 intelligence_router = EchoIntelligenceRouter()

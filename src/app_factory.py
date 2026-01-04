@@ -148,6 +148,16 @@ except ImportError as e:
     print(f"❌ Failed to import semantic integration router: {e}")
     semantic_integration_router = None
 
+# Database metrics and connection pool monitoring
+try:
+    from src.api.db_metrics import router as db_metrics_router
+    db_metrics_available = True
+    print("✅ Database metrics router imported successfully")
+except ImportError as e:
+    db_metrics_available = False
+    print(f"❌ Failed to import database metrics router: {e}")
+    db_metrics_router = None
+
 def create_app() -> FastAPI:
     """Create and configure FastAPI application"""
     # Load environment variables
@@ -174,6 +184,14 @@ def create_app() -> FastAPI:
         logging.info("✅ User context and permission middleware added")
     except ImportError as e:
         logging.warning(f"⚠️ Could not load user context middleware: {e}")
+
+    # Add JSON cleaning middleware to strip narrative wrappers
+    try:
+        from src.middleware.clean_json_middleware import CleanJSONMiddleware
+        app.add_middleware(CleanJSONMiddleware)
+        logging.info("✅ Clean JSON middleware added - will strip narrative wrappers")
+    except ImportError as e:
+        logging.warning(f"⚠️ Could not load clean JSON middleware: {e}")
 
     # Include routers
     print(f"🔍 Including main_router with routes: {[r.path for r in main_router.routes if hasattr(r, 'path')]}")
@@ -262,6 +280,19 @@ def create_app() -> FastAPI:
     if semantic_integration_available and semantic_integration_router:
         app.include_router(semantic_integration_router, prefix="", tags=["semantic-integration"])
         print("✅ Semantic integration routes added to app")
+
+    # Database metrics and connection pool monitoring
+    if db_metrics_available and db_metrics_router:
+        app.include_router(db_metrics_router, prefix="", tags=["database-metrics"])
+        print("✅ Database metrics routes added to app at /api/db/*")
+
+    # DeepSeek Coding Agent
+    try:
+        from src.agents.deepseek_coding_agent import router as coding_agent_router
+        app.include_router(coding_agent_router, prefix="", tags=["coding-agent"])
+        print("✅ DeepSeek Coding Agent routes added to app at /api/coding-agent/*")
+    except ImportError as e:
+        print(f"❌ Failed to import coding agent: {e}")
 
     # Static files
     static_dir = "/opt/tower-echo-brain/static"

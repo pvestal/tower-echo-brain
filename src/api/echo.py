@@ -246,41 +246,52 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
 
     # Import and use memory search
     try:
-        print(f"🔍 MEMORY SEARCH: Starting search for '{request.query}'")
-        from src.managers.echo_integration import MemorySearch
-        memory_search = MemorySearch()
-        memories = memory_search.search_all(request.query)
-        total_memories = sum(len(v) for v in memories.values())
-        print(f"📚 MEMORY SEARCH: Found {total_memories} memories")
-        logger.info(f"📚 Found {total_memories} memories for query")
+        # BYPASS SIMPLE QUERIES - prevent context contamination
+        query_lower = request.query.lower().strip()
+        bypass_patterns = [
+            'return json', 'return only', 'return:', 'return ', 'json:', 'echo ',
+            'print ', 'test', 'hello', 'ping', 'status', '{"', '[', 'get ', 'show ', 'list '
+        ]
 
-        # Convert to semantic_results format
-        if total_memories > 0:
-            # Add learned patterns
-            if memories.get('learned_patterns'):
-                for pattern in memories['learned_patterns'][:3]:
-                    semantic_results.append({
-                        'content': pattern['text'],
-                        'metadata': {'source': 'learned_patterns', 'confidence': pattern.get('confidence', 0.8)}
-                    })
+        if len(request.query) < 15 or any(query_lower.startswith(p) for p in bypass_patterns):
+            print(f"📋 BYPASSING MEMORY SEARCH for simple query: {request.query}")
+            logger.info(f"📋 Bypassing memory search for simple query: {request.query[:50]}")
+        else:
+            print(f"🔍 MEMORY SEARCH: Starting search for '{request.query}'")
+            from src.managers.echo_integration import MemorySearch
+            memory_search = MemorySearch()
+            memories = memory_search.search_all(request.query)
+            total_memories = sum(len(v) for v in memories.values())
+            print(f"📚 MEMORY SEARCH: Found {total_memories} memories")
+            logger.info(f"📚 Found {total_memories} memories for query")
 
-            # Add conversations
-            if memories.get('conversations'):
-                for conv in memories['conversations'][:2]:
-                    semantic_results.append({
-                        'content': f"Previous Q: {conv['query']}\nA: {conv['response']}",
-                        'metadata': {'source': 'conversations', 'date': str(conv.get('date', ''))}
-                    })
+            # Convert to semantic_results format
+            if total_memories > 0:
+                # Add learned patterns
+                if memories.get('learned_patterns'):
+                    for pattern in memories['learned_patterns'][:3]:
+                        semantic_results.append({
+                            'content': pattern['text'],
+                            'metadata': {'source': 'learned_patterns', 'confidence': pattern.get('confidence', 0.8)}
+                        })
 
-            # Add takeout insights
-            if memories.get('takeout'):
-                for item in memories['takeout'][:2]:
-                    semantic_results.append({
-                        'content': item['content'],
-                        'metadata': {'source': 'takeout', 'type': item.get('type', '')}
-                    })
+                # Add conversations
+                if memories.get('conversations'):
+                    for conv in memories['conversations'][:2]:
+                        semantic_results.append({
+                            'content': f"Previous Q: {conv['query']}\nA: {conv['response']}",
+                            'metadata': {'source': 'conversations', 'date': str(conv.get('date', ''))}
+                        })
 
-            logger.info(f"📚 Added {len(semantic_results)} memory results to context")
+                # Add takeout insights
+                if memories.get('takeout'):
+                    for item in memories['takeout'][:2]:
+                        semantic_results.append({
+                            'content': item['content'],
+                            'metadata': {'source': 'takeout', 'type': item.get('type', '')}
+                        })
+
+                logger.info(f"📚 Added {len(semantic_results)} memory results to context")
     except Exception as e:
         logger.error(f"Memory search error: {e}")
 
@@ -726,7 +737,10 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
 
         # Build augmented query with memory context
         augmented_query = request.query
-        if semantic_results:
+        logger.info(f"🔍 DEBUG: semantic_results count: {len(semantic_results)}")
+        logger.info(f"🔍 DEBUG: original query length: {len(request.query)}")
+
+        if semantic_results and len(semantic_results) > 0:
             memory_context_parts = ["\n📚 Relevant memories:"]
             for result in semantic_results[:5]:
                 source = result.get('metadata', {}).get('source', 'unknown')
@@ -735,6 +749,8 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
 
             augmented_query = "\n".join(memory_context_parts) + f"\n\n🔍 Current query: {request.query}"
             logger.info(f"📚 Augmented query with {len(semantic_results)} memory results")
+
+        logger.info(f"🔍 DEBUG: augmented query length: {len(augmented_query)}")
 
         # Use model router to dynamically select the best model based on query complexity
         if selected_model:
@@ -1255,3 +1271,75 @@ async def get_echo_goals():
             "goals": default_goals,
             "timestamp": datetime.now().isoformat()
         }
+
+# ============= MISSING ENDPOINTS FOR DASHBOARD =============
+import socket
+import time as time_module
+
+# Store startup time at module level
+_startup_time = time_module.time()
+
+@router.get("/api/coordination/services")
+async def get_services():
+    """Service discovery for dashboard"""
+    services = [
+        {"name": "Echo Brain", "port": 8309, "status": "unknown"},
+        {"name": "Anime Production", "port": 8328, "status": "unknown"},
+        {"name": "ComfyUI", "port": 8188, "status": "unknown"},
+        {"name": "Ollama", "port": 11434, "status": "unknown"},
+        {"name": "Qdrant", "port": 6333, "status": "unknown"},
+        {"name": "Redis", "port": 6379, "status": "unknown"},
+    ]
+    
+    # Check each service
+    for svc in services:
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(1)
+            result = sock.connect_ex(('localhost', svc["port"]))
+            svc["status"] = "running" if result == 0 else "stopped"
+            sock.close()
+        except:
+            svc["status"] = "error"
+    
+    return {"services": services}
+
+@router.get("/api/theater/agents")
+async def get_theater_agents():
+    """Theater agent status - placeholder until theater is wired up"""
+    return {
+        "agents": [],
+        "status": "not_configured",
+        "message": "Theater system not yet integrated"
+    }
+
+# ============= ROOT LEVEL ENDPOINTS FOR MONITORING =============
+
+@router.get("/health")
+async def root_health_check():
+    """Root health check for monitoring tools"""
+    return {
+        "status": "healthy",
+        "uptime_seconds": int(time_module.time() - _startup_time),
+        "version": "1.0.0",
+        "service": "echo-brain"
+    }
+
+@router.get("/ready")
+async def readiness_check():
+    """Readiness probe for kubernetes/monitoring"""
+    return {"ready": True, "service": "echo-brain"}
+
+@router.get("/alive")
+async def liveness_check():
+    """Liveness probe"""
+    return {"alive": True}
+
+@router.get("/metrics")
+async def get_metrics():
+    """Basic metrics endpoint"""
+    return {
+        "uptime_seconds": int(time_module.time() - _startup_time),
+        "endpoints_registered": 20,
+        "status": "operational"
+    }

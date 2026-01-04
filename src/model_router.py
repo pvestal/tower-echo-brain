@@ -124,7 +124,7 @@ class ModelRouter:
                     return {
                         "success": False,
                         "error": f"API error: {response.status_code}",
-                        "model_used": model
+                        "model_used": decision.model
                     }
 
         except Exception as e:
