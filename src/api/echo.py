@@ -201,9 +201,11 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
     # MEMORY AUGMENTATION - Add memory context to ALL queries
     try:
         from src.middleware.memory_augmentation_middleware import augment_with_memories
-        augmented = augment_with_memories(request.query)
+        # Generate unique request ID for memory isolation
+        request_id = str(uuid.uuid4())
+        augmented = augment_with_memories(request.query, request_id)
         if augmented != request.query:
-            logger.info(f"📚 Query augmented with memory context")
+            logger.info(f"📚 Query augmented with memory context (request_id: {request_id})")
             request.query = augmented
     except Exception as e:
         logger.warning(f"Memory augmentation failed: {e}")

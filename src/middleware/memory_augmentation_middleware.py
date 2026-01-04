@@ -5,7 +5,8 @@ Memory Augmentation Middleware - Automatically adds memory context to all querie
 
 import psycopg2
 import logging
-from typing import Dict, List
+import uuid
+from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +20,8 @@ class MemoryAugmentationMiddleware:
             'user': 'patrick',
             'password': '***REMOVED***'
         }
+        # Request-scoped memory cache to prevent cross-contamination
+        self._request_cache = {}
 
     def search_memories(self, query: str) -> List[str]:
         """Search all memory sources and return relevant context"""
@@ -65,8 +68,21 @@ class MemoryAugmentationMiddleware:
 
         return memories
 
-    def augment_query(self, query: str) -> str:
-        """Augment a query with memory context"""
+    def augment_query(self, query: str, request_id: Optional[str] = None) -> str:
+        """Augment a query with memory context
+
+        Args:
+            query: The query to augment
+            request_id: Optional unique identifier for this request to prevent memory contamination
+        """
+
+        # Generate request ID if not provided
+        if request_id is None:
+            request_id = str(uuid.uuid4())
+
+        # Clear any stale cache entries (keep only last 100 requests)
+        if len(self._request_cache) > 100:
+            self._request_cache.clear()
 
         # Don't augment if already augmented
         if "Based on these memories:" in query or "Relevant memories:" in query:
@@ -119,6 +135,11 @@ class MemoryAugmentationMiddleware:
 # Global instance
 memory_augmenter = MemoryAugmentationMiddleware()
 
-def augment_with_memories(query: str) -> str:
-    """Public function to augment queries with memory"""
-    return memory_augmenter.augment_query(query)
+def augment_with_memories(query: str, request_id: Optional[str] = None) -> str:
+    """Public function to augment queries with memory
+
+    Args:
+        query: The query to augment
+        request_id: Optional unique identifier for this request to prevent memory contamination
+    """
+    return memory_augmenter.augment_query(query, request_id)
