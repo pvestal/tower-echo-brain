@@ -944,12 +944,14 @@ class ResilientModelManager:
         # MEMORY AUGMENTATION - Add stored memories to prompt
         try:
             import sys
+            import uuid
             sys.path.insert(0, '/opt/tower-echo-brain')
             from src.middleware.memory_augmentation_middleware import augment_with_memories
             original_prompt = prompt
-            prompt = augment_with_memories(prompt)
+            request_id = str(uuid.uuid4())
+            prompt = augment_with_memories(prompt, request_id)
             if prompt != original_prompt:
-                logger.info(f"📚 Resilient: Query augmented with stored memories")
+                logger.info(f"📚 Resilient: Query augmented with stored memories (request_id: {request_id})")
         except Exception as e:
             logger.debug(f"Memory augmentation skipped: {e}")
 

@@ -28,10 +28,12 @@ def augment_prompt_with_memory(prompt: str) -> str:
             return prompt
 
         from src.middleware.memory_augmentation_middleware import augment_with_memories
-        augmented = augment_with_memories(prompt)
+        import uuid
+        request_id = str(uuid.uuid4())
+        augmented = augment_with_memories(prompt, request_id)
         if augmented != prompt:
-            print(f"[OLLAMA WRAPPER] 📚 Added memory context to prompt")
-            logger.info(f"📚 Ollama wrapper: Added memory context")
+            print(f"[OLLAMA WRAPPER] 📚 Added memory context to prompt (request_id: {request_id})")
+            logger.info(f"📚 Ollama wrapper: Added memory context (request_id: {request_id})")
         return augmented
     except Exception as e:
         logger.debug(f"Memory augmentation failed: {e}")

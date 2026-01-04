@@ -87,10 +87,12 @@ class EchoIntelligenceRouter:
             # MEMORY AUGMENTATION - Add stored memories to prompt
             try:
                 from src.middleware.memory_augmentation_middleware import augment_with_memories
+                import uuid
                 original_prompt = prompt
-                prompt = augment_with_memories(prompt)
+                request_id = str(uuid.uuid4())
+                prompt = augment_with_memories(prompt, request_id)
                 if prompt != original_prompt:
-                    logger.info(f"📚 Query augmented with stored memories")
+                    logger.info(f"📚 Query augmented with stored memories (request_id: {request_id})")
             except Exception as e:
                 logger.debug(f"Memory augmentation skipped: {e}")
 
