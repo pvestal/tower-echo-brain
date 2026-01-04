@@ -146,6 +146,53 @@ class TowerModelRegistry:
                 latency_ms=3000,
                 gpu_memory_gb=26.0
             ),
+            "deepseek-reasoner": ModelCapability(
+                name="DeepSeek Reasoner",
+                model_id="deepseek-reasoner",
+                base_url="https://api.deepseek.com",
+                api_type="openai",  # OpenAI-compatible API
+                context_window=128000,
+                parameters=671,  # DeepSeek V3 size
+                specialties=[
+                    TaskCategory.REASONING,
+                    TaskCategory.CODE_GENERATION,
+                    TaskCategory.DEBUGGING,
+                    TaskCategory.ARCHITECTURE,
+                    TaskCategory.DATA_ANALYSIS
+                ],
+                performance_scores={
+                    TaskCategory.REASONING: 0.98,
+                    TaskCategory.CODE_GENERATION: 0.96,
+                    TaskCategory.DEBUGGING: 0.94,
+                    TaskCategory.ARCHITECTURE: 0.92,
+                    TaskCategory.DATA_ANALYSIS: 0.90,
+                    TaskCategory.CODE_ANALYSIS: 0.93,
+                    TaskCategory.CODE_REFACTOR: 0.91
+                },
+                latency_ms=5000,  # API call latency
+                gpu_memory_gb=0  # Cloud-based, no local GPU
+            ),
+            "deepseek-chat": ModelCapability(
+                name="DeepSeek Chat",
+                model_id="deepseek-chat",
+                base_url="https://api.deepseek.com",
+                api_type="openai",
+                context_window=128000,
+                parameters=671,
+                specialties=[
+                    TaskCategory.CONVERSATION,
+                    TaskCategory.CREATIVE,
+                    TaskCategory.SUMMARIZATION
+                ],
+                performance_scores={
+                    TaskCategory.CONVERSATION: 0.95,
+                    TaskCategory.CREATIVE: 0.92,
+                    TaskCategory.SUMMARIZATION: 0.90,
+                    TaskCategory.REASONING: 0.85
+                },
+                latency_ms=3000,
+                gpu_memory_gb=0  # Cloud-based
+            ),
             "tinyllama": ModelCapability(
                 name="TinyLlama",
                 model_id="tinyllama:latest",
@@ -308,6 +355,10 @@ class UnifiedModelClient:
                 response = await self._call_ollama(
                     model, prompt, system, max_tokens, temperature
                 )
+            elif model.api_type == "openai":
+                response = await self._call_openai_compatible(
+                    model, prompt, system, max_tokens, temperature
+                )
             else:
                 raise NotImplementedError(f"API type {model.api_type} not implemented")
 
@@ -363,6 +414,40 @@ class UnifiedModelClient:
             )
             response.raise_for_status()
             return response.json()["response"]
+
+    async def _call_openai_compatible(
+        self,
+        model: ModelCapability,
+        prompt: str,
+        system: str,
+        max_tokens: int,
+        temperature: float
+    ) -> str:
+        """Call OpenAI-compatible API (including DeepSeek) with proper error handling."""
+        # Import DeepSeek adapter
+        from src.models.deepseek_adapter import create_deepseek_adapter, DeepSeekModel
+
+        # Determine which DeepSeek model to use
+        if model.model_id == "deepseek-reasoner":
+            adapter = create_deepseek_adapter("reasoner")
+        else:
+            adapter = create_deepseek_adapter("chat")
+
+        # Prepare messages
+        messages = []
+        if system:
+            messages.append({"role": "system", "content": system})
+        messages.append({"role": "user", "content": prompt})
+
+        # Call DeepSeek API
+        response = adapter.generate(
+            messages=messages,
+            temperature=temperature,
+            max_tokens=max_tokens
+        )
+
+        # Return the content from the response
+        return response.content
 
     async def code_generation(self, prompt: str, language: str = "python") -> str:
         """Specialized method for code generation tasks."""

@@ -175,7 +175,7 @@ const services = ref([
   {
     name: 'Knowledge Base',
     description: 'Article storage and retrieval',
-    endpoint: 'https://***REMOVED***/api/kb/articles?limit=1',
+    endpoint: 'https://vestal-garcia.duckdns.org/api/kb/articles?limit=1',
     online: false
   },
   {

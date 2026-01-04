@@ -1,0 +1,196 @@
+{
+  "capabilities": {
+    "capabilities": [
+      {
+        "name": "code_execution",
+        "type": "code_execution",
+        "description": "Execute code in sandboxed Docker containers",
+        "status": "active",
+        "requirements": [
+          "module:docker"
+        ],
+        "permissions": [
+          "docker_access"
+        ],
+        "metadata": {},
+        "usage_count": 3,
+        "success_rate": 0.0,
+        "last_used": "2025-12-30T00:56:23.396505"
+      },
+      {
+        "name": "get_balances",
+        "type": "financial",
+        "description": "Get account balances via Plaid",
+        "status": "active",
+        "requirements": [
+          "module:plaid"
+        ],
+        "permissions": [
+          "financial_read"
+        ],
+        "metadata": {},
+        "usage_count": 0,
+        "success_rate": 0.0,
+        "last_used": null
+      },
+      {
+        "name": "get_transactions",
+        "type": "financial",
+        "description": "Get financial transactions",
+        "status": "active",
+        "requirements": [
+          "module:plaid"
+        ],
+        "permissions": [
+          "financial_read"
+        ],
+        "metadata": {},
+        "usage_count": 0,
+        "success_rate": 0.0,
+        "last_used": null
+      },
+      {
+        "name": "analyze_spending",
+        "type": "financial",
+        "description": "Analyze spending patterns",
+        "status": "active",
+        "requirements": [
+          "module:plaid"
+        ],
+        "permissions": [
+          "financial_read"
+        ],
+        "metadata": {},
+        "usage_count": 0,
+        "success_rate": 0.0,
+        "last_used": null
+      },
+      {
+        "name": "analyze_codebase",
+        "type": "self_modification",
+        "description": "Analyze own codebase for improvements",
+        "status": "active",
+        "requirements": [
+          "module:ast",
+          "module:git"
+        ],
+        "permissions": [
+          "code_write"
+        ],
+        "metadata": {},
+        "usage_count": 0,
+        "success_rate": 0.0,
+        "last_used": null
+      },
+      {
+        "name": "apply_improvement",
+        "type": "self_modification",
+        "description": "Apply code improvements",
+        "status": "active",
+        "requirements": [
+          "module:ast",
+          "module:git"
+        ],
+        "permissions": [
+          "code_write"
+        ],
+        "metadata": {},
+        "usage_count": 0,
+        "success_rate": 0.0,
+        "last_used": null
+      },
+      {
+        "name": "train_character_lora",
+        "type": "training",
+        "description": "Train character LoRA adapter",
+        "status": "active",
+        "requirements": [
+          "module:torch",
+          "module:peft"
+        ],
+        "permissions": [
+          "gpu_access",
+          "model_training"
+        ],
+        "metadata": {},
+        "usage_count": 0,
+        "success_rate": 0.0,
+        "last_used": null
+      },
+      {
+        "name": "train_style_lora",
+        "type": "training",
+        "description": "Train style LoRA adapter",
+        "status": "active",
+        "requirements": [
+          "module:torch",
+          "module:peft"
+        ],
+        "permissions": [
+          "gpu_access",
+          "model_training"
+        ],
+        "metadata": {},
+        "usage_count": 0,
+        "success_rate": 0.0,
+        "last_used": null
+      }
+    ],
+    "execution_history": [
+      {
+        "capability": "code_execution",
+        "timestamp": "2025-12-30T00:56:23.180198",
+        "execution_time": 2.346194,
+        "success": false,
+        "args": {
+          "language": "bash",
+          "code": "echo 'Task executed'"
+        }
+      },
+      {
+        "capability": "code_execution",
+        "timestamp": "2025-12-30T00:56:23.294428",
+        "execution_time": 0.114181,
+        "success": false,
+        "args": {
+          "language": "bash",
+          "code": "echo 'Task executed'"
+        }
+      },
+      {
+        "capability": "code_execution",
+        "timestamp": "2025-12-30T00:56:23.396507",
+        "execution_time": 0.102014,
+        "success": false,
+        "args": {
+          "language": "bash",
+          "code": "echo 'Task executed'"
+        }
+      }
+    ]
+  },
+  "autonomy_level": 1.0,
+  "execution_history": [
+    {
+      "success": true,
+      "output": "First 25 Fibonacci numbers: [0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181, 6765, 10946, 17711, 28657, 46368]\nF(24) = 46368\nSaved to /tmp/docker_fib.txt inside container\n",
+      "error": null,
+      "exit_code": 0,
+      "execution_time": 0.457417,
+      "exec_id": "1e5109dd0cae",
+      "language": "python",
+      "timestamp": "2025-12-30T00:56:19.055560"
+    },
+    {
+      "success": true,
+      "output": "Simulating database query...\nDatabase info: {'tables': ['conversations', 'users', 'sessions'], 'records': 43362, 'last_update': '2025-12-30'}\n",
+      "error": null,
+      "exit_code": 0,
+      "execution_time": 0.501228,
+      "exec_id": "dfcb2c74f2a5",
+      "language": "python",
+      "timestamp": "2025-12-30T00:56:19.557655"
+    }
+  ],
+  "training_history": []
+}

@@ -1,0 +1,12 @@
+Step 1/10: Loss = 0.6243
+GPU Memory: 2958.0MB, Utilization: 0.0%
+Step 2/10: Loss = 0.9692
+Step 3/10: Loss = 0.9227
+Step 4/10: Loss = 0.6670
+Step 5/10: Loss = 0.9676
+Step 6/10: Loss = 0.9610
+GPU Memory: 2849.0MB, Utilization: 0.0%
+Step 7/10: Loss = 0.5448
+Step 8/10: Loss = 0.6214
+Step 9/10: Loss = 0.5210
+Step 10/10: Loss = 0.8217
