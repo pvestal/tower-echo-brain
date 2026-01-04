@@ -72,6 +72,38 @@ class MemoryAugmentationMiddleware:
         if "Based on these memories:" in query or "Relevant memories:" in query:
             return query
 
+        # BYPASS SIMPLE QUERIES - don't augment if:
+        # - Query is too short (less than 15 characters)
+        # - Query is a simple JSON/command request
+        # - Query starts with common command patterns
+        query_lower = query.lower().strip()
+
+        # Skip augmentation for simple/command queries
+        bypass_patterns = [
+            'return exactly',
+            'return only',
+            'return json',
+            'return:',
+            'json:',
+            '{"',
+            '[{',
+            'test',
+            'ping',
+            'hello',
+            'status',
+            'echo',
+            'what is 2+2',
+            'what is 1+1'
+        ]
+
+        # Debug logging
+        logger.info(f"🔍 DEBUG: query='{query}', length={len(query)}, query_lower='{query_lower}'")
+        logger.info(f"🔍 DEBUG: bypass_patterns check results: {[(p, p in query_lower) for p in bypass_patterns]}")
+
+        if len(query) < 20 or any(p in query_lower for p in bypass_patterns):
+            logger.info(f"📋 Bypassing memory augmentation for simple query: {query[:50]}")
+            return query
+
         memories = self.search_memories(query)
 
         if memories:

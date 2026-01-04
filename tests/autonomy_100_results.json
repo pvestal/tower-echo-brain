@@ -1,0 +1,128 @@
+{
+  "capabilities": {
+    "self_improvement": {
+      "evidence": {
+        "module_exists": true,
+        "has_improvement_commits": true,
+        "recent_commits": "aac454b3 \ud83e\udd16 Auto-improvement: add_docstrings_and_logging for model_router.py",
+        "ast_capability": true
+      },
+      "score": 1.0
+    },
+    "code_execution": {
+      "evidence": {
+        "docker_module": true,
+        "execution_logs": true,
+        "can_execute": true
+      },
+      "score": 1.0
+    },
+    "task_management": {
+      "evidence": {
+        "task_queue_exists": true,
+        "orchestrator_exists": true
+      },
+      "score": 1.0
+    },
+    "learning": {
+      "evidence": {
+        "memory_module": true,
+        "has_backups": true,
+        "backup_count": 1,
+        "qdrant_running": true
+      },
+      "score": 1.0
+    },
+    "decision_making": {
+      "evidence": {
+        "model_router": true,
+        "intent_classifier": true,
+        "board_system": true
+      },
+      "score": 1.0
+    },
+    "error_recovery": {
+      "evidence": {
+        "has_try_except": true,
+        "has_logging": true,
+        "has_fallbacks": true
+      },
+      "score": 1.0
+    },
+    "model_management": {
+      "evidence": {
+        "model_count": 14,
+        "has_models": true
+      },
+      "score": 1.0
+    },
+    "infrastructure": {
+      "evidence": {
+        "systemd_service": true,
+        "nginx_config": false
+      },
+      "score": 0.5
+    },
+    "integrations": {
+      "evidence": {
+        "comfyui": true,
+        "has_outputs": true,
+        "lora_training": true,
+        "has_loras": true
+      },
+      "score": 1.0
+    },
+    "optimization": {
+      "evidence": {
+        "has_redis": true,
+        "has_indexes": true
+      },
+      "score": 1.0
+    },
+    "security": {
+      "evidence": {
+        "sandboxed": true,
+        "vault": true
+      },
+      "score": 1.0
+    },
+    "resources": {
+      "evidence": {
+        "gpu_available": true,
+        "monitoring": true
+      },
+      "score": 1.0
+    },
+    "monitoring": {
+      "evidence": {
+        "health_endpoint": true,
+        "logs": true
+      },
+      "score": 1.0
+    },
+    "backup": {
+      "evidence": {
+        "has_backups": true
+      },
+      "score": 1.0
+    },
+    "documentation": {
+      "evidence": {
+        "api_docs": true,
+        "readme": true
+      },
+      "score": 1.0
+    },
+    "testing": {
+      "evidence": {
+        "has_tests": true,
+        "test_count": 71
+      },
+      "score": 1.0
+    }
+  },
+  "total_score": 97.5,
+  "autonomy_percentage": 97.5,
+  "timestamp": "2025-12-30T01:30:28.584949",
+  "achieved_100": false
+}

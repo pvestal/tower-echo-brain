@@ -15,11 +15,12 @@ import sys
 import os
 sys.path.append('/opt/tower-echo-brain/src')
 from src.config.qdrant_4096d_config import COLLECTION_MAPPING, QDRANT_CONFIG, get_4096d_collection
+from src.interfaces.vector_memory import VectorMemoryInterface
 
 logger = logging.getLogger(__name__)
 
 
-class VectorMemory:
+class VectorMemory(VectorMemoryInterface):
     """
     Vector-based memory system for Echo using AMD GPU services
     Integrates with existing Qdrant vector database and embedding service
@@ -222,7 +223,7 @@ class VectorMemory:
 
         return context
 
-    async def get_statistics(self) -> Dict:
+    async def get_statistics(self) -> Dict[str, Any]:
         """Get statistics about the memory system"""
         async with httpx.AsyncClient() as client:
             try:
@@ -240,6 +241,207 @@ class VectorMemory:
                 logger.error(f"Failed to get statistics: {e}")
 
         return {"error": "Failed to retrieve statistics"}
+
+    # Additional methods required by VectorMemoryInterface
+
+    async def store_memory(self, content: str, metadata: Dict[str, Any]) -> str:
+        """
+        Store memory and return unique identifier
+
+        Args:
+            content: Memory content to store
+            metadata: Metadata dictionary including type, source, etc.
+
+        Returns:
+            str: Unique identifier for the stored memory
+        """
+        success = await self.remember(content, metadata)
+        if success:
+            # Generate memory ID using content hash
+            memory_id = abs(hash(content + str(datetime.now()))) % (2**31)
+            return str(memory_id)
+        else:
+            raise Exception("Failed to store memory")
+
+    async def search_memory(self, query: str, limit: int = 10,
+                          filters: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+        """
+        Advanced memory search with optional filtering
+
+        Args:
+            query: Search query string
+            limit: Maximum results to return
+            filters: Optional filters for metadata-based filtering
+
+        Returns:
+            List[Dict]: Filtered and scored memory results
+        """
+        # Use existing recall method as base
+        memories = await self.recall(query, limit)
+
+        # Apply filters if provided
+        if filters:
+            filtered_memories = []
+            for memory in memories:
+                match = True
+                for key, value in filters.items():
+                    if memory.get(key) != value:
+                        match = False
+                        break
+                if match:
+                    filtered_memories.append(memory)
+            return filtered_memories
+
+        return memories
+
+    async def delete_memory(self, memory_id: str) -> bool:
+        """
+        Delete a specific memory by ID
+
+        Args:
+            memory_id: Unique identifier of memory to delete
+
+        Returns:
+            bool: True if memory was successfully deleted
+        """
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.delete(
+                    f"{self.vector_db_url}/collections/{self.collection_name}/points",
+                    json={"points": [int(memory_id)]}
+                )
+                return response.status_code == 200
+            except Exception as e:
+                logger.error(f"Failed to delete memory {memory_id}: {e}")
+                return False
+
+    async def update_memory(self, memory_id: str, content: Optional[str] = None,
+                          metadata: Optional[Dict[str, Any]] = None) -> bool:
+        """
+        Update existing memory content or metadata
+
+        Args:
+            memory_id: Unique identifier of memory to update
+            content: New content (optional)
+            metadata: New metadata to merge (optional)
+
+        Returns:
+            bool: True if memory was successfully updated
+        """
+        if content is None and metadata is None:
+            return False
+
+        try:
+            # Get existing memory
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    f"{self.vector_db_url}/collections/{self.collection_name}/points/{memory_id}"
+                )
+
+                if response.status_code != 200:
+                    return False
+
+                existing_data = response.json().get("result", {})
+                payload = existing_data.get("payload", {})
+
+                # Update content if provided
+                if content is not None:
+                    payload["text"] = content
+                    # Regenerate embedding if content changed
+                    embedding = await self._generate_embedding(content)
+                    if embedding is None:
+                        return False
+                else:
+                    embedding = existing_data.get("vector", [])
+
+                # Update metadata if provided
+                if metadata is not None:
+                    payload.update(metadata)
+
+                payload["updated_at"] = datetime.now().isoformat()
+
+                # Update the memory
+                update_response = await client.put(
+                    f"{self.vector_db_url}/collections/{self.collection_name}/points",
+                    json={
+                        "points": [{
+                            "id": int(memory_id),
+                            "vector": embedding,
+                            "payload": payload
+                        }]
+                    }
+                )
+
+                return update_response.status_code == 200
+
+        except Exception as e:
+            logger.error(f"Failed to update memory {memory_id}: {e}")
+            return False
+
+    async def create_collection(self, collection_name: str,
+                              vector_size: int = 384) -> bool:
+        """
+        Create a new memory collection
+
+        Args:
+            collection_name: Name of the collection to create
+            vector_size: Dimension size for vectors
+
+        Returns:
+            bool: True if collection was successfully created
+        """
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.put(
+                    f"{self.vector_db_url}/collections/{collection_name}",
+                    json={
+                        "vectors": {
+                            "size": vector_size,
+                            "distance": QDRANT_CONFIG.get('distance', 'Cosine')
+                        }
+                    }
+                )
+                return response.status_code == 200
+            except Exception as e:
+                logger.error(f"Failed to create collection {collection_name}: {e}")
+                return False
+
+    async def list_collections(self) -> List[str]:
+        """
+        List all available memory collections
+
+        Returns:
+            List[str]: Names of available collections
+        """
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.get(f"{self.vector_db_url}/collections")
+                if response.status_code == 200:
+                    data = response.json()
+                    collections = data.get("result", {}).get("collections", [])
+                    return [col.get("name", "") for col in collections]
+            except Exception as e:
+                logger.error(f"Failed to list collections: {e}")
+
+        return []
+
+    def get_embedding_model(self) -> str:
+        """
+        Get the name of the current embedding model
+
+        Returns:
+            str: Name/identifier of the embedding model in use
+        """
+        return self.embedding_model
+
+    def get_vector_dimensions(self) -> int:
+        """
+        Get the vector dimensions used by this memory system
+
+        Returns:
+            int: Number of dimensions in the vector space
+        """
+        return self.vector_dimensions
 
 
 # Integration helper for Echo's main service

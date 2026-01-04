@@ -1,72 +1,149 @@
 <template>
-  <div class="min-h-screen bg-tower-bg">
-    <!-- Simple navbar replacement -->
-    <nav style="background: #1a1a1a; padding: 1rem; border-bottom: 1px solid #333;">
-      <div style="max-width: 1280px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center;">
-        <span style="font-size: 1.25rem; font-weight: bold; color: #f0f6fc;">Echo Brain</span>
-        <div style="display: flex; gap: 1rem;">
-          <a
-            v-for="tab in tabs"
-            :key="tab.id"
-            @click="currentTab = tab.id"
-            style="padding: 0.5rem 1rem; cursor: pointer; border-radius: 0.375rem; color: #8b949e;"
-            :style="currentTab === tab.id ? 'background: #21262d; color: #f0f6fc;' : ''"
-          >
-            {{ tab.label }}
-          </a>
-        </div>
-        <span :style="wsConnected ? 'color: #3fb950;' : 'color: #da3633;'">
-          {{ wsConnected ? '● Connected' : '● Disconnected' }}
-        </span>
+  <div class="app">
+    <nav class="app-nav">
+      <div class="nav-brand">Echo Brain Monitor</div>
+      <div class="nav-links">
+        <router-link to="/" class="nav-link" :class="{ active: $route.path === '/' }">
+          Health Check
+        </router-link>
+        <router-link to="/chat-test" class="nav-link" :class="{ active: $route.path === '/chat-test' }">
+          Chat Test
+        </router-link>
+        <router-link to="/logs" class="nav-link" :class="{ active: $route.path === '/logs' }">
+          System Logs
+        </router-link>
+      </div>
+      <div class="nav-status">
+        <span class="status-indicator" :class="systemStatus"></span>
+        <span class="status-text">{{ statusText }}</span>
       </div>
     </nav>
-
-    <main class="max-w-7xl mx-auto px-4 py-8">
-      <ChatInterface v-if="currentTab === 'chat'" />
-      <VoiceInterface v-if="currentTab === 'voice'" />
-      <EchoMetrics v-if="currentTab === 'metrics'" />
-      <PlaidAuth v-if="currentTab === 'plaid'" />
-      <ComponentShowcase v-if="currentTab === 'components'" />
-    </main>
+    <router-view />
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import ChatInterface from './views/ChatInterface.vue'
-import VoiceInterface from './views/VoiceInterface.vue'
-import EchoMetrics from './views/EchoMetrics.vue'
-import PlaidAuth from './views/PlaidAuth.vue'
-import ComponentShowcase from './views/ComponentShowcase.vue'
+import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import axios from 'axios'
 
-const currentTab = ref('chat')
-const wsConnected = ref(false)
+const $route = useRoute()
+const systemStatus = ref('unknown')
+const statusText = ref('Checking...')
 
-const tabs = [
-  { id: 'chat', label: 'Chat' },
-  { id: 'voice', label: 'Voice' },
-  { id: 'metrics', label: 'Metrics' },
-  { id: 'plaid', label: 'Financial' },
-  { id: 'components', label: 'Components' }
-]
+async function checkSystemHealth() {
+  try {
+    await axios.get('https://vestal-garcia.duckdns.org/api/echo/health', { timeout: 2000 })
+    systemStatus.value = 'healthy'
+    statusText.value = 'System Online'
+  } catch (error) {
+    systemStatus.value = 'error'
+    statusText.value = 'System Offline'
+  }
+}
+
+onMounted(() => {
+  checkSystemHealth()
+  setInterval(checkSystemHealth, 10000)
+})
 </script>
 
-<style scoped>
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Roboto Mono', 'SF Mono', Monaco, Consolas, monospace;
+  background: #0a0a0f;
+  color: #e2e8f0;
+}
+
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-nav {
+  background: #151520;
+  border-bottom: 1px solid #2d3748;
+  padding: 0 20px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav-brand {
+  font-size: 18px;
+  font-weight: 600;
+  color: #2a7de1;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.nav-links {
+  display: flex;
+  gap: 5px;
+}
+
 .nav-link {
-  color: var(--tower-text-secondary);
-  cursor: pointer;
-  padding: 0.5rem 1rem;
-  border-radius: 0.375rem;
-  transition: all 0.2s;
+  padding: 8px 16px;
+  color: #94a3b8;
+  text-decoration: none;
+  border-radius: 4px;
+  transition: all 150ms;
+  font-size: 14px;
 }
 
 .nav-link:hover {
-  color: var(--tower-text-primary);
-  background-color: var(--tower-bg-hover);
+  color: #e2e8f0;
+  background: rgba(42, 125, 225, 0.1);
 }
 
 .nav-link.active {
-  color: var(--tower-accent-primary);
-  background-color: rgba(59, 130, 246, 0.1);
+  color: #2a7de1;
+  background: rgba(42, 125, 225, 0.15);
+}
+
+.nav-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #475569;
+}
+
+.status-indicator.healthy {
+  background: #19b37b;
+  animation: pulse 2s infinite;
+}
+
+.status-indicator.error {
+  background: #ef4444;
+}
+
+.status-indicator.unknown {
+  background: #f59e0b;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.status-text {
+  font-size: 12px;
+  color: #94a3b8;
+  text-transform: uppercase;
 }
 </style>

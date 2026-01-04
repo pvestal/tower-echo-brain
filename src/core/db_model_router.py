@@ -84,7 +84,7 @@ class DatabaseModelRouter:
                 SELECT model_name, min_complexity, max_complexity, priority, quality_tier
                 FROM model_routing
                 WHERE is_installed = true AND is_active = true
-                ORDER BY priority ASC
+                ORDER BY priority DESC
             """)
             models = [dict(row) for row in cursor.fetchall()]
 

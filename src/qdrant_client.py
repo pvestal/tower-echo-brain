@@ -61,14 +61,15 @@ class QdrantMemory:
 
     async def generate_embedding(self, text: str) -> Optional[List[float]]:
         """Generate embedding using Ollama"""
-        async with httpx.AsyncClient(timeout=30) as client:
+        async with httpx.AsyncClient(timeout=120) as client:
             try:
                 response = await client.post(
                     f"{self.ollama_url}/api/embeddings",
                     json={
                         "model": "nomic-embed-text:latest",
                         "prompt": text
-                    }
+                    },
+                    timeout=120.0
                 )
                 if response.status_code == 200:
                     data = response.json()
