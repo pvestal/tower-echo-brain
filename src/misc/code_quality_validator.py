@@ -474,7 +474,6 @@ class ModelReloadManager:
     async def _select_better_model(self, failed_model: str, task_type: str) -> Optional[str]:
         """Select a better model based on failure and task type"""
 
-        model_hierarchy = {
             'code': [
                 'qwen2.5-coder:32b',
                 'deepseek-coder-v2:latest',
@@ -490,7 +489,6 @@ class ModelReloadManager:
             ]
         }
 
-        hierarchy = model_hierarchy.get(task_type, model_hierarchy['general'])
 
         # Find current model position
         try:
