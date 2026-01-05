@@ -26,21 +26,8 @@ class EchoIntelligenceRouter:
         # Initialize decision engine for intelligent model selection
         self.decision_engine = get_decision_engine(database.db_config)
 
-        # ENHANCED hierarchy with DeepSeek integration
-        self.model_hierarchy = {
-            "quick": "llama3.1:8b",                # Fast local model
-            "standard": "deepseek-r1:8b",          # DeepSeek for general queries
-            "professional": "deepseek-r1:8b",      # DeepSeek for professional queries
-            "expert": "deepseek-coder-v2:16b",     # DeepSeek for complex reasoning
-            "genius": "deepseek-coder-v2:16b",     # DeepSeek heavyweight model
-        }
-        self.specialized_models = {
-            "coding": "deepseek-coder-v2:16b",      # DeepSeek excels at coding
-            "creative": "deepseek-r1:8b",           # DeepSeek for creative tasks
-            "analysis": "deepseek-coder-v2:16b",    # DeepSeek for deep analysis
-            "reasoning": "deepseek-coder-v2:16b",   # Complex reasoning tasks
-            "math": "deepseek-coder-v2:16b"         # Mathematical problem solving
-        }
+        # Model hierarchy removed - now uses database routing via db_model_router.py
+        # See model_capabilities and intent_model_mapping tables for configuration
         self.escalation_history = []
         self.decision_history = []  # Track decisions for learning
 
