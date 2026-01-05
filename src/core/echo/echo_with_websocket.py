@@ -556,7 +556,6 @@ class EchoIntelligenceRouter:
         self.decision_engine = get_decision_engine(database.db_config)
 
         # Legacy hierarchy for backward compatibility
-        self.model_hierarchy = {
             "quick": "tinyllama:latest",        # 1B parameters
             "standard": "llama3.2:3b",          # 3B parameters
             "professional": "mistral:7b",       # 7B parameters
@@ -1554,7 +1553,6 @@ async def health_check():
     return {
         "status": "healthy",
         "service": "Echo Brain Unified",
-        "intelligence_levels": list(router.model_hierarchy.keys()),
         "specialized_models": list(router.specialized_models.keys()),
         "max_parameters": "70B",
         "timestamp": datetime.now().isoformat(),

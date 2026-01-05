@@ -24,7 +24,6 @@ class ModelSelector:
             self.use_analyzer = False
 
         # Models that EXIST and WORK
-        self.model_hierarchy = {
             "quick": "tinyllama:latest",
             "standard": "llama3.2:3b",
             "professional": "mistral:7b-instruct",
@@ -99,7 +98,6 @@ class ModelSelector:
         
         # PRIORITY: Detect "think harder" requests - ALWAYS escalate to highest model
         if "think harder" in query_lower:
-            return (self.model_hierarchy["genius"], "genius", 
                    "Think harder mode - escalated to 70B model", 100.0, "cloud")
         
         # PRIORITY: Deep analysis requests should use high-end models
@@ -107,13 +105,10 @@ class ModelSelector:
             "analyze this", "review this", "refactor this", "optimize this",
             "improve this", "what.s wrong with", "better way to", "performance issue"
         ]):
-            return (self.model_hierarchy["genius"], "genius", 
                    "Deep analysis request - using 70B model", 100.0, "cloud")
         
         # If user explicitly requests a level, RESPECT IT
         if requested_level and requested_level != "auto":
-            if requested_level in self.model_hierarchy:
-                model = self.model_hierarchy[requested_level]
                 logger.info(f"User requested {requested_level}: using {model}")
                 # Still calculate complexity for metadata
                 complexity_score = None
@@ -129,7 +124,6 @@ class ModelSelector:
                        complexity_score, tier)
             else:
                 logger.warning(f"Unknown level {requested_level}, using standard")
-                return (self.model_hierarchy["standard"], "standard", 
                        "Invalid level, using standard", None, None)
 
         # Use ComplexityAnalyzer if available
@@ -168,18 +162,14 @@ class ModelSelector:
         
         # Quick responses for simple queries
         if query_len < 25 and any(w in query_lower for w in ["hi", "hello", "hey", "thanks", "bye"]):
-            return (self.model_hierarchy["quick"], "quick", 
                    "Simple greeting/acknowledgment", None, "tiny")
 
         # Default based on length
         if query_len < 50:
-            return (self.model_hierarchy["standard"], "standard", 
                    "Short general query (fallback)", None, "small")
         elif query_len < 150:
-            return (self.model_hierarchy["professional"], "professional", 
                    "Medium complexity query (fallback)", None, "medium")
         else:
-            return (self.model_hierarchy["genius"], "genius", 
                    "Long complex query (fallback)", None, "large")
 
     def get_expected_time(self, model: str) -> float:
