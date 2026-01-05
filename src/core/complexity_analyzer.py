@@ -45,14 +45,8 @@ class ComplexityAnalyzer:
     - Simple queries (0-10 score → llama3.2:3b)
     """
 
-    # Model mapping (matches complexity_thresholds table)
-    TIER_TO_MODEL = {
-        "tiny": "llama3.1:8b",  # Good baseline for simple queries
-        "small": "llama3.1:8b",  # Same model, no more 3b
-        "medium": "gemma2:9b",  # Better for moderate complexity
-        "large": "deepseek-coder-v2:16b",  # Best installed model for complex
-        "cloud": "deepseek-coder-v2:16b"  # Same - 70b won't fit in VRAM
-    }
+    # Model mapping removed - now uses database routing via db_model_router.py
+    # See model_capabilities and intent_model_mapping tables
 
     # Threshold boundaries
     TIER_THRESHOLDS = {
@@ -87,7 +81,9 @@ class ComplexityAnalyzer:
         """
         score, breakdown = ComplexityAnalyzer._calculate_score(message, context)
         tier = ComplexityAnalyzer._score_to_tier(score, breakdown)
-        model = ComplexityAnalyzer.TIER_TO_MODEL[tier]
+        # Use database routing instead of hardcoded dict
+        from src.core.db_model_router import get_model_for_query
+        model = get_model_for_query(message)
         confidence = min(score / 100, 1.0)
 
         return ComplexityScore(
@@ -219,11 +215,14 @@ class ComplexityAnalyzer:
     @staticmethod
     def get_tier_info(tier: str) -> Dict:
         """Get information about a specific tier"""
-        if tier not in ComplexityAnalyzer.TIER_TO_MODEL:
+        # Tier validation uses TIER_THRESHOLDS instead
+        if tier not in ComplexityAnalyzer.TIER_THRESHOLDS:
             raise ValueError(f"Unknown tier: {tier}")
 
         min_score, max_score = ComplexityAnalyzer.TIER_THRESHOLDS[tier]
-        model = ComplexityAnalyzer.TIER_TO_MODEL[tier]
+        # Use database routing instead of hardcoded dict
+        from src.core.db_model_router import get_model_for_query
+        model = get_model_for_query(message)
 
         return {
             "tier": tier,

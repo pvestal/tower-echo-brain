@@ -98,10 +98,10 @@ class ModelRouter:
 
                     # Log performance
                     intelligent_router.log_performance(
-                        decision=decision,
+                        model=decision.model,
                         response_time_ms=response_time_ms,
-                        success=True,
-                        tokens_used=len(result.get("response", "").split())
+                        tokens_generated=len(result.get("response", "").split()),
+                        success=True
                     )
 
                     return {
@@ -110,8 +110,8 @@ class ModelRouter:
                         "tier": f"{decision.intent or 'general'}/{decision.domain or 'general'}",
                         "complexity_score": decision.complexity_score,
                         "response": result.get("response", ""),
-                        "reasoning": decision.reasoning,
-                        "requires_context": decision.requires_context,
+                        "reasoning": getattr(decision, 'reasoning', decision.reason),
+                        "requires_context": getattr(decision, 'requires_context', False),
                         "complexity_details": {
                             "word_count": len(query.split()),
                             "complexity_score": decision.complexity_score,

@@ -56,6 +56,10 @@ from src.photo_comparison import router as photo_router
 # from src.api.legacy.improvement_metrics import router as improvement_router
 improvement_router = None
 from src.api.delegation_routes import router as delegation_router
+# from src.api.codebase import router as codebase_router  # Temporarily disabled
+# from src.api.solutions import router as solutions_router  # Temporarily disabled
+codebase_router = None
+solutions_router = None
 
 # External integrations
 from src.modules.agents.agent_development_endpoints import agent_dev_router
@@ -221,6 +225,8 @@ def create_app() -> FastAPI:
     app.include_router(photo_router, prefix="", tags=["vision"])
     # app.include_router(improvement_router, prefix="/api/echo", tags=["improvement"])
     app.include_router(delegation_router, prefix="/api/echo", tags=["delegation"])
+    # app.include_router(codebase_router, tags=["codebase"])  # Temporarily disabled
+    # app.include_router(solutions_router, tags=["solutions"])  # Temporarily disabled
 
     # Training status router
     try:
