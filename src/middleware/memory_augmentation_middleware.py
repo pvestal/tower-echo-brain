@@ -55,8 +55,24 @@ class MemoryAugmentationMiddleware:
 
             for row in cur.fetchall():
                 if row[0] and row[1]:
-                    memories.append(f"[Previous Q]: {row[0][:100]}")
-                    memories.append(f"[Previous A]: {row[1][:100]}...")
+                    query_text, response_text = row[0], row[1]
+
+                    # Domain filtering: Skip anime-contaminated memories for technical queries
+                    anime_keywords = ['goblin', 'anime', 'scene', 'cyber', 'slayer', 'character', 'mei', 'tokyo debt']
+                    tech_keywords = ['code', 'function', 'debug', 'system', 'architecture', 'what is', 'calculate']
+
+                    query_lower = query.lower()
+                    response_lower = response_text.lower()
+
+                    is_technical_query = any(kw in query_lower for kw in tech_keywords)
+                    has_anime_content = any(kw in response_lower for kw in anime_keywords)
+
+                    if is_technical_query and has_anime_content:
+                        logger.info(f"🚫 Skipping anime-contaminated memory for technical query: {query_text[:50]}...")
+                        continue
+
+                    memories.append(f"[Previous Q]: {query_text[:100]}")
+                    memories.append(f"[Previous A]: {response_text[:100]}...")
 
             cur.close()
             conn.close()

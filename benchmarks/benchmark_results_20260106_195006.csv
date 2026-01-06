@@ -1,0 +1,119 @@
+model,test_id,test_name,category,time_to_first_token_ms,total_generation_time_ms,tokens_generated,tokens_per_second,vram_before_mb,vram_during_mb,output,classification_correct,quality_score,quality_notes,timestamp,error
+qwen2.5:3b,cls_001,Simple greeting,classification,88.74,105.28,1,9.5,,5564.0,greeting,True,,,2026-01-06T19:49:24.089633,
+qwen2.5:3b,cls_002,Coding request,classification,90.43,98.67,1,10.14,,5564.0,coding,True,,,2026-01-06T19:49:24.339945,
+qwen2.5:3b,cls_003,Reasoning request,classification,84.72,93.34,1,10.71,,5564.0,coding,False,,,2026-01-06T19:49:24.586170,
+qwen2.5:3b,cls_004,Financial query,classification,90.18,98.57,1,10.15,,5564.0,financial,True,,,2026-01-06T19:49:24.820752,
+qwen2.5:3b,cls_005,Ambiguous technical,classification,96.49,105.05,1,9.52,,5564.0,coding,True,,,2026-01-06T19:49:25.068916,
+qwen2.5-coder:7b,cls_001,Simple greeting,classification,94.78,125.4,1,7.97,,10521.0,greeting,True,,,2026-01-06T19:49:30.729110,
+qwen2.5-coder:7b,cls_002,Coding request,classification,94.39,109.79,1,9.11,,10521.0,coding,True,,,2026-01-06T19:49:30.997795,
+qwen2.5-coder:7b,cls_003,Reasoning request,classification,93.93,124.82,1,8.01,,10521.0,reasoning,True,,,2026-01-06T19:49:31.296523,
+qwen2.5-coder:7b,cls_004,Financial query,classification,104.07,119.44,1,8.37,,10521.0,financial,True,,,2026-01-06T19:49:31.573728,
+qwen2.5-coder:7b,cls_005,Ambiguous technical,classification,90.05,105.66,1,9.46,,10521.0,coding,True,,,2026-01-06T19:49:31.833157,
+deepseek-r1:8b,cls_001,Simple greeting,classification,222.71,222.71,0,0.0,,8602.0,,False,,,2026-01-06T19:49:35.636972,
+deepseek-r1:8b,cls_002,Coding request,classification,228.08,228.08,0,0.0,,8602.0,,False,,,2026-01-06T19:49:36.147812,
+deepseek-r1:8b,cls_003,Reasoning request,classification,229.7,229.7,0,0.0,,8602.0,,False,,,2026-01-06T19:49:36.669731,
+deepseek-r1:8b,cls_004,Financial query,classification,225.22,225.22,0,0.0,,8602.0,,False,,,2026-01-06T19:49:37.174709,
+deepseek-r1:8b,cls_005,Ambiguous technical,classification,229.34,229.34,0,0.0,,8602.0,,False,,,2026-01-06T19:49:37.686442,
+llama3.1:8b,cls_001,Simple greeting,classification,106.83,138.81,1,7.2,,8564.0,greeting,True,,,2026-01-06T19:49:43.968271,
+llama3.1:8b,cls_002,Coding request,classification,104.15,120.0,1,8.33,,8564.0,coding,True,,,2026-01-06T19:49:44.252468,
+llama3.1:8b,cls_003,Reasoning request,classification,110.24,126.78,1,7.89,,8564.0,coding,False,,,2026-01-06T19:49:44.552452,
+llama3.1:8b,cls_004,Financial query,classification,107.9,124.03,1,8.06,,8564.0,financial,True,,,2026-01-06T19:49:44.843663,
+llama3.1:8b,cls_005,Ambiguous technical,classification,104.5,120.28,1,8.31,,8564.0,coding,True,,,2026-01-06T19:49:45.137902,
+qwen2.5:3b,code_001,Simple function generation,coding,91.48,2774.58,252,90.82,,11061.0,"Certainly! Below is a Python function named `reverse_string` which takes a string as input and returns the reversed version of it. The function includes type hints for its parameters and return value, along with a detailed docstring.
+
+```python
+def reverse_string(s: str) -> str:
+    """"""
+    Reverses the given string without using built-in reverse methods.
+
+    Parameters:
+        s (str): The input string to be reversed.
+
+    Returns:
+        str: The reversed string.
+    """"""
+
+    # Initialize an empty list to hold characters of the reversed string
+    reversed_list = []
+
+    # Iterate over the original string in reverse order and append each character to the list
+    for i in range(len(s) - 1, -1, -1):
+        reversed_list.append(s[i])
+
+    # Join all elements (characters) in the list into a single string
+    return ''.join(reversed_list)
+
+# Example usage:
+if __name__ == ""__main__"":
+    original_string = ""hello""
+    print(f""Original: {original_string}"")
+    print(f""Reversed: {reverse_string(original_string)}"")
+```
+
+This function creates an empty list and iterates over the characters of the input string in reverse order, appending each character to the list. Finally, it joins all elements in the list into a single string using `''.join()` method, which concatenates them without any additional spaces or delimiters.
+
+You can test this function with different inputs to",,,,2026-01-06T19:49:51.762811,
+qwen2.5:3b,code_002,Bug fix identification,coding,93.53,2614.62,273,104.41,,11061.0,"The provided function `get_user_by_id` has a logical error where it immediately returns `None` after finding the first matching user, without checking all users in the list. It's important to iterate over all elements in the list to ensure that if no match is found for any given `user_id`, then the function can return `None`.
+
+Here's the corrected version of the code:
+
+```python
+def get_user_by_id(user_id: int, users: list[dict]) -> dict | None:
+    for user in users:
+        if user['id'] == user_id:
+            return user
+    # If no matching user is found, return None
+    return None
+```
+
+### Explanation of the Changes:
+
+1. **Removed Early Return**: The function previously returned `None` as soon as a match was found during the iteration, which means that if any user matches the given ID, the rest of the list won't be checked.
+2. **Added Missing Return Statement**: To ensure that all users are checked and no matching user is found in the entire list, a return statement should be added after exiting the loop to handle the case where no match was found.
+
+Now, the function correctly checks every user in the `users` list before deciding whether or not to return the matched user. If no matching user is found at all, it will finally return `None`.",,,,2026-01-06T19:49:57.820956,
+qwen2.5:3b,code_003,Database query optimization,coding,88.37,4107.28,343,83.51,,11061.0,"To improve the performance of the query, we can use SQLAlchemy's eager loading (also known as subqueries or joins), which allows us to fetch related data in a single database round-trip instead of multiple queries.
+
+Here is an optimized version of the function:
+
+```python
+from sqlalchemy import func
+
+def get_active_users_with_orders(session):
+    # Use a subquery for fetching orders associated with active users.
+    order_subquery = session.query(Order).filter(
+        Order.user_id == User.id, 
+        User.is_active,
+    ).subquery()
+
+    # Query the main table to fetch active users and then join them with the
+    # pre-fetched data in one query.
+    result = (
+        session.query(User)
+        .filter(User.is_active)
+        .outerjoin(order_subquery, order_subquery.c.user_id == User.id)
+        .group_by(User.id)
+        .with_entities(
+            User,
+            func.count(order_subquery.c.id).label(""order_count"")
+        )
+        .all()
+    )
+
+    return result
+```
+
+### Explanation:
+1. **Subquery for Orders**: 
+   - The subquery `order_subquery` is created using a filter that selects all orders related to active users (i.e., `Order.user_id == User.id AND User.is_active`). This pre-fetches the relevant data in one query.
+   
+2. **Query with Join**:
+   - We use an outer join (`outerjoin`) between the main table `User` and the subquery `order_subquery`. The condition for the join is that a user's ID should match an order’s associated User ID.
+
+3. **Group By and Count**:
+   - Using SQLAlchemy's `group_by`, we group the results by user IDs to ensure each user record appears only once in the result set.
+   
+4. **Select Specific Columns**:
+   - The `with_entities` method is used to specify which columns of interest should be returned: the User object itself and a computed count of orders.
+
+By using this optimized approach, you eliminate the need for multiple queries, leading to improved performance, especially if the database is large or complex.",,,,2026-01-06T19:50:06.473196,
