@@ -1,0 +1,43 @@
+{
+  "aws_s3": {
+    "enabled": false,
+    "bucket": "tower-echo-brain-backups",
+    "region": "us-east-1",
+    "storage_class": "STANDARD_IA",
+    "lifecycle_rules": {
+      "transition_to_glacier": 90,
+      "delete_after_days": 2555
+    }
+  },
+  "local_remote": {
+    "enabled": true,
+    "path": "/mnt/1TB-storage/backups/echo-brain",
+    "rsync_target": null,
+    "mount_check": "/mnt/1TB-storage"
+  },
+  "retention": {
+    "local": {
+      "daily": 7,
+      "weekly": 4,
+      "monthly": 12
+    },
+    "remote": {
+      "daily": 30,
+      "weekly": 12,
+      "monthly": 24
+    }
+  },
+  "compression": {
+    "level": 6,
+    "algorithm": "gzip"
+  },
+  "encryption": {
+    "enabled": false,
+    "key_file": "/opt/tower-echo-brain/.backup-encryption-key"
+  },
+  "monitoring": {
+    "max_backup_size_gb": 50,
+    "min_backup_size_mb": 1,
+    "alert_on_size_anomaly": true
+  }
+}

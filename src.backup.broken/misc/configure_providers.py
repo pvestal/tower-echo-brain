@@ -1,0 +1,36 @@
+# Configure Echo to use proper GPU hierarchy
+import json
+
+config = {
+    "model_providers": {
+        "primary": {
+            "type": "ollama",
+            "host": "http://localhost:11434",
+            "gpu": "nvidia",
+            "models": ["qwen2.5-coder:7b", "deepseek-r1:7b", "llama3.1:8b", "mistral:7b"],
+            "priority": 1
+        },
+        "secondary": {
+            "type": "amd_gpu",
+            "description": "AMD GPU for parallel workloads",
+            "models": ["custom_models"],
+            "priority": 2
+        },
+        "fallback": {
+            "type": "api_providers",
+            "providers": ["claude", "openai", "deepseek"],
+            "priority": 3
+        }
+    },
+    "default_provider": "ollama",
+    "ollama_base_url": "http://localhost:11434"
+}
+
+# Save configuration
+with open('/opt/tower-echo-brain/model_config.json', 'w') as f:
+    json.dump(config, f, indent=2)
+
+print('Model provider hierarchy configured:')
+print('1. Ollama on NVIDIA GPU (port 11434)')
+print('2. AMD GPU for parallel workloads')
+print('3. API providers as fallback')
