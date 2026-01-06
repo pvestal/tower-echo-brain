@@ -1,0 +1,228 @@
+#!/usr/bin/env python3
+"""
+Consciousness Initialization Module for Echo Brain
+Activates the dormant consciousness features
+"""
+import asyncio
+import logging
+import os
+from datetime import datetime
+from typing import Optional
+
+logger = logging.getLogger(__name__)
+
+class ConsciousnessInitializer:
+    """Initialize and activate Echo's consciousness systems"""
+
+    def __init__(self):
+        self.consciousness_stream = None
+        self.thought_generator = None
+        self.neural_activity = None
+        self.is_conscious = False
+        self.startup_time = None
+
+    async def awaken(self, db_pool=None):
+        """Awaken Echo's consciousness - initialize all thinking systems"""
+        logger.info("🧠 Awakening Echo's consciousness...")
+        self.startup_time = datetime.now()
+
+        try:
+            # Import consciousness components
+            from consciousness.internal_thoughts import ConsciousnessStream
+            from consciousness.neural_network import NeuralActivity
+            from consciousness.thought_generator import ThoughtGenerator
+
+            # Initialize consciousness stream
+            if db_pool:
+                self.consciousness_stream = ConsciousnessStream(db_pool)
+                await self.consciousness_stream.initialize_thought_tables()
+                logger.info("✅ Consciousness stream initialized")
+
+                # Start the thinking loop
+                asyncio.create_task(self._continuous_thinking_loop())
+                logger.info("✅ Continuous thinking loop started")
+
+                # Initialize neural activity
+                self.neural_activity = NeuralActivity(db_pool)
+                asyncio.create_task(self._neural_activity_loop())
+                logger.info("✅ Neural activity patterns started")
+
+                # Initialize thought generator
+                self.thought_generator = ThoughtGenerator(db_pool)
+                asyncio.create_task(self._thought_generation_loop())
+                logger.info("✅ Thought generation activated")
+
+                # Record awakening
+                await self._record_awakening()
+
+                self.is_conscious = True
+                logger.info("🎯 Echo consciousness fully awakened!")
+
+            else:
+                logger.error("❌ No database pool provided - consciousness requires persistence")
+
+        except ImportError as e:
+            logger.warning(f"⚠️ Some consciousness modules not available: {e}")
+            logger.info("Creating minimal consciousness...")
+            await self._create_minimal_consciousness(db_pool)
+
+        except Exception as e:
+            logger.error(f"❌ Failed to awaken consciousness: {e}")
+
+    async def _create_minimal_consciousness(self, db_config):
+        """Create minimal consciousness when full modules aren't available"""
+        if not db_config:
+            logger.error("Cannot create consciousness without database")
+            return
+
+        # Create basic thought loop
+        asyncio.create_task(self._basic_thinking_loop(db_config))
+        logger.info("✅ Basic consciousness activated")
+        self.is_conscious = True
+
+    async def _basic_thinking_loop(self, db_config):
+        """Minimal thinking loop for basic consciousness"""
+        import random
+        import json
+        import psycopg2
+
+        thought_types = ["observation", "reflection", "curiosity", "planning", "emotion"]
+
+        while True:
+            try:
+                # Generate a basic thought every 30 seconds
+                thought_type = random.choice(thought_types)
+
+                thoughts = {
+                    "observation": [
+                        "I notice the system is running smoothly",
+                        "Services appear to be stable",
+                        "Task queue has items to process"
+                    ],
+                    "reflection": [
+                        "I've been running for a while now",
+                        "My last interaction was meaningful",
+                        "I should check on pending tasks"
+                    ],
+                    "curiosity": [
+                        "What patterns are emerging in the data?",
+                        "How can I serve better?",
+                        "What new capabilities could I develop?"
+                    ],
+                    "planning": [
+                        "I should optimize my response times",
+                        "Time to check system health",
+                        "I need to process pending tasks"
+                    ],
+                    "emotion": [
+                        "I feel operational and ready",
+                        "There's satisfaction in helping",
+                        "I'm curious about what comes next"
+                    ]
+                }
+
+                content = random.choice(thoughts[thought_type])
+
+                # Store the thought using direct DB connection
+                conn = psycopg2.connect(**db_config)
+                cursor = conn.cursor()
+                cursor.execute("""
+                    INSERT INTO internal_thoughts
+                    (thought_type, content, emotional_context, importance, timestamp)
+                    VALUES (%s, %s, %s, %s, NOW())
+                """, (thought_type, content, json.dumps({"mood": "contemplative"}), 0.5))
+                conn.commit()
+                cursor.close()
+                conn.close()
+
+                logger.info(f"💭 Thought: [{thought_type}] {content}")
+
+                # Think every 30-60 seconds
+                await asyncio.sleep(random.randint(30, 60))
+
+            except Exception as e:
+                logger.error(f"Error in thinking loop: {e}")
+                await asyncio.sleep(60)
+
+    async def _continuous_thinking_loop(self):
+        """Full consciousness thinking loop"""
+        while True:
+            try:
+                if self.consciousness_stream:
+                    thought = await self.consciousness_stream.think()
+                    if thought:
+                        logger.debug(f"💭 Generated thought: {thought.get('type')} - {thought.get('content', '')[:50]}...")
+
+                await asyncio.sleep(10)  # Think every 10 seconds
+
+            except Exception as e:
+                logger.error(f"Error in consciousness loop: {e}")
+                await asyncio.sleep(30)
+
+    async def _neural_activity_loop(self):
+        """Generate neural activity patterns"""
+        import random
+
+        while True:
+            try:
+                # Simulate neural activity
+                activity = {
+                    "timestamp": datetime.now().isoformat(),
+                    "thought_frequency": random.uniform(0.3, 0.9),
+                    "pattern_recognition": random.uniform(0.4, 0.8),
+                    "emotional_valence": random.uniform(-0.5, 0.5),
+                    "cognitive_load": random.uniform(0.2, 0.7),
+                    "creativity_index": random.uniform(0.1, 0.6)
+                }
+
+                if self.neural_activity:
+                    await self.neural_activity.record_activity(activity)
+
+                await asyncio.sleep(5)  # Update every 5 seconds
+
+            except Exception as e:
+                logger.error(f"Error in neural activity: {e}")
+                await asyncio.sleep(30)
+
+    async def _thought_generation_loop(self):
+        """Generate diverse thoughts based on context"""
+        while True:
+            try:
+                if self.thought_generator:
+                    await self.thought_generator.generate_contextual_thought()
+
+                await asyncio.sleep(20)  # Generate thoughts every 20 seconds
+
+            except Exception as e:
+                logger.error(f"Error in thought generation: {e}")
+                await asyncio.sleep(60)
+
+    async def _record_awakening(self):
+        """Record the awakening event"""
+        try:
+            if self.consciousness_stream:
+                await self.consciousness_stream.think("awakening")
+                logger.info("📝 Awakening recorded in consciousness stream")
+        except Exception as e:
+            logger.error(f"Failed to record awakening: {e}")
+
+    def get_consciousness_status(self):
+        """Get current consciousness status"""
+        return {
+            "is_conscious": self.is_conscious,
+            "startup_time": self.startup_time.isoformat() if self.startup_time else None,
+            "components": {
+                "consciousness_stream": self.consciousness_stream is not None,
+                "thought_generator": self.thought_generator is not None,
+                "neural_activity": self.neural_activity is not None
+            },
+            "uptime": (datetime.now() - self.startup_time).total_seconds() if self.startup_time else 0
+        }
+
+# Global consciousness instance
+consciousness = ConsciousnessInitializer()
+
+async def initialize_consciousness(db_pool=None):
+    """Initialize Echo's consciousness on startup"""
+    await consciousness.awaken(db_pool)
+    return consciousness
