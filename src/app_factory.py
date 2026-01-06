@@ -56,10 +56,25 @@ from src.photo_comparison import router as photo_router
 # from src.api.legacy.improvement_metrics import router as improvement_router
 improvement_router = None
 from src.api.delegation_routes import router as delegation_router
-# from src.api.codebase import router as codebase_router  # Temporarily disabled
-# from src.api.solutions import router as solutions_router  # Temporarily disabled
-codebase_router = None
-solutions_router = None
+from src.api.codebase import router as codebase_router
+from src.api.solutions import router as solutions_router
+from src.api.agents import router as agents_router
+
+# Personal Dashboard APIs
+try:
+    from src.api.knowledge import router as knowledge_router
+    from src.api.preferences import router as preferences_router
+    from src.api.vault import router as vault_router
+    from src.api.integrations import router as integrations_router
+    dashboard_available = True
+    print("✅ Personal Dashboard APIs imported successfully")
+except ImportError as e:
+    dashboard_available = False
+    print(f"❌ Failed to import dashboard APIs: {e}")
+    knowledge_router = None
+    preferences_router = None
+    vault_router = None
+    integrations_router = None
 
 # External integrations
 from src.modules.agents.agent_development_endpoints import agent_dev_router
@@ -225,8 +240,24 @@ def create_app() -> FastAPI:
     app.include_router(photo_router, prefix="", tags=["vision"])
     # app.include_router(improvement_router, prefix="/api/echo", tags=["improvement"])
     app.include_router(delegation_router, prefix="/api/echo", tags=["delegation"])
-    # app.include_router(codebase_router, tags=["codebase"])  # Temporarily disabled
-    # app.include_router(solutions_router, tags=["solutions"])  # Temporarily disabled
+    app.include_router(codebase_router, tags=["codebase"])
+    app.include_router(solutions_router, tags=["solutions"])
+    app.include_router(agents_router, tags=["agents"])
+
+    # Personal Dashboard APIs
+    if dashboard_available:
+        if knowledge_router:
+            app.include_router(knowledge_router, tags=["knowledge"])
+            print("✅ Knowledge API routes added at /api/knowledge/*")
+        if preferences_router:
+            app.include_router(preferences_router, tags=["preferences"])
+            print("✅ Preferences API routes added at /api/preferences/*")
+        if vault_router:
+            app.include_router(vault_router, tags=["vault"])
+            print("✅ Vault API routes added at /api/vault/*")
+        if integrations_router:
+            app.include_router(integrations_router, tags=["integrations"])
+            print("✅ Integrations API routes added at /api/integrations/*")
 
     # Training status router
     try:
