@@ -1,32 +1,46 @@
 #!/usr/bin/env python3
 """
-REAL Vector Search Implementation - NO MOCKS
-This actually searches the 19,255 vectors in Qdrant
-Created: December 9, 2025
-Author: Claude (fixing my lies)
+Unified Vector Search Service
+Uses OpenAI embeddings (1536D) and Qdrant for semantic search.
 """
 
+import os
 import json
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
+from dataclasses import dataclass
 from qdrant_client import QdrantClient
-from src.api.models import Filter, FieldCondition, MatchValue
-from sentence_transformers import SentenceTransformer
-import numpy as np
+from qdrant_client.models import Filter, FieldCondition, MatchValue, SearchParams
+import asyncio
+import sys
+sys.path.insert(0, '/opt/tower-echo-brain')
+
+@dataclass
+class SearchResult:
+    """A single search result."""
+    id: str
+    score: float
+    collection: str
+    payload: dict
+
+@dataclass
+class SearchResponse:
+    """Search response with results and metadata."""
+    query: str
+    results: List[SearchResult]
+    collections_searched: List[str]
 
 class RealVectorSearch:
-    """ACTUAL vector search using REAL Qdrant vectors"""
+    """Unified vector search across all Echo Brain collections."""
+
+    COLLECTIONS = ["documents", "conversations", "facts", "code"]
 
     def __init__(self):
         # REAL Qdrant connection
         self.qdrant = QdrantClient(host="localhost", port=6333)
+        self._embedding_service = None
 
-        # Multiple encoders for different dimensions
-        self.encoder_384 = SentenceTransformer('all-MiniLM-L6-v2')  # 384D
-        self.encoder_768 = SentenceTransformer('sentence-transformers/all-mpnet-base-v2')  # 768D
-        # For 4096D, we'll need to pad or use different approach
-
-        # Collections we ACTUALLY have
-        self.collections = ["echo_memory", "claude_conversations", "kb_articles"]
+        # Collections we NOW have (1536D OpenAI)
+        self.collections = self.COLLECTIONS
 
         print("Initializing REAL vector search...")
         self._verify_collections()
@@ -69,6 +83,14 @@ class RealVectorSearch:
                 query_vector = self.encoder_384.encode(query).tolist()
             elif dimensions == 768:
                 query_vector = self.encoder_768.encode(query).tolist()
+            elif dimensions == 1024:
+                # Use Ollama mxbai-embed-large for 1024D
+                import requests
+                response = requests.post(
+                    f"{self.ollama_url}/api/embeddings",
+                    json={"model": self.embedding_model, "prompt": query}
+                )
+                query_vector = response.json()["embedding"]
             elif dimensions == 4096:
                 # Use 384D base and pad to 4096D (for now)
                 base_vector = self.encoder_384.encode(query).tolist()

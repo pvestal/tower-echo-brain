@@ -34,11 +34,11 @@ class VectorMemory(VectorMemoryInterface):
         # Use Ollama for embeddings (since custom service isn't working)
         self.ollama_url = "http://127.0.0.1:11434"
 
-        # Use 4096D collection if available
-        base_collection = "echo_real_knowledge"
-        self.collection_name = get_4096d_collection(base_collection)
-        self.vector_dimensions = QDRANT_CONFIG['vector_size']  # 4096D
-        self.embedding_model = "nomic-embed-text:latest"
+        # Use 1024D collection with mxbai-embed-large
+        base_collection = "echo_memories"  # Using the new collection
+        self.collection_name = base_collection
+        self.vector_dimensions = 1024  # Using 1024D for better quality
+        self.embedding_model = "mxbai-embed-large:latest"  # Superior embedding model
 
         # Initialize collection on startup
         asyncio.create_task(self._ensure_collection())
@@ -69,7 +69,7 @@ class VectorMemory(VectorMemoryInterface):
                 logger.error(f"Failed to ensure collection: {e}")
 
     async def _generate_embedding(self, text: str) -> Optional[List[float]]:
-        """Generate embedding using Ollama with nomic-embed-text model"""
+        """Generate embedding using Ollama with mxbai-embed-large model (1024D)"""
         async with httpx.AsyncClient(timeout=30) as client:
             try:
                 # Use Ollama's embedding endpoint
