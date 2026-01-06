@@ -1,0 +1,1 @@
+import{s as o}from"./index-y_s3za8l.js";const t="http://localhost:8309",a=o.create({baseURL:t,headers:{"Content-Type":"application/json"}});a.interceptors.response.use(e=>e,e=>{var s;return console.error("API Error:",((s=e.response)==null?void 0:s.data)||e.message),Promise.reject(e)});export{a};

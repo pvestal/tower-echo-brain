@@ -79,3 +79,9 @@ websocket_*.log
 *_migrated.py
 archive/
 .vault-token
+
+# Qdrant database files (dynamic)
+data/qdrant/
+
+# Loki log files
+loki/data/wal/
