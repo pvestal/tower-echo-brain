@@ -1,87 +1,37 @@
-# Python
+# CREDENTIALS - NEVER COMMIT
+credentials.json
+token.json
+*.key
+*.pem
+*.cert
+.env
+.env.*
+/home/patrick/.tower_credentials/
+
+# Vault
+.vault-token
+vault_data/
+
+# Database/Vector storage
+data/qdrant/
+*.db
+*.sqlite
+*.mmap
+
+# Cache
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-env/
+*.pyc
+.pytest_cache/
+.ruff_cache/
 venv/
 
 # Logs
 *.log
 logs/
-/tmp/
+loki/
 
-# Generated videos
-*.mp4
-*.avi
-*.webm
-output/
-generated/
-
-# Models (too large)
-*.safetensors
-*.ckpt
-*.pth
-models/
-
-# Temporary
-temp/
-*.tmp
-logs/
-.env
-node_modules/
-venv/
-
-# Backup files
-*.backup*
-*.bak
-*.old
+# Generated
+outputs/
+snapshots/
 backups/
-
-# Database files
-*.db
-*.sqlite
-*.sqlite3
-
-# Security sensitive files
-vault/
-vault_data/
-.encryption_key
-*_key
-*_secret
-
-# Runtime files
-*.pid
-*.lock
-
-# Test cache and artifacts
-.pytest_cache/
-.ruff_cache/
-.coverage
-
-# Version files with equals prefix
-=*
-
-# Service-specific logs
-echo_*.log
-cognitive_*.log
-websocket_*.log
-
-# Backup file patterns
-*_backup*
-*_backup.py
-*_old.py
-*_original.py
-*_fixed.py
-*_working.py
-*_test.py
-*_migrated.py
-archive/
-.vault-token
-
-# Qdrant database files (dynamic)
-data/qdrant/
-
-# Loki log files
-loki/data/wal/
+tmp/
