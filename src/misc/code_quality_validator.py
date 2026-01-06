@@ -473,7 +473,7 @@ class ModelReloadManager:
 
     async def _select_better_model(self, failed_model: str, task_type: str) -> Optional[str]:
         """Select a better model based on failure and task type"""
-
+        hierarchy = {
             'code': [
                 'qwen2.5-coder:32b',
                 'deepseek-coder-v2:latest',
