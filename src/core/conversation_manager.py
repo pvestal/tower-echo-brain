@@ -223,9 +223,11 @@ class ConversationManager:
                     if msg["assistant"]:
                         enhanced_parts.append(f"You: {msg['assistant'][:100]}")
 
-        # Add learned facts
-        if context["learned_facts"]:
-            enhanced_parts.append(f"\n[Known facts]: {'; '.join(context['learned_facts'][:5])}")
+        # TEMPORARILY DISABLED: learned_facts injection causing anime contamination
+        # TODO: Re-enable with domain filtering once contamination source is identified
+        # if context["learned_facts"]:
+        #     enhanced_parts.append(f"\n[Known facts]: {'; '.join(context['learned_facts'][:5])}")
+        logger.warning("⚠️ learned_facts injection disabled to prevent contamination")
 
         # Add entities
         if context["entities"]:
