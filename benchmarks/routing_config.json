@@ -1,0 +1,24 @@
+{
+  "routing_strategy": "benchmark_optimized",
+  "fallback_model": "llama3.2:3b",
+  "categories": {
+    "classification": {
+      "primary_model": "qwen2.5:3b",
+      "expected_ttft_ms": 94,
+      "expected_tps": 9.7,
+      "accuracy": 0.8,
+      "vram_requirement_mb": 10523.0,
+      "selection_reason": "Best composite score: 0.864",
+      "benchmark_date": "2026-01-06"
+    }
+  },
+  "hardware_limits": {
+    "max_vram_mb": 12000,
+    "concurrent_models": 1
+  },
+  "performance_thresholds": {
+    "classification_max_ttft_ms": 150,
+    "coding_min_tps": 5.0,
+    "reasoning_min_tps": 3.0
+  }
+}

@@ -1,0 +1,243 @@
+{
+  "projects": {
+    "tokyo-debt-desire": {
+      "name": "Tokyo Debt Desire",
+      "theme": "Corporate debt collection and yakuza business drama",
+      "setting": "Modern Tokyo, Japan - corporate offices, bars, back alleys, financial districts",
+      "tone": "Dark, mature, business-focused, psychological thriller",
+      "character_archetypes": [
+        "Corporate executives",
+        "Debt collectors", 
+        "Yakuza members",
+        "Financial analysts",
+        "Business owners",
+        "Loan sharks",
+        "Office workers",
+        "Banking officials"
+      ],
+      "themes": [
+        "Financial pressure",
+        "Corporate corruption", 
+        "Debt collection",
+        "Business negotiations",
+        "Yakuza involvement in legitimate business",
+        "Modern Japanese society",
+        "Economic struggles",
+        "Power dynamics in business"
+      ],
+      "vocabulary": [
+        "debt", "collection", "payment", "interest", "yakuza", "corporation", 
+        "business", "money", "loan", "office", "suit", "meeting", "contract",
+        "pressure", "deadline", "negotiations", "Tokyo", "yen", "finance"
+      ],
+      "forbidden_elements": [
+        "fantasy creatures", "magic", "medieval settings", "swords", "dungeons",
+        "goblins", "adventurers", "priests", "guilds", "quests", "monsters"
+      ],
+      "main_characters": {
+        "Kenji Tanaka": {
+          "role": "Senior Debt Collection Manager",
+          "age": 42,
+          "background": "Started as junior analyst, clawed his way up through relentless determination. Father was yakuza enforcer.",
+          "personality": "Calculating, ruthless, psychologically manipulative. Uses pressure and veiled threats. Has twisted sense of loyalty.",
+          "appearance": "Sharp-featured man with graying temples, designer glasses, immaculate dark suits. Small scar on left temple.",
+          "voice": "Deep, measured voice. Speaks slowly for maximum psychological impact. Never shouts - threats delivered like weather discussion.",
+          "relationships": "Divorced, estranged 16-year-old daughter. Manages team of 20 collectors.",
+          "motivation": "Believes debt is sacred contract, default is personal insult. 95% collection rate - highest in company."
+        },
+        "Yuki Sato": {
+          "role": "Junior Debt Collector", 
+          "age": 26,
+          "background": "Tokyo University Economics graduate. Sends half salary to support elderly parents in rural Akita.",
+          "personality": "Initially empathetic and naive, developing harder edge. Highly intelligent, lacks confidence. Perfectionist prone to overthinking.",
+          "appearance": "Petite with deceptively innocent appearance. Professional chignon hairstyle, department store business suits. Large expressive brown eyes.",
+          "voice": "Clear, precise Tokyo standard Japanese. Can shift from warm to coldly professional instantly. Clears throat before bad news.",
+          "relationships": "Lives with three roommates in cramped Harajuku apartment. Strong family duty conflicts with moral compass.",
+          "motivation": "Studying for CPA exam to escape debt collection. Torn between needing money and growing guilt."
+        },
+        "Hiroshi Yamamoto": {
+          "role": "Senior Yakuza Associate and Corporate Consultant",
+          "age": 38,
+          "background": "Yamaguchi-gumi family member for 20 years. Father was legendary enforcer. Handles cases where traditional methods fail.",
+          "personality": "Old-school yakuza with strong honor code. Philosophical about money and debt. More educated than he appears.",
+          "appearance": "Heavily tattooed, stocky build, shaved head. Missing tip of left pinky finger. Dark suits with dragon cufflinks. Gold tooth.",
+          "voice": "Gravelly voice with thick Osaka accent. Uses yakuza slang mixed with business terminology. Whispers when truly angry.",
+          "relationships": "Unmarried, lives in traditional Asakusa house. Complex relationship with corporate world.",
+          "motivation": "Maintains old yakuza code while adapting to modern financial warfare. Reputation does the work for him."
+        },
+        "Maki Ishida": {
+          "role": "Senior Financial Analyst and Secret Informant",
+          "age": 29,
+          "background": "Brilliant analyst who discovered massive fraud. Brother died by suicide after debt collector harassment from rival firm.",
+          "personality": "Highly intelligent, methodical. Outwardly model employee, internally seething with rage. Developing sophisticated deception skills.",
+          "appearance": "Tall, elegant, unremarkable appearance helps her blend in. Conservative business attire, minimal makeup. Intense, intelligent eyes.",
+          "voice": "Soft, professional voice with excellent diction. Masters art of sounding engaged while noncommittal. Voice cracks when discussing brother.",
+          "relationships": "Lives in constant fear of discovery. Connections with investigative journalists.",
+          "motivation": "Secretly documenting evidence to expose illegal practices. Driven by need for justice over brother's death."
+        },
+        "Takeshi Morimoto": {
+          "role": "Debt Collection Target - Small Business Owner",
+          "age": 45,
+          "background": "Owns traditional ramen shop, family business for three generations. Owes 12 million yen after pandemic expansion failed.",
+          "personality": "Proud traditionalist who sees debt as personal failure. Stubborn, hardworking. Traditional Japanese values about honor and obligation.",
+          "appearance": "Medium height, sturdy build, prematurely gray hair. Weathered face showing stress. Usually wears traditional white cook's jacket.",
+          "voice": "Working-class Tokyo accent, uses older Japanese expressions. Naturally loud from kitchen work, becoming quieter from stress.",
+          "relationships": "Wife left with teenage son. Three employees depend on him. Elderly mother lives above shop.",
+          "motivation": "Refuses bankruptcy to preserve family legacy. Increasingly desperate, considering dangerous options to raise money."
+        }
+      },
+      "story_arcs": {
+        "Season 1 - Blood Money": {
+          "setting": "Mizuho Financial Corp debt collection department facing mounting pressure from Japan's economic downturn",
+          "main_conflict": "Impossible collection targets force increasing reliance on yakuza connections, blurring legitimate business and organized crime",
+          "character_development": "Kenji trains Yuki in psychological manipulation while Maki secretly documents illegal practices",
+          "climax": "Confrontation over Takeshi's case forces each character to choose between survival and remaining humanity"
+        },
+        "Season 2 - The Whistleblower": {
+          "setting": "Expanded to investigative journalism offices, police stations, government buildings as scandal breaks",
+          "main_conflict": "Maki's leaked documents expose systematic harassment and yakuza involvement, threatening entire network",
+          "character_development": "Yuki must choose loyalty vs horror, Hiroshi caught between yakuza family and personal code",
+          "climax": "Media attention and investigation threaten to destroy the shadow world connecting corporate and criminal finance"
+        }
+      },
+      "world_building": {
+        "locations": {
+          "Mizuho Financial Corp": "High-rise office in Shinjuku financial district, sterile corporate environment hiding dark practices",
+          "Kabukicho": "Underground yakuza establishments where business deals blend with criminal negotiations",
+          "Roppongi": "Luxury apartments of successful debt collectors, representing the rewards of moral compromise",
+          "Asakusa": "Traditional neighborhoods where old values conflict with modern corporate ruthlessness",
+          "Harajuku": "Cramped apartments of struggling young professionals caught in the system"
+        },
+        "themes": {
+          "debt_as_control": "Debt collection as psychological warfare and social control mechanism",
+          "corporate_yakuza_fusion": "Blurred boundaries between legitimate business and organized crime",
+          "economic_desperation": "How financial pressure corrupts individuals and institutions",
+          "traditional_vs_modern": "Conflict between old Japanese values and corporate capitalism"
+        }
+      }
+    },
+    "goblin-slayer": {
+      "name": "Goblin Slayer",
+      "theme": "Dark fantasy adventure with focus on goblin extermination",
+      "setting": "Medieval fantasy world - villages, dungeons, forests, guilds",
+      "tone": "Dark fantasy, tactical combat, adventure, medieval atmosphere",
+      "character_archetypes": [
+        "Adventurers",
+        "Guild members",
+        "Priestesses", 
+        "Warriors",
+        "Mages",
+        "Archers",
+        "Village folk",
+        "Guild receptionists"
+      ],
+      "themes": [
+        "Monster hunting",
+        "Adventurer guilds",
+        "Fantasy combat",
+        "Medieval society",
+        "Tactical warfare",
+        "Protecting the innocent",
+        "Fantasy magic",
+        "Hero's journey"
+      ],
+      "vocabulary": [
+        "goblin", "slayer", "adventure", "guild", "quest", "dungeon", "sword",
+        "magic", "priest", "warrior", "monster", "village", "combat", "armor",
+        "weapon", "spell", "fantasy", "medieval", "dragon", "treasure"
+      ],
+      "forbidden_elements": [
+        "corporate offices", "debt collection", "yakuza", "business suits",
+        "modern technology", "Tokyo", "financial terms", "corporations",
+        "loans", "interest rates", "business meetings", "skyscrapers"
+      ],
+      "main_characters": {
+        "Goblin Slayer": {
+          "role": "Veteran Adventurer specializing in goblin extermination",
+          "age": "Approximately 20",
+          "background": "Witnessed sister's brutal death by goblins at age 10. Has spent decade perfecting anti-goblin tactics. Lives alone in remote farmhouse.",
+          "personality": "Single-minded obsession with goblin extermination. Methodical, calculating. Socially awkward due to isolation and trauma. Views goblin hunting as pest control.",
+          "appearance": "Always wears grimy leather armor and metal helmet that conceals face. Medium height, lean build optimized for speed and endurance.",
+          "voice": "Flat, emotionless monotone. Uses simple, direct language. Never shows fear, excitement, or humor - only grim determination.",
+          "relationships": "Works alone except for current party. Protective of innocent villagers but no patience for inexperienced adventurers.",
+          "motivation": "Complete extermination of goblin species through systematic hunting and nest destruction."
+        },
+        "Priestess": {
+          "role": "Young Cleric of the Earth Mother",
+          "age": 15,
+          "background": "Joined Adventurer's Guild with idealistic dreams. First quest nearly killed her - saved by Goblin Slayer. Trained in rural temple.",
+          "personality": "Kind-hearted and compassionate with desire to help others. Initially naive but learning to balance idealism with pragmatism. Remarkable resilience.",
+          "appearance": "Petite with long blonde hair in twin braids. Large, expressive blue eyes. White and blue clerical robes with Earth Mother symbols.",
+          "voice": "Clear, youthful voice with genuine warmth. Uses formal temple speech patterns. Reverent tone when casting spells.",
+          "relationships": "Acts as party's moral compass and emotional heart. Growing respect for Goblin Slayer's dedication.",
+          "motivation": "Help others and protect innocent people while learning to be effective adventurer despite traumatic introduction."
+        },
+        "High Elf Archer": {
+          "role": "Proud Elven Archer from Noble House",
+          "age": "2,000 years (early 20s equivalent for elves)",
+          "background": "Trained in archery, forest survival, and elven magic. Joined guild seeking excitement beyond static elven society.",
+          "personality": "Proud and initially arrogant due to elven superiority complex. Quick-witted with sharp tongue. Fiercely loyal once friendship earned.",
+          "appearance": "Tall and graceful with ethereal elven beauty. Silver-white hair in practical ponytail. Forest green leather armor, elegant elven longbow.",
+          "voice": "Musical voice with refined elven nobility accent. Uses archaic speech patterns and formal language. Often sounds condescending.",
+          "relationships": "Growing genuine friendships with human companions, unusual for typically aloof elven species.",
+          "motivation": "Prove elven superiority through adventuring while seeking purpose beyond traditional elven culture."
+        },
+        "Dwarf Shaman": {
+          "role": "Skilled Dwarven Cleric and Brewmaster",
+          "age": "107 years (middle-aged for dwarves)",
+          "background": "Trained in metalworking, brewing, and earth magic. Former military engineer with siege warfare knowledge.",
+          "personality": "Practical and methodical with patience of long-lived race. Dry humor, enjoys intellectual puzzles. Takes responsibility for party safety.",
+          "appearance": "Short and stocky with magnificent braided beard containing magical implements. Leather armor with metal plates, war hammer with runic symbols.",
+          "voice": "Deep, resonant voice with mountain dwarf accent. Speaks deliberately, uses traditional dwarven expressions and technical terminology.",
+          "relationships": "Deeply loyal to companions, serves as party's morale officer during downtime.",
+          "motivation": "Apply dwarven engineering and magical knowledge to surface adventures, protect party through strategic magic use."
+        },
+        "Lizard Priest": {
+          "role": "Ancient Lizardman Shaman and Scout",
+          "age": "Several centuries old",
+          "background": "From secretive marshland tribe. Drawn to guild by philosophical curiosity about civilization and balance between order and chaos.",
+          "personality": "Philosophical and detached with patience of long-lived predator. Genuinely curious about mammalian behavior. Pragmatic problem-solving approach.",
+          "appearance": "Tall and lean with natural predator build. Green-scaled skin with darker patterns. Large intelligent eyes with vertical pupils. Long tail.",
+          "voice": "Sibilant voice with slight hiss. Measured tones with careful enunciation. Uses formal, archaic speech patterns from shamanic traditions.",
+          "relationships": "Loyal through mutual benefit and respect rather than affection. Serves as voice of reason during emotional moments.",
+          "motivation": "Study mammalian civilization while maintaining natural balance through goblin extermination as predator controlling prey population."
+        }
+      },
+      "story_arcs": {
+        "Arc 1 - The Nest Destroyer": {
+          "setting": "Frontier villages plagued by goblin raids, with Adventurer's Guild as central hub for quest coordination",
+          "main_conflict": "Systematic goblin nest destruction attracts attention while inexperienced adventurers continue dying in routine quests",
+          "character_development": "Unlikely party forms around Goblin Slayer's expertise, each member contributing unique skills to anti-goblin warfare",
+          "climax": "Discovery of larger pattern in goblin behavior suggesting coordinated intelligence behind seemingly random raids"
+        },
+        "Arc 2 - The Goblin Lord's Revenge": {
+          "setting": "Expanded to goblin strongholds and besieged settlements as organized goblin army emerges",
+          "main_conflict": "Intelligent Goblin Lord coordinates scattered tribes into sophisticated army using human shields and multi-pronged attacks",
+          "character_development": "Goblin Slayer must adapt individual hunting methods to large-scale warfare, learning to trust others",
+          "climax": "Massive siege requiring coordination with Adventurer's Guild and local militias against largest goblin army in generations"
+        }
+      },
+      "world_building": {
+        "locations": {
+          "Adventurer's Guild": "Central hub where quests are posted and adventurers gather, bureaucratic organization managing monster threats",
+          "Frontier Villages": "Small settlements constantly threatened by goblin raids, representing innocent people needing protection",
+          "Ancient Dungeons": "Underground complexes where goblins nest, dangerous labyrinths requiring careful tactical approach",
+          "Goblin Warrens": "Deep underground cities showing goblin organizational capabilities and breeding grounds",
+          "Sacred Temples": "Religious sites providing divine magic support and moral guidance for adventurers"
+        },
+        "themes": {
+          "tactical_warfare": "Emphasis on strategy, preparation, and using environment against enemies rather than heroic charges",
+          "trauma_and_healing": "How psychological wounds shape behavior and importance of human connections in recovery",
+          "underestimated_threats": "Goblins as serious danger ignored by glory-seeking adventurers focused on dragons and demons",
+          "party_dynamics": "How different races and backgrounds can work together when united by common purpose"
+        },
+        "magic_system": {
+          "divine_magic": "Priestess channels Earth Mother's power for healing and protection spells",
+          "earth_magic": "Dwarf Shaman manipulates stone and metal for fortification and tactical advantages", 
+          "primal_magic": "Lizard Priest uses nature-based magic connected to ancient dragon bloodline",
+          "elven_magic": "High Elf Archer employs forest magic for enhanced archery and reconnaissance"
+        }
+      }
+    }
+  }
+}

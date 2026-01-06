@@ -28,21 +28,21 @@ class PatrickPreferenceLearner:
         else:
             # Initialize with what we know about Patrick
             return {
-                "art_style": {
-                    "preferred": ["anime", "cyberpunk", "modern"],
-                    "quality": ["masterpiece", "best quality", "detailed"],
-                    "avoid": ["cartoon", "western", "3D render"]
+                "technical_style": {
+                    "preferred": ["modern", "technical", "systematic"],
+                    "quality": ["accurate", "efficient", "reliable"],
+                    "avoid": ["outdated", "inefficient", "unreliable"]
                 },
                 "projects": {
-                    "tokyo_debt_crisis": {
-                        "theme": "romantic comedy, modern japan, debt crisis",
-                        "mood": "lighthearted, comedic, romantic tension",
-                        "setting": "urban Tokyo, modern day"
+                    "echo_brain_optimization": {
+                        "theme": "AI system optimization, performance tuning",
+                        "mood": "technical, analytical, solution-focused",
+                        "setting": "local development environment"
                     },
-                    "goblin_slayer_neon": {
-                        "theme": "cyberpunk, tactical, dark",
-                        "mood": "serious, action-oriented, mysterious",
-                        "setting": "futuristic city, neon lights"
+                    "tower_infrastructure": {
+                        "theme": "system architecture, automation, monitoring",
+                        "mood": "systematic, efficient, robust",
+                        "setting": "home server environment"
                     }
                 },
                 "character_traits": {

@@ -436,14 +436,14 @@ class ResilientOmniscientContext:
                 'search_method': 'fallback'
             })
 
-        # Technical project fallbacks
-        if any(term in query_lower for term in ['technical', 'project', 'work', 'system']):
+        # Project info fallbacks
+        if any(term in query_lower for term in ['anime', 'project', 'work']):
             fallback_results.append({
-                'id': 'fallback_technical',
+                'id': 'fallback_anime',
                 'source_type': 'fallback',
                 'source_category': 'work_projects',
-                'title': 'Technical System Work',
-                'content_preview': 'You work on technical systems and infrastructure optimization',
+                'title': 'Anime Production Work',
+                'content_preview': 'You work on anime production projects',
                 'importance_score': 95,
                 'query_relevance': 0.8,
                 'search_method': 'fallback'

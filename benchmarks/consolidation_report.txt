@@ -1,0 +1,38 @@
+🧠 ECHO BRAIN MODEL ROUTING CONSOLIDATION REPORT
+============================================================
+Generated: 2026-01-06
+Based on benchmark results: 10 test runs
+
+📊 BENCHMARK-OPTIMIZED RECOMMENDATIONS
+========================================
+
+CLASSIFICATION:
+  🏆 Winner: qwen2.5:3b
+  ⚡ TTFT: 94ms
+  🚀 TPS: 9.7
+  🎯 Accuracy: 80.0%
+  💾 VRAM: 10523MB
+  📈 Score: 0.864
+
+🔧 IMPLEMENTATION STEPS
+==============================
+
+1. Apply database migration:
+   psql -f routing_migration.sql
+
+2. Update db_model_router.py to use new config
+
+3. Clean up hardcoded references (58 files found)
+
+4. Test with sample queries
+
+5. Monitor performance in production
+
+🎯 EXPECTED IMPROVEMENTS
+==============================
+
+- Eliminate conflicts between 46 routing files
+- Reduce classification time to <150ms
+- Increase coding throughput to >5 TPS
+- Remove anime bias from fallback context
+- Enable data-driven model selection
