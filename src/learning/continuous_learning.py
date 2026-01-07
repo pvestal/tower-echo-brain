@@ -1,3 +1,7 @@
+# 🔴 DEPRECATED: Use unified_router.py instead
+# This file is being phased out in favor of single source of truth
+# Import from: from src.routing.unified_router import unified_router
+
 #!/usr/bin/env python3
 """
 Continuous Learning System for Echo Brain
