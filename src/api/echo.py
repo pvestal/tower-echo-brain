@@ -794,17 +794,53 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
 
         # Execute query with selected model
         try:
-            result = await intelligence_router.query_model(selected_model, augmented_query, context)
-            if result["success"]:
-                result["model"] = selected_model
-                result["tier"] = selection.tier
-                result["decision_reason"] = selection.reason
+            # Check if this is a reasoning query that needs special handling
+            if selected_model == "deepseek-r1:8b" and selection.tier == "reasoning":
+                # Use actual reasoning execution
+                try:
+                    from src.reasoning.deepseek_reasoner import execute_reasoning
+                except ImportError:
+                    # Try alternate import path
+                    import sys
+                    sys.path.insert(0, '/opt/tower-echo-brain/src')
+                    from reasoning.deepseek_reasoner import execute_reasoning
+
+                logger.info(f"🧠 Executing DeepSeek reasoning for: {request.query[:50]}...")
+                reasoning_result = await execute_reasoning(request.query)
+
+                if reasoning_result.success:
+                    result = {
+                        "success": True,
+                        "response": reasoning_result.final_answer,
+                        "model": reasoning_result.model_used,
+                        "tier": "reasoning",
+                        "decision_reason": selection.reason,
+                        "reasoning": {
+                            "steps": reasoning_result.thinking_steps,
+                            "model": reasoning_result.model_used
+                        }
+                    }
+                    logger.info(f"✅ Reasoning completed with {len(reasoning_result.thinking_steps)} thinking steps")
+                else:
+                    # Reasoning failed, fallback to standard model
+                    logger.warning(f"⚠️ Reasoning failed: {reasoning_result.error}, using fallback")
+                    result = await intelligence_router.query_model("qwen2.5:3b", augmented_query, context)
+                    result["model"] = "qwen2.5:3b"
+                    result["tier"] = "fallback"
+                    result["reasoning_error"] = reasoning_result.error
             else:
-                # Fallback to fast model if selected model fails
-                logger.warning(f"⚠️ Model {selected_model} failed, using fallback qwen2.5:3b")
-                result = await intelligence_router.query_model("qwen2.5:3b", augmented_query, context)
-                result["model"] = "qwen2.5:3b"
-                result["tier"] = "fallback"
+                # Standard model execution
+                result = await intelligence_router.query_model(selected_model, augmented_query, context)
+                if result["success"]:
+                    result["model"] = selected_model
+                    result["tier"] = selection.tier
+                    result["decision_reason"] = selection.reason
+                else:
+                    # Fallback to fast model if selected model fails
+                    logger.warning(f"⚠️ Model {selected_model} failed, using fallback qwen2.5:3b")
+                    result = await intelligence_router.query_model("qwen2.5:3b", augmented_query, context)
+                    result["model"] = "qwen2.5:3b"
+                    result["tier"] = "fallback"
         except Exception as e:
             logger.error(f"❌ Unified router error: {e}")
             # Emergency fallback

@@ -1,137 +1,229 @@
 """
-DeepSeek Reasoning System with <think> tag support.
-Enables chain-of-thought reasoning for complex queries.
+DeepSeek Reasoning System - ACTUAL IMPLEMENTATION
+Calls deepseek-r1:8b and parses <think> tags from responses.
 """
-
 import re
 import logging
-from typing import Dict, Tuple, Optional
+import httpx
+import asyncio
+from typing import Dict, List, Optional, Tuple
+from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
+OLLAMA_BASE_URL = "http://localhost:11434"
+
+@dataclass
+class ReasoningResult:
+    """Structured reasoning output"""
+    thinking_steps: List[str]
+    final_answer: str
+    model_used: str
+    raw_response: str
+    success: bool = True
+    error: Optional[str] = None
+
+def should_use_reasoning(query: str) -> bool:
+    """Detect if query needs deep reasoning"""
+    query_lower = query.lower()
+
+    # Explicit reasoning requests
+    reasoning_triggers = [
+        'think through', 'analyze', 'compare', 'evaluate',
+        'pros and cons', 'trade-off', 'should i', 'which is better',
+        'why would', 'how would', 'step by step', 'reasoning',
+        'architecture', 'design decision', 'strategy', 'explain how',
+        'explain why', 'implications', 'consider'
+    ]
+
+    # Complex queries (long or multi-part)
+    is_complex = len(query) > 150 or query.count('?') > 1
+
+    return any(trigger in query_lower for trigger in reasoning_triggers) or is_complex
+
+def parse_think_tags(response: str) -> Tuple[List[str], str]:
+    """
+    Extract <think>...</think> content and final answer.
+    Returns (thinking_steps, final_answer)
+    """
+    # Find all <think> blocks
+    think_pattern = r'<think>(.*?)</think>'
+    think_matches = re.findall(think_pattern, response, re.DOTALL)
+
+    # Extract thinking steps
+    thinking_steps = []
+    for match in think_matches:
+        # Split on newlines and clean up
+        steps = [s.strip() for s in match.split('\n') if s.strip()]
+        thinking_steps.extend(steps)
+
+    # Get final answer (everything after last </think> or whole response if no tags)
+    if '</think>' in response:
+        final_answer = response.split('</think>')[-1].strip()
+    else:
+        # If no think tags, treat entire response as answer
+        final_answer = response.strip()
+
+        # But still try to extract logical steps if present
+        if any(marker in response for marker in ['Step 1:', 'First,', '1.', '2.', '3.']):
+            # Try to parse numbered or marked steps
+            lines = response.split('\n')
+            for line in lines:
+                line = line.strip()
+                if re.match(r'^(Step \d+:|^\d+\.|^First,|^Second,|^Then,)', line):
+                    thinking_steps.append(line)
+
+    return thinking_steps, final_answer
+
+async def execute_reasoning(query: str, model: str = "deepseek-r1:8b") -> ReasoningResult:
+    """
+    Execute reasoning query and parse structured response.
+    """
+    # Build reasoning-optimized prompt
+    prompt = f"""<think>
+I need to carefully analyze this query and think through it step by step.
+Let me break down what's being asked and work through it methodically.
+</think>
+
+Question: {query}
+
+Please think through this step by step, showing your reasoning process, then provide your final answer."""
+
+    try:
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            logger.info(f"🤔 Calling {model} for reasoning on: {query[:50]}...")
+
+            response = await client.post(
+                f"{OLLAMA_BASE_URL}/api/generate",
+                json={
+                    "model": model,
+                    "prompt": prompt,
+                    "stream": False,
+                    "options": {
+                        "temperature": 0.7,
+                        "num_predict": 2048,
+                        "top_k": 40,
+                        "top_p": 0.9,
+                    }
+                }
+            )
+            response.raise_for_status()
+            result = response.json()
+            raw_response = result.get("response", "")
+
+            if not raw_response:
+                logger.warning("Empty response from model")
+                return ReasoningResult(
+                    thinking_steps=["No response received from model"],
+                    final_answer="Unable to generate response",
+                    model_used=model,
+                    raw_response="",
+                    success=False,
+                    error="Empty response"
+                )
+
+            # Parse thinking and answer
+            thinking_steps, final_answer = parse_think_tags(raw_response)
+
+            logger.info(f"🧠 DeepSeek reasoning completed: {len(thinking_steps)} thinking steps extracted")
+
+            # If no thinking steps were extracted, but we have a response,
+            # create a single step from the response
+            if not thinking_steps and raw_response:
+                thinking_steps = ["Direct reasoning applied"]
+
+            return ReasoningResult(
+                thinking_steps=thinking_steps,
+                final_answer=final_answer or raw_response,
+                model_used=model,
+                raw_response=raw_response,
+                success=True
+            )
+
+    except httpx.TimeoutException:
+        logger.error("DeepSeek reasoning timed out")
+        return ReasoningResult(
+            thinking_steps=["Reasoning request timed out after 120 seconds"],
+            final_answer="Unable to complete reasoning - request timed out. The query may be too complex or the model may be overloaded.",
+            model_used=model,
+            raw_response="",
+            success=False,
+            error="Timeout"
+        )
+    except httpx.HTTPStatusError as e:
+        logger.error(f"HTTP error in DeepSeek reasoning: {e}")
+        return ReasoningResult(
+            thinking_steps=[f"HTTP Error {e.response.status_code}"],
+            final_answer=f"Reasoning failed due to HTTP error: {e.response.status_code}",
+            model_used=model,
+            raw_response="",
+            success=False,
+            error=str(e)
+        )
+    except Exception as e:
+        logger.error(f"DeepSeek reasoning failed: {e}")
+        return ReasoningResult(
+            thinking_steps=[f"Error: {str(e)}"],
+            final_answer=f"Reasoning failed: {str(e)}",
+            model_used=model,
+            raw_response="",
+            success=False,
+            error=str(e)
+        )
+
+def execute_reasoning_sync(query: str, model: str = "deepseek-r1:8b") -> ReasoningResult:
+    """Synchronous wrapper for execute_reasoning"""
+    try:
+        # Get or create event loop
+        try:
+            loop = asyncio.get_running_loop()
+            # We're already in an async context, can't use asyncio.run
+            return asyncio.create_task(execute_reasoning(query, model))
+        except RuntimeError:
+            # No running loop, safe to use asyncio.run
+            return asyncio.run(execute_reasoning(query, model))
+    except Exception as e:
+        logger.error(f"Failed to execute reasoning sync: {e}")
+        return ReasoningResult(
+            thinking_steps=[f"Sync execution error: {str(e)}"],
+            final_answer="Unable to execute reasoning",
+            model_used=model,
+            raw_response="",
+            success=False,
+            error=str(e)
+        )
+
+# Legacy compatibility
 class DeepSeekReasoner:
-    """
-    Handles DeepSeek R1 model's reasoning capabilities.
-    Processes <think> tags for internal reasoning steps.
-    """
+    """Legacy class for backwards compatibility"""
 
     def __init__(self):
         self.model = "deepseek-r1:8b"
-        self.think_pattern = re.compile(r'<think>(.*?)</think>', re.DOTALL)
-        logger.info("🧠 DeepSeek Reasoner initialized")
+        logger.info("🧠 DeepSeek Reasoner initialized (legacy mode)")
 
     def needs_reasoning(self, query: str) -> bool:
-        """
-        Determine if a query requires deep reasoning.
-        """
-        reasoning_indicators = [
-            'explain how', 'explain why', 'analyze', 'compare',
-            'evaluate', 'design', 'architect', 'solve',
-            'calculate', 'derive', 'prove', 'optimize',
-            'trade-off', 'pros and cons', 'implications'
-        ]
-
-        query_lower = query.lower()
-
-        # Check for reasoning indicators
-        if any(indicator in query_lower for indicator in reasoning_indicators):
-            return True
-
-        # Check for complex multi-part questions
-        if query.count('?') > 1 or len(query) > 200:
-            return True
-
-        return False
-
-    def format_reasoning_prompt(self, query: str) -> str:
-        """
-        Format query with reasoning instructions for DeepSeek.
-        """
-        return f"""<think>
-First, I need to understand what is being asked and break it down into logical steps.
-Then I'll work through each part systematically to arrive at a comprehensive answer.
-</think>
-
-{query}
-
-Please provide a detailed, step-by-step response. Use <think> tags for your internal reasoning process, then provide the final answer clearly."""
-
-    def extract_reasoning_and_answer(self, response: str) -> Dict[str, str]:
-        """
-        Extract thinking process and final answer from response.
-        """
-        # Find all thinking sections
-        thinking_sections = self.think_pattern.findall(response)
-
-        # Remove thinking sections to get the answer
-        answer = self.think_pattern.sub('', response).strip()
-
-        # Clean up the thinking text
-        thinking = '\n'.join(thinking_sections).strip() if thinking_sections else ""
-
-        return {
-            "thinking": thinking,
-            "answer": answer,
-            "full_response": response
-        }
+        return should_use_reasoning(query)
 
     async def reason(self, query: str, context: Optional[Dict] = None) -> Dict:
-        """
-        Execute reasoning process with DeepSeek model.
-        """
-        try:
-            # Check if reasoning is needed
-            if not self.needs_reasoning(query):
-                logger.info("Query doesn't require deep reasoning, using standard response")
-                return {
-                    "success": True,
-                    "needs_reasoning": False,
-                    "query": query
-                }
-
-            logger.info(f"🤔 Deep reasoning triggered for: {query[:50]}...")
-
-            # Format the prompt with reasoning instructions
-            reasoning_prompt = self.format_reasoning_prompt(query)
-
-            # Here we would normally call the model
-            # For now, return structured response
+        """Execute reasoning and return result"""
+        if not should_use_reasoning(query):
             return {
                 "success": True,
-                "needs_reasoning": True,
-                "model": self.model,
-                "prompt": reasoning_prompt,
-                "query": query,
-                "reasoning_triggered": True
+                "needs_reasoning": False,
+                "query": query
             }
 
-        except Exception as e:
-            logger.error(f"Reasoning error: {e}")
-            return {
-                "success": False,
-                "error": str(e)
-            }
-
-    def process_response(self, response: str) -> Dict:
-        """
-        Process a response that may contain thinking tags.
-        """
-        result = self.extract_reasoning_and_answer(response)
-
-        # Log if reasoning was detected
-        if result["thinking"]:
-            logger.info(f"🧠 Extracted {len(result['thinking'])} chars of reasoning")
+        result = await execute_reasoning(query, self.model)
 
         return {
-            "has_reasoning": bool(result["thinking"]),
-            "thinking": result["thinking"],
-            "answer": result["answer"],
-            "thinking_steps": len(result["thinking"].split('\n')) if result["thinking"] else 0
+            "success": result.success,
+            "needs_reasoning": True,
+            "model": result.model_used,
+            "response": result.final_answer,
+            "thinking_steps": result.thinking_steps,
+            "raw_response": result.raw_response,
+            "error": result.error
         }
 
-# Global instance
+# Global instance for legacy compatibility
 reasoner = DeepSeekReasoner()
-
-def should_use_reasoning(query: str) -> bool:
-    """Quick check if query needs reasoning."""
-    return reasoner.needs_reasoning(query)
