@@ -177,6 +177,9 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
     print(f"\n🎯 ECHO QUERY HANDLER CALLED: {request.query[:50]}...\n")
     logger.info(f"🎯 ECHO QUERY HANDLER CALLED: {request.query[:50]}...")
 
+    # Store original query BEFORE any modifications
+    original_query = request.query
+
     # MEMORY AUGMENTATION - Add memory context to ALL queries
     try:
         from src.middleware.memory_augmentation_middleware import augment_with_memories
@@ -224,8 +227,69 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
     logger.info(f"🔍 ECHO QUERY HANDLER - Query: {request.query[:50]}...")
     logger.info(f"🔍 Request type: {getattr(request, 'request_type', 'NOT_SET')}")
 
-    # Store original query for database logging
-    original_query = request.query
+    # ========================================
+    # REASONING PRIORITY - CHECK FIRST (USE ORIGINAL QUERY)
+    # ========================================
+    logger.info(f"🔍 Checking if reasoning needed for ORIGINAL query: {original_query[:100]}...")
+    try:
+        # Add path first to ensure import works
+        import sys
+        if '/opt/tower-echo-brain/src' not in sys.path:
+            sys.path.insert(0, '/opt/tower-echo-brain/src')
+
+        from reasoning.deepseek_reasoner import should_use_reasoning
+
+        needs_reasoning = should_use_reasoning(original_query)  # Use original query
+        logger.info(f"🔍 Reasoning check result: {needs_reasoning}")
+
+        if needs_reasoning:
+            logger.info(f"🧠 REASONING PRIORITY: Bypassing other handlers for: {original_query[:50]}...")
+
+            # Try importing with fallback
+            try:
+                from src.reasoning.deepseek_reasoner import execute_reasoning
+            except ImportError:
+                import sys
+                sys.path.insert(0, '/opt/tower-echo-brain/src')
+                from reasoning.deepseek_reasoner import execute_reasoning
+
+            reasoning_result = await execute_reasoning(original_query)  # Use original query
+
+            if reasoning_result.success:
+                processing_time = time.time() - start_time
+
+                # Build response with reasoning
+                response = QueryResponse(
+                    response=reasoning_result.final_answer,
+                    model_used=reasoning_result.model_used,
+                    intelligence_level="reasoning",
+                    processing_time=processing_time,
+                    escalation_path=["reasoning_priority"],
+                    conversation_id=request.conversation_id,
+                    intent="reasoning",
+                    confidence=1.0,
+                    requires_clarification=False,
+                    clarifying_questions=[],
+                    reasoning={
+                        "steps": reasoning_result.thinking_steps,
+                        "model": reasoning_result.model_used
+                    }
+                )
+
+                # Log to conversation history with original query
+                try:
+                    conversation_manager.update_conversation(
+                        request.conversation_id, original_query, "reasoning", response.response, False
+                    )
+                except Exception as e:
+                    logger.warning(f"Failed to update conversation history: {e}")
+
+                logger.info(f"✅ Reasoning completed with {len(reasoning_result.thinking_steps)} steps")
+                return response
+            else:
+                logger.warning(f"⚠️ Reasoning failed: {reasoning_result.error}, continuing to normal handlers")
+    except Exception as e:
+        logger.warning(f"⚠️ Reasoning priority check failed: {e}, continuing normally")
 
     # CONVERSATION MANAGER - Process through conversation pipeline
     try:
