@@ -480,18 +480,33 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
         # Get memory components
         context_retriever, pronoun_resolver, entity_extractor = get_memory_components()
 
-        # TEMPORARILY DISABLED: Semantic search causing anime contamination
-        # TODO: Re-enable with domain filtering once contamination is resolved
-        # semantic_results = conversation_manager.search_semantic_memory(request.query)
-        # if semantic_results:
-        #     logger.info(f"🔍 SEMANTIC MEMORY: Found {len(semantic_results)} relevant memories")
-        #     # Add to context for response generation
-        #     memory_context = "\n".join([f"- {r['content'][:200]}" for r in semantic_results[:5]])
-        # else:
-        #     memory_context = ""
-        logger.warning("⚠️ Semantic memory search disabled to prevent anime contamination")
-        semantic_results = []
-        memory_context = ""
+        # Re-enabled with domain filtering to prevent cross-domain contamination
+        from src.utils.domain_classifier import QueryDomainClassifier
+
+        classifier = QueryDomainClassifier()
+        query_domain = classifier.classify(request.query)
+
+        # Search semantic memory
+        semantic_results = conversation_manager.search_semantic_memory(request.query)
+
+        # Filter results based on query domain
+        if semantic_results:
+            filtered_results = [
+                r for r in semantic_results
+                if classifier.filter_content(r.get('content', ''), query_domain)
+            ]
+
+            if filtered_results:
+                logger.info(f"🔍 SEMANTIC MEMORY: {len(filtered_results)}/{len(semantic_results)} memories passed domain filter for '{query_domain}' query")
+                # Add to context for response generation
+                memory_context = "\n".join([f"- {r['content'][:200]}" for r in filtered_results[:5]])
+            else:
+                logger.info(f"🚫 All {len(semantic_results)} semantic memories filtered out for '{query_domain}' query")
+                memory_context = ""
+
+            semantic_results = filtered_results
+        else:
+            memory_context = ""
 
         # ============================================
         # STEP 1: Retrieve conversation history with memory system
@@ -749,17 +764,18 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
         logger.info(f"🔍 DEBUG: semantic_results count: {len(semantic_results)}")
         logger.info(f"🔍 DEBUG: original query length: {len(request.query)}")
 
-        # TEMPORARILY DISABLED: Memory augmentation causing anime contamination
-        # if semantic_results and len(semantic_results) > 0:
-        #     memory_context_parts = ["\n📚 Relevant memories:"]
-        #     for result in semantic_results[:5]:
-        #         source = result.get('metadata', {}).get('source', 'unknown')
-        #         content = result.get('content', '')[:200]
-        #         memory_context_parts.append(f"[{source}]: {content}...")
-        #
-        #     augmented_query = "\n".join(memory_context_parts) + f"\n\n🔍 Current query: {request.query}"
-        #     logger.info(f"📚 Augmented query with {len(semantic_results)} memory results")
-        logger.info("⚠️ Memory augmentation disabled to prevent contamination")
+        # Re-enabled with domain filtering - semantic_results already filtered above
+        if semantic_results and len(semantic_results) > 0:
+            memory_context_parts = ["\n📚 Relevant memories:"]
+            for result in semantic_results[:5]:
+                source = result.get('metadata', {}).get('source', 'unknown')
+                content = result.get('content', '')[:200]
+                memory_context_parts.append(f"[{source}]: {content}...")
+
+            augmented_query = "\n".join(memory_context_parts) + f"\n\n🔍 Current query: {request.query}"
+            logger.info(f"📚 Augmented query with {len(semantic_results)} domain-filtered memory results")
+        else:
+            logger.info("📚 No relevant memories passed domain filter for augmentation")
 
         logger.info(f"🔍 DEBUG: augmented query length: {len(augmented_query)}")
 
