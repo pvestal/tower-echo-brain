@@ -223,11 +223,19 @@ class ConversationManager:
                     if msg["assistant"]:
                         enhanced_parts.append(f"You: {msg['assistant'][:100]}")
 
-        # TEMPORARILY DISABLED: learned_facts injection causing anime contamination
-        # TODO: Re-enable with domain filtering once contamination source is identified
-        # if context["learned_facts"]:
-        #     enhanced_parts.append(f"\n[Known facts]: {'; '.join(context['learned_facts'][:5])}")
-        logger.warning("⚠️ learned_facts injection disabled to prevent contamination")
+        # Re-enabled with domain filtering to prevent cross-domain contamination
+        from src.utils.domain_classifier import QueryDomainClassifier
+
+        if context["learned_facts"]:
+            classifier = QueryDomainClassifier()
+            domain = classifier.classify(query)
+            filtered_facts = classifier.filter_facts(context["learned_facts"], domain)
+
+            if filtered_facts:
+                enhanced_parts.append(f"\n[Known facts]: {'; '.join(filtered_facts[:5])}")
+                logger.info(f"✅ Injected {len(filtered_facts)} domain-filtered facts for {domain} query")
+            else:
+                logger.debug(f"No facts matched domain '{domain}' for injection")
 
         # Add entities
         if context["entities"]:
