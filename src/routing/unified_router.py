@@ -35,11 +35,24 @@ class UnifiedModelRouter:
         """ONE FUNCTION TO RULE THEM ALL"""
         query_lower = query.lower()
 
+        # CHECK FOR REASONING NEEDS FIRST (HIGHEST PRIORITY)
+        try:
+            from src.reasoning.deepseek_reasoner import should_use_reasoning
+            if should_use_reasoning(query):
+                return ModelSelection(
+                    model_name=self.rules[ModelTier.REASONING],
+                    tier="reasoning",
+                    reason="Deep reasoning required (DeepSeek with <think> tags)"
+                )
+        except ImportError:
+            # Fallback if reasoner not available
+            pass
+
         # CODING QUERIES
         coding_words = ['code', 'function', 'debug', 'refactor', 'implement', 'write.*code', 'generate.*code', 'python', 'javascript']
         if any(word in query_lower for word in coding_words):
             return ModelSelection(
-                model_name=self.rules[ModelTier.CODING],
+                model_name="qwen2.5:3b",  # Based on available models
                 tier="coding",
                 reason="Contains coding keywords"
             )
@@ -53,7 +66,7 @@ class UnifiedModelRouter:
                 reason="Contains anime/creative keywords"
             )
 
-        # REASONING QUERIES
+        # REASONING QUERIES (BACKUP CHECK)
         reasoning_words = ['analyze', 'plan', 'design', 'architecture', 'strategy', 'consolidate', 'how.*work', 'why.*work']
         if any(word in query_lower for word in reasoning_words) or len(query) > 100:
             return ModelSelection(
