@@ -779,38 +779,44 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
 
         logger.info(f"🔍 DEBUG: augmented query length: {len(augmented_query)}")
 
-        # ============================================
-        # UNIFIED MODEL ROUTING - SINGLE SOURCE OF TRUTH
-        # ============================================
-        from src.routing.unified_router import unified_router
-
-        # Get model selection from unified router
-        selection = unified_router.select_model(augmented_query)
-        selected_model = selection.model_name
-
-        # Log the decision
-        logger.info(f"🔀 UNIFIED ROUTER: Selected {selected_model} for: {augmented_query[:50]}...")
-        logger.info(f"   Reason: {selection.reason}")
-
-        # Execute query with selected model
-        try:
+        # Use model router to dynamically select the best model based on query complexity
+        if selected_model:
+            # If we already have a selected model from cognitive selection, use it
+            logger.info(f"🧠 Using cognitively selected model: {selected_model} - {selection_reason}")
             result = await intelligence_router.query_model(selected_model, augmented_query, context)
             if result["success"]:
-                result["model"] = selected_model
-                result["tier"] = selection.tier
-                result["decision_reason"] = selection.reason
+                result["intelligence_level"] = intelligence_level
+                result["escalation_path"] = [f"cognitive_selection:{selected_model}"]
+                result["decision_reason"] = selection_reason
             else:
-                # Fallback to fast model if selected model fails
-                logger.warning(f"⚠️ Model {selected_model} failed, using fallback qwen2.5:3b")
-                result = await intelligence_router.query_model("qwen2.5:3b", augmented_query, context)
-                result["model"] = "qwen2.5:3b"
-                result["tier"] = "fallback"
-        except Exception as e:
-            logger.error(f"❌ Unified router error: {e}")
-            # Emergency fallback
-            result = await intelligence_router.query_model("qwen2.5:3b", augmented_query, context)
-            result["model"] = "qwen2.5:3b"
-            result["tier"] = "emergency_fallback"
+                # Fallback: use model router for dynamic selection
+                logger.warning(f"⚠️ Cognitive model {selected_model} failed, using model router for fallback")
+                routing_result = await model_router.route_query(augmented_query, context)
+                if routing_result["success"]:
+                    result = await intelligence_router.query_model(routing_result["model_used"], augmented_query, context)
+                    result["complexity_details"] = routing_result.get("complexity_details", {})
+                else:
+                    # Last resort: use lightweight llama model
+                    result = await intelligence_router.query_model("llama3.2:3b", augmented_query, context)
+        else:
+            # Use model router for dynamic model selection based on query complexity
+            routing_result = await model_router.route_query(augmented_query, context)
+            if routing_result["success"]:
+                logger.info(f"🎯 Model router selected: {routing_result['model_used']} (Tier: {routing_result.get('tier', 'N/A')}, Score: {routing_result.get('complexity_score', 0):.1f})")
+                # Note: Model router already executes the query, so we use its response
+                result = {
+                    "success": True,
+                    "response": routing_result["response"],
+                    "model": routing_result["model_used"],
+                    "tier": routing_result.get("tier", "N/A"),
+                    "complexity_score": routing_result.get("complexity_score", 0),
+                    "complexity_details": routing_result.get("complexity_details", {}),
+                    "specialization": routing_result.get("specialization")
+                }
+            else:
+                # Fallback to lightweight model if router fails
+                logger.warning("⚠️ Model router failed, using fallback llama3.2:3b")
+                result = await intelligence_router.query_model("llama3.2:3b", augmented_query, context)
 
         if result["success"]:
             processing_time = time.time() - start_time
