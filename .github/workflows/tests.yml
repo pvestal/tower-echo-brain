@@ -1,0 +1,137 @@
+name: Echo Brain Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-asyncio pytest-timeout httpx
+          pip install -r requirements.txt || true
+
+      - name: Run unit tests
+        run: |
+          python -m pytest tests/comprehensive/ \
+            -v \
+            --tb=short \
+            -m "not integration and not live" \
+            --ignore=tests/comprehensive/run_comprehensive_tests.py \
+            --timeout=60
+        env:
+          TEST_DEBUG: "1"
+
+  smoke-tests:
+    name: Smoke Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-asyncio pytest-timeout httpx
+          pip install -r requirements.txt || true
+
+      - name: Run smoke tests
+        run: |
+          python -m pytest tests/comprehensive/ \
+            -v \
+            -x \
+            --tb=short \
+            -k "health or init or import" \
+            --ignore=tests/comprehensive/run_comprehensive_tests.py \
+            --timeout=30
+
+  lint:
+    name: Lint Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install linters
+        run: |
+          pip install ruff
+
+      - name: Run ruff
+        run: |
+          ruff check src/ --select=E,F,W --ignore=E501,E402 || true
+
+  # Integration tests only run on main branch merges
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: echo_user
+          POSTGRES_PASSWORD: echo_password
+          POSTGRES_DB: echo_brain
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-asyncio pytest-timeout httpx psycopg2-binary
+          pip install -r requirements.txt || true
+
+      - name: Run integration tests
+        run: |
+          python -m pytest tests/comprehensive/ \
+            -v \
+            --tb=short \
+            -m "integration" \
+            --ignore=tests/comprehensive/run_comprehensive_tests.py \
+            --timeout=120
+        env:
+          DB_HOST: localhost
+          DB_NAME: echo_brain
+          DB_USER: echo_user
+          DB_PASSWORD: echo_password
