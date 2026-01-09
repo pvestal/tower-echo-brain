@@ -52,25 +52,42 @@ tower-echo-brain/
 
 ## Model Routing
 
-Echo Brain automatically selects models based on complexity:
+Echo Brain uses intent-based routing via `UnifiedModelRouter`:
 
-| Complexity | Model |
-|------------|-------|
-| Basic (0-30) | qwen2.5-coder:7b |
-| Advanced (30-60) | qwen2.5-coder:32b |
-| Reasoning (60+) | deepseek-r1:8b / deepseek-r1:70b |
+| Intent | Model | Notes |
+|--------|-------|-------|
+| Default/Fast | qwen2.5:3b | 94ms TTFT, greetings, quick questions |
+| Coding | qwen2.5-coder:7b | Code generation, debugging |
+| Reasoning | deepseek-r1:8b | Complex analysis with `<think>` tags |
+| Conversation | llama3.1:8b | General chat |
+| Fallback | llama3.2:3b | When database unavailable |
+
+Routing is database-driven via `select_model()` PostgreSQL function, with fallback to pattern matching.
 
 ## Integration with tower-anime-production
 
-Echo Brain provides AI services for anime production:
+**Echo Brain calls tower-anime-production** (not the other way around):
 
+```
+Echo Brain (8309) ---> tower-anime-production (8328)
+                       /api/anime/generate
+                       /api/anime/jobs/{id}
+                       /api/anime/health
+```
+
+When a user asks to "generate anime", Echo Brain:
+1. Detects `anime_generation` intent
+2. Forwards to `http://localhost:8328/api/anime/generate`
+3. Returns job ID for monitoring
+
+**From tower-anime-production calling Echo Brain:**
 ```python
 import httpx
 
 async def ask_echo(prompt: str):
     async with httpx.AsyncClient() as client:
         response = await client.post(
-            "http://192.168.50.135:8309/api/echo/chat",
+            "http://localhost:8309/api/echo/chat",
             json={"query": prompt, "user_id": "anime_production"}
         )
         return response.json()
@@ -80,9 +97,10 @@ See `docs/INTEGRATION_CONTRACT.md` for full API documentation.
 
 ## Database
 
-Connects to PostgreSQL databases:
-- `echo_brain` - Echo Brain state and conversations
-- `anime_production` - Shared with tower-anime-production
+Connects to PostgreSQL:
+- `tower_consolidated` - Main database for routing decisions
+- Model selection via `select_model()` function
+- Performance logging to `model_performance` table
 
 ## Configuration
 
