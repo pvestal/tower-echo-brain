@@ -124,14 +124,17 @@ class TestIntelligentRouting:
         from model_router import ModelRouter
         router = ModelRouter()
 
-        with patch('src.core.db_model_router.intelligent_router') as mock_router:
-            mock_decision = MagicMock()
-            mock_decision.model = "qwen2.5-coder:7b"
-            mock_decision.complexity_score = 15
-            mock_decision.intent = "general"
-            mock_decision.domain = "general"
-            mock_router.route_query.return_value = mock_decision
+        # Patch the import inside model_router module
+        mock_decision = MagicMock()
+        mock_decision.model = "qwen2.5-coder:7b"
+        mock_decision.complexity_score = 15
+        mock_decision.intent = "general"
+        mock_decision.domain = "general"
 
+        mock_intelligent_router = MagicMock()
+        mock_intelligent_router.route_query.return_value = mock_decision
+
+        with patch.dict('sys.modules', {'src.core.db_model_router': MagicMock(intelligent_router=mock_intelligent_router)}):
             with patch('httpx.AsyncClient') as mock_client:
                 mock_response = MagicMock()
                 mock_response.status_code = 200
@@ -156,14 +159,16 @@ class TestIntelligentRouting:
             ]
         }
 
-        with patch('src.core.db_model_router.intelligent_router') as mock_router:
-            mock_decision = MagicMock()
-            mock_decision.model = "qwen2.5-coder:7b"
-            mock_decision.complexity_score = 15
-            mock_decision.intent = "general"
-            mock_decision.domain = "general"
-            mock_router.route_query.return_value = mock_decision
+        mock_decision = MagicMock()
+        mock_decision.model = "qwen2.5-coder:7b"
+        mock_decision.complexity_score = 15
+        mock_decision.intent = "general"
+        mock_decision.domain = "general"
 
+        mock_intelligent_router = MagicMock()
+        mock_intelligent_router.route_query.return_value = mock_decision
+
+        with patch.dict('sys.modules', {'src.core.db_model_router': MagicMock(intelligent_router=mock_intelligent_router)}):
             with patch('httpx.AsyncClient') as mock_client:
                 mock_response = MagicMock()
                 mock_response.status_code = 200
@@ -329,22 +334,24 @@ class TestModelAvailability:
         from model_router import ModelRouter
         router = ModelRouter()
 
-        with patch('httpx.AsyncClient') as mock_client:
-            # Simulate model not found error
-            mock_response = MagicMock()
-            mock_response.status_code = 404
-            mock_response.json.return_value = {"error": "model not found"}
-            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
-                return_value=mock_response
-            )
+        mock_decision = MagicMock()
+        mock_decision.model = "nonexistent:model"
+        mock_decision.complexity_score = 15
+        mock_decision.intent = "general"
+        mock_decision.domain = "general"
 
-            with patch('src.core.db_model_router.intelligent_router') as mock_router:
-                mock_decision = MagicMock()
-                mock_decision.model = "nonexistent:model"
-                mock_decision.complexity_score = 15
-                mock_decision.intent = "general"
-                mock_decision.domain = "general"
-                mock_router.route_query.return_value = mock_decision
+        mock_intelligent_router = MagicMock()
+        mock_intelligent_router.route_query.return_value = mock_decision
+
+        with patch.dict('sys.modules', {'src.core.db_model_router': MagicMock(intelligent_router=mock_intelligent_router)}):
+            with patch('httpx.AsyncClient') as mock_client:
+                # Simulate model not found error
+                mock_response = MagicMock()
+                mock_response.status_code = 404
+                mock_response.json.return_value = {"error": "model not found"}
+                mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                    return_value=mock_response
+                )
 
                 result = await router.route_query("test query")
                 # Should handle error gracefully
