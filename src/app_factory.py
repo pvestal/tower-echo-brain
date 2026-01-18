@@ -177,6 +177,36 @@ except ImportError as e:
     print(f"❌ Failed to import database metrics router: {e}")
     db_metrics_router = None
 
+# Home Assistant integration for smart home control
+try:
+    from src.api.home_assistant_api import router as home_assistant_router
+    home_assistant_available = True
+    print("✅ Home Assistant API router imported successfully")
+except ImportError as e:
+    home_assistant_available = False
+    print(f"❌ Failed to import Home Assistant API router: {e}")
+    home_assistant_router = None
+
+# Google Calendar integration for schedule management
+try:
+    from src.api.google_calendar_api import router as google_calendar_router
+    google_calendar_available = True
+    print("✅ Google Calendar API router imported successfully")
+except ImportError as e:
+    google_calendar_available = False
+    print(f"❌ Failed to import Google Calendar API router: {e}")
+    google_calendar_router = None
+
+# Unified notification system (ntfy, Telegram, Email)
+try:
+    from src.api.notifications_api import router as notifications_router
+    notifications_available = True
+    print("✅ Notifications API router imported successfully")
+except ImportError as e:
+    notifications_available = False
+    print(f"❌ Failed to import Notifications API router: {e}")
+    notifications_router = None
+
 def create_app() -> FastAPI:
     """Create and configure FastAPI application"""
     # Load environment variables
@@ -322,6 +352,21 @@ def create_app() -> FastAPI:
     if db_metrics_available and db_metrics_router:
         app.include_router(db_metrics_router, prefix="", tags=["database-metrics"])
         print("✅ Database metrics routes added to app at /api/db/*")
+
+    # Home Assistant integration for smart home control
+    if home_assistant_available and home_assistant_router:
+        app.include_router(home_assistant_router, prefix="", tags=["home-assistant"])
+        print("✅ Home Assistant API routes added to app at /api/home/*")
+
+    # Google Calendar integration for schedule management
+    if google_calendar_available and google_calendar_router:
+        app.include_router(google_calendar_router, prefix="", tags=["google-calendar"])
+        print("✅ Google Calendar API routes added to app at /api/calendar/*")
+
+    # Unified notification system
+    if notifications_available and notifications_router:
+        app.include_router(notifications_router, prefix="", tags=["notifications"])
+        print("✅ Notifications API routes added to app at /api/notifications/*")
 
     # DeepSeek Coding Agent
     try:

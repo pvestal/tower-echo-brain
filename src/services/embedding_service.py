@@ -47,10 +47,20 @@ def get_openai_key() -> str:
 
 class EmbeddingService:
     def __init__(self):
-        self.api_key = get_openai_key()
-        self.model = "text-embedding-3-small"
-        self.dimensions = 1536
-        self.base_url = "https://api.openai.com/v1/embeddings"
+        try:
+            self.api_key = get_openai_key()
+            self.use_openai = True
+            self.model = "text-embedding-3-small"
+            self.dimensions = 1536
+            self.base_url = "https://api.openai.com/v1/embeddings"
+        except ValueError:
+            # Fallback to local Ollama embeddings
+            self.use_openai = False
+            self.model = "nomic-embed-text"
+            self.dimensions = 768
+            self.ollama_url = "http://localhost:11434"
+            print("⚠️ OpenAI API key not found, using local Ollama embeddings")
+
         self.db_pool: Optional[asyncpg.Pool] = None
 
     async def initialize(self):
@@ -116,26 +126,43 @@ class EmbeddingService:
         return results
 
     async def _call_openai(self, texts: List[str]) -> List[List[float]]:
-        """Call OpenAI API"""
-        async with httpx.AsyncClient(timeout=60) as client:
-            response = await client.post(
-                self.base_url,
-                headers={
-                    "Authorization": f"Bearer {self.api_key}",
-                    "Content-Type": "application/json"
-                },
-                json={
-                    "input": texts,
-                    "model": self.model,
-                    "dimensions": self.dimensions
-                }
-            )
-            response.raise_for_status()
-            data = response.json()
+        """Call OpenAI API or Ollama fallback"""
+        if self.use_openai:
+            async with httpx.AsyncClient(timeout=60) as client:
+                response = await client.post(
+                    self.base_url,
+                    headers={
+                        "Authorization": f"Bearer {self.api_key}",
+                        "Content-Type": "application/json"
+                    },
+                    json={
+                        "input": texts,
+                        "model": self.model,
+                        "dimensions": self.dimensions
+                    }
+                )
+                response.raise_for_status()
+                data = response.json()
 
-            # Sort by index to maintain order
-            sorted_data = sorted(data["data"], key=lambda x: x["index"])
-            return [item["embedding"] for item in sorted_data]
+                # Sort by index to maintain order
+                sorted_data = sorted(data["data"], key=lambda x: x["index"])
+                return [item["embedding"] for item in sorted_data]
+        else:
+            # Use Ollama embeddings
+            embeddings = []
+            async with httpx.AsyncClient(timeout=60) as client:
+                for text in texts:
+                    response = await client.post(
+                        f"{self.ollama_url}/api/embeddings",
+                        json={
+                            "model": self.model,
+                            "prompt": text
+                        }
+                    )
+                    response.raise_for_status()
+                    data = response.json()
+                    embeddings.append(data["embedding"])
+            return embeddings
 
 async def create_embedding_service() -> EmbeddingService:
     """Factory function to create initialized embedding service"""

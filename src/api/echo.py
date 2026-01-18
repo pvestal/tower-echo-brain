@@ -21,7 +21,7 @@ from src.services.conversation import conversation_manager
 from src.model_router import ModelRouter
 
 # Import Qdrant memory system for vectorization
-from src.qdrant_client import QdrantMemory
+from src.qdrant_memory import QdrantMemory
 
 # Import identity and user context systems
 from src.core.echo_identity import get_echo_identity
@@ -48,6 +48,8 @@ from src.memory.context_retrieval import ConversationContextRetriever
 from src.memory.pronoun_resolver import PronounResolver
 from src.memory.entity_extractor import EntityExtractor
 from src.memory.memory_integration import save_conversation_with_entities
+
+# Reasoning module will be loaded directly from file
 
 # Import conversation management system
 from src.core.conversation_manager import (
@@ -228,32 +230,107 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
     logger.info(f"🔍 Request type: {getattr(request, 'request_type', 'NOT_SET')}")
 
     # ========================================
-    # REASONING PRIORITY - CHECK FIRST (USE ORIGINAL QUERY)
+    # KNOWLEDGE RETRIEVAL - SEARCH INDEXED CONTENT FIRST
     # ========================================
-    logger.info(f"🔍 Checking if reasoning needed for ORIGINAL query: {original_query[:100]}...")
+    logger.info("🔍 KNOWLEDGE RETRIEVAL: === STARTING ===")
+    knowledge_context = ""
     try:
-        # Add path first to ensure import works
-        import sys
-        if '/opt/tower-echo-brain/src' not in sys.path:
-            sys.path.insert(0, '/opt/tower-echo-brain/src')
+        from qdrant_client import QdrantClient
 
-        from reasoning.deepseek_reasoner import should_use_reasoning
+        # Load embedding service via direct file import (same pattern as reasoning)
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "embedding_service",
+            "/opt/tower-echo-brain/src/services/embedding_service.py"
+        )
+        embed_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(embed_module)
 
-        needs_reasoning = should_use_reasoning(original_query)  # Use original query
-        logger.info(f"🔍 Reasoning check result: {needs_reasoning}")
+        # Initialize embedding service
+        embedder = embed_module.EmbeddingService()
+        await embedder.initialize()
 
-        if needs_reasoning:
-            logger.info(f"🧠 REASONING PRIORITY: Bypassing other handlers for: {original_query[:50]}...")
+        # Get query embedding
+        query_vector = await embedder.embed_single(original_query)
 
-            # Try importing with fallback
+        # Search multiple collections
+        client = QdrantClient(host="localhost", port=6333)
+        collections = ['documents', 'code', 'facts', 'solutions', 'photos']
+        all_results = []
+
+        for collection in collections:
             try:
-                from src.reasoning.deepseek_reasoner import execute_reasoning
-            except ImportError:
-                import sys
-                sys.path.insert(0, '/opt/tower-echo-brain/src')
-                from reasoning.deepseek_reasoner import execute_reasoning
+                hits = client.search(
+                    collection_name=collection,
+                    query_vector=query_vector,
+                    limit=3,
+                    score_threshold=0.4  # Lower threshold for better recall
+                )
+                for hit in hits:
+                    # Handle different content types
+                    if collection == 'photos':
+                        content = f"Photo: {hit.payload.get('filename', 'unknown')} from {hit.payload.get('date', 'unknown date')} at {hit.payload.get('location', 'unknown location')}"
+                    else:
+                        content = hit.payload.get('text') or hit.payload.get('content') or hit.payload.get('problem', '')
+                    if content and hit.score > 0.4:
+                        all_results.append({
+                            'source': collection,
+                            'content': content[:500],
+                            'score': hit.score
+                        })
+            except Exception as e:
+                logger.debug(f"Collection {collection} search failed: {e}")
 
-            reasoning_result = await execute_reasoning(original_query)  # Use original query
+        # Sort by relevance and take top 5
+        all_results.sort(key=lambda x: x['score'], reverse=True)
+        top_results = all_results[:5]
+
+        if top_results:
+            knowledge_parts = ["📚 Relevant knowledge from your indexed content:"]
+            for r in top_results:
+                knowledge_parts.append(f"[{r['source']}] (score: {r['score']:.2f}): {r['content'][:300]}...")
+            knowledge_context = "\n".join(knowledge_parts)
+            logger.info(f"🔍 KNOWLEDGE RETRIEVAL: Found {len(top_results)} results across collections")
+        else:
+            logger.debug("🔍 KNOWLEDGE RETRIEVAL: No relevant knowledge found in indexed content")
+
+    except Exception as e:
+        logger.warning(f"🔍 KNOWLEDGE RETRIEVAL failed: {e}")
+
+    # Create augmented query for reasoning and conversation processing
+    query_for_processing = original_query
+    if knowledge_context:
+        query_for_processing = f"{knowledge_context}\n\n🔍 User question: {original_query}"
+        logger.info(f"📚 KNOWLEDGE RETRIEVAL: Augmented query is {len(query_for_processing)} chars")
+
+    # ========================================
+    # REASONING PRIORITY - CHECK ENHANCED QUERY
+    # ========================================
+    logger.info(f"🔍 Checking if reasoning needed for query: {original_query[:100]}...")
+
+    # Load reasoning module directly from file (bypasses import issues)
+    reasoning_available = False
+    try:
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "deepseek_reasoner",
+            "/opt/tower-echo-brain/src/reasoning/deepseek_reasoner.py"
+        )
+        reasoner_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(reasoner_module)
+
+        should_use_reasoning = reasoner_module.should_use_reasoning
+        execute_reasoning = reasoner_module.execute_reasoning
+        reasoning_available = True
+        logger.info("✅ Reasoning module loaded via direct file import")
+    except Exception as e:
+        logger.warning(f"⚠️ Failed to load reasoning module: {e}")
+
+    if reasoning_available and should_use_reasoning(original_query):
+        logger.info(f"🧠 REASONING PRIORITY: {original_query[:50]}...")
+        try:
+            # Use augmented query for reasoning to include knowledge context
+            reasoning_result = await execute_reasoning(query_for_processing)
 
             if reasoning_result.success:
                 processing_time = time.time() - start_time
@@ -288,14 +365,15 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
                 return response
             else:
                 logger.warning(f"⚠️ Reasoning failed: {reasoning_result.error}, continuing to normal handlers")
-    except Exception as e:
-        logger.warning(f"⚠️ Reasoning priority check failed: {e}, continuing normally")
+        except Exception as e:
+            logger.warning(f"⚠️ Reasoning execution failed: {e}, continuing normally")
 
     # CONVERSATION MANAGER - Process through conversation pipeline
+    logger.info(f"🔄 CONVERSATION MANAGER: Receiving query of {len(query_for_processing)} chars")
     try:
         unified_result = await process_message(
             conversation_id=request.conversation_id,
-            query_text=request.query,
+            query_text=query_for_processing,
             user_id=request.user_id,
             metadata={
                 "intelligence_level": request.intelligence_level,
@@ -860,14 +938,11 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
         try:
             # Check if this is a reasoning query that needs special handling
             if selected_model == "deepseek-r1:8b" and selection.tier == "reasoning":
-                # Use actual reasoning execution
-                try:
-                    from src.reasoning.deepseek_reasoner import execute_reasoning
-                except ImportError:
-                    # Try alternate import path
-                    import sys
+                # Use actual reasoning execution with proper import path
+                import sys
+                if '/opt/tower-echo-brain/src' not in sys.path:
                     sys.path.insert(0, '/opt/tower-echo-brain/src')
-                    from reasoning.deepseek_reasoner import execute_reasoning
+                from reasoning.deepseek_reasoner import execute_reasoning
 
                 logger.info(f"🧠 Executing DeepSeek reasoning for: {request.query[:50]}...")
                 reasoning_result = await execute_reasoning(request.query)

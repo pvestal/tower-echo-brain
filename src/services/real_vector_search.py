@@ -45,6 +45,22 @@ class RealVectorSearch:
         print("Initializing REAL vector search...")
         self._verify_collections()
 
+    async def _get_embedding_service(self):
+        """Get or create embedding service"""
+        if self._embedding_service is None:
+            # Import and initialize embedding service
+            import importlib.util
+            spec = importlib.util.spec_from_file_location(
+                "embedding_service",
+                "/opt/tower-echo-brain/src/services/embedding_service.py"
+            )
+            embed_module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(embed_module)
+
+            self._embedding_service = embed_module.EmbeddingService()
+            await self._embedding_service.initialize()
+        return self._embedding_service
+
     def _verify_collections(self):
         """Verify what collections actually exist"""
         try:
@@ -61,7 +77,7 @@ class RealVectorSearch:
         except Exception as e:
             print(f"Error checking collections: {e}")
 
-    def search_vectors(self, query: str, collection: str = "echo_memory", limit: int = 5) -> List[Dict]:
+    async def search_vectors(self, query: str, collection: str = "echo_memory", limit: int = 5) -> List[Dict]:
         """
         ACTUALLY search vectors in Qdrant
 
@@ -74,58 +90,29 @@ class RealVectorSearch:
             List of actual search results with scores
         """
         try:
-            # Get collection info to match dimensions
-            collection_info = self.qdrant.get_collection(collection)
-            dimensions = collection_info.config.params.vectors.size
+            # Get embedding service
+            embedding_service = await self._get_embedding_service()
 
-            # Generate REAL query vector matching collection dimensions
-            if dimensions == 384:
-                query_vector = self.encoder_384.encode(query).tolist()
-            elif dimensions == 768:
-                query_vector = self.encoder_768.encode(query).tolist()
-            elif dimensions == 1024:
-                # Use Ollama mxbai-embed-large for 1024D
-                import requests
-                response = requests.post(
-                    f"{self.ollama_url}/api/embeddings",
-                    json={"model": self.embedding_model, "prompt": query}
-                )
-                query_vector = response.json()["embedding"]
-            elif dimensions == 4096:
-                # Use 384D base and pad to 4096D (for now)
-                base_vector = self.encoder_384.encode(query).tolist()
-                query_vector = base_vector + [0.0] * (4096 - 384)
-            else:
-                print(f"Unsupported dimensions: {dimensions}")
-                return []
+            # Generate query vector using embedding service
+            query_vector = await embedding_service.embed_single(query)
 
             # ACTUAL Qdrant search (using correct API)
-            results = self.qdrant.query_points(
+            results = self.qdrant.search(
                 collection_name=collection,
-                query=query_vector,
+                query_vector=query_vector,
                 limit=limit,
                 with_payload=True
             )
 
-            # Format REAL results (new API returns different structure)
+            # Format results
             formatted_results = []
-            if hasattr(results, 'points'):
-                for hit in results.points:
-                    formatted_results.append({
-                        "id": hit.id,
-                        "score": getattr(hit, 'score', 1.0),
-                        "payload": hit.payload if hit.payload else {},
-                        "collection": collection
-                    })
-            else:
-                # Fallback for different API response
-                for hit in results:
-                    formatted_results.append({
-                        "id": getattr(hit, 'id', str(hit)),
-                        "score": getattr(hit, 'score', 1.0),
-                        "payload": getattr(hit, 'payload', {}),
-                        "collection": collection
-                    })
+            for hit in results:
+                formatted_results.append({
+                    "id": str(hit.id),
+                    "score": hit.score,
+                    "payload": hit.payload if hit.payload else {},
+                    "collection": collection
+                })
 
             return formatted_results
 
@@ -133,7 +120,7 @@ class RealVectorSearch:
             print(f"Search error in {collection}: {e}")
             return []
 
-    def search_all_collections(self, query: str, limit_per_collection: int = 3) -> Dict[str, List]:
+    async def search_all_collections(self, query: str, limit_per_collection: int = 3) -> Dict[str, List]:
         """
         Search across ALL collections
 
@@ -147,7 +134,7 @@ class RealVectorSearch:
 
         for collection in collections:
             collection_name = collection.name
-            results = self.search_vectors(query, collection_name, limit_per_collection)
+            results = await self.search_vectors(query, collection_name, limit_per_collection)
             if results:
                 all_results[collection_name] = results
                 print(f"Found {len(results)} results in {collection_name}")
