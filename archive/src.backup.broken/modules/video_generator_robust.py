@@ -16,8 +16,8 @@ logger = logging.getLogger(__name__)
 class VideoGenerator:
     def __init__(self):
         self.comfyui_api = "http://127.0.0.1:8188"
-        self.output_dir = Path("***REMOVED***/ComfyUI-Working/output")
-        self.video_dir = Path("***REMOVED***")
+        self.output_dir = Path("/home/patrick/Projects/ComfyUI-Working/output")
+        self.video_dir = Path("/home/patrick/Videos")
         self.video_dir.mkdir(exist_ok=True)
         self.db_path = Path("/opt/tower-echo-brain/video_projects.db")
         self.init_database()

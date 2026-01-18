@@ -211,7 +211,7 @@ class SecureGitExecutor:
 
 ```bash
 # VULNERABLE - Plain text credentials
-DB_PASSWORD=***REMOVED***
+DB_PASSWORD=tower_echo_brain_secret_key_2025
 ```
 
 **SECURE REPLACEMENT** using Python keyring:
@@ -1435,10 +1435,10 @@ class SecureServiceClient:
 
         # Determine service URL based on target service
         service_urls = {
-            'tower-dashboard': 'https://***REMOVED***/',
-            'tower-kb': 'https://***REMOVED***/kb',
-            'tower-auth': 'https://***REMOVED***/api/auth',
-            'tower-agent-manager': 'https://***REMOVED***/agent-manager'
+            'tower-dashboard': 'https://192.168.50.135/',
+            'tower-kb': 'https://192.168.50.135/kb',
+            'tower-auth': 'https://192.168.50.135/api/auth',
+            'tower-agent-manager': 'https://192.168.50.135/agent-manager'
         }
 
         base_url = service_urls.get(target_service)

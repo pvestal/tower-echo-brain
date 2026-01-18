@@ -167,7 +167,7 @@ class EdgeCaseTester:
                 host="localhost",
                 database="echo_brain",
                 user="patrick",
-                password="***REMOVED***"
+                password="tower_echo_brain_secret_key_2025"
             )
             cursor = conn.cursor()
             cursor.execute("""
@@ -216,7 +216,7 @@ class EdgeCaseTester:
             await client.post(
                 f"{self.echo_url}/api/echo/query",
                 json={
-                    "query": "The Tower server IP is ***REMOVED***",
+                    "query": "The Tower server IP is 192.168.50.135",
                     "conversation_id": "conflict_test"
                 }
             )
@@ -241,8 +241,8 @@ class EdgeCaseTester:
 
             if resp.status_code == 200:
                 response = resp.json()["response"]
-                # Should mention the correct one (***REMOVED***)
-                if "***REMOVED***" in response:
+                # Should mention the correct one (192.168.50.135)
+                if "192.168.50.135" in response:
                     print(f"✅ Resolved conflict correctly")
                     print(f"   Response: {response[:200]}")
                     return True

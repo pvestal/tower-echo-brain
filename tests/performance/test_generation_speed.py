@@ -148,9 +148,9 @@ class AnimeBenchmarkSuite:
     }
 
     def __init__(self,
-                 anime_api: str = "http://***REMOVED***:8328",
-                 echo_api: str = "http://***REMOVED***:8309",
-                 comfyui_api: str = "http://***REMOVED***:8188"):
+                 anime_api: str = "http://192.168.50.135:8328",
+                 echo_api: str = "http://192.168.50.135:8309",
+                 comfyui_api: str = "http://192.168.50.135:8188"):
         self.anime_api = anime_api
         self.echo_api = echo_api
         self.comfyui_api = comfyui_api

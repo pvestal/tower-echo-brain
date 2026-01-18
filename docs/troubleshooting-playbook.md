@@ -27,16 +27,16 @@ This comprehensive troubleshooting guide provides systematic approaches to diagn
 
 ```bash
 # Quick system health check
-curl -k https://***REMOVED***/api/echo/health
+curl -k https://192.168.50.135/api/echo/health
 
 # Direct service health (bypassing nginx)
-curl http://***REMOVED***:8309/api/echo/health
+curl http://192.168.50.135:8309/api/echo/health
 
 # Check all Tower services status
-curl -k https://***REMOVED***/api/echo/tower/status
+curl -k https://192.168.50.135/api/echo/tower/status
 
 # Test specific service connectivity
-curl -X POST http://***REMOVED***:8309/api/echo/test/comfyui \
+curl -X POST http://192.168.50.135:8309/api/echo/test/comfyui \
   -H "Content-Type: application/json" \
   -d '{"target": "comfyui", "test_type": "universal"}'
 ```
@@ -55,10 +55,10 @@ sudo systemctl status ollama
 curl http://localhost:11434/api/tags
 
 # Check PostgreSQL connection
-psql -h ***REMOVED*** -U patrick -d tower_consolidated -c "SELECT 1;"
+psql -h 192.168.50.135 -U patrick -d tower_consolidated -c "SELECT 1;"
 
 # Check Redis connection
-redis-cli -h ***REMOVED*** ping
+redis-cli -h 192.168.50.135 ping
 ```
 
 ### Model Management Diagnostics
@@ -126,7 +126,7 @@ cat /opt/tower-echo-brain/.env
 3. **Database Connection Issues:**
    ```bash
    # Test PostgreSQL connection
-   psql -h ***REMOVED*** -U patrick -d tower_consolidated -c "\dt"
+   psql -h 192.168.50.135 -U patrick -d tower_consolidated -c "\dt"
 
    # Check .env file for correct database credentials
    grep -E "DB_|DATABASE_" /opt/tower-echo-brain/.env
@@ -215,15 +215,15 @@ curl -X POST http://localhost:8309/api/echo/query \
 **Diagnostic Steps:**
 ```bash
 # Test auth service
-curl http://***REMOVED***:8088/api/auth/health
+curl http://192.168.50.135:8088/api/auth/health
 
 # Check JWT token validity
 curl -H "Authorization: Bearer YOUR_TOKEN" \
-  http://***REMOVED***:8088/api/auth/verify
+  http://192.168.50.135:8088/api/auth/verify
 
 # Test AI Assist auth integration
 curl -H "Authorization: Bearer YOUR_TOKEN" \
-  http://***REMOVED***:8309/api/echo/board/status
+  http://192.168.50.135:8309/api/echo/board/status
 ```
 
 **Solutions:**
@@ -237,7 +237,7 @@ curl -H "Authorization: Bearer YOUR_TOKEN" \
 2. **Invalid/Expired Token:**
    ```bash
    # Get new token
-   curl -X POST http://***REMOVED***:8088/api/auth/login \
+   curl -X POST http://192.168.50.135:8088/api/auth/login \
      -H "Content-Type: application/json" \
      -d '{"username": "your_username", "password": "your_password"}'
    ```
@@ -245,10 +245,10 @@ curl -H "Authorization: Bearer YOUR_TOKEN" \
 3. **Redis Session Issues:**
    ```bash
    # Check Redis connection
-   redis-cli -h ***REMOVED*** ping
+   redis-cli -h 192.168.50.135 ping
 
    # Clear Redis sessions if needed
-   redis-cli -h ***REMOVED*** flushdb
+   redis-cli -h 192.168.50.135 flushdb
    ```
 
 ### Issue 4: WebSocket Connections Failing
@@ -261,10 +261,10 @@ curl -H "Authorization: Bearer YOUR_TOKEN" \
 **Diagnostic Steps:**
 ```bash
 # Test WebSocket endpoint
-wscat -c ws://***REMOVED***:8309/api/echo/stream
+wscat -c ws://192.168.50.135:8309/api/echo/stream
 
 # Test with authentication
-wscat -c "ws://***REMOVED***:8309/api/echo/board/ws?token=YOUR_JWT_TOKEN"
+wscat -c "ws://192.168.50.135:8309/api/echo/board/ws?token=YOUR_JWT_TOKEN"
 
 # Check nginx WebSocket configuration
 sudo nginx -t
@@ -331,7 +331,7 @@ echo ""
 echo "3. Dependencies:"
 
 # PostgreSQL
-if psql -h ***REMOVED*** -U patrick -d tower_consolidated -c "SELECT 1;" >/dev/null 2>&1; then
+if psql -h 192.168.50.135 -U patrick -d tower_consolidated -c "SELECT 1;" >/dev/null 2>&1; then
     echo "   ✓ PostgreSQL connection OK"
 else
     echo "   ✗ PostgreSQL connection FAILED"
@@ -345,14 +345,14 @@ else
 fi
 
 # Redis
-if redis-cli -h ***REMOVED*** ping >/dev/null 2>&1; then
+if redis-cli -h 192.168.50.135 ping >/dev/null 2>&1; then
     echo "   ✓ Redis connection OK"
 else
     echo "   ✗ Redis connection FAILED"
 fi
 
 # Auth Service
-if curl -s http://***REMOVED***:8088/api/auth/health >/dev/null 2>&1; then
+if curl -s http://192.168.50.135:8088/api/auth/health >/dev/null 2>&1; then
     echo "   ✓ Auth service OK"
 else
     echo "   ✗ Auth service FAILED"
@@ -429,7 +429,7 @@ if ! curl -s -f http://localhost:11434/api/tags >/dev/null 2>&1; then
 fi
 
 # Check database
-if ! psql -h ***REMOVED*** -U patrick -d tower_consolidated -c "SELECT 1;" >/dev/null 2>&1; then
+if ! psql -h 192.168.50.135 -U patrick -d tower_consolidated -c "SELECT 1;" >/dev/null 2>&1; then
     send_alert "PostgreSQL database is not accessible"
     exit 1
 fi
@@ -546,14 +546,14 @@ curl -X POST http://localhost:8309/api/echo/board/test-director \
 
 ```bash
 # Check board tables
-psql -h ***REMOVED*** -U patrick -d tower_consolidated -c "
+psql -h 192.168.50.135 -U patrick -d tower_consolidated -c "
 \dt board_*
 SELECT COUNT(*) FROM board_decisions;
 SELECT COUNT(*) FROM board_director_evaluations;
 "
 
 # Clean up stale board data
-psql -h ***REMOVED*** -U patrick -d tower_consolidated -c "
+psql -h 192.168.50.135 -U patrick -d tower_consolidated -c "
 DELETE FROM board_decisions WHERE created_at < NOW() - INTERVAL '30 days';
 "
 ```
@@ -614,10 +614,10 @@ EOF
 
 ```bash
 # Test database connection
-psql -h ***REMOVED*** -U patrick -d tower_consolidated -c "\l"
+psql -h 192.168.50.135 -U patrick -d tower_consolidated -c "\l"
 
 # Check connection limits
-psql -h ***REMOVED*** -U patrick -d tower_consolidated -c "
+psql -h 192.168.50.135 -U patrick -d tower_consolidated -c "
 SELECT count(*) as active_connections,
        max_conn,
        max_conn-count(*) as remaining_connections
@@ -626,7 +626,7 @@ FROM pg_stat_activity,
 GROUP BY max_conn;"
 
 # Check table sizes
-psql -h ***REMOVED*** -U patrick -d tower_consolidated -c "
+psql -h 192.168.50.135 -U patrick -d tower_consolidated -c "
 SELECT schemaname,tablename,attname,n_distinct,correlation
 FROM pg_stats
 WHERE tablename LIKE 'echo_%'
@@ -648,7 +648,7 @@ find /opt/tower-echo-brain/logs -name "*.log" -mtime +7 -delete
 sudo logrotate /etc/logrotate.d/tower-echo-brain
 
 # Archive old conversation data
-psql -h ***REMOVED*** -U patrick -d tower_consolidated -c "
+psql -h 192.168.50.135 -U patrick -d tower_consolidated -c "
 DELETE FROM echo_unified_interactions
 WHERE created_at < NOW() - INTERVAL '90 days';"
 ```
@@ -683,14 +683,14 @@ print(f'CPU: {process.cpu_percent()}%')
 
 ```bash
 # Enable PostgreSQL query logging
-psql -h ***REMOVED*** -U patrick -d tower_consolidated -c "
+psql -h 192.168.50.135 -U patrick -d tower_consolidated -c "
 ALTER SYSTEM SET log_statement = 'all';
 ALTER SYSTEM SET log_duration = 'on';
 SELECT pg_reload_conf();
 "
 
 # Check slow queries
-psql -h ***REMOVED*** -U patrick -d tower_consolidated -c "
+psql -h 192.168.50.135 -U patrick -d tower_consolidated -c "
 SELECT query, mean_exec_time, calls
 FROM pg_stat_statements
 WHERE mean_exec_time > 1000
@@ -698,7 +698,7 @@ ORDER BY mean_exec_time DESC
 LIMIT 10;"
 
 # Analyze table statistics
-psql -h ***REMOVED*** -U patrick -d tower_consolidated -c "
+psql -h 192.168.50.135 -U patrick -d tower_consolidated -c "
 ANALYZE;
 SELECT tablename, n_tup_ins, n_tup_upd, n_tup_del, n_live_tup, n_dead_tup
 FROM pg_stat_user_tables
@@ -735,7 +735,7 @@ echo "YOUR_JWT_TOKEN" | cut -d. -f2 | base64 -d | jq .
 
 # Test token validation
 curl -H "Authorization: Bearer YOUR_TOKEN" \
-  http://***REMOVED***:8088/api/auth/verify
+  http://192.168.50.135:8088/api/auth/verify
 
 # Check token expiration
 python3 << 'EOF'
@@ -755,7 +755,7 @@ EOF
 ```bash
 # Check user permissions
 curl -H "Authorization: Bearer YOUR_TOKEN" \
-  http://***REMOVED***:8088/api/auth/user/permissions
+  http://192.168.50.135:8088/api/auth/user/permissions
 
 # Test specific endpoint permissions
 curl -H "Authorization: Bearer YOUR_TOKEN" \
@@ -814,7 +814,7 @@ echo "=== Weekly AI Assist Maintenance - $(date) ==="
 
 # 1. Database Maintenance
 echo "1. Database maintenance..."
-psql -h ***REMOVED*** -U patrick -d tower_consolidated -c "
+psql -h 192.168.50.135 -U patrick -d tower_consolidated -c "
 VACUUM ANALYZE echo_unified_interactions;
 VACUUM ANALYZE board_decisions;
 VACUUM ANALYZE board_director_evaluations;
@@ -826,7 +826,7 @@ sudo logrotate -f /etc/logrotate.d/tower-echo-brain
 
 # 3. Clean Old Data
 echo "3. Cleaning old data..."
-psql -h ***REMOVED*** -U patrick -d tower_consolidated -c "
+psql -h 192.168.50.135 -U patrick -d tower_consolidated -c "
 DELETE FROM echo_unified_interactions WHERE created_at < NOW() - INTERVAL '30 days';
 DELETE FROM board_decisions WHERE created_at < NOW() - INTERVAL '60 days' AND status = 'completed';
 "
@@ -847,7 +847,7 @@ sudo journalctl -u tower-echo-brain --since "7 days ago" --no-pager | grep -i "4
 
 # 6. Performance Report
 echo "6. Performance report..."
-psql -h ***REMOVED*** -U patrick -d tower_consolidated -c "
+psql -h 192.168.50.135 -U patrick -d tower_consolidated -c "
 SELECT
     DATE_TRUNC('day', created_at) as date,
     COUNT(*) as queries,
@@ -1017,7 +1017,7 @@ systemctl status tower-echo-brain ollama postgresql redis
 
 # 2. Database backup
 echo "2. Creating emergency database backup..."
-pg_dump -h ***REMOVED*** -U patrick tower_consolidated > \
+pg_dump -h 192.168.50.135 -U patrick tower_consolidated > \
     "/tmp/emergency_backup_$(date +%Y%m%d_%H%M%S).sql"
 
 # 3. Configuration backup
@@ -1082,7 +1082,7 @@ def collect_metrics():
     try:
         # Database metrics
         conn = psycopg2.connect(
-            host="***REMOVED***",
+            host="192.168.50.135",
             database="tower_consolidated",
             user="patrick"
         )
@@ -1127,7 +1127,7 @@ def check_service_health(service):
             return response.status_code == 200
         elif service == 'postgres':
             conn = psycopg2.connect(
-                host="***REMOVED***",
+                host="192.168.50.135",
                 database="tower_consolidated",
                 user="patrick",
                 connect_timeout=5

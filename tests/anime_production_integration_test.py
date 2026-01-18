@@ -19,9 +19,9 @@ class AnimeProductionIntegrationTest:
     """End-to-end anime production test via Echo Brain coordination"""
 
     def __init__(self):
-        self.echo_url = "http://***REMOVED***:8309"
-        self.comfyui_url = "http://***REMOVED***:8188"
-        self.apple_music_url = "http://***REMOVED***:8096"  # Need to find actual port
+        self.echo_url = "http://192.168.50.135:8309"
+        self.comfyui_url = "http://192.168.50.135:8188"
+        self.apple_music_url = "http://192.168.50.135:8096"  # Need to find actual port
         self.results = []
 
     def test_echo_brain_coordination(self):
@@ -220,7 +220,7 @@ class AnimeProductionIntegrationTest:
 
             # Try to check the API
             try:
-                response = requests.get("http://***REMOVED***:8096/health", timeout=5)
+                response = requests.get("http://192.168.50.135:8096/health", timeout=5)
                 if response.status_code == 200:
                     print(f"✅ Service responding")
                     return {"test": "apple_music", "success": True}

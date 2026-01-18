@@ -70,7 +70,7 @@ class AutoDocumenter:
     def __init__(
         self,
         project_root: Path = Path("/opt/tower-echo-brain"),
-        kb_url: str = "https://***REMOVED***/api/kb"
+        kb_url: str = "https://192.168.50.135/api/kb"
     ):
         self.project_root = project_root
         self.docs_dir = project_root / "docs"

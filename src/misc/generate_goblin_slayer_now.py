@@ -83,4 +83,4 @@ if os.path.exists(output_video):
 else:
     print("❌ Video generation failed!")
 
-print("🎮 Available at: http://***REMOVED***:8096")
+print("🎮 Available at: http://192.168.50.135:8096")

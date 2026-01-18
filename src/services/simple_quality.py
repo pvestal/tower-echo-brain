@@ -38,6 +38,6 @@ def assess_video_quality(video_path):
         return 50
 
 # Test on Goblin Slayer video
-video = '***REMOVED***/AI_Generated/echo_video_1758230481_Goblin_Slayer_epic_b.mp4'
+video = '/home/patrick/Videos/AI_Generated/echo_video_1758230481_Goblin_Slayer_epic_b.mp4'
 score = assess_video_quality(video)
 print(f'Goblin Slayer Quality Score: {score}/100')

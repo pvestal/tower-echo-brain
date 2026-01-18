@@ -24,8 +24,8 @@ from src.services.embedding_service import create_embedding_service
 from src.services.vector_search import get_vector_search
 
 # Database connections
-KB_DATABASE_URL = "postgresql://patrick:***REMOVED***@localhost/knowledge_base"
-ECHO_DATABASE_URL = "postgresql://patrick:***REMOVED***@localhost/tower_consolidated"
+KB_DATABASE_URL = "postgresql://patrick:tower_echo_brain_secret_key_2025@localhost/knowledge_base"
+ECHO_DATABASE_URL = "postgresql://patrick:tower_echo_brain_secret_key_2025@localhost/tower_consolidated"
 
 BATCH_SIZE = 20  # Articles per batch for embedding
 

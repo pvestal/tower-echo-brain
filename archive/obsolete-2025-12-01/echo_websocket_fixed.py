@@ -2805,8 +2805,8 @@ Type: {result['type']}
 Vertices: {result['vertices']}
 
 You can:
-1. View at: http://***REMOVED***:8500
-2. Download: wget http://***REMOVED***/downloads/{os.path.basename(result['file'])}
+1. View at: http://192.168.50.135:8500
+2. Download: wget http://192.168.50.135/downloads/{os.path.basename(result['file'])}
 3. Load in 3D viewer on Tower"""
             else:
                 return "❌ Failed to generate 3D model"

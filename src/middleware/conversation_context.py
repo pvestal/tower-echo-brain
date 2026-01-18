@@ -24,7 +24,7 @@ class ConversationContextManager:
             "host": "localhost",
             "database": "echo_brain",
             "user": "patrick",
-            "password": "***REMOVED***"
+            "password": "tower_echo_brain_secret_key_2025"
         }
         # In-memory cache for recent conversations
         self.context_cache = {}

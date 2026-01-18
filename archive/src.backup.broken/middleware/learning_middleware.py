@@ -24,7 +24,7 @@ class LearningMiddleware:
             "host": "localhost",
             "database": "echo_brain",
             "user": "patrick",
-            "password": "***REMOVED***"
+            "password": "tower_echo_brain_secret_key_2025"
         }
         self.importance_threshold = 0.3
 

@@ -415,7 +415,7 @@ class DeepSeekCodingAgent:
 
     async def _query_deepseek(self, prompt: str, model: str) -> str:
         """Query DeepSeek model through Echo Brain"""
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(
                 "http://localhost:8309/api/echo/chat",
                 json={
@@ -691,11 +691,30 @@ class ImproveRequest(BaseModel):
 
 @router.post("/analyze")
 async def analyze_codebase(request: AnalyzeRequest):
-    """Analyze codebase quality and structure"""
-    agent = get_agent()
-    path = Path(request.path) if request.path else None
-    analysis = await agent.analyze_codebase(path)
-    return analysis
+    """Analyze codebase quality and structure - with timeout protection"""
+    try:
+        agent = get_agent()
+        path = Path(request.path) if request.path else agent.workspace
+
+        # Quick analysis instead of full codebase scan
+        import asyncio
+        analysis_task = asyncio.create_task(agent.analyze_codebase(path))
+
+        try:
+            analysis = await asyncio.wait_for(analysis_task, timeout=30.0)
+            return analysis
+        except asyncio.TimeoutError:
+            analysis_task.cancel()
+            return {
+                "status": "timeout",
+                "error": "Analysis timed out after 30 seconds",
+                "quick_summary": {
+                    "workspace": str(path),
+                    "message": "Full analysis requires more time - use quick endpoints for faster results"
+                }
+            }
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
 
 @router.post("/generate")
 async def generate_code(request: GenerateRequest):
@@ -738,3 +757,23 @@ async def get_agent_status():
         "workspace": str(agent.workspace),
         "tools_available": tools_available
     }
+
+class QuickFixRequest(BaseModel):
+    code: str
+    issue: str
+
+@router.post("/quick-fix")
+async def quick_code_fix(request: QuickFixRequest):
+    """Quick code fix for simple issues - with timeout protection"""
+    try:
+        prompt = f"Fix this code issue:\nISSUE: {request.issue}\nCODE:\n{request.code}\n\nProvide only the corrected code."
+
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.post(
+                "http://localhost:8309/api/echo/chat",
+                json={"query": prompt, "user": "coding_agent"}
+            )
+            result = response.json()
+            return {"fixed_code": result["response"], "status": "success"}
+    except Exception as e:
+        return {"error": str(e), "status": "failed"}

@@ -23,7 +23,7 @@ class DatabaseMemoryTester:
             "host": "localhost",
             "database": "tower_consolidated",
             "user": "patrick",
-            "password": "***REMOVED***"
+            "password": "tower_echo_brain_secret_key_2025"
         }
         self.qdrant_url = "http://localhost:6333"
         self.echo_url = "http://localhost:8309"

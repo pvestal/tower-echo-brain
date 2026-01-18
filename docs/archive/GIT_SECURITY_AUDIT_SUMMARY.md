@@ -46,7 +46,7 @@ def _run_git(self, *args, check: bool = True) -> subprocess.CompletedProcess:
 
 **Vulnerability**:
 ```bash
-DB_PASSWORD=***REMOVED***
+DB_PASSWORD=tower_echo_brain_secret_key_2025
 ```
 
 **Risk**: Database compromise if file is accessed

@@ -31,7 +31,7 @@ async def get_connection_pool():
             host="localhost",
             database="echo_brain",
             user="patrick",
-            password="***REMOVED***",
+            password="tower_echo_brain_secret_key_2025",
             min_size=2,
             max_size=5
         )

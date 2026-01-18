@@ -79,7 +79,7 @@ class TestHappyPathIntegration:
         import psycopg2
         conn = psycopg2.connect(
             host="localhost", database="anime_production",
-            user="patrick", password="***REMOVED***"
+            user="patrick", password="tower_echo_brain_secret_key_2025"
         )
         cursor = conn.cursor()
         cursor.execute("""

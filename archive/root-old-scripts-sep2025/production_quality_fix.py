@@ -133,7 +133,7 @@ def test_production_generation():
 
         # Submit to ComfyUI
         response = requests.post(
-            "http://***REMOVED***:8188/api/prompt",
+            "http://192.168.50.135:8188/api/prompt",
             json=workflow
         )
 
@@ -148,7 +148,7 @@ def test_production_generation():
 
             # Check result
             history = requests.get(
-                f"http://***REMOVED***:8188/api/history/{prompt_id}"
+                f"http://192.168.50.135:8188/api/history/{prompt_id}"
             ).json()
 
             if prompt_id in history:

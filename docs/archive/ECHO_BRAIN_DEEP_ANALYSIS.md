@@ -121,7 +121,7 @@
 
 ### Issues:
 - Circuit breaker opens frequently
-- Database connection to ***REMOVED*** fails (should use localhost?)
+- Database connection to 192.168.50.135 fails (should use localhost?)
 - Multiple retry attempts on each query
 
 ## 🎯 NEXT STEPS
@@ -135,8 +135,8 @@ find / -name "*learning_pipeline.py" 2>/dev/null
 
 ### 2. Fix Database Connection
 ```bash
-# Check why it's trying ***REMOVED*** instead of localhost
-grep -r "***REMOVED***" /opt/tower-echo-brain
+# Check why it's trying 192.168.50.135 instead of localhost
+grep -r "192.168.50.135" /opt/tower-echo-brain
 ```
 
 ### 3. Implement Qdrant Updates

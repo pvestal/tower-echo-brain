@@ -22,7 +22,7 @@ The AI Assist system serves as the central AI orchestrator within the Tower ecos
 ### Core Services Overview
 
 ```
-Tower Ecosystem (***REMOVED***)
+Tower Ecosystem (192.168.50.135)
 ├── Tower Dashboard (8080) - Main entry point and service orchestration
 ├── AI Assist (8309) - AI orchestrator and intelligence hub
 ├── Anime Production (8305) - Creative production pipeline
@@ -112,12 +112,12 @@ graph TB
 class TowerTestingFramework:
     def __init__(self):
         self.services = {
-            "dashboard": "http://***REMOVED***:8080",
-            "anime": "http://***REMOVED***:8305",
-            "agent-manager": "http://***REMOVED***:8301",
-            "loan-search": "http://***REMOVED***:8302",
-            "crypto-trader": "http://***REMOVED***:8303",
-            "comfyui": "http://***REMOVED***:8188"
+            "dashboard": "http://192.168.50.135:8080",
+            "anime": "http://192.168.50.135:8305",
+            "agent-manager": "http://192.168.50.135:8301",
+            "loan-search": "http://192.168.50.135:8302",
+            "crypto-trader": "http://192.168.50.135:8303",
+            "comfyui": "http://192.168.50.135:8188"
         }
 
     async def test_service(self, service_name: str):
@@ -161,7 +161,7 @@ async def notify_echo_brain(project_status: str, project_id: str):
     """Notify AI Assist of project status changes"""
     async with aiohttp.ClientSession() as session:
         await session.post(
-            "http://***REMOVED***:8309/api/echo/events/anime",
+            "http://192.168.50.135:8309/api/echo/events/anime",
             json={
                 "event": "project_status_change",
                 "project_id": project_id,
@@ -193,7 +193,7 @@ upstream anime_production {
 
 server {
     listen 443 ssl;
-    server_name ***REMOVED***;
+    server_name 192.168.50.135;
 
     location /api/echo/ {
         proxy_pass http://echo_brain/api/echo/;
@@ -242,7 +242,7 @@ tower_consolidated/
 class EchoBrainDatabase:
     def __init__(self):
         self.config = {
-            "host": "***REMOVED***",
+            "host": "192.168.50.135",
             "database": "tower_consolidated",
             "user": "patrick"
         }
@@ -291,7 +291,7 @@ async def validate_service_request(service_name: str, token: str):
     """Validate service-to-service requests"""
     async with aiohttp.ClientSession() as session:
         response = await session.post(
-            "http://***REMOVED***:8088/api/auth/validate",
+            "http://192.168.50.135:8088/api/auth/validate",
             headers={"Authorization": f"Bearer {token}"},
             json={"service": service_name}
         )

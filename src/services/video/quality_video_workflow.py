@@ -92,7 +92,7 @@ def generate_quality_video_from_image(image_path, output_name='quality_video'):
                     outputs = hist_data[prompt_id]['outputs']
                     if '7' in outputs and 'gifs' in outputs['7']:
                         video_file = outputs['7']['gifs'][0]['filename']
-                        return f'***REMOVED***/ComfyUI-Production/output/{video_file}'
+                        return f'/home/patrick/Projects/ComfyUI-Production/output/{video_file}'
         return None
     else:
         print('Error:', json.dumps(data, indent=2))

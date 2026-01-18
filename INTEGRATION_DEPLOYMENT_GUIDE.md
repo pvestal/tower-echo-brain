@@ -35,7 +35,7 @@ sudo systemctl stop tower-echo-brain
 cp -r /opt/tower-echo-brain /opt/tower-echo-brain.backup.$(date +%Y%m%d_%H%M%S)
 
 # Backup database
-pg_dump -h ***REMOVED*** -U patrick -d tower_consolidated > echo_brain_backup_$(date +%Y%m%d_%H%M%S).sql
+pg_dump -h 192.168.50.135 -U patrick -d tower_consolidated > echo_brain_backup_$(date +%Y%m%d_%H%M%S).sql
 ```
 
 ### Step 2: Merge Integration Branch
@@ -99,7 +99,7 @@ python scripts/migrate_database.py
 # Verify database integrity
 python -c "
 import psycopg2
-conn = psycopg2.connect('postgresql://patrick:***REMOVED***@***REMOVED***/tower_consolidated')
+conn = psycopg2.connect('postgresql://patrick:tower_echo_brain_secret_key_2025@192.168.50.135/tower_consolidated')
 cur = conn.cursor()
 cur.execute('SELECT version();')
 print('Database connection successful:', cur.fetchone())
@@ -208,7 +208,7 @@ sudo rm -rf /opt/tower-echo-brain
 sudo mv /opt/tower-echo-brain.backup.TIMESTAMP /opt/tower-echo-brain
 
 # Restore database if needed
-psql -h ***REMOVED*** -U patrick -d tower_consolidated < echo_brain_backup_TIMESTAMP.sql
+psql -h 192.168.50.135 -U patrick -d tower_consolidated < echo_brain_backup_TIMESTAMP.sql
 
 # Restart services
 sudo systemctl start tower-echo-brain
@@ -247,8 +247,8 @@ pip list | grep -E "(fastapi|aiohttp|google|psycopg2)"
 #### Database Connection Issues
 ```bash
 # Test database connectivity
-pg_isready -h ***REMOVED*** -U patrick
-psql -h ***REMOVED*** -U patrick -d tower_consolidated -c "SELECT 1;"
+pg_isready -h 192.168.50.135 -U patrick
+psql -h 192.168.50.135 -U patrick -d tower_consolidated -c "SELECT 1;"
 ```
 
 #### Service Startup Failures
@@ -291,7 +291,7 @@ sudo chmod +x /opt/tower-echo-brain/scripts/*.sh
 
 ## =Ú Additional Resources
 
-- [Echo Brain API Documentation](http://***REMOVED***:8307/api/docs)
+- [Echo Brain API Documentation](http://192.168.50.135:8307/api/docs)
 - [Google Calendar API Documentation](https://developers.google.com/calendar/api)
 - [Home Assistant API Documentation](https://developers.home-assistant.io/docs/api/rest/)
 - [NTFY Documentation](https://docs.ntfy.sh/)

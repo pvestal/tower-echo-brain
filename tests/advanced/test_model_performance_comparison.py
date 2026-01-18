@@ -247,7 +247,7 @@ class TestModelPerformanceComparison:
             'host': 'localhost',
             'database': 'echo_brain',
             'user': 'patrick',
-            'password': '***REMOVED***'
+            'password': 'tower_echo_brain_secret_key_2025'
         }
 
     @pytest.fixture
@@ -462,7 +462,7 @@ if __name__ == "__main__":
         'host': 'localhost',
         'database': 'echo_brain',
         'user': 'patrick',
-        'password': '***REMOVED***'
+        'password': 'tower_echo_brain_secret_key_2025'
     }
 
     comparator = ModelPerformanceComparator(db_config)

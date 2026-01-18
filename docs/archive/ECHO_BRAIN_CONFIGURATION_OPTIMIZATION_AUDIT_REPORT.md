@@ -266,7 +266,7 @@ Solutions:
 ### Current Monitoring Status ✅ GOOD FOUNDATION
 ```yaml
 Prometheus Targets:
-- echo-brain: ***REMOVED***:8309
+- echo-brain: 192.168.50.135:8309
 - tower-services: Multiple endpoints
 - node-exporter: System metrics
 - postgres-exporter: Database metrics

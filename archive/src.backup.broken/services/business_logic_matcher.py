@@ -20,7 +20,7 @@ class BusinessLogicPatternMatcher:
             'host': 'localhost',
             'database': 'echo_brain',
             'user': 'patrick',
-            'password': '***REMOVED***'
+            'password': 'tower_echo_brain_secret_key_2025'
         }
         self._cached_patterns = None
         self._cache_timestamp = None

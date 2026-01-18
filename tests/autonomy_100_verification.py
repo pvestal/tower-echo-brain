@@ -189,7 +189,7 @@ class Autonomy100Verifier:
             conn = await asyncpg.connect(
                 host='localhost',
                 user='patrick',
-                password='***REMOVED***',
+                password='tower_echo_brain_secret_key_2025',
                 database='echo_brain'
             )
 

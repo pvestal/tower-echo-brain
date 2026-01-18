@@ -160,7 +160,7 @@ class GCloudBurstManager:
         """Check if local ComfyUI service is available"""
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.get("http://***REMOVED***:8188/api/health", timeout=5) as response:
+                async with session.get("http://192.168.50.135:8188/api/health", timeout=5) as response:
                     return response.status == 200
         except:
             return False
@@ -349,7 +349,7 @@ class EchoBrainWithBurst:
         """Get current VRAM usage percentage"""
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.get("http://***REMOVED***:8309/api/echo/system/metrics") as response:
+                async with session.get("http://192.168.50.135:8309/api/echo/system/metrics") as response:
                     if response.status == 200:
                         data = await response.json()
                         vram_used = data.get("vram_used_gb", 0)
@@ -379,7 +379,7 @@ class EchoBrainWithBurst:
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.post(
-                    "http://***REMOVED***:8309/api/echo/chat",
+                    "http://192.168.50.135:8309/api/echo/chat",
                     json={
                         "query": query,
                         "user_id": "burst_test",

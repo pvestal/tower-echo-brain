@@ -27,7 +27,7 @@ from src.services.embedding_service import create_embedding_service
 
 # Configuration
 PHOTOS_DB = "/mnt/10TB2/Google_Takeout_2025/photos_comparison.db"
-QDRANT_URL = "http://***REMOVED***:6333"
+QDRANT_URL = "http://192.168.50.135:6333"
 BATCH_SIZE = 50
 
 async def index_photos_for_echo_brain():

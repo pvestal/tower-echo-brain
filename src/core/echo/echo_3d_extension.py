@@ -32,8 +32,8 @@ def process_3d_request(query: str) -> dict:
 🔺 Faces: {result['faces']}
 
 Access your model:
-🖼️ View: http://***REMOVED***:8500
-💾 Download: wget http://***REMOVED***/downloads/{filename}
+🖼️ View: http://192.168.50.135:8500
+💾 Download: wget http://192.168.50.135/downloads/{filename}
 📱 Telegram: File will be sent automatically"""
             
             return {

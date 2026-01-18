@@ -16,8 +16,8 @@ from datetime import datetime
 logger = logging.getLogger(__name__)
 
 # JWT Configuration
-JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', '***REMOVED***')
-AUTH_SERVICE_URL = "https://***REMOVED***/api/auth"
+JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'echo-brain-secret-key-2025')
+AUTH_SERVICE_URL = "https://192.168.50.135/api/auth"
 
 # Security scheme
 security = HTTPBearer()

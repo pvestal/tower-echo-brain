@@ -21,7 +21,7 @@ scrape_configs:
   # Echo Brain main metrics
   - job_name: "echo-brain"
     static_configs:
-      - targets: ["***REMOVED***:8309"]
+      - targets: ["192.168.50.135:8309"]
     metrics_path: "/api/echo/metrics"
     scrape_interval: 10s
     scrape_timeout: 5s
@@ -30,7 +30,7 @@ scrape_configs:
   # Echo Brain system metrics (legacy endpoint)
   - job_name: "echo-brain-system"
     static_configs:
-      - targets: ["***REMOVED***:8309"]
+      - targets: ["192.168.50.135:8309"]
     metrics_path: "/api/echo/system/metrics"
     scrape_interval: 30s
     metric_relabel_configs:
@@ -43,37 +43,37 @@ scrape_configs:
   - job_name: "tower-services"
     static_configs:
       - targets:
-          - "***REMOVED***:8307"  # Knowledge Base
-          - "***REMOVED***:8328"  # Anime Production
-          - "***REMOVED***:8315"  # Apple Music
-          - "***REMOVED***:8088"  # Auth Service
-          - "***REMOVED***:8089"  # Plaid Financial
+          - "192.168.50.135:8307"  # Knowledge Base
+          - "192.168.50.135:8328"  # Anime Production
+          - "192.168.50.135:8315"  # Apple Music
+          - "192.168.50.135:8088"  # Auth Service
+          - "192.168.50.135:8089"  # Plaid Financial
     metrics_path: "/health"
     scrape_interval: 30s
 
   # ComfyUI monitoring
   - job_name: "comfyui"
     static_configs:
-      - targets: ["***REMOVED***:8188"]
+      - targets: ["192.168.50.135:8188"]
     metrics_path: "/metrics"
     scrape_interval: 30s
 
   # Node exporter for system metrics
   - job_name: "node-exporter"
     static_configs:
-      - targets: ["***REMOVED***:9100"]
+      - targets: ["192.168.50.135:9100"]
     scrape_interval: 15s
 
   # PostgreSQL exporter
   - job_name: "postgres-exporter"
     static_configs:
-      - targets: ["***REMOVED***:9187"]
+      - targets: ["192.168.50.135:9187"]
     scrape_interval: 30s
 
   # Redis exporter
   - job_name: "redis-exporter"
     static_configs:
-      - targets: ["***REMOVED***:9121"]
+      - targets: ["192.168.50.135:9121"]
     scrape_interval: 30s
 
   # Prometheus self-monitoring

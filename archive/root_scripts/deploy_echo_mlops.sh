@@ -329,12 +329,12 @@ main() {
     echo "   • Monitor services:   python3 monitor_mlops.py"
     echo
     echo "📊 Service URLs (after starting):"
-    echo "   • Model Registry:      http://***REMOVED***:8340/docs"
-    echo "   • A/B Testing:         http://***REMOVED***:8341/docs"
-    echo "   • Drift Detection:     http://***REMOVED***:8342/docs"
-    echo "   • Retraining Pipeline: http://***REMOVED***:8343/docs"
-    echo "   • Feature Store:       http://***REMOVED***:8344/docs"
-    echo "   • MLOps Integration:   http://***REMOVED***:8345/docs"
+    echo "   • Model Registry:      http://192.168.50.135:8340/docs"
+    echo "   • A/B Testing:         http://192.168.50.135:8341/docs"
+    echo "   • Drift Detection:     http://192.168.50.135:8342/docs"
+    echo "   • Retraining Pipeline: http://192.168.50.135:8343/docs"
+    echo "   • Feature Store:       http://192.168.50.135:8344/docs"
+    echo "   • MLOps Integration:   http://192.168.50.135:8345/docs"
 }
 
 # Run main function

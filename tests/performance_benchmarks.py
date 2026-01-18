@@ -145,7 +145,7 @@ class PerformanceBenchmark:
             memory = PersistentMemorySystem({
                 'host': 'localhost',
                 'user': 'patrick',
-                'password': '***REMOVED***',
+                'password': 'tower_echo_brain_secret_key_2025',
                 'database': 'echo_brain'
             })
 
@@ -296,7 +296,7 @@ print(f"Found {len(primes)} primes")
             conn = await asyncpg.connect(
                 host='localhost',
                 user='patrick',
-                password='***REMOVED***',
+                password='tower_echo_brain_secret_key_2025',
                 database='echo_brain'
             )
 

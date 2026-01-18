@@ -23,8 +23,8 @@ class EchoBrainTester:
     """Comprehensive Echo Brain test suite"""
 
     def __init__(self):
-        self.base_url = "http://***REMOVED***:8309"
-        self.dashboard_url = "https://***REMOVED***"
+        self.base_url = "http://192.168.50.135:8309"
+        self.dashboard_url = "https://192.168.50.135"
         self.test_results = {}
 
     def run_all_tests(self) -> Dict[str, Any]:

@@ -121,10 +121,10 @@ class SafeSQLExecutor:
 # Test function
 def test_real_execution():
     config = {
-        'host': '***REMOVED***',
+        'host': '192.168.50.135',
         'database': 'echo_brain',
         'user': 'patrick',
-        'password': '***REMOVED***'
+        'password': 'tower_echo_brain_secret_key_2025'
     }
 
     executor = SafeSQLExecutor(config)

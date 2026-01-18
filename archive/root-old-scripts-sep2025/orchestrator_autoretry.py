@@ -26,7 +26,7 @@ class QualityAutoRetryOrchestrator:
         """Create trailer with automatic quality retry"""
         
         results = []
-        output = f"***REMOVED***/echo_quality_{int(time.time())}.mp4"
+        output = f"/home/patrick/Videos/echo_quality_{int(time.time())}.mp4"
         
         # Generate frames with auto-retry
         frames = await self.generate_frames_with_retry(character)

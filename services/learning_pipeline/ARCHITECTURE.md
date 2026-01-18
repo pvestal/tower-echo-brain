@@ -13,7 +13,7 @@ This document outlines a production-ready learning pipeline architecture for Ech
 ### Critical Problems Identified
 1. **Broken Cron Job**: Points to `/home/patrick/Tower/echo_learning_pipeline.py` (non-existent)
 2. **Stale Vector Database**: Qdrant has 1,780 stale vectors with no active updates
-3. **Database Connection Issues**: Services trying to connect to ***REMOVED*** instead of localhost
+3. **Database Connection Issues**: Services trying to connect to 192.168.50.135 instead of localhost
 4. **Missing Semantic Memory Service**: tower-semantic-memory (port 8320) not accessible
 5. **Table Conflicts**: Two overlapping tables (`conversations` and `echo_unified_interactions`)
 
@@ -276,7 +276,7 @@ CREATE INDEX idx_pipeline_runs_status ON pipeline_runs(status);
 
 ```yaml
 database:
-  host: "localhost"  # Fixed: was ***REMOVED***
+  host: "localhost"  # Fixed: was 192.168.50.135
   port: 5432
   name: "echo_brain"
   user: "patrick"

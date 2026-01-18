@@ -22,7 +22,7 @@ Welcome to AI Assist - the Advanced AI Orchestrator with 24+ models, Board of Di
 
 ```bash
 # Test basic connectivity
-curl -k https://***REMOVED***/api/echo/health
+curl -k https://192.168.50.135/api/echo/health
 
 # Expected response:
 {
@@ -43,7 +43,7 @@ curl -k https://***REMOVED***/api/echo/health
 
 ```bash
 # Simple query without authentication
-curl -X POST https://***REMOVED***/api/echo/query \
+curl -X POST https://192.168.50.135/api/echo/query \
   -H "Content-Type: application/json" \
   -d '{
     "query": "Explain what AI Assist is in one sentence",
@@ -65,7 +65,7 @@ curl -X POST https://***REMOVED***/api/echo/query \
 
 ```bash
 # List all available AI models
-curl https://***REMOVED***/api/echo/models/list | jq -r '.models[] | "\(.name) - \(.size) - \(.specialization)"'
+curl https://192.168.50.135/api/echo/models/list | jq -r '.models[] | "\(.name) - \(.size) - \(.specialization)"'
 
 # Example output:
 # llama3.1:70b - 40GB - General Intelligence
@@ -78,22 +78,22 @@ curl https://***REMOVED***/api/echo/models/list | jq -r '.models[] | "\(.name) -
 
 ```bash
 # Test integration with other Tower services
-curl -X POST https://***REMOVED***/api/echo/test/comfyui \
+curl -X POST https://192.168.50.135/api/echo/test/comfyui \
   -H "Content-Type: application/json" \
   -d '{"target": "comfyui", "test_type": "universal"}' | jq .
 
 # Check Tower services status
-curl https://***REMOVED***/api/echo/tower/status | jq .
+curl https://192.168.50.135/api/echo/tower/status | jq .
 ```
 
 ### Step 5: Monitor Real-time Brain Activity (1.5 minutes)
 
 ```bash
 # Connect to brain activity stream (requires wscat: npm install -g wscat)
-wscat -c wss://***REMOVED***/api/echo/stream
+wscat -c wss://192.168.50.135/api/echo/stream
 
 # Or use curl for Server-Sent Events
-curl -N https://***REMOVED***/api/echo/stream
+curl -N https://192.168.50.135/api/echo/stream
 ```
 
 🎉 **Congratulations!** You've successfully:
@@ -113,7 +113,7 @@ For protected endpoints (Board of Directors, Model Management), you'll need auth
 
 ```bash
 # Step 1: Login to Tower Auth Service
-curl -X POST https://***REMOVED***/api/auth/login \
+curl -X POST https://192.168.50.135/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "username": "your_username",
@@ -132,7 +132,7 @@ export JWT_TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 
 # Step 3: Test authenticated endpoint
 curl -H "Authorization: Bearer $JWT_TOKEN" \
-  https://***REMOVED***/api/echo/board/status
+  https://192.168.50.135/api/echo/board/status
 ```
 
 ### Token Management Script
@@ -142,7 +142,7 @@ curl -H "Authorization: Bearer $JWT_TOKEN" \
 # save as: ~/bin/echo-auth.sh
 
 # Tower Auth Helper Script
-AUTH_URL="https://***REMOVED***/api/auth"
+AUTH_URL="https://192.168.50.135/api/auth"
 TOKEN_FILE="$HOME/.echo-token"
 
 login() {
@@ -211,7 +211,7 @@ Learn how AI Assist automatically selects the best model for your query.
 
 ```bash
 # Simple query - will use lightweight model
-curl -X POST https://***REMOVED***/api/echo/query \
+curl -X POST https://192.168.50.135/api/echo/query \
   -H "Content-Type: application/json" \
   -d '{
     "query": "What is 2+2?",
@@ -219,7 +219,7 @@ curl -X POST https://***REMOVED***/api/echo/query \
   }' | jq '.model_used, .escalation_path'
 
 # Complex query - will escalate to powerful model
-curl -X POST https://***REMOVED***/api/echo/query \
+curl -X POST https://192.168.50.135/api/echo/query \
   -H "Content-Type: application/json" \
   -d '{
     "query": "Design a microservices architecture for a high-throughput financial trading system with real-time risk management",
@@ -227,7 +227,7 @@ curl -X POST https://***REMOVED***/api/echo/query \
   }' | jq '.model_used, .escalation_path, .processing_time'
 
 # Force specific intelligence level
-curl -X POST https://***REMOVED***/api/echo/query \
+curl -X POST https://192.168.50.135/api/echo/query \
   -H "Content-Type: application/json" \
   -d '{
     "query": "Explain quantum computing",
@@ -247,7 +247,7 @@ AI Assist maintains conversation context across multiple queries.
 
 ```bash
 # Start a conversation
-response1=$(curl -s -X POST https://***REMOVED***/api/echo/query \
+response1=$(curl -s -X POST https://192.168.50.135/api/echo/query \
   -H "Content-Type: application/json" \
   -d '{
     "query": "I need help designing a REST API for user management",
@@ -259,7 +259,7 @@ conversation_id=$(echo "$response1" | jq -r '.conversation_id')
 echo "Conversation ID: $conversation_id"
 
 # Continue the conversation with context
-curl -X POST https://***REMOVED***/api/echo/query \
+curl -X POST https://192.168.50.135/api/echo/query \
   -H "Content-Type: application/json" \
   -d "{
     \"query\": \"What authentication method would you recommend?\",
@@ -268,10 +268,10 @@ curl -X POST https://***REMOVED***/api/echo/query \
   }" | jq '.response'
 
 # Get conversation history
-curl "https://***REMOVED***/api/echo/conversation/$conversation_id" | jq .
+curl "https://192.168.50.135/api/echo/conversation/$conversation_id" | jq .
 
 # List all conversations for a user
-curl "https://***REMOVED***/api/echo/conversations?user_id=developer_123&limit=10" | jq .
+curl "https://192.168.50.135/api/echo/conversations?user_id=developer_123&limit=10" | jq .
 ```
 
 ### Tutorial 3: Model Management with Board Approval
@@ -280,10 +280,10 @@ For large models (70B+ parameters), the Board of Directors system provides gover
 
 ```bash
 # List current models
-curl https://***REMOVED***/api/echo/models/list | jq '.models[] | {name, size, parameters}'
+curl https://192.168.50.135/api/echo/models/list | jq '.models[] | {name, size, parameters}'
 
 # Request to install a large model (requires authentication)
-curl -X POST https://***REMOVED***/api/echo/models/manage \
+curl -X POST https://192.168.50.135/api/echo/models/manage \
   -H "Authorization: Bearer $JWT_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -295,10 +295,10 @@ curl -X POST https://***REMOVED***/api/echo/models/manage \
 
 # Monitor the board decision process
 # (Replace TASK_ID with the actual task_id from above response)
-curl https://***REMOVED***/api/echo/board/decisions/TASK_ID | jq .
+curl https://192.168.50.135/api/echo/board/decisions/TASK_ID | jq .
 
 # Connect to WebSocket for real-time board updates
-wscat -c "wss://***REMOVED***/api/echo/board/ws?token=$JWT_TOKEN"
+wscat -c "wss://192.168.50.135/api/echo/board/ws?token=$JWT_TOKEN"
 ```
 
 ### Tutorial 4: Universal Testing Framework
@@ -307,7 +307,7 @@ AI Assist can test any service in the Tower ecosystem.
 
 ```bash
 # Test ComfyUI image generation service
-curl -X POST https://***REMOVED***/api/echo/test/comfyui \
+curl -X POST https://192.168.50.135/api/echo/test/comfyui \
   -H "Content-Type: application/json" \
   -d '{
     "target": "comfyui",
@@ -316,14 +316,14 @@ curl -X POST https://***REMOVED***/api/echo/test/comfyui \
   }' | jq .
 
 # Debug a service with detailed analysis
-curl -X POST https://***REMOVED***/api/echo/debug/anime-production \
+curl -X POST https://192.168.50.135/api/echo/debug/anime-production \
   -H "Content-Type: application/json" | jq .
 
 # Test multiple services in batch
 services=("comfyui" "anime-production" "agent-manager" "loan-search")
 for service in "${services[@]}"; do
     echo "Testing $service..."
-    curl -s -X POST https://***REMOVED***/api/echo/test/$service \
+    curl -s -X POST https://192.168.50.135/api/echo/test/$service \
       -H "Content-Type: application/json" \
       -d "{\"target\": \"$service\"}" | jq -r '.success, .test_results.connectivity'
 done
@@ -335,20 +335,20 @@ Monitor AI decision-making in real-time.
 
 ```bash
 # Get current brain state
-curl https://***REMOVED***/api/echo/brain | jq .
+curl https://192.168.50.135/api/echo/brain | jq .
 
 # Stream real-time brain activity
-curl -N https://***REMOVED***/api/echo/stream | head -20
+curl -N https://192.168.50.135/api/echo/stream | head -20
 
 # Get detailed thought process for a specific query
 # First, make a query and note the thought_id
-response=$(curl -s -X POST https://***REMOVED***/api/echo/query \
+response=$(curl -s -X POST https://192.168.50.135/api/echo/query \
   -H "Content-Type: application/json" \
   -d '{"query": "Analyze the performance implications of microservices"}')
 
 thought_id=$(echo "$response" | jq -r '.thought_id // empty')
 if [ -n "$thought_id" ]; then
-    curl "https://***REMOVED***/api/echo/thoughts/$thought_id" | jq .
+    curl "https://192.168.50.135/api/echo/thoughts/$thought_id" | jq .
 fi
 ```
 
@@ -358,7 +358,7 @@ AI Assist supports voice notifications for hands-free operation.
 
 ```bash
 # Send a voice notification
-curl -X POST https://***REMOVED***/api/echo/voice/notify \
+curl -X POST https://192.168.50.135/api/echo/voice/notify \
   -H "Content-Type: application/json" \
   -d '{
     "message": "Your deployment has completed successfully",
@@ -368,10 +368,10 @@ curl -X POST https://***REMOVED***/api/echo/voice/notify \
   }' | jq .
 
 # Get available voice characters
-curl https://***REMOVED***/api/echo/voice/characters | jq .
+curl https://192.168.50.135/api/echo/voice/characters | jq .
 
 # Send urgent notification
-curl -X POST https://***REMOVED***/api/echo/voice/notify \
+curl -X POST https://192.168.50.135/api/echo/voice/notify \
   -H "Content-Type: application/json" \
   -d '{
     "message": "Critical system alert: database connection lost",
@@ -404,7 +404,7 @@ analyze_deployment() {
     logs=$(tail -100 "$log_file" | jq -Rs .)
 
     # Send to AI Assist for analysis
-    analysis=$(curl -s -X POST https://***REMOVED***/api/echo/query \
+    analysis=$(curl -s -X POST https://192.168.50.135/api/echo/query \
         -H "Content-Type: application/json" \
         -d "{
             \"query\": \"Analyze these deployment logs and identify any issues or recommendations: $logs\",
@@ -423,7 +423,7 @@ analyze_deployment() {
     if (( $(echo "$confidence < 0.7" | bc -l) )); then
         echo "Low confidence analysis - escalating to human review"
         # Send alert
-        curl -X POST https://***REMOVED***/api/echo/voice/notify \
+        curl -X POST https://192.168.50.135/api/echo/voice/notify \
             -H "Content-Type: application/json" \
             -d '{
                 "message": "Deployment analysis requires human review",
@@ -437,12 +437,12 @@ get_scaling_recommendations() {
     local service="$1"
 
     # Test service performance
-    perf_data=$(curl -s -X POST https://***REMOVED***/api/echo/test/$service \
+    perf_data=$(curl -s -X POST https://192.168.50.135/api/echo/test/$service \
         -H "Content-Type: application/json" \
         -d '{"target": "'$service'", "test_type": "performance"}')
 
     # Get AI recommendations
-    recommendation=$(curl -s -X POST https://***REMOVED***/api/echo/query \
+    recommendation=$(curl -s -X POST https://192.168.50.135/api/echo/query \
         -H "Content-Type: application/json" \
         -d "{
             \"query\": \"Based on this performance data, provide scaling recommendations: $(echo "$perf_data" | jq -c .)\",
@@ -476,7 +476,7 @@ import subprocess
 import sys
 
 class EchoBrainCodeReviewer:
-    def __init__(self, base_url="https://***REMOVED***/api/echo"):
+    def __init__(self, base_url="https://192.168.50.135/api/echo"):
         self.base_url = base_url
         self.session = requests.Session()
         self.session.verify = False  # For self-signed certificates
@@ -627,7 +627,7 @@ Create smart monitoring that uses AI to analyze patterns and reduce false alarms
 # intelligent-monitor.sh
 
 # Configuration
-ECHO_BRAIN_URL="https://***REMOVED***/api/echo"
+ECHO_BRAIN_URL="https://192.168.50.135/api/echo"
 SERVICES=("comfyui" "anime-production" "agent-manager" "loan-search")
 ALERT_THRESHOLD=3
 CONTEXT_WINDOW="1h"
@@ -791,7 +791,7 @@ class ModelInfo:
 class EchoBrainClient:
     """Python client for AI Assist API"""
 
-    def __init__(self, base_url="https://***REMOVED***/api/echo", verify_ssl=False):
+    def __init__(self, base_url="https://192.168.50.135/api/echo", verify_ssl=False):
         self.base_url = base_url.rstrip('/')
         self.session = requests.Session()
         self.session.verify = verify_ssl
@@ -984,7 +984,7 @@ const WebSocket = require('ws');
 const https = require('https');
 
 class EchoBrainClient {
-    constructor(baseUrl = 'https://***REMOVED***/api/echo', options = {}) {
+    constructor(baseUrl = 'https://192.168.50.135/api/echo', options = {}) {
         this.baseUrl = baseUrl.replace(/\/$/, '');
         this.jwtToken = null;
 
@@ -1188,7 +1188,7 @@ if (require.main === module) {
 **Do's:**
 ```bash
 # Use appropriate intelligence levels
-curl -X POST https://***REMOVED***/api/echo/query \
+curl -X POST https://192.168.50.135/api/echo/query \
   -H "Content-Type: application/json" \
   -d '{
     "query": "Simple calculation: 2+2",
@@ -1196,7 +1196,7 @@ curl -X POST https://***REMOVED***/api/echo/query \
   }'
 
 # Provide context for better responses
-curl -X POST https://***REMOVED***/api/echo/query \
+curl -X POST https://192.168.50.135/api/echo/query \
   -H "Content-Type: application/json" \
   -d '{
     "query": "Optimize this database query",
@@ -1212,7 +1212,7 @@ curl -X POST https://***REMOVED***/api/echo/query \
 **Don'ts:**
 ```bash
 # Don't use genius level for simple tasks
-curl -X POST https://***REMOVED***/api/echo/query \
+curl -X POST https://192.168.50.135/api/echo/query \
   -H "Content-Type: application/json" \
   -d '{
     "query": "What time is it?",
@@ -1250,7 +1250,7 @@ def safe_query(query_text, max_retries=3):
     for attempt in range(max_retries):
         try:
             response = session.post(
-                "https://***REMOVED***/api/echo/query",
+                "https://192.168.50.135/api/echo/query",
                 json={"query": query_text},
                 timeout=30
             )
@@ -1284,7 +1284,7 @@ cat > ~/.echo-auth << 'EOF'
 # AI Assist Authentication Helper
 
 TOKEN_FILE="$HOME/.echo-token"
-AUTH_URL="https://***REMOVED***/api/auth"
+AUTH_URL="https://192.168.50.135/api/auth"
 
 get_token() {
     if [ -f "$TOKEN_FILE" ]; then
@@ -1328,7 +1328,7 @@ chmod +x ~/.echo-auth
 
 ```bash
 # Use appropriate models for tasks
-curl -X POST https://***REMOVED***/api/echo/query \
+curl -X POST https://192.168.50.135/api/echo/query \
   -H "Content-Type: application/json" \
   -d '{
     "query": "Quick yes/no answer: Is Python object-oriented?",
@@ -1336,12 +1336,12 @@ curl -X POST https://***REMOVED***/api/echo/query \
   }'
 
 # Cache conversation IDs for context
-conversation_id=$(curl -s -X POST https://***REMOVED***/api/echo/query \
+conversation_id=$(curl -s -X POST https://192.168.50.135/api/echo/query \
   -H "Content-Type: application/json" \
   -d '{"query": "Start project discussion"}' | jq -r '.conversation_id')
 
 # Reuse conversation ID for related queries
-curl -X POST https://***REMOVED***/api/echo/query \
+curl -X POST https://192.168.50.135/api/echo/query \
   -H "Content-Type: application/json" \
   -d "{
     \"query\": \"What technologies should we use?\",
@@ -1356,7 +1356,7 @@ curl -X POST https://***REMOVED***/api/echo/query \
 cat >> /etc/prometheus/prometheus.yml << 'EOF'
   - job_name: 'echo-brain'
     static_configs:
-      - targets: ['***REMOVED***:8309']
+      - targets: ['192.168.50.135:8309']
     metrics_path: /api/echo/metrics
     scrape_interval: 30s
 EOF
@@ -1396,7 +1396,7 @@ EOF
 sudo systemctl status tower-echo-brain
 
 # Check port availability
-curl -v http://***REMOVED***:8309/api/echo/health
+curl -v http://192.168.50.135:8309/api/echo/health
 ```
 
 **Issue: Authentication Errors**
@@ -1405,7 +1405,7 @@ curl -v http://***REMOVED***:8309/api/echo/health
 echo "$JWT_TOKEN" | cut -d. -f2 | base64 -d | jq .
 
 # Get new token
-curl -X POST https://***REMOVED***/api/auth/login \
+curl -X POST https://192.168.50.135/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username": "your_user", "password": "your_pass"}'
 ```
@@ -1417,7 +1417,7 @@ htop
 nvidia-smi  # If using GPU
 
 # Test with basic intelligence level
-curl -X POST https://***REMOVED***/api/echo/query \
+curl -X POST https://192.168.50.135/api/echo/query \
   -H "Content-Type: application/json" \
   -d '{"query": "test", "intelligence_level": "basic"}'
 ```
@@ -1425,7 +1425,7 @@ curl -X POST https://***REMOVED***/api/echo/query \
 **Issue: Model Not Available**
 ```bash
 # List available models
-curl https://***REMOVED***/api/echo/models/list
+curl https://192.168.50.135/api/echo/models/list
 
 # Check Ollama directly
 curl http://localhost:11434/api/tags
@@ -1440,12 +1440,12 @@ curl http://localhost:11434/api/tags
 
 2. **System Health:**
    ```bash
-   curl https://***REMOVED***/api/echo/health | jq .
+   curl https://192.168.50.135/api/echo/health | jq .
    ```
 
 3. **Test Connectivity:**
    ```bash
-   curl -X POST https://***REMOVED***/api/echo/test/echo-brain
+   curl -X POST https://192.168.50.135/api/echo/test/echo-brain
    ```
 
 4. **Documentation:**
@@ -1463,6 +1463,6 @@ Now that you've completed the quick start guide:
 2. **Read User Journeys:** Check [User Journey Maps](./user-journey-maps.md) for your persona
 3. **Learn Integration:** Review [Tower Integration Patterns](./tower-integration-patterns.md)
 4. **Set Up Monitoring:** Implement health checks and alerting
-5. **Join the Community:** Access the [Knowledge Base](https://***REMOVED***/kb/) for updates
+5. **Join the Community:** Access the [Knowledge Base](https://192.168.50.135/kb/) for updates
 
 **Happy building with AI Assist! 🧠✨**

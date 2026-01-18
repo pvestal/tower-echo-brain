@@ -12,7 +12,7 @@ ANIME_DB_CONFIG = {
     'host': 'localhost',
     'database': 'tower_anime',
     'user': 'patrick',
-    'password': '***REMOVED***'
+    'password': 'tower_echo_brain_secret_key_2025'
 }
 
 class NarrationAgent(BaseAgent):

@@ -46,12 +46,12 @@ class EchoCompleteAuthSystem:
 
         # Service endpoints
         self.services = {
-            "echo_brain": "http://***REMOVED***:8309",
-            "auth_service": "http://***REMOVED***:8088",
-            "apple_music": "http://***REMOVED***:8315",
-            "knowledge_base": "http://***REMOVED***:8307",
-            "plaid": "http://***REMOVED***:8089",
-            "vault": "http://***REMOVED***:8200"
+            "echo_brain": "http://192.168.50.135:8309",
+            "auth_service": "http://192.168.50.135:8088",
+            "apple_music": "http://192.168.50.135:8315",
+            "knowledge_base": "http://192.168.50.135:8307",
+            "plaid": "http://192.168.50.135:8089",
+            "vault": "http://192.168.50.135:8200"
         }
 
         # Tailscale IP for remote access
@@ -73,7 +73,7 @@ class EchoCompleteAuthSystem:
         if network_mode == "tailscale_vpn":
             for service in self.services:
                 self.services[service] = self.services[service].replace(
-                    "***REMOVED***", self.tailscale_ip
+                    "192.168.50.135", self.tailscale_ip
                 )
 
         # Check all authentication providers

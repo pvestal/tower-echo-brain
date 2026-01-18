@@ -241,10 +241,10 @@ The framework includes a comprehensive CI/CD pipeline:
 # Test configuration
 export TESTING=true
 export DATABASE_URL=postgresql://user:pass@host/test_db
-export COMFYUI_ENDPOINT=http://***REMOVED***:8188
-export ANIME_API_ENDPOINT=http://***REMOVED***:8328
-export ECHO_API_ENDPOINT=http://***REMOVED***:8309
-export LLAVA_ENDPOINT=http://***REMOVED***:11434
+export COMFYUI_ENDPOINT=http://192.168.50.135:8188
+export ANIME_API_ENDPOINT=http://192.168.50.135:8328
+export ECHO_API_ENDPOINT=http://192.168.50.135:8309
+export LLAVA_ENDPOINT=http://192.168.50.135:11434
 ```
 
 ### pytest Configuration
@@ -294,7 +294,7 @@ python tests/run_tests.py --check-services
 1. **LLaVA Service Unavailable**
    ```bash
    # Check Ollama service
-   curl http://***REMOVED***:11434/api/tags
+   curl http://192.168.50.135:11434/api/tags
 
    # Visual tests will be skipped automatically
    ```
@@ -302,7 +302,7 @@ python tests/run_tests.py --check-services
 2. **Database Connection Errors**
    ```bash
    # Test database connectivity
-   pg_isready -h ***REMOVED*** -U patrick
+   pg_isready -h 192.168.50.135 -U patrick
 
    # Check test database configuration
    echo $DATABASE_URL
@@ -311,7 +311,7 @@ python tests/run_tests.py --check-services
 3. **ComfyUI Not Responding**
    ```bash
    # Check ComfyUI service
-   curl http://***REMOVED***:8188/system_stats
+   curl http://192.168.50.135:8188/system_stats
 
    # Restart ComfyUI if needed
    sudo systemctl restart comfyui

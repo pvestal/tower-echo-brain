@@ -50,7 +50,7 @@ class LLaVAClient:
     """Client for interacting with LLaVA model"""
 
     def __init__(self,
-                 model_endpoint: str = "http://***REMOVED***:11434",
+                 model_endpoint: str = "http://192.168.50.135:11434",
                  model_name: str = "llava:latest",
                  timeout: int = 30):
         self.endpoint = model_endpoint
@@ -239,7 +239,7 @@ class VisualValidator:
     }
 
     def __init__(self,
-                 llava_endpoint: str = "http://***REMOVED***:11434",
+                 llava_endpoint: str = "http://192.168.50.135:11434",
                  db_config: Optional[Dict] = None):
         self.llava_client = LLaVAClient(llava_endpoint)
         self.db_client = CharacterDatabase(db_config) if db_config else None
@@ -464,7 +464,7 @@ if __name__ == "__main__":
     parser.add_argument("--character", required=True, help="Character name")
     parser.add_argument("--emotion", default="neutral", help="Expected emotion")
     parser.add_argument("--description", default="", help="Character description")
-    parser.add_argument("--llava-endpoint", default="http://***REMOVED***:11434",
+    parser.add_argument("--llava-endpoint", default="http://192.168.50.135:11434",
                        help="LLaVA API endpoint")
     parser.add_argument("--output", help="Output JSON file for results")
 

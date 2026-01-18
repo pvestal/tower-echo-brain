@@ -83,7 +83,7 @@ fi
 
 # Test 7: Database Routing Table
 echo -e "\n[TEST 7] Database has routing config"
-COUNT=$(PGPASSWORD=***REMOVED*** psql -U patrick -d tower_consolidated -t \
+COUNT=$(PGPASSWORD=tower_echo_brain_secret_key_2025 psql -U patrick -d tower_consolidated -t \
     -c "SELECT COUNT(*) FROM intent_model_mapping;" 2>/dev/null | tr -d ' ')
 if [ "$COUNT" -gt 0 ]; then
     echo "✅ intent_model_mapping has $COUNT rows"

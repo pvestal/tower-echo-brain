@@ -89,15 +89,15 @@ run_test "Code uses systemctl" \
 # Test 4: Database Separation
 echo -e "\n${YELLOW}=== DATABASE SEPARATION TESTS ===${NC}"
 run_test "tower_consolidated database exists" \
-    "PGPASSWORD=***REMOVED*** psql -U patrick -d tower_consolidated -c 'SELECT 1' 2>/dev/null | grep -o '1 row'" \
+    "PGPASSWORD=tower_echo_brain_secret_key_2025 psql -U patrick -d tower_consolidated -c 'SELECT 1' 2>/dev/null | grep -o '1 row'" \
     "1 row"
 
 run_test "tower_anime database exists" \
-    "PGPASSWORD=***REMOVED*** psql -U patrick -d tower_anime -c 'SELECT 1' 2>/dev/null | grep -o '1 row'" \
+    "PGPASSWORD=tower_echo_brain_secret_key_2025 psql -U patrick -d tower_anime -c 'SELECT 1' 2>/dev/null | grep -o '1 row'" \
     "1 row"
 
 run_test "No anime tables in tower_consolidated" \
-    "PGPASSWORD=***REMOVED*** psql -U patrick -d tower_consolidated -c \"SELECT COUNT(*) FROM information_schema.tables WHERE table_name LIKE 'anime_%'\" 2>/dev/null | grep -o '0'" \
+    "PGPASSWORD=tower_echo_brain_secret_key_2025 psql -U patrick -d tower_consolidated -c \"SELECT COUNT(*) FROM information_schema.tables WHERE table_name LIKE 'anime_%'\" 2>/dev/null | grep -o '0'" \
     "0"
 
 # Test 5: ReasoningAgent Analysis Quality

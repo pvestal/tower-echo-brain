@@ -57,7 +57,7 @@ class PlaidFinancialIntegration:
             if not plaid_config:
                 # Use known credentials from VueBudgetFire
                 plaid_config = {
-                    "client_id": "***REMOVED***",
+                    "client_id": "67b7532c37f3d10023aba53e",
                     "secret": os.getenv("PLAID_SECRET", ""),
                     "environment": "sandbox"  # Start with sandbox
                 }

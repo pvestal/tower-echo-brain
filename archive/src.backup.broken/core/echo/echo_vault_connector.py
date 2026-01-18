@@ -12,7 +12,7 @@ class EchoVaultConnector:
 
     def __init__(self):
         self.vault_addr = 'http://127.0.0.1:8200'
-        self.vault_token = '***REMOVED***'
+        self.vault_token = 'hvs.FEQ0zs7Jcng6B5nmuwtTlZnM'
         self.client = None
         self.connect()
 

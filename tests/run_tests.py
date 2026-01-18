@@ -142,7 +142,7 @@ class TestRunner:
         import httpx
         try:
             with httpx.Client(timeout=10) as client:
-                response = client.get("http://***REMOVED***:11434/api/tags")
+                response = client.get("http://192.168.50.135:11434/api/tags")
                 if response.status_code != 200:
                     self.log("LLaVA service not available, skipping visual tests", "WARNING")
                     return True
@@ -200,10 +200,10 @@ class TestRunner:
         self.log("Checking service availability...")
 
         services = {
-            "ComfyUI": "http://***REMOVED***:8188",
-            "Anime API": "http://***REMOVED***:8328/api/health",
-            "Echo API": "http://***REMOVED***:8309/api/echo/health",
-            "LLaVA": "http://***REMOVED***:11434/api/tags"
+            "ComfyUI": "http://192.168.50.135:8188",
+            "Anime API": "http://192.168.50.135:8328/api/health",
+            "Echo API": "http://192.168.50.135:8309/api/echo/health",
+            "LLaVA": "http://192.168.50.135:11434/api/tags"
         }
 
         status = {}

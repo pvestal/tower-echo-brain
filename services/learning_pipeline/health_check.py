@@ -136,7 +136,7 @@ class HealthChecker:
 
             # Test configuration
             connection_string = db_config.connection_string
-            localhost_check = 'localhost' in connection_string and '***REMOVED***' not in connection_string
+            localhost_check = 'localhost' in connection_string and '192.168.50.135' not in connection_string
 
             self.results['database'] = {
                 'healthy': True,  # Basic health if config is correct

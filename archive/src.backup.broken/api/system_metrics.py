@@ -21,7 +21,7 @@ DB_CONFIG = {
     "host": "localhost",
     "database": "tower_consolidated",
     "user": "patrick",
-    "password": "***REMOVED***"
+    "password": "tower_echo_brain_secret_key_2025"
 }
 
 @router.get("/api/echo/metrics/system")

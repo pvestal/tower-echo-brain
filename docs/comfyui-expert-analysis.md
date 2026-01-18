@@ -1,7 +1,7 @@
 # ComfyUI Expert Analysis - Patrick's Tower System
 **Analysis Date:** November 19, 2025
 **Analyst:** Claude Code (ComfyUI Expert)
-**System:** Tower (***REMOVED***) NVIDIA RTX 3060 12GB
+**System:** Tower (192.168.50.135) NVIDIA RTX 3060 12GB
 
 ## Executive Summary
 
@@ -200,7 +200,7 @@ Created in `/mnt/1TB-storage/ComfyUI/workflows/patrick_characters/`:
 1. **WebSocket Integration**
    ```javascript
    // Real-time progress monitoring
-   const ws = new WebSocket('ws://***REMOVED***:8188/ws');
+   const ws = new WebSocket('ws://192.168.50.135:8188/ws');
    ws.onmessage = (event) => {
      const data = JSON.parse(event.data);
      if (data.type === 'progress') {
@@ -212,7 +212,7 @@ Created in `/mnt/1TB-storage/ComfyUI/workflows/patrick_characters/`:
 2. **Polling Enhancement**
    ```bash
    # Improved status endpoint
-   curl -s http://***REMOVED***:8188/history/{prompt_id}
+   curl -s http://192.168.50.135:8188/history/{prompt_id}
    ```
 
 3. **Progress Calculation**

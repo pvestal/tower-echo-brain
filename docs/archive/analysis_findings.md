@@ -17,7 +17,7 @@
 ### The Ugly:
 1. **19,578 Python files** for ~50 file functionality
 2. **Dual table confusion** - conversations vs echo_unified_interactions
-3. **Connection string issues** - Using ***REMOVED*** instead of localhost
+3. **Connection string issues** - Using 192.168.50.135 instead of localhost
 4. **No active vector updates** - Collections exist but aren't growing
 
 ## 🧠 DEEP THINKING: What Echo Brain ACTUALLY Is
@@ -85,7 +85,7 @@ It's not thinking. It's logging with aspirations.
 
 ### 1. Fix Connection String (5 min)
 ```bash
-grep -r "***REMOVED***" /opt/tower-echo-brain
+grep -r "192.168.50.135" /opt/tower-echo-brain
 # Replace with "localhost" where appropriate
 ```
 

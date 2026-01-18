@@ -28,7 +28,7 @@ class EchoBrainIntegrationTest:
             "host": "localhost",
             "database": "echo_brain",
             "user": "patrick",
-            "password": "***REMOVED***"
+            "password": "tower_echo_brain_secret_key_2025"
         }
         self.test_results = {
             "total_tests": 0,

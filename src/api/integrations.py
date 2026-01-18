@@ -10,7 +10,7 @@ import json
 
 router = APIRouter(prefix="/api/integrations", tags=["integrations"])
 
-DATABASE_URL = "postgresql://patrick:***REMOVED***@localhost/tower_consolidated"
+DATABASE_URL = "postgresql://patrick:tower_echo_brain_secret_key_2025@localhost/tower_consolidated"
 
 @router.get("")
 async def list_integrations():

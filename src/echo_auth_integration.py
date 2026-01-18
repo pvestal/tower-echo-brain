@@ -27,7 +27,7 @@ class EchoAuthIntegration:
         # Local network
         if self.test_port('127.0.0.1', 8309):
             access_methods.append('localhost')
-        if self.test_port('***REMOVED***', 8309):
+        if self.test_port('192.168.50.135', 8309):
             access_methods.append('local_network')
             
         # Tailscale 
@@ -98,7 +98,7 @@ class EchoAuthIntegration:
         if 'tailscale' in self.network_mode:
             base_url = 'http://100.125.174.118'
         elif 'local_network' in self.network_mode:
-            base_url = 'http://***REMOVED***'
+            base_url = 'http://192.168.50.135'
         else:
             return {'error': 'No remote access configured'}
             

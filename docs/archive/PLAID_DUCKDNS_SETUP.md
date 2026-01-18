@@ -39,9 +39,9 @@ https://vestal-garcia.duckdns.org:8089/api/plaid/webhook/{session_id}
 
 ## 🔧 ROUTER PORT FORWARDING REQUIRED
 
-**Forward these ports to Tower (***REMOVED***):**
-- **8089** → ***REMOVED***:8089 (Plaid Auth Service)
-- **8090** → ***REMOVED***:8090 (Webhook Handler with MFA)
+**Forward these ports to Tower (192.168.50.135):**
+- **8089** → 192.168.50.135:8089 (Plaid Auth Service)
+- **8090** → 192.168.50.135:8090 (Webhook Handler with MFA)
 
 ## 🌐 PUBLIC ACCESS URLS
 

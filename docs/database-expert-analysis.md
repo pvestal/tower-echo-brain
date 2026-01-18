@@ -1,6 +1,6 @@
 # 🚨 DATABASE EXPERT ANALYSIS - ECHO BRAIN POSTGRESQL
 **Analysis Date:** November 19, 2025
-**Database:** echo_brain (***REMOVED***)
+**Database:** echo_brain (192.168.50.135)
 **Analyst:** Claude Code Database Expert
 **Status:** CRITICAL ISSUES IDENTIFIED
 
@@ -124,7 +124,7 @@ model_decisions:           8.5 MB (decision tracking)
 
 1. **Backup Database**
    ```bash
-   pg_dump -h ***REMOVED*** -U patrick echo_brain > /tmp/echo_brain_backup_$(date +%Y%m%d_%H%M%S).sql
+   pg_dump -h 192.168.50.135 -U patrick echo_brain > /tmp/echo_brain_backup_$(date +%Y%m%d_%H%M%S).sql
    ```
 
 2. **Execute Critical Cleanup**

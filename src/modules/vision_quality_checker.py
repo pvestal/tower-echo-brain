@@ -289,7 +289,7 @@ class EchoVisionIntegration:
     async def _compile_video(self, frames, project_name):
         """Compile frames into video"""
         import subprocess
-        output_path = f"***REMOVED***/{project_name}_quality.mp4"
+        output_path = f"/home/patrick/Videos/{project_name}_quality.mp4"
         
         # Create frame list
         with open("/tmp/quality_frames.txt", "w") as f:

@@ -49,7 +49,7 @@ class PersistentMemorySystem:
                 host=self.db_config.get('host', 'localhost'),
                 port=self.db_config.get('port', 5432),
                 user=self.db_config.get('user', 'patrick'),
-                password=self.db_config.get('password', '***REMOVED***'),
+                password=self.db_config.get('password', 'tower_echo_brain_secret_key_2025'),
                 database=self.db_config.get('database', 'echo_brain')
             )
             logger.info("Connected to persistent memory database")
@@ -345,7 +345,7 @@ async def test_persistent_memory():
     memory = PersistentMemorySystem({
         'host': 'localhost',
         'user': 'patrick',
-        'password': '***REMOVED***',
+        'password': 'tower_echo_brain_secret_key_2025',
         'database': 'echo_brain'
     })
 

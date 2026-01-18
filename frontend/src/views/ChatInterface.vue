@@ -244,11 +244,11 @@ const getRequestTypeLabel = (type) => {
 const getApiEndpoint = () => {
   switch (requestType.value) {
     case 'system_command':
-      return 'http://***REMOVED***:8309/api/echo/execute';
+      return 'http://192.168.50.135:8309/api/echo/execute';
     case 'collaboration':
-      return 'http://***REMOVED***:8309/api/echo/collaborate';
+      return 'http://192.168.50.135:8309/api/echo/collaborate';
     default:
-      return 'http://***REMOVED***:8309/api/echo/query';
+      return 'http://192.168.50.135:8309/api/echo/query';
   }
 }
 

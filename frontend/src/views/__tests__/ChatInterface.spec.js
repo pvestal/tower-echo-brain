@@ -70,7 +70,7 @@ describe('ChatInterface.vue', () => {
 
       // Verify API was called with correct payload
       expect(axios.post).toHaveBeenCalledWith(
-        'http://***REMOVED***:8309/api/echo/chat',
+        'http://192.168.50.135:8309/api/echo/chat',
         {
           query: 'Hello Echo',
           user_id: 'web_user',

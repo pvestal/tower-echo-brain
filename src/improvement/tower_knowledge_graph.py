@@ -37,7 +37,7 @@ class TowerKnowledgeGraph:
             host="localhost",
             database="echo_brain",
             user="patrick",
-            password="***REMOVED***"
+            password="tower_echo_brain_secret_key_2025"
         )
         self.redis = redis.Redis(host='localhost', port=6379, decode_responses=True)
         self.qdrant_url = "http://localhost:6333"

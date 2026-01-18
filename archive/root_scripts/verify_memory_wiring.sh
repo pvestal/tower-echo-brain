@@ -40,7 +40,7 @@ fi
 
 # Test 4: Database has entities column
 echo -n "Test 4: Database entities column... "
-if PGPASSWORD='***REMOVED***' psql -h localhost -U patrick -d echo_brain -t -c "SELECT column_name FROM information_schema.columns WHERE table_name='echo_conversations' AND column_name='entities_mentioned';" 2>/dev/null | grep -q "entities"; then
+if PGPASSWORD='tower_echo_brain_secret_key_2025' psql -h localhost -U patrick -d echo_brain -t -c "SELECT column_name FROM information_schema.columns WHERE table_name='echo_conversations' AND column_name='entities_mentioned';" 2>/dev/null | grep -q "entities"; then
     echo "✅ PASS"
     ((PASS++))
 else
@@ -89,7 +89,7 @@ else
 fi
 
 # Cleanup
-PGPASSWORD='***REMOVED***' psql -h localhost -U patrick -d echo_brain -c "DELETE FROM echo_conversations WHERE conversation_id IN ('verify_test', 'multitest_verify');" 2>/dev/null
+PGPASSWORD='tower_echo_brain_secret_key_2025' psql -h localhost -U patrick -d echo_brain -c "DELETE FROM echo_conversations WHERE conversation_id IN ('verify_test', 'multitest_verify');" 2>/dev/null
 
 echo ""
 echo "=========================================="

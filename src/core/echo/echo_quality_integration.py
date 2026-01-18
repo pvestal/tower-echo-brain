@@ -466,7 +466,7 @@ class EchoQualityIntegration:
         # Save to knowledge base
         async with aiohttp.ClientSession() as session:
             await session.post(
-                "https://***REMOVED***/api/kb/articles",
+                "https://192.168.50.135/api/kb/articles",
                 json={
                     "title": f"Quality Feedback: {quality.level.name}",
                     "content": json.dumps(feedback, indent=2),

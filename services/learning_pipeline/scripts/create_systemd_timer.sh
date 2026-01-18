@@ -45,7 +45,7 @@ User=patrick
 Group=patrick
 WorkingDirectory=/opt/tower-echo-brain/services/learning_pipeline
 Environment=PYTHONPATH=/opt/tower-echo-brain/services/learning_pipeline/src
-Environment=ECHO_BRAIN_DB_PASSWORD=***REMOVED***
+Environment=ECHO_BRAIN_DB_PASSWORD=tower_echo_brain_secret_key_2025
 ExecStart=/usr/bin/python3 $SCRIPT_PATH --config $CONFIG_PATH --log-level INFO
 StandardOutput=append:$LOG_PATH
 StandardError=append:$LOG_PATH
@@ -112,7 +112,7 @@ echo "Started at: $(date)"
 
 cd /opt/tower-echo-brain/services/learning_pipeline
 export PYTHONPATH=/opt/tower-echo-brain/services/learning_pipeline/src
-export ECHO_BRAIN_DB_PASSWORD=***REMOVED***
+export ECHO_BRAIN_DB_PASSWORD=tower_echo_brain_secret_key_2025
 
 python3 "$SCRIPT_PATH" --config "$CONFIG_PATH" --log-level INFO "$@"
 
@@ -138,7 +138,7 @@ echo "========================================"
 
 cd /opt/tower-echo-brain/services/learning_pipeline
 export PYTHONPATH=/opt/tower-echo-brain/services/learning_pipeline/src
-export ECHO_BRAIN_DB_PASSWORD=***REMOVED***
+export ECHO_BRAIN_DB_PASSWORD=tower_echo_brain_secret_key_2025
 
 # Check dependencies
 echo "Checking dependencies..."

@@ -3,7 +3,7 @@
 ## Overview
 This document provides comprehensive analysis of the Echo Brain system's database schemas and API endpoints, documenting the relationship between all 107 PostgreSQL tables and the various API routes.
 
-**Database**: `echo_brain` (PostgreSQL on ***REMOVED***:5432)
+**Database**: `echo_brain` (PostgreSQL on 192.168.50.135:5432)
 **User**: `patrick`
 **Total Tables**: 107 tables
 **Key Data Points**:
@@ -697,7 +697,7 @@ def _get_db_config_from_vault(self):
     return {
         "database": os.environ.get("DB_NAME", "echo_brain"),
         "user": os.environ.get("DB_USER", "patrick"),
-        "host": os.environ.get("DB_HOST", "***REMOVED***"),
+        "host": os.environ.get("DB_HOST", "192.168.50.135"),
         "password": os.environ.get("DB_PASSWORD"),  # Never hardcoded
         "port": os.environ.get("DB_PORT", 5432)
     }

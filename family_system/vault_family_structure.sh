@@ -6,7 +6,7 @@ echo "=================================="
 # This script sets up HashiCorp Vault for multi-user family secrets management
 
 export VAULT_ADDR='http://127.0.0.1:8200'
-export VAULT_TOKEN='***REMOVED***'
+export VAULT_TOKEN='hvs.FEQ0zs7Jcng6B5nmuwtTlZnM'
 
 # ================================
 # ENABLE ENGINES & AUTH METHODS

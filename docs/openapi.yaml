@@ -20,13 +20,13 @@ info:
   version: "1.0.0"
   contact:
     name: Echo Brain API Support
-    url: https://***REMOVED***/kb
+    url: https://192.168.50.135/kb
   license:
     name: MIT
 servers:
-  - url: https://***REMOVED***/api/echo
+  - url: https://192.168.50.135/api/echo
     description: Production Echo Brain API (HTTPS)
-  - url: http://***REMOVED***:8309/api/echo
+  - url: http://192.168.50.135:8309/api/echo
     description: Direct API Access (HTTP)
   - url: http://localhost:8309/api/echo
     description: Local Development

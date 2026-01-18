@@ -1,9 +1,9 @@
 # Echo Brain ↔ Tower Anime Production Integration Contract
 
 ## Echo Brain Server
-- **Host:** `***REMOVED***`
+- **Host:** `192.168.50.135`
 - **Port:** `8309`
-- **Base URL:** `http://***REMOVED***:8309`
+- **Base URL:** `http://192.168.50.135:8309`
 
 ---
 
@@ -166,7 +166,7 @@ from src.modules.generation.anime.anime_quality_orchestrator import AnimeQuality
 This path doesn't exist in current tower-anime-production structure.
 
 ### 4. Hardcoded IPs
-Multiple files reference `***REMOVED***` directly instead of using env vars.
+Multiple files reference `192.168.50.135` directly instead of using env vars.
 
 ---
 
@@ -176,7 +176,7 @@ Multiple files reference `***REMOVED***` directly instead of using env vars.
 ```python
 import httpx
 
-ECHO_BRAIN_URL = os.getenv("ECHO_BRAIN_URL", "http://***REMOVED***:8309")
+ECHO_BRAIN_URL = os.getenv("ECHO_BRAIN_URL", "http://192.168.50.135:8309")
 
 async def ask_echo_brain(prompt: str, conversation_id: str = None) -> dict:
     """Send query to Echo Brain for intelligent response"""
@@ -210,13 +210,13 @@ async def delegate_to_tower(task: str, model: str = "qwen2.5-coder:7b") -> dict:
 ## Test the Integration
 ```bash
 # Health check
-curl http://***REMOVED***:8309/api/echo/health
+curl http://192.168.50.135:8309/api/echo/health
 
 # Simple query
-curl -X POST http://***REMOVED***:8309/api/echo/chat \
+curl -X POST http://192.168.50.135:8309/api/echo/chat \
   -H "Content-Type: application/json" \
   -d '{"query": "What anime characters do you know about?", "user_id": "test"}'
 
 # Check capabilities
-curl http://***REMOVED***:8309/api/echo/delegate/capabilities
+curl http://192.168.50.135:8309/api/echo/delegate/capabilities
 ```

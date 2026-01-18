@@ -153,7 +153,7 @@ import { ref, onMounted } from 'vue'
 import axios from 'axios'
 
 // Configure axios base URL
-const API_BASE = 'http://***REMOVED***:8309'
+const API_BASE = 'http://192.168.50.135:8309'
 
 // Reactive state with default values
 const metrics = ref({
@@ -169,7 +169,7 @@ const services = ref([
   {
     name: 'Echo Brain',
     description: 'Main AI orchestration service',
-    endpoint: 'http://***REMOVED***:8309/api/echo/health',
+    endpoint: 'http://192.168.50.135:8309/api/echo/health',
     online: false
   },
   {
@@ -181,7 +181,7 @@ const services = ref([
   {
     name: 'ComfyUI',
     description: 'Image/video generation',
-    endpoint: 'http://***REMOVED***:8188/',
+    endpoint: 'http://192.168.50.135:8188/',
     online: false
   }
 ])

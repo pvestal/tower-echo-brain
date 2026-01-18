@@ -16,7 +16,7 @@ on:
         - production
 
 env:
-  TOWER_HOST: '***REMOVED***'
+  TOWER_HOST: '192.168.50.135'
   SERVICE_NAME: 'tower-echo-brain'
   SERVICE_PATH: '/opt/tower-echo-brain'
 

@@ -19,7 +19,7 @@ class GoogleTakeoutManager:
         self.vault_addr = "http://127.0.0.1:8200"
         self.download_path = Path("/opt/tower-echo-brain/data/takeout")
         self.old_takeout = Path("/mnt/10TB2/Google_Takeout_2025")
-        self.db_url = "postgresql://patrick:***REMOVED***@localhost/echo_brain"
+        self.db_url = "postgresql://patrick:tower_echo_brain_secret_key_2025@localhost/echo_brain"
 
         # Ensure paths exist
         self.download_path.mkdir(parents=True, exist_ok=True)

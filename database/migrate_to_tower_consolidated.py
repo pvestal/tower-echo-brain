@@ -21,7 +21,7 @@ class EchoBrainDatabaseMigration:
             "host": "localhost",
             "database": "tower_consolidated",
             "user": "patrick",
-            "password": "***REMOVED***",
+            "password": "tower_echo_brain_secret_key_2025",
             "port": 5432
         }
 
@@ -144,7 +144,7 @@ class EchoBrainDatabaseMigration:
         env_content = f"""# Echo Brain Database Configuration
 DB_NAME=tower_consolidated
 DB_USER=patrick
-DB_PASSWORD=***REMOVED***
+DB_PASSWORD=tower_echo_brain_secret_key_2025
 DB_HOST=localhost
 DB_PORT=5432
 

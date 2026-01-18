@@ -12,7 +12,7 @@ DB_CONFIG = {
     'host': 'localhost',
     'database': 'tower_consolidated',
     'user': 'patrick',
-    'password': '***REMOVED***'
+    'password': 'tower_echo_brain_secret_key_2025'
 }
 
 class CodebaseIndexer:

@@ -37,7 +37,7 @@ class EchoRemoteAuthManager:
         """Detect what network mode we're in"""
         try:
             # Check if we're on home network
-            if self.can_reach_ip("***REMOVED***", 8309, timeout=2):
+            if self.can_reach_ip("192.168.50.135", 8309, timeout=2):
                 return "home_network"
 
             # Check if Tower is reachable via Tailscale
@@ -93,7 +93,7 @@ class EchoRemoteAuthManager:
         # These would be your external domain/IP with port forwarding
         external_hosts = [
             ("vestal-garcia.duckdns.org", 8309),
-            ("***REMOVED***", 8309),  # If you have port forwarding
+            ("192.168.50.135", 8309),  # If you have port forwarding
         ]
 
         for host, port in external_hosts:
@@ -105,11 +105,11 @@ class EchoRemoteAuthManager:
         """Get base URLs based on network mode"""
         if self.network_mode == "home_network":
             return {
-                "echo": "http://***REMOVED***:8309",
-                "auth": "http://***REMOVED***:8088",
-                "apple_music": "http://***REMOVED***:8315",
-                "plaid": "http://***REMOVED***:8089",
-                "vault": "http://***REMOVED***:8200"
+                "echo": "http://192.168.50.135:8309",
+                "auth": "http://192.168.50.135:8088",
+                "apple_music": "http://192.168.50.135:8315",
+                "plaid": "http://192.168.50.135:8089",
+                "vault": "http://192.168.50.135:8200"
             }
         elif self.network_mode == "tailscale_vpn":
             # Get actual Tailscale IP
@@ -148,9 +148,9 @@ class EchoRemoteAuthManager:
                     parts = line.split()
                     if len(parts) > 0:
                         return parts[0]
-            return "***REMOVED***"  # fallback
+            return "192.168.50.135"  # fallback
         except Exception:
-            return "***REMOVED***"
+            return "192.168.50.135"
 
     def load_credentials(self):
         """Load credentials based on network access"""
@@ -173,7 +173,7 @@ class EchoRemoteAuthManager:
             if self.network_mode == "tailscale_vpn":
                 tower_ip = self.get_tailscale_tower_ip()
             else:
-                tower_ip = "***REMOVED***"
+                tower_ip = "192.168.50.135"
 
             ssh.connect(tower_ip, username=os.getenv("TOWER_USER", "patrick"))
 

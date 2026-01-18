@@ -35,7 +35,7 @@ class ApprovalMode(Enum):
 class AutonomousAuthorization:
     """Authorization system for Echo's autonomous actions"""
 
-    def __init__(self, db_url: str = "postgresql://patrick:***REMOVED***@localhost/echo_brain"):
+    def __init__(self, db_url: str = "postgresql://patrick:tower_echo_brain_secret_key_2025@localhost/echo_brain"):
         self.db_url = db_url
         self.pool = None
 

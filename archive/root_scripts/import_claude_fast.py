@@ -17,7 +17,7 @@ class ClaudeImporter:
             host="localhost",
             database="echo_brain",
             user="patrick",
-            password="***REMOVED***"
+            password="tower_echo_brain_secret_key_2025"
         )
         self.cur = self.conn.cursor()
         self.claude_dir = Path("/home/patrick/.claude/conversations")
