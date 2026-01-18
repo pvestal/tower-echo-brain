@@ -12,7 +12,7 @@ import json
 
 router = APIRouter(prefix="/api/preferences", tags=["preferences"])
 
-DATABASE_URL = "postgresql://patrick:tower_echo_brain_secret_key_2025@localhost/tower_consolidated"
+DATABASE_URL = "postgresql://patrick:RP78eIrW7cI2jYvL5akt1yurE@localhost/tower_consolidated"
 
 class PreferenceCreate(BaseModel):
     category: str

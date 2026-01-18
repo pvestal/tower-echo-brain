@@ -124,7 +124,7 @@ def test_real_execution():
         'host': '192.168.50.135',
         'database': 'echo_brain',
         'user': 'patrick',
-        'password': 'tower_echo_brain_secret_key_2025'
+        'password': 'RP78eIrW7cI2jYvL5akt1yurE'
     }
 
     executor = SafeSQLExecutor(config)

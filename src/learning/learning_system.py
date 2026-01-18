@@ -32,7 +32,7 @@ class LearningSystem:
     """Actually implements learning from Patrick's data"""
 
     def __init__(self):
-        self.db_url = "postgresql://patrick:tower_echo_brain_secret_key_2025@localhost/echo_brain"
+        self.db_url = "postgresql://patrick:RP78eIrW7cI2jYvL5akt1yurE@localhost/echo_brain"
         self.photos_db = "/opt/tower-echo-brain/photos.db"
         self.models_dir = Path("/opt/tower-echo-brain/models")
         self.models_dir.mkdir(exist_ok=True)

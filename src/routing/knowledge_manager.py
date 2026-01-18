@@ -123,7 +123,9 @@ class KnowledgeManager:
             redis_config: Redis connection parameters (optional)
             kb_file_path: Path to SQLite knowledge base file (optional)
         """
-        self.db_config = db_config
+        # Override with connection pool config to ensure consistency
+        from src.db.connection_pool import get_database_config
+        self.db_config = get_database_config()
         self.redis_config = redis_config or {}
         self.kb_file_path = kb_file_path or "/tmp/echo_kb.sqlite"
 
@@ -152,13 +154,14 @@ class KnowledgeManager:
     def _initialize_storage(self):
         """Initialize storage systems"""
         try:
-            # Initialize PostgreSQL
-            conn = psycopg2.connect(**self.db_config)
-            conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
-            cursor = conn.cursor()
+            # Initialize PostgreSQL using connection pool
+            from src.db.connection_pool import SyncConnection
+            with SyncConnection() as conn:
+                conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+                cursor = conn.cursor()
 
-            # Knowledge items table
-            cursor.execute("""
+                # Knowledge items table
+                cursor.execute("""
                 CREATE TABLE IF NOT EXISTS knowledge_items (
                     item_id VARCHAR(255) PRIMARY KEY,
                     knowledge_type VARCHAR(50) NOT NULL,

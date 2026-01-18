@@ -18,7 +18,7 @@ def extract_kb_articles():
         host="localhost",
         database="knowledge_base",
         user="patrick",
-        password="tower_echo_brain_secret_key_2025"
+        password="RP78eIrW7cI2jYvL5akt1yurE"
     )
     cursor = conn.cursor()
 
@@ -55,7 +55,7 @@ def extract_claude_conversations():
         host="localhost",
         database="echo_brain",
         user="patrick",
-        password="tower_echo_brain_secret_key_2025"
+        password="RP78eIrW7cI2jYvL5akt1yurE"
     )
     cursor = conn.cursor()
 
@@ -149,7 +149,7 @@ def extract_work_projects():
         host="localhost",
         database="echo_brain",
         user="patrick",
-        password="tower_echo_brain_secret_key_2025"
+        password="RP78eIrW7cI2jYvL5akt1yurE"
     )
     cursor = conn.cursor()
 

@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 class KnowledgeGraphBuilder:
     def __init__(self):
-        self.db_url = "postgresql://patrick:tower_echo_brain_secret_key_2025@localhost/echo_brain"
+        self.db_url = "postgresql://patrick:RP78eIrW7cI2jYvL5akt1yurE@localhost/echo_brain"
 
     async def build_relationship_graph(self, conn) -> Dict[str, Any]:
         """Build relationships between people, locations, and events"""
