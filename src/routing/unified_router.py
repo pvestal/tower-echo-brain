@@ -37,7 +37,10 @@ class UnifiedModelRouter:
 
         # CHECK FOR REASONING NEEDS FIRST (HIGHEST PRIORITY)
         try:
-            from src.reasoning.deepseek_reasoner import should_use_reasoning
+            import sys
+            if '/opt/tower-echo-brain/src' not in sys.path:
+                sys.path.insert(0, '/opt/tower-echo-brain/src')
+            from reasoning.deepseek_reasoner import should_use_reasoning
             if should_use_reasoning(query):
                 return ModelSelection(
                     model_name=self.rules[ModelTier.REASONING],

@@ -43,35 +43,51 @@ def should_use_reasoning(query: str) -> bool:
 
 def parse_think_tags(response: str) -> Tuple[List[str], str]:
     """
-    Extract <think>...</think> content and final answer.
-    Returns (thinking_steps, final_answer)
+    Extract thinking steps from response.
+    Handles both <think> tags AND numbered/bulleted reasoning.
     """
-    # Find all <think> blocks
+    thinking_steps = []
+    final_answer = response
+
+    # Method 1: Extract <think> tags
     think_pattern = r'<think>(.*?)</think>'
     think_matches = re.findall(think_pattern, response, re.DOTALL)
 
-    # Extract thinking steps
-    thinking_steps = []
-    for match in think_matches:
-        # Split on newlines and clean up
-        steps = [s.strip() for s in match.split('\n') if s.strip()]
-        thinking_steps.extend(steps)
-
-    # Get final answer (everything after last </think> or whole response if no tags)
-    if '</think>' in response:
+    if think_matches:
+        for match in think_matches:
+            steps = [s.strip() for s in match.split('\n') if s.strip()]
+            thinking_steps.extend(steps)
         final_answer = response.split('</think>')[-1].strip()
     else:
-        # If no think tags, treat entire response as answer
-        final_answer = response.strip()
+        # Method 2: Extract numbered steps (1. 2. 3. or Step 1: Step 2:)
+        step_patterns = [
+            r'(?:^|\n)\s*(\d+)\.\s*(.+?)(?=\n\s*\d+\.|\n\n|$)',  # "1. First..."
+            r'(?:^|\n)\s*Step\s*(\d+)[:\.]?\s*(.+?)(?=Step\s*\d+|\n\n|$)',  # "Step 1: First..."
+            r'(?:^|\n)\s*[-•]\s*(.+?)(?=\n\s*[-•]|\n\n|$)',  # "- First..." or "• First..."
+        ]
 
-        # But still try to extract logical steps if present
-        if any(marker in response for marker in ['Step 1:', 'First,', '1.', '2.', '3.']):
-            # Try to parse numbered or marked steps
-            lines = response.split('\n')
-            for line in lines:
-                line = line.strip()
-                if re.match(r'^(Step \d+:|^\d+\.|^First,|^Second,|^Then,)', line):
-                    thinking_steps.append(line)
+        for pattern in step_patterns:
+            matches = re.findall(pattern, response, re.DOTALL | re.IGNORECASE)
+            if matches:
+                for match in matches:
+                    if isinstance(match, tuple):
+                        step_text = match[-1].strip()  # Get the text part
+                    else:
+                        step_text = match.strip()
+                    if step_text and len(step_text) > 10:
+                        thinking_steps.append(step_text)
+                break
+
+        # Method 3: If still no steps, split on sentence boundaries for long responses
+        if not thinking_steps and len(response) > 200:
+            sentences = re.split(r'(?<=[.!?])\s+', response)
+            # Take first few sentences as "thinking", rest as answer
+            if len(sentences) > 3:
+                thinking_steps = sentences[:len(sentences)//2]
+                final_answer = ' '.join(sentences[len(sentences)//2:])
+
+    # Clean up steps
+    thinking_steps = [s[:200] for s in thinking_steps if s and len(s) > 5]
 
     return thinking_steps, final_answer
 
@@ -80,14 +96,15 @@ async def execute_reasoning(query: str, model: str = "deepseek-r1:8b") -> Reason
     Execute reasoning query and parse structured response.
     """
     # Build reasoning-optimized prompt
-    prompt = f"""<think>
-I need to carefully analyze this query and think through it step by step.
-Let me break down what's being asked and work through it methodically.
-</think>
+    prompt = f"""You are a careful analytical thinker. Break down this problem step by step.
 
-Question: {query}
+Format your response as:
+Step 1: [first consideration]
+Step 2: [next consideration]
+...
+Final Answer: [your conclusion]
 
-Please think through this step by step, showing your reasoning process, then provide your final answer."""
+Question: {query}"""
 
     try:
         async with httpx.AsyncClient(timeout=120.0) as client:
