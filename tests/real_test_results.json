@@ -1,15 +1,15 @@
 {
-  "timestamp": "2026-01-18T22:41:15.116063",
+  "timestamp": "2026-01-18T22:47:39.829004",
   "total_tests": 8,
-  "passed": 3,
-  "failed": 5,
-  "success_rate": 0.375,
+  "passed": 8,
+  "failed": 0,
+  "success_rate": 1.0,
   "test_results": [
     {
       "test": "Health Endpoint",
       "passed": true,
       "is_healthy": true,
-      "uptime_seconds": 1070,
+      "uptime_seconds": 1457,
       "version": "1.0.0"
     },
     {
@@ -19,53 +19,53 @@
       "has_recent_messages": true,
       "has_stats": true,
       "message_count": 5,
-      "conversations_24h": 75
+      "conversations_24h": 84
+    },
+    {
+      "test": "Service Restart (Real)",
+      "passed": true,
+      "response_claimed_success": true,
+      "service_actually_restarted": true,
+      "database_logged": true,
+      "log_count": 1,
+      "service_timestamp": "ActiveEnterTimestamp=Sun 2026-01-18 22:47:34 UTC",
+      "response_preview": "\u2705 Successfully restarted tower-dashboard. The service should now be operational."
     },
     {
       "test": "System Diagnosis (Real)",
-      "passed": false,
+      "passed": true,
       "has_response": true,
-      "database_logged": false,
-      "log_count": 0,
+      "database_logged": true,
+      "log_count": 1,
       "capability_used": "autonomous_repair",
       "response_preview": "\ud83d\udcca System Diagnosis Complete:\n\u2705 Active Services (4): tower-dashboard, tower-auth, tower-echo-brain, t"
     },
     {
-      "test": "Service Restart (Real)",
-      "passed": false,
-      "response_claimed_success": true,
-      "service_actually_restarted": true,
-      "database_logged": false,
-      "log_count": 0,
-      "service_timestamp": "ActiveEnterTimestamp=Sun 2026-01-18 22:41:07 UTC",
-      "response_preview": "\u2705 Successfully restarted tower-dashboard. The service should now be operational."
+      "test": "Send Notification (Real)",
+      "passed": true,
+      "notification_sent": true,
+      "database_logged": true,
+      "log_count": 1,
+      "intent_detected": "action_execution",
+      "response_preview": "\ud83d\udce2 Notification sent successfully via 1 channel(s)."
     },
     {
       "test": "Service Monitoring (Real)",
-      "passed": false,
+      "passed": true,
       "has_response": true,
-      "database_logged": false,
-      "log_count": 0,
+      "database_logged": true,
+      "log_count": 1,
       "intent": "action_execution",
       "response_length": 53,
       "response_preview": "\u274c Failed to execute service monitoring: Unknown error"
     },
     {
-      "test": "Send Notification (Real)",
-      "passed": false,
-      "notification_sent": true,
-      "database_logged": false,
-      "log_count": 0,
-      "intent_detected": "action_execution",
-      "response_preview": "\ud83d\udce2 Notification sent successfully via 1 channel(s)."
-    },
-    {
       "test": "Conversation Memory",
-      "passed": false,
+      "passed": true,
       "has_memory": true,
-      "database_entries": 0,
+      "database_entries": 2,
       "response1_preview": "Can you tell me more about what you're trying to a",
-      "response2_preview": "Your name is TestUser. How else can I assist you t"
+      "response2_preview": "Your name is TestUser. How can I assist you furthe"
     },
     {
       "test": "Intent Classification",
