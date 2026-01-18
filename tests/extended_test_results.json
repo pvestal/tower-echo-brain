@@ -1,0 +1,102 @@
+{
+  "timestamp": "2026-01-18T22:50:03.695288",
+  "test_type": "extended",
+  "total_tests": 12,
+  "passed": 6,
+  "failed": 6,
+  "success_rate": 0.5,
+  "test_results": [
+    {
+      "test": "Delegation System",
+      "passed": false,
+      "endpoint_exists": false,
+      "status_code": 404
+    },
+    {
+      "test": "Vault Integration",
+      "passed": false,
+      "endpoint_exists": false,
+      "auth_required": false,
+      "status_code": 404
+    },
+    {
+      "test": "Solutions API",
+      "passed": false,
+      "endpoint_exists": false,
+      "status_code": 404
+    },
+    {
+      "test": "Knowledge Management API",
+      "passed": false,
+      "endpoint_exists": false,
+      "can_read": false,
+      "can_create": false,
+      "status_code": 404
+    },
+    {
+      "test": "Git Operations",
+      "passed": true,
+      "endpoint_works": true,
+      "has_commit_info": false,
+      "has_branch_info": true,
+      "status_code": 200
+    },
+    {
+      "test": "Agent Coordination",
+      "passed": true,
+      "coordination_endpoint": true,
+      "theater_endpoint": true,
+      "coord_status": 200,
+      "theater_status": 200
+    },
+    {
+      "test": "Integration Availability",
+      "passed": true,
+      "integrations": {
+        "google_calendar": false,
+        "home_assistant": false,
+        "telegram": false,
+        "notifications": true
+      },
+      "total_available": 1,
+      "total_checked": 4
+    },
+    {
+      "test": "Preferences Management API",
+      "passed": true,
+      "endpoint_exists": true,
+      "templates_available": false,
+      "status_code": 500
+    },
+    {
+      "test": "Performance Under Load",
+      "passed": true,
+      "success_rate": 1.0,
+      "average_response_time": 0.07417337894439698,
+      "total_time": 0.7417337894439697,
+      "requests_sent": 10,
+      "successful_responses": 10
+    },
+    {
+      "test": "Error Recovery",
+      "passed": false,
+      "handles_errors": false,
+      "recovers_properly": true,
+      "error_response_preview": "What would you like me to help you with today?",
+      "recovery_response_preview": "Based on the current context, I am operational and here to help. Let me check the status of all serv"
+    },
+    {
+      "test": "Concurrent Capability Execution",
+      "passed": true,
+      "successful_requests": 3,
+      "total_requests": 3,
+      "execution_time": 3.8537073135375977,
+      "is_concurrent": true
+    },
+    {
+      "test": "Multi-Turn Conversation",
+      "passed": false,
+      "error": "connection to server at \"localhost\" (127.0.0.1), port 5432 failed: FATAL:  remaining connection slots are reserved for roles with the SUPERUSER attribute\n"
+    }
+  ]
+}

@@ -75,7 +75,7 @@ class RealEchoBrainTests:
 
             # Check echo_unified_interactions table
             cursor.execute("""
-                SELECT COUNT(*), MAX(created_at)
+                SELECT COUNT(*), MAX(timestamp)
                 FROM echo_unified_interactions
                 WHERE conversation_id = %s
             """, (conversation_id,))
