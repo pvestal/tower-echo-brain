@@ -13,7 +13,7 @@ import sys
 sys.path.insert(0, '/opt/tower-echo-brain')
 from src.services.embedding_service import create_embedding_service
 
-router = APIRouter(prefix="/api/knowledge", tags=["knowledge"])
+router = APIRouter(tags=["knowledge"])
 
 DATABASE_URL = "postgresql://patrick:RP78eIrW7cI2jYvL5akt1yurE@localhost/tower_consolidated"
 QDRANT_URL = "http://localhost:6333"

@@ -8,7 +8,7 @@ from datetime import datetime
 import asyncpg
 import json
 
-router = APIRouter(prefix="/api/integrations", tags=["integrations"])
+router = APIRouter(tags=["integrations"])
 
 DATABASE_URL = "postgresql://patrick:RP78eIrW7cI2jYvL5akt1yurE@localhost/tower_consolidated"
 

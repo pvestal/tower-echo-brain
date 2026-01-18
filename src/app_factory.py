@@ -271,22 +271,22 @@ def create_app() -> FastAPI:
     # app.include_router(improvement_router, prefix="/api/echo", tags=["improvement"])
     app.include_router(delegation_router, prefix="/api/echo", tags=["delegation"])
     app.include_router(codebase_router, tags=["codebase"])
-    app.include_router(solutions_router, tags=["solutions"])
+    app.include_router(solutions_router, prefix="", tags=["solutions"])  # Solutions already has /api/echo prefix
     app.include_router(agents_router, tags=["agents"])
 
     # Personal Dashboard APIs
     if dashboard_available:
         if knowledge_router:
-            app.include_router(knowledge_router, tags=["knowledge"])
+            app.include_router(knowledge_router, prefix="/api/knowledge", tags=["knowledge"])
             print("✅ Knowledge API routes added at /api/knowledge/*")
         if preferences_router:
-            app.include_router(preferences_router, tags=["preferences"])
+            app.include_router(preferences_router, prefix="/api/preferences", tags=["preferences"])
             print("✅ Preferences API routes added at /api/preferences/*")
         if vault_router:
-            app.include_router(vault_router, tags=["vault"])
+            app.include_router(vault_router, prefix="/api/vault", tags=["vault"])
             print("✅ Vault API routes added at /api/vault/*")
         if integrations_router:
-            app.include_router(integrations_router, tags=["integrations"])
+            app.include_router(integrations_router, prefix="/api/integrations", tags=["integrations"])
             print("✅ Integrations API routes added at /api/integrations/*")
 
     # Training status router
