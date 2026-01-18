@@ -11,7 +11,7 @@ import asyncpg
 import httpx
 from datetime import datetime
 
-router = APIRouter(prefix="/api/vault", tags=["vault"])
+router = APIRouter(tags=["vault"])
 
 DATABASE_URL = "postgresql://patrick:RP78eIrW7cI2jYvL5akt1yurE@localhost/tower_consolidated"
 

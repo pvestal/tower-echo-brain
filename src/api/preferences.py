@@ -10,7 +10,7 @@ from datetime import datetime
 import asyncpg
 import json
 
-router = APIRouter(prefix="/api/preferences", tags=["preferences"])
+router = APIRouter(tags=["preferences"])
 
 DATABASE_URL = "postgresql://patrick:RP78eIrW7cI2jYvL5akt1yurE@localhost/tower_consolidated"
 

@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-01-18T22:50:03.695288",
+  "timestamp": "2026-01-18T23:02:24.695491",
   "test_type": "extended",
   "total_tests": 12,
   "passed": 6,
@@ -65,15 +65,23 @@
       "test": "Preferences Management API",
       "passed": true,
       "endpoint_exists": true,
-      "templates_available": false,
-      "status_code": 500
+      "templates_available": true,
+      "status_code": 200
+    },
+    {
+      "test": "Concurrent Capability Execution",
+      "passed": true,
+      "successful_requests": 3,
+      "total_requests": 3,
+      "execution_time": 4.009169340133667,
+      "is_concurrent": true
     },
     {
       "test": "Performance Under Load",
       "passed": true,
       "success_rate": 1.0,
-      "average_response_time": 0.07417337894439698,
-      "total_time": 0.7417337894439697,
+      "average_response_time": 0.5051036596298217,
+      "total_time": 5.051036596298218,
       "requests_sent": 10,
       "successful_responses": 10
     },
@@ -83,15 +91,7 @@
       "handles_errors": false,
       "recovers_properly": true,
       "error_response_preview": "What would you like me to help you with today?",
-      "recovery_response_preview": "Based on the current context, I am operational and here to help. Let me check the status of all serv"
-    },
-    {
-      "test": "Concurrent Capability Execution",
-      "passed": true,
-      "successful_requests": 3,
-      "total_requests": 3,
-      "execution_time": 3.8537073135375977,
-      "is_concurrent": true
+      "recovery_response_preview": "Based on the current context provided:\n\n- Echo Brain (8309) Status: running\n- Knowledge Base (8307) "
     },
     {
       "test": "Multi-Turn Conversation",
