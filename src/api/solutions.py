@@ -12,7 +12,7 @@ DB_CONFIG = {
     'host': 'localhost',
     'database': 'tower_consolidated',
     'user': 'patrick',
-    'password': 'tower_echo_brain_secret_key_2025'
+    'password': 'RP78eIrW7cI2jYvL5akt1yurE'
 }
 
 @router.get("/api/echo/solutions/search")

@@ -46,7 +46,7 @@ class UnifiedModelRouter:
             'host': 'localhost',
             'database': 'tower_consolidated',
             'user': 'patrick',
-            'password': 'tower_echo_brain_secret_key_2025'
+            'password': 'RP78eIrW7cI2jYvL5akt1yurE'
         }
 
         # Fallback mappings (used if database is unavailable)

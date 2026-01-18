@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 class TakeoutBatchProcessor:
     def __init__(self):
-        self.db_url = "postgresql://patrick:tower_echo_brain_secret_key_2025@localhost/echo_brain"
+        self.db_url = "postgresql://patrick:RP78eIrW7cI2jYvL5akt1yurE@localhost/echo_brain"
         self.takeout_base = Path("/mnt/10TB2/Google_Takeout_2025/Takeout")
         self.mbox_path = self.takeout_base / "Mail" / "All mail Including Spam and Trash.mbox"
         self.photos_path = self.takeout_base / "Google Photos"

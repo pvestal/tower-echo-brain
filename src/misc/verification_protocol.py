@@ -16,7 +16,7 @@ class VerificationProtocol:
             "host": "localhost",
             "database": "echo_brain",
             "user": "patrick",
-            "password": "tower_echo_brain_secret_key_2025"
+            "password": "RP78eIrW7cI2jYvL5akt1yurE"
         }
 
     async def verify_conversation_persistence(self) -> bool:

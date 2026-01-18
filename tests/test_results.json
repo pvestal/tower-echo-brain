@@ -1,0 +1,112 @@
+{
+  "total_tests": 6,
+  "passed": 6,
+  "failed": 0,
+  "success_rate": 100.0,
+  "test_results": [
+    {
+      "test_name": "Service Restart Capability",
+      "success": true,
+      "validations": {
+        "response_received": true,
+        "action_taken": true,
+        "service_restarted": true,
+        "service_active": true,
+        "database_logged": true,
+        "logs_show_execution": true
+      },
+      "response": "\u2705 Successfully restarted tower-dashboard. The service should now be operational.",
+      "conversation_id": "restart_test_1768775080",
+      "timestamp": "2026-01-18T22:24:44.022085"
+    },
+    {
+      "test_name": "System Diagnosis Capability",
+      "success": true,
+      "validations": {
+        "response_received": true,
+        "action_taken": true,
+        "contains_service_status": true,
+        "lists_services": true,
+        "database_logged": true,
+        "logs_show_execution": true
+      },
+      "response": "\ud83d\udcca System Diagnosis Complete:\n\u2705 Active Services (4): tower-dashboard, tower-auth, tower-echo-brain, tower-anime-production\n",
+      "conversation_id": "diagnosis_test_1768775084",
+      "timestamp": "2026-01-18T22:24:44.482010"
+    },
+    {
+      "test_name": "Notification Capability",
+      "success": true,
+      "validations": {
+        "response_received": true,
+        "action_taken": true,
+        "success_message": true,
+        "database_logged": true,
+        "logs_show_execution": true
+      },
+      "response": "\ud83d\udce2 Notification sent successfully via 1 channel(s).",
+      "conversation_id": "notify_test_1768775084",
+      "timestamp": "2026-01-18T22:24:44.811422"
+    },
+    {
+      "test_name": "Non-Capability Query Handling",
+      "success": true,
+      "validations": {
+        "response_received": true,
+        "no_action_taken": true,
+        "normal_response": true,
+        "database_logged": true,
+        "no_capability_execution": true
+      },
+      "response": "I'm sorry, but I don't have information about current weather conditions as it's not part of the ser",
+      "conversation_id": "normal_test_1768775084",
+      "timestamp": "2026-01-18T22:24:46.299119"
+    },
+    {
+      "test_name": "Database Persistence",
+      "success": true,
+      "validations": {
+        "all_queries_logged": true,
+        "queries_match": true,
+        "responses_exist": true,
+        "model_recorded": true,
+        "intent_classified": true
+      },
+      "conversation_id": "persist_test_1768775086",
+      "interactions_count": 3,
+      "timestamp": "2026-01-18T22:24:51.235708"
+    },
+    {
+      "test_name": "Capability Performance",
+      "success": true,
+      "validations": {
+        "all_under_5_seconds": true,
+        "capabilities_under_3_seconds": true,
+        "api_times_reported": true
+      },
+      "performance_metrics": [
+        {
+          "query_type": "diagnosis",
+          "total_time": 0.02055215835571289,
+          "api_time": 0.009753227233886719,
+          "overhead": 0.010798931121826172
+        },
+        {
+          "query_type": "notification",
+          "total_time": 0.30002927780151367,
+          "api_time": 0.2890632152557373,
+          "overhead": 0.010966062545776367
+        },
+        {
+          "query_type": "normal_query",
+          "total_time": 0.821662425994873,
+          "api_time": 0.7720568180084229,
+          "overhead": 0.049605607986450195
+        }
+      ],
+      "average_time": 0.3807479540506999,
+      "timestamp": "2026-01-18T22:24:52.378051"
+    }
+  ],
+  "timestamp": "2026-01-18T22:24:52.378290"
+}

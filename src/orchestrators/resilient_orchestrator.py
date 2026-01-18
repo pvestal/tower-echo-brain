@@ -847,6 +847,65 @@ class ResilientOrchestrator:
                 "fallback": "Using cached music or simple generation"
             }
 
+    async def check_all_services(self) -> Dict:
+        """Check status of all Tower services - MISSING METHOD FIXED"""
+        service_map = {
+            "echo_brain": "http://localhost:8309",
+            "dashboard": "http://localhost:8080",
+            "anime_production": "http://localhost:8328",
+            "comfyui": "http://localhost:8188",
+            "voice": "http://localhost:8312",
+            "music": "http://localhost:8308",
+            "kb": "http://localhost:8307",
+            "auth": "http://localhost:8088"
+        }
+
+        results = {}
+        for service_name, url in service_map.items():
+            try:
+                async with aiohttp.ClientSession() as session:
+                    # Try health endpoint first, fallback to root
+                    health_endpoints = ["/health", "/api/health", "/"]
+                    service_healthy = False
+
+                    for endpoint in health_endpoints:
+                        try:
+                            async with session.get(f"{url}{endpoint}", timeout=3) as response:
+                                if response.status == 200:
+                                    service_healthy = True
+                                    break
+                        except:
+                            continue
+
+                    results[service_name] = {
+                        "status": "running" if service_healthy else "down",
+                        "url": url,
+                        "circuit_state": self.circuit_breakers.get(service_name, CircuitBreaker()).state
+                    }
+
+            except Exception as e:
+                results[service_name] = {
+                    "status": "error",
+                    "url": url,
+                    "error": str(e)
+                }
+
+        # Count healthy services
+        healthy_count = sum(1 for s in results.values() if s.get("status") == "running")
+        total_count = len(results)
+
+        return {
+            "services": results,
+            "summary": {
+                "total": total_count,
+                "healthy": healthy_count,
+                "unhealthy": total_count - healthy_count,
+                "health_rate": (healthy_count / total_count) * 100 if total_count > 0 else 0
+            },
+            "timestamp": datetime.now().isoformat(),
+            "status": "healthy" if healthy_count > total_count * 0.6 else "degraded"
+        }
+
     async def get_service_status(self, service: str) -> Dict:
         """Get status of a specific service"""
         service_map = {

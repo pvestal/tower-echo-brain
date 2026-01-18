@@ -32,7 +32,7 @@ class BulletproofEchoVerifier:
             "host": "localhost",
             "database": "echo_brain",
             "user": "patrick",
-            "password": "tower_echo_brain_secret_key_2025"
+            "password": "RP78eIrW7cI2jYvL5akt1yurE"
         }
 
     async def test_claim_1_indefinite_memory(self):

@@ -217,6 +217,85 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
     # Add to user's conversation history
     await user_manager.add_conversation(username, "user", request.query)
 
+    # ========================================
+    # CAPABILITY COORDINATOR - CHECK FOR ACTION REQUESTS
+    # ========================================
+    logger.info(f"🔍 CHECKING CAPABILITY COORDINATOR for query: {original_query[:50]}...")
+    try:
+        from src.capabilities.echo_capability_coordinator import get_capability_coordinator
+        capability_coordinator = get_capability_coordinator()
+        logger.info(f"📋 Capability coordinator instance: {capability_coordinator}")
+
+        if capability_coordinator:
+            logger.info(f"🎯 Processing request through capability coordinator...")
+            should_execute, execution_result = await capability_coordinator.process_request(
+                original_query, username
+            )
+            logger.info(f"📊 Capability check result - should_execute: {should_execute}, result: {execution_result}")
+
+            if should_execute and execution_result:
+                logger.info(f"✅ EXECUTING CAPABILITY: {execution_result.get('capability', 'unknown')}")
+
+                # Format the execution result as a response
+                response_text = capability_coordinator.format_execution_response(
+                    execution_result, original_query
+                )
+
+                processing_time = time.time() - start_time
+
+                # Create response with execution result
+                response = QueryResponse(
+                    response=response_text,
+                    model_used="capability_coordinator",
+                    intelligence_level="autonomous",
+                    processing_time=processing_time,
+                    escalation_path=["capability_execution"],
+                    conversation_id=request.conversation_id,
+                    intent="action_execution",
+                    confidence=1.0,
+                    requires_clarification=False,
+                    clarifying_questions=[],
+                    reasoning={
+                        "action_taken": True,
+                        "capability": execution_result.get("capability", "unknown"),
+                        "success": execution_result.get("success", False)
+                    }
+                )
+
+                # Log the action execution to database
+                await user_manager.add_conversation(username, "assistant", response_text)
+
+                # Log to database for tracking
+                try:
+                    await database.log_interaction(
+                        query=original_query,
+                        response=response_text,
+                        model_used="capability_coordinator",
+                        processing_time=processing_time,
+                        escalation_path=["capability_execution"],
+                        conversation_id=request.conversation_id,
+                        user_id=username,
+                        intent="action_execution",
+                        confidence=1.0,
+                        requires_clarification=False,
+                        complexity_score=0.5,
+                        tier="capability"
+                    )
+                    logger.info(f"✅ Capability execution logged to database")
+                except Exception as e:
+                    logger.error(f"❌ Failed to log capability execution: {e}")
+
+                logger.info(f"🚀 Action executed for {username}: {execution_result.get('capability', 'unknown')}")
+
+                return response
+            else:
+                logger.info(f"❌ No capability match found for query: {original_query[:50]}")
+        else:
+            logger.warning("⚠️ Capability coordinator is None - not initialized!")
+    except Exception as e:
+        logger.error(f"⚠️ Capability coordinator error: {e}", exc_info=True)
+        # Continue with normal processing if capability execution fails
+
     # RETRIEVE CONVERSATION CONTEXT
     try:
         from src.intelligence.conversation_context import ConversationContext, enhance_query_with_context

@@ -142,7 +142,7 @@ class DatabaseModelRouter:
         self.db_config = {
             'dbname': 'tower_consolidated',
             'user': 'patrick',
-            'password': 'tower_echo_brain_secret_key_2025',
+            'password': 'RP78eIrW7cI2jYvL5akt1yurE',
             'host': 'localhost'
         }
         self._query_cache = {}

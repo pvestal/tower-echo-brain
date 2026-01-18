@@ -76,7 +76,7 @@ class MultiLLMCollaborator:
             'host': '192.168.50.135',
             'database': 'echo_brain',
             'user': 'patrick',
-            'password': 'tower_echo_brain_secret_key_2025'
+            'password': 'RP78eIrW7cI2jYvL5akt1yurE'
         }
 
         # Collaboration workflow
@@ -432,7 +432,7 @@ Please assess:
         """Save collaboration result to database"""
         try:
             # Try multiple password options for database connection
-            passwords = ['tower_echo_brain_secret_key_2025', 'password', '']
+            passwords = ['RP78eIrW7cI2jYvL5akt1yurE', 'password', '']
 
             for password in passwords:
                 try:

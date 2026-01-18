@@ -11,23 +11,8 @@ import os
 from typing import Dict, List, Optional
 from datetime import datetime
 
-# Import secure credential manager
-try:
-    from ..security.credential_validator import get_secure_db_config
-except ImportError:
-    # Fallback for development environments
-    def get_secure_db_config():
-        logger.warning("⚠️ Secure credential validator not available, using basic fallback")
-        db_password = os.environ.get("DB_PASSWORD")
-        if not db_password:
-            raise RuntimeError("Database password not configured. Set DB_PASSWORD environment variable.")
-        return {
-            "database": os.environ.get("DB_NAME", "echo_brain"),
-            "user": os.environ.get("DB_USER", "patrick"),
-            "host": os.environ.get("DB_HOST", "localhost"),
-            "password": db_password,
-            "port": int(os.environ.get("DB_PORT", 5432))
-        }
+# Use centralized connection pool
+from .connection_pool import get_database_config, SyncConnection
 
 logger = logging.getLogger(__name__)
 
@@ -35,9 +20,9 @@ class EchoDatabase:
     """Unified database manager for Echo learning"""
 
     def __init__(self):
-        # SECURITY: Get database credentials using secure credential manager
-        self.db_config = get_secure_db_config()
-        logger.info("✅ Database connection configured with secure credentials")
+        # Use centralized connection pool configuration
+        self.db_config = get_database_config()
+        logger.info("✅ Database connection configured via connection pool")
 
 
     async def log_interaction(self, query: str, response: str, model_used: str,
