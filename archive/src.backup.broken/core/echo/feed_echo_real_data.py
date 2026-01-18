@@ -22,7 +22,7 @@ def feed_echo_everything():
         host="localhost",
         database="echo_brain",
         user="patrick",
-        password="***REMOVED***"
+        password="tower_echo_brain_secret_key_2025"
     )
     echo_cursor = echo_conn.cursor()
     
@@ -30,7 +30,7 @@ def feed_echo_everything():
         host="localhost",
         database="knowledge_base",
         user="patrick",
-        password="***REMOVED***"
+        password="tower_echo_brain_secret_key_2025"
     )
     kb_cursor = kb_conn.cursor()
     

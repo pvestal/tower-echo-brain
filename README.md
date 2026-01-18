@@ -70,7 +70,7 @@ import httpx
 async def ask_echo(prompt: str):
     async with httpx.AsyncClient() as client:
         response = await client.post(
-            "http://***REMOVED***:8309/api/echo/chat",
+            "http://192.168.50.135:8309/api/echo/chat",
             json={"query": prompt, "user_id": "anime_production"}
         )
         return response.json()

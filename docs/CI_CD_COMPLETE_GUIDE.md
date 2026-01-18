@@ -253,7 +253,7 @@ pip install -r requirements.txt
 sudo systemctl start tower-echo-brain
 
 # Verify
-curl -s https://***REMOVED***/api/echo/health
+curl -s https://192.168.50.135/api/echo/health
 ```
 
 ### Rollback Procedure
@@ -275,7 +275,7 @@ sudo systemctl start tower-echo-brain
 
 ### Health Checks
 
-**Endpoint:** `https://***REMOVED***/api/echo/health`
+**Endpoint:** `https://192.168.50.135/api/echo/health`
 
 **Automated Monitoring:**
 - Service status verification

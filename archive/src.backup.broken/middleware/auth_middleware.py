@@ -21,9 +21,9 @@ import json
 logger = logging.getLogger(__name__)
 
 # Configuration
-JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', '***REMOVED***')
-AUTH_SERVICE_URL = os.getenv('AUTH_SERVICE_URL', "https://***REMOVED***/api/auth")
-REDIS_HOST = os.getenv('REDIS_HOST', '***REMOVED***')
+JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'echo-brain-secret-key-2025')
+AUTH_SERVICE_URL = os.getenv('AUTH_SERVICE_URL', "https://192.168.50.135/api/auth")
+REDIS_HOST = os.getenv('REDIS_HOST', '192.168.50.135')
 REDIS_PORT = int(os.getenv('REDIS_PORT', '6379'))
 REDIS_DB = int(os.getenv('REDIS_AUTH_DB', '1'))
 

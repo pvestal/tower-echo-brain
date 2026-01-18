@@ -96,7 +96,7 @@ export DB_PASSWORD="patrick123"
 2. **Set Webhook**:
    ```bash
    curl -X POST "https://api.telegram.org/bot{BOT_TOKEN}/setWebhook" \
-     -d "url=https://***REMOVED***/api/telegram/webhook/telegram_webhook_secret_2025"
+     -d "url=https://192.168.50.135/api/telegram/webhook/telegram_webhook_secret_2025"
    ```
 3. **Test Bot**: Send message to bot, system will respond therapeutically
 

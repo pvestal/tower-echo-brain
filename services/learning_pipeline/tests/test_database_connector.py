@@ -19,7 +19,7 @@ from src.config.settings import DatabaseConfig
 
 @pytest.fixture
 def localhost_db_config():
-    """Database config using localhost (not ***REMOVED***)."""
+    """Database config using localhost (not 192.168.50.135)."""
     return DatabaseConfig(
         host="localhost",
         port=5432,
@@ -46,7 +46,7 @@ class TestDatabaseConnector:
     async def test_connect_to_localhost_database(self, localhost_db_config):
         """Test connector connects to localhost database properly."""
         # Mock password environment variable
-        with patch.dict(os.environ, {'ECHO_BRAIN_DB_PASSWORD': '***REMOVED***'}):
+        with patch.dict(os.environ, {'ECHO_BRAIN_DB_PASSWORD': 'tower_echo_brain_secret_key_2025'}):
             connector = DatabaseConnector(localhost_db_config)
 
             # Should connect without errors
@@ -59,18 +59,18 @@ class TestDatabaseConnector:
             await connector.disconnect()
 
     async def test_connection_string_uses_localhost(self, localhost_db_config):
-        """Test connection string uses localhost, not ***REMOVED***."""
+        """Test connection string uses localhost, not 192.168.50.135."""
         with patch.dict(os.environ, {'ECHO_BRAIN_DB_PASSWORD': 'test_password'}):
             connector = DatabaseConnector(localhost_db_config)
 
             connection_string = localhost_db_config.async_connection_string
             assert "localhost" in connection_string
-            assert "***REMOVED***" not in connection_string
+            assert "192.168.50.135" not in connection_string
             assert "postgresql+asyncpg://patrick:test_password@localhost:5432/echo_brain" == connection_string
 
     async def test_save_pipeline_run(self, localhost_db_config):
         """Test saving pipeline run to database."""
-        with patch.dict(os.environ, {'ECHO_BRAIN_DB_PASSWORD': '***REMOVED***'}):
+        with patch.dict(os.environ, {'ECHO_BRAIN_DB_PASSWORD': 'tower_echo_brain_secret_key_2025'}):
             connector = DatabaseConnector(localhost_db_config)
             await connector.connect()
 
@@ -97,7 +97,7 @@ class TestDatabaseConnector:
 
     async def test_update_pipeline_run(self, localhost_db_config):
         """Test updating pipeline run status."""
-        with patch.dict(os.environ, {'ECHO_BRAIN_DB_PASSWORD': '***REMOVED***'}):
+        with patch.dict(os.environ, {'ECHO_BRAIN_DB_PASSWORD': 'tower_echo_brain_secret_key_2025'}):
             connector = DatabaseConnector(localhost_db_config)
             await connector.connect()
 
@@ -126,7 +126,7 @@ class TestDatabaseConnector:
 
     async def test_save_learning_items(self, localhost_db_config):
         """Test saving learning items to database."""
-        with patch.dict(os.environ, {'ECHO_BRAIN_DB_PASSWORD': '***REMOVED***'}):
+        with patch.dict(os.environ, {'ECHO_BRAIN_DB_PASSWORD': 'tower_echo_brain_secret_key_2025'}):
             connector = DatabaseConnector(localhost_db_config)
             await connector.connect()
 
@@ -161,7 +161,7 @@ class TestDatabaseConnector:
 
     async def test_get_last_successful_run_time(self, localhost_db_config):
         """Test retrieving last successful pipeline run time."""
-        with patch.dict(os.environ, {'ECHO_BRAIN_DB_PASSWORD': '***REMOVED***'}):
+        with patch.dict(os.environ, {'ECHO_BRAIN_DB_PASSWORD': 'tower_echo_brain_secret_key_2025'}):
             connector = DatabaseConnector(localhost_db_config)
             await connector.connect()
 
@@ -187,7 +187,7 @@ class TestDatabaseConnector:
 
     async def test_health_check(self, localhost_db_config):
         """Test database health check functionality."""
-        with patch.dict(os.environ, {'ECHO_BRAIN_DB_PASSWORD': '***REMOVED***'}):
+        with patch.dict(os.environ, {'ECHO_BRAIN_DB_PASSWORD': 'tower_echo_brain_secret_key_2025'}):
             connector = DatabaseConnector(localhost_db_config)
 
             # Health check should fail when not connected
@@ -213,7 +213,7 @@ class TestDatabaseConnector:
 
     async def test_transaction_rollback(self, localhost_db_config):
         """Test transaction rollback on errors."""
-        with patch.dict(os.environ, {'ECHO_BRAIN_DB_PASSWORD': '***REMOVED***'}):
+        with patch.dict(os.environ, {'ECHO_BRAIN_DB_PASSWORD': 'tower_echo_brain_secret_key_2025'}):
             connector = DatabaseConnector(localhost_db_config)
             await connector.connect()
 
@@ -245,7 +245,7 @@ class TestDatabaseConnector:
 
     async def test_concurrent_connections(self, localhost_db_config):
         """Test handling multiple concurrent connections."""
-        with patch.dict(os.environ, {'ECHO_BRAIN_DB_PASSWORD': '***REMOVED***'}):
+        with patch.dict(os.environ, {'ECHO_BRAIN_DB_PASSWORD': 'tower_echo_brain_secret_key_2025'}):
             connector = DatabaseConnector(localhost_db_config)
             await connector.connect()
 

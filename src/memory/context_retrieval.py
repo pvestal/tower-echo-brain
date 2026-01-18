@@ -52,7 +52,7 @@ class ConversationContextRetriever:
         else:
             # Create a single connection if no pool
             if not self._connection_string:
-                self._connection_string = "postgresql://patrick:***REMOVED***@localhost/echo_brain"
+                self._connection_string = "postgresql://patrick:tower_echo_brain_secret_key_2025@localhost/echo_brain"
             conn = await asyncpg.connect(self._connection_string)
             return conn
 

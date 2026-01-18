@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 class KBVideoVerifier:
     def __init__(self):
-        self.kb_url = "https://***REMOVED***/kb/api/articles/71"
+        self.kb_url = "https://192.168.50.135/kb/api/articles/71"
         self.standards = {
             "min_duration": 30,  # seconds
             "min_fps": 24,
@@ -144,7 +144,7 @@ class EchoKBIntegration:
     
     async def process_video_request(self, request):
         """Process video request with KB verification"""
-        output_path = f"***REMOVED***/{request['project']}_verified.mp4"
+        output_path = f"/home/patrick/Videos/{request['project']}_verified.mp4"
         
         # Generate with retry until standards met
         success = await self.verifier.generate_with_retry(
@@ -171,8 +171,8 @@ if __name__ == "__main__":
     
     # Test existing videos
     test_videos = [
-        "***REMOVED***/GOBLIN_SLAYER_FINAL_MASTER.mp4",
-        "***REMOVED***/GOBLIN_SLAYER_MOTION_VIDEO.mp4"
+        "/home/patrick/Videos/GOBLIN_SLAYER_FINAL_MASTER.mp4",
+        "/home/patrick/Videos/GOBLIN_SLAYER_MOTION_VIDEO.mp4"
     ]
     
     for video in test_videos:

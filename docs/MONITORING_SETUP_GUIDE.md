@@ -56,18 +56,18 @@ The Prometheus exporter is integrated into Echo Brain at:
 - `/opt/tower-echo-brain/src/api/prometheus_exporter.py`
 
 Metrics are exposed at:
-- `http://***REMOVED***:8309/api/echo/metrics` (Prometheus format)
-- `http://***REMOVED***:8309/api/echo/metrics/json` (JSON format)
+- `http://192.168.50.135:8309/api/echo/metrics` (Prometheus format)
+- `http://192.168.50.135:8309/api/echo/metrics/json` (JSON format)
 
 ## Access Information
 
 ### Service URLs
 
-- **Grafana**: http://***REMOVED***:3000 (admin/admin)
-- **Prometheus**: http://***REMOVED***:9090
-- **Alertmanager**: http://***REMOVED***:9093
-- **Loki**: http://***REMOVED***:3100
-- **Echo Brain Metrics**: http://***REMOVED***:8309/api/echo/metrics
+- **Grafana**: http://192.168.50.135:3000 (admin/admin)
+- **Prometheus**: http://192.168.50.135:9090
+- **Alertmanager**: http://192.168.50.135:9093
+- **Loki**: http://192.168.50.135:3100
+- **Echo Brain Metrics**: http://192.168.50.135:8309/api/echo/metrics
 
 ### Quick Start Commands
 
@@ -80,7 +80,7 @@ docker-compose -f docker-compose-essential.yml up -d
 docker-compose -f docker-compose-essential.yml ps
 
 # View metrics
-curl http://***REMOVED***:8309/api/echo/metrics
+curl http://192.168.50.135:8309/api/echo/metrics
 
 # Run health check
 python3 scripts/health_monitor.py --once

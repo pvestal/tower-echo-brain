@@ -313,7 +313,7 @@ class TestAPISecurity:
         """Test CORS security configuration"""
         # Test that CORS is properly configured
         allowed_origins = [
-            "https://***REMOVED***",
+            "https://192.168.50.135",
             "https://tower.local",
             "http://localhost:3000"
         ]

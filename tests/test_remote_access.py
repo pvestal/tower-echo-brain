@@ -6,11 +6,11 @@ def test_remote_connectivity():
     """Test if Echo can be reached remotely"""
     
     # Test local access
-    print("🏠 Testing local access (***REMOVED***:8309):")
+    print("🏠 Testing local access (192.168.50.135:8309):")
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(3)
-        result = sock.connect_ex(('***REMOVED***', 8309))
+        result = sock.connect_ex(('192.168.50.135', 8309))
         sock.close()
         if result == 0:
             print("  ✅ Local access: WORKING")

@@ -25,9 +25,9 @@ class CharacterGenerationTest:
     """Test character generation accuracy and consistency"""
 
     def __init__(self,
-                 anime_api_endpoint: str = "http://***REMOVED***:8328",
-                 echo_api_endpoint: str = "http://***REMOVED***:8309",
-                 comfyui_endpoint: str = "http://***REMOVED***:8188",
+                 anime_api_endpoint: str = "http://192.168.50.135:8328",
+                 echo_api_endpoint: str = "http://192.168.50.135:8309",
+                 comfyui_endpoint: str = "http://192.168.50.135:8188",
                  test_timeout: int = 300):  # 5 minutes max per test
         self.anime_api = anime_api_endpoint
         self.echo_api = echo_api_endpoint

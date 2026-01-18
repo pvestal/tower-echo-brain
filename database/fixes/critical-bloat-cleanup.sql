@@ -18,7 +18,7 @@
 
 -- WARNING: These operations will permanently delete data
 -- Create backup before running:
--- pg_dump -h ***REMOVED*** -U patrick echo_brain > /tmp/echo_brain_backup_$(date +%Y%m%d_%H%M%S).sql
+-- pg_dump -h 192.168.50.135 -U patrick echo_brain > /tmp/echo_brain_backup_$(date +%Y%m%d_%H%M%S).sql
 
 -- Remove duplicate content (keep newest record for each hash)
 BEGIN;

@@ -255,7 +255,7 @@ location /docs/ {
 }
 
 # Access via Tower dashboard
-https://***REMOVED***/docs/
+https://192.168.50.135/docs/
 ```
 
 ### Monitoring and Validation

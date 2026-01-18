@@ -17,7 +17,7 @@ import asyncpg
 from src.services.embedding_service import create_embedding_service
 from src.services.vector_search import get_vector_search
 
-DATABASE_URL = "postgresql://patrick:***REMOVED***@localhost/tower_consolidated"
+DATABASE_URL = "postgresql://patrick:tower_echo_brain_secret_key_2025@localhost/tower_consolidated"
 BATCH_SIZE = 50  # Larger batches for efficiency
 
 async def import_codebase():

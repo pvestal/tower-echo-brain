@@ -103,7 +103,7 @@ async def wait_for_generation(prompt_id: str, timeout: int = 60):
                         for node_outputs in outputs.values():
                             if 'images' in node_outputs:
                                 for img in node_outputs['images']:
-                                    return f'***REMOVED***/ComfyUI-Working/output/{img["filename"]}'
+                                    return f'/home/patrick/Projects/ComfyUI-Working/output/{img["filename"]}'
             
             await asyncio.sleep(0.5)  # Optimized polling
     

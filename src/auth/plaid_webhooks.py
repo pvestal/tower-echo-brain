@@ -65,7 +65,7 @@ class TowerMFA:
         token_path = Path('/opt/vault/.vault-token')
         if token_path.exists():
             return token_path.read_text().strip()
-        return '***REMOVED***'
+        return 'hvs.FEQ0zs7Jcng6B5nmuwtTlZnM'
 
     def _load_mfa_secrets(self):
         """Load or create MFA secrets"""
@@ -169,7 +169,7 @@ class PlaidWebhookHandler:
         token_path = Path('/opt/vault/.vault-token')
         if token_path.exists():
             return token_path.read_text().strip()
-        return '***REMOVED***'
+        return 'hvs.FEQ0zs7Jcng6B5nmuwtTlZnM'
 
     def _load_credentials(self):
         """Load Plaid credentials"""

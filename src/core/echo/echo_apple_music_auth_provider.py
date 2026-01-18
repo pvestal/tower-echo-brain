@@ -30,7 +30,7 @@ class AppleMusicAuthProvider:
 
         # Alternative credentials (from oauth_config.json)
         self.alt_team_id = "7XY5SYJMAP"
-        self.alt_key_path = Path("/home/{os.getenv("TOWER_USER", "patrick")}/Downloads/AuthKey_9M85DX285V.p8")
+        self.alt_key_path = Path(f"/home/{os.getenv('TOWER_USER', 'patrick')}/Downloads/AuthKey_9M85DX285V.p8")
 
         # Local service endpoint
         self.local_service_url = "http://localhost:8315"

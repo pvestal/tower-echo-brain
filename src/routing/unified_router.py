@@ -52,12 +52,12 @@ class UnifiedModelRouter:
             pass
 
         # CODING QUERIES
-        coding_words = ['code', 'function', 'debug', 'refactor', 'implement', 'write.*code', 'generate.*code', 'python', 'javascript']
+        coding_words = ['code', 'function', 'debug', 'refactor', 'implement', 'write.*code', 'generate.*code', 'python', 'javascript', 'java', 'c++', 'algorithm', 'programming']
         if any(word in query_lower for word in coding_words):
             return ModelSelection(
-                model_name="qwen2.5:3b",  # Based on available models
+                model_name=self.rules[ModelTier.CODING],  # Use proper coding model: deepseek-coder-v2:16b
                 tier="coding",
-                reason="Contains coding keywords"
+                reason="Contains coding keywords - routing to coding specialist"
             )
 
         # ANIME/CREATIVE QUERIES

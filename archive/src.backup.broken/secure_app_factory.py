@@ -107,7 +107,7 @@ def create_secure_app() -> FastAPI:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[
-            "https://***REMOVED***",
+            "https://192.168.50.135",
             "https://tower.local",
             "http://localhost:3000",  # For development
             "http://localhost:8080"   # Tower dashboard

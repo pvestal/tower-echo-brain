@@ -6,9 +6,9 @@ set -e
 
 BACKUP_DIR="/opt/tower-echo-brain/backups"
 DB_NAME="echo_brain"
-DB_HOST="***REMOVED***"
+DB_HOST="192.168.50.135"
 DB_USER="patrick"
-DB_PASS="***REMOVED***"
+DB_PASS="tower_echo_brain_secret_key_2025"
 GITHUB_REPO="git@github.com:pvestal/tower-echo-brain.git"
 LOG_FILE="/opt/tower-echo-brain/logs/backup.log"
 

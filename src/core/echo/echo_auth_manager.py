@@ -18,7 +18,7 @@ class EchoAuthManager:
 
     def __init__(self):
         self.token_dir = "/opt/tower-auth/tokens"
-        self.oauth_service_url = "http://***REMOVED***:8088"
+        self.oauth_service_url = "http://192.168.50.135:8088"
         self.tokens_cache = {}
 
     async def get_token(self, provider: str = "google") -> Optional[Dict[str, Any]]:
@@ -133,7 +133,7 @@ class EchoWithAuth:
         headers = await self.auth_manager.get_google_headers()
 
         if not headers:
-            return {"error": "Not authenticated. Visit http://***REMOVED***:8088 to login"}
+            return {"error": "Not authenticated. Visit http://192.168.50.135:8088 to login"}
 
         async with httpx.AsyncClient() as client:
             if method == "GET":

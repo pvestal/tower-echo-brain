@@ -33,7 +33,7 @@ class EchoVideoRefactored:
 
     def __init__(self):
         # From working Tower paths
-        self.comfyui_url = "http://***REMOVED***:8188"
+        self.comfyui_url = "http://192.168.50.135:8188"
         self.llava_url = "http://localhost:11435/api/generate"  # LLaVA on Ollama
         self.output_dir = Path("/home/{os.getenv("TOWER_USER", "patrick")}/Videos")
         self.frame_dir = Path("/mnt/ComfyUI/output")

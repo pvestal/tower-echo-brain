@@ -14,7 +14,7 @@ Environment="DB_HOST=localhost"
 Environment="DB_PORT=5432"
 Environment="DB_NAME=echo_brain"
 Environment="DB_USER=patrick"
-Environment="DB_PASSWORD=***REMOVED***"
+Environment="DB_PASSWORD=tower_echo_brain_secret_key_2025"
 ExecStart=/opt/tower-echo-brain/venv/bin/python -m src.tasks.background_worker
 Restart=on-failure
 RestartSec=10

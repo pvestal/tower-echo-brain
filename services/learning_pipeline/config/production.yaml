@@ -1,7 +1,7 @@
 # Production configuration for Echo Brain Learning Pipeline
 
 database:
-  host: "localhost"  # Fixed: was ***REMOVED***
+  host: "localhost"  # Fixed: was 192.168.50.135
   port: 5432
   name: "echo_brain"
   user: "patrick"

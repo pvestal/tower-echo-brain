@@ -17,7 +17,7 @@ from pydantic import BaseModel
 logger = logging.getLogger(__name__)
 
 COMFYUI_URL = "http://127.0.0.1:8188"
-OUTPUT_DIR = Path("***REMOVED***/AI_Generated")
+OUTPUT_DIR = Path("/home/patrick/Videos/AI_Generated")
 TEMP_DIR = Path("/tmp/echo_video_gen")
 
 class VideoGenerationRequest(BaseModel):
@@ -315,7 +315,7 @@ class EchoVideoGenerator:
                     for video_info in output["gifs"]:
                         filename = video_info["filename"]
                         subfolder = video_info.get("subfolder", "")
-                        source_path = Path(f"***REMOVED***/ComfyUI-Production/output/{subfolder}/{filename}")
+                        source_path = Path(f"/home/patrick/Projects/ComfyUI-Production/output/{subfolder}/{filename}")
                         logger.info(f"Found video file: {source_path}")
                         if source_path.exists():
                             video_files.append(source_path)
@@ -331,7 +331,7 @@ class EchoVideoGenerator:
                                 filename = file_info["filename"]
                                 if filename.endswith(('.mp4', '.avi', '.mov', '.webm')):
                                     subfolder = file_info.get("subfolder", "")
-                                    source_path = Path(f"***REMOVED***/ComfyUI-Production/output/{subfolder}/{filename}")
+                                    source_path = Path(f"/home/patrick/Projects/ComfyUI-Production/output/{subfolder}/{filename}")
                                     if source_path.exists():
                                         video_files.append(source_path)
 

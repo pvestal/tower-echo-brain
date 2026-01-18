@@ -46,7 +46,7 @@ SELECT * FROM get_pipeline_stats();
 
 1. **Set environment variables**:
 ```bash
-export ECHO_BRAIN_DB_PASSWORD="***REMOVED***"
+export ECHO_BRAIN_DB_PASSWORD="tower_echo_brain_secret_key_2025"
 export PYTHONPATH="/opt/tower-echo-brain/services/learning_pipeline/src"
 ```
 
@@ -132,11 +132,11 @@ SELECT COUNT(*) FROM learning_items;
 
 ### Database Connection Fix
 
-The main issue was services trying to connect to `***REMOVED***` instead of `localhost`. The production configuration now correctly uses:
+The main issue was services trying to connect to `192.168.50.135` instead of `localhost`. The production configuration now correctly uses:
 
 ```yaml
 database:
-  host: "localhost"  # Fixed: was ***REMOVED***
+  host: "localhost"  # Fixed: was 192.168.50.135
   port: 5432
   name: "echo_brain"
   user: "patrick"

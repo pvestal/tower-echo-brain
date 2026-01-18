@@ -19,7 +19,7 @@ import ipaddress
 logger = logging.getLogger(__name__)
 
 # Configuration
-REDIS_HOST = os.getenv('REDIS_HOST', '***REMOVED***')
+REDIS_HOST = os.getenv('REDIS_HOST', '192.168.50.135')
 REDIS_PORT = int(os.getenv('REDIS_PORT', '6379'))
 REDIS_DB = int(os.getenv('REDIS_RATE_LIMIT_DB', '2'))
 

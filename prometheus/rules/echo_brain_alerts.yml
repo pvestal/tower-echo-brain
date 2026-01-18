@@ -11,7 +11,7 @@ groups:
         annotations:
           summary: "Echo Brain service is down"
           description: "Echo Brain has been down for more than 30 seconds"
-          runbook_url: "https://***REMOVED***/kb/monitoring/echo-brain-down"
+          runbook_url: "https://192.168.50.135/kb/monitoring/echo-brain-down"
 
       # Resource usage alerts
       - alert: EchoBrainHighCPU

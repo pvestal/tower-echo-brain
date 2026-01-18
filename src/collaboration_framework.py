@@ -73,10 +73,10 @@ class MultiLLMCollaborator:
 
         # Database connection for persistence
         self.db_config = {
-            'host': '***REMOVED***',
+            'host': '192.168.50.135',
             'database': 'echo_brain',
             'user': 'patrick',
-            'password': '***REMOVED***'
+            'password': 'tower_echo_brain_secret_key_2025'
         }
 
         # Collaboration workflow
@@ -432,12 +432,12 @@ Please assess:
         """Save collaboration result to database"""
         try:
             # Try multiple password options for database connection
-            passwords = ['***REMOVED***', 'password', '']
+            passwords = ['tower_echo_brain_secret_key_2025', 'password', '']
 
             for password in passwords:
                 try:
                     conn = psycopg2.connect(
-                        host='***REMOVED***',
+                        host='192.168.50.135',
                         database='echo_brain',
                         user='patrick',
                         password=password

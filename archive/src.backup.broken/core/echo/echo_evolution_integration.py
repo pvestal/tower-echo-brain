@@ -90,7 +90,7 @@ class EvolutionOrchestrator:
         """Configure CORS for web access"""
         self.app.add_middleware(
             CORSMiddleware,
-            allow_origins=["https://***REMOVED***", "http://***REMOVED***"],
+            allow_origins=["https://192.168.50.135", "http://192.168.50.135"],
             allow_credentials=True,
             allow_methods=["*"],
             allow_headers=["*"],

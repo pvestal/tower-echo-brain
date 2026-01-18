@@ -391,9 +391,9 @@ def get_omniscient_context() -> OmniscientContextManager:
 
     if omniscient_context is None:
         db_config = {
-            'host': '***REMOVED***',
+            'host': '192.168.50.135',
             'user': 'patrick',
-            'password': '***REMOVED***',
+            'password': 'tower_echo_brain_secret_key_2025',
             'database': 'echo_brain'
         }
         omniscient_context = OmniscientContextManager(db_config)

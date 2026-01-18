@@ -334,7 +334,7 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production'
     environment:
       name: production
-      url: http://***REMOVED***:8309
+      url: http://192.168.50.135:8309
     steps:
       - name: Manual approval checkpoint
         run: |

@@ -63,7 +63,7 @@ ANIME_TEST_CASES = [
 class AnimeGenerationTester:
     """Tests Echo Brain's model escalation using anime generation workloads"""
 
-    def __init__(self, echo_url: str = "http://***REMOVED***:8309"):
+    def __init__(self, echo_url: str = "http://192.168.50.135:8309"):
         self.echo_url = echo_url
         self.results = []
 

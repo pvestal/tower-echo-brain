@@ -4,7 +4,7 @@
 
 ### Transaction Updates
 ```
-https://***REMOVED***:8089/api/plaid/webhook/{session_id}
+https://192.168.50.135:8089/api/plaid/webhook/{session_id}
 ```
 - **Events**: INITIAL_UPDATE, HISTORICAL_UPDATE, DEFAULT_UPDATE, TRANSACTIONS_REMOVED
 - **Auto-triggers**: AgenticPersona financial monitoring
@@ -12,7 +12,7 @@ https://***REMOVED***:8089/api/plaid/webhook/{session_id}
 
 ### Income Refresh Callbacks
 ```
-https://***REMOVED***:8089/api/plaid/webhook/{session_id}
+https://192.168.50.135:8089/api/plaid/webhook/{session_id}
 ```
 - **Events**: INCOME_VERIFICATION_REFRESH_STARTED, INCOME_VERIFICATION_REFRESH_COMPLETE
 - **Data stored**: Vault at `plaid/income/{item_id}`
@@ -20,7 +20,7 @@ https://***REMOVED***:8089/api/plaid/webhook/{session_id}
 
 ### Wallet/Transfer Updates
 ```
-https://***REMOVED***:8089/api/plaid/webhook/{session_id}
+https://192.168.50.135:8089/api/plaid/webhook/{session_id}
 ```
 - **Events**: TRANSFER_EVENTS_UPDATE
 - **Statuses**: posted (complete), failed, pending
@@ -29,13 +29,13 @@ https://***REMOVED***:8089/api/plaid/webhook/{session_id}
 ## 🔒 Tower MFA Authentication
 
 ### Setup MFA (First Time)
-1. Visit: `http://***REMOVED***:8090/mfa/setup/patrick`
+1. Visit: `http://192.168.50.135:8090/mfa/setup/patrick`
 2. Scan QR code with Google Authenticator/Authy
 3. Save backup codes
 
 ### MFA Login Flow
 ```python
-POST http://***REMOVED***:8090/mfa/verify
+POST http://192.168.50.135:8090/mfa/verify
 {
     "user_id": "patrick",
     "totp_code": "123456"  # From authenticator app
@@ -58,7 +58,7 @@ Response:
 
 ### 1. Initial Bank Connection
 ```
-http://***REMOVED***:8089/plaid/auth
+http://192.168.50.135:8089/plaid/auth
 ```
 - Click "Connect Your Bank Account"
 - Complete bank MFA
@@ -87,7 +87,7 @@ Automatic monitoring triggers:
 - ✅ AgenticPersona: Monitoring active
 
 ### Credentials
-- **Client ID**: ***REMOVED***
+- **Client ID**: 67b7532c37f3d10023aba53e
 - **Environment**: Production
 - **Products**: transactions, auth, identity, income
 - **Vault Storage**: All tokens encrypted
@@ -135,7 +135,7 @@ After connecting accounts:
 
 ### Simulate Transaction Update
 ```bash
-curl -X POST http://***REMOVED***:8089/api/plaid/webhook/test \
+curl -X POST http://192.168.50.135:8089/api/plaid/webhook/test \
   -H "Content-Type: application/json" \
   -d '{
     "webhook_type": "TRANSACTIONS",
@@ -147,7 +147,7 @@ curl -X POST http://***REMOVED***:8089/api/plaid/webhook/test \
 
 ### Simulate Income Refresh
 ```bash
-curl -X POST http://***REMOVED***:8089/api/plaid/webhook/test \
+curl -X POST http://192.168.50.135:8089/api/plaid/webhook/test \
   -H "Content-Type: application/json" \
   -d '{
     "webhook_type": "INCOME",
@@ -159,8 +159,8 @@ curl -X POST http://***REMOVED***:8089/api/plaid/webhook/test \
 
 ## 🎯 Next Steps
 
-1. **Connect Bank**: Visit http://***REMOVED***:8089/plaid/auth
-2. **Setup MFA**: Visit http://***REMOVED***:8090/mfa/setup/patrick
+1. **Connect Bank**: Visit http://192.168.50.135:8089/plaid/auth
+2. **Setup MFA**: Visit http://192.168.50.135:8090/mfa/setup/patrick
 3. **Configure Alerts**: Ask Echo to set up monitoring rules
 4. **Test Webhooks**: Verify real-time updates working
 5. **Monitor**: AgenticPersona begins autonomous tracking

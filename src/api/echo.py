@@ -711,6 +711,12 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
             needs_clarification = False
             logger.info("🎯 Skipping clarification - pronoun was resolved")
 
+        # Skip clarification for coding queries to enable proper model routing
+        coding_keywords = ['code', 'function', 'python', 'javascript', 'java', 'c++', 'ruby', 'php', 'go', 'rust', 'swift', 'kotlin', 'scala', 'haskell', 'deepseek', 'programming', 'algorithm', 'debug', 'fix', 'write', 'implement']
+        if any(keyword in request.query.lower() for keyword in coding_keywords):
+            needs_clarification = False
+            logger.info("🎯 Skipping clarification - coding query detected, routing to unified router")
+
         if needs_clarification:
             if contextual_question:
                 clarifying_questions = [contextual_question]
@@ -730,7 +736,7 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
 
             response = QueryResponse(
                 response=response_text_with_patterns,
-                model_used="conversation_manager",
+                model_used="clarification_system",
                 intelligence_level="clarification",
                 processing_time=processing_time,
                 escalation_path=["clarification_needed"],
@@ -1502,12 +1508,161 @@ async def get_services():
 
 @router.get("/api/theater/agents")
 async def get_theater_agents():
-    """Theater agent status - placeholder until theater is wired up"""
-    return {
-        "agents": [],
-        "status": "not_configured",
-        "message": "Theater system not yet integrated"
-    }
+    """Get status and list of available autonomous agents"""
+    try:
+        agents = []
+
+        # DeepSeek Coding Agent
+        try:
+            from src.agents.deepseek_coding_agent import get_agent
+            coding_agent = get_agent()
+            agents.append({
+                "name": "DeepSeek Coding Agent",
+                "type": "coding",
+                "status": "active",
+                "description": "Autonomous code generation, analysis, and debugging",
+                "model": "deepseek-coder-v2:16b",
+                "endpoints": ["/api/coding-agent/*"],
+                "capabilities": ["code_generation", "debugging", "refactoring", "analysis"]
+            })
+        except Exception as e:
+            agents.append({
+                "name": "DeepSeek Coding Agent",
+                "type": "coding",
+                "status": "error",
+                "error": str(e)
+            })
+
+        # Reasoning Agent
+        try:
+            from src.agents.reasoning_agent import ReasoningAgent
+            agents.append({
+                "name": "Reasoning Agent",
+                "type": "reasoning",
+                "status": "available",
+                "description": "Complex problem analysis and strategic thinking",
+                "model": "deepseek-r1:8b",
+                "capabilities": ["analysis", "planning", "problem_solving"]
+            })
+        except Exception as e:
+            agents.append({
+                "name": "Reasoning Agent",
+                "type": "reasoning",
+                "status": "error",
+                "error": str(e)
+            })
+
+        # Narration Agent
+        try:
+            from src.agents.narration_agent import NarrationAgent
+            agents.append({
+                "name": "Narration Agent",
+                "type": "creative",
+                "status": "available",
+                "description": "Content creation and narrative generation",
+                "model": "llama3.2:3b",
+                "capabilities": ["storytelling", "content_creation", "documentation"]
+            })
+        except Exception as e:
+            agents.append({
+                "name": "Narration Agent",
+                "type": "creative",
+                "status": "error",
+                "error": str(e)
+            })
+
+        # Autonomous Repair Executor
+        try:
+            from src.tasks.autonomous_repair_executor import RepairExecutor
+            agents.append({
+                "name": "Autonomous Repair Executor",
+                "type": "maintenance",
+                "status": "available",
+                "description": "Automated system repair and maintenance",
+                "capabilities": ["system_repair", "error_detection", "automated_fixes"]
+            })
+        except Exception as e:
+            agents.append({
+                "name": "Autonomous Repair Executor",
+                "type": "maintenance",
+                "status": "error",
+                "error": str(e)
+            })
+
+        active_count = len([a for a in agents if a["status"] == "active"])
+        available_count = len([a for a in agents if a["status"] in ["active", "available"]])
+
+        return {
+            "agents": agents,
+            "status": "configured" if available_count > 0 else "error",
+            "message": f"{active_count} active agents, {available_count} total available",
+            "total": len(agents),
+            "active": active_count,
+            "available": available_count
+        }
+
+    except Exception as e:
+        return {
+            "agents": [],
+            "status": "error",
+            "message": f"Failed to load theater agents: {str(e)}"
+        }
+
+@router.get("/api/echo/git/status")
+async def get_git_status():
+    """Simple git status endpoint without complex imports"""
+    try:
+        import subprocess
+        import os
+
+        # Change to the echo brain directory
+        os.chdir("/opt/tower-echo-brain")
+
+        # Get basic git status
+        result = subprocess.run(["git", "status", "--porcelain"],
+                              capture_output=True, text=True, timeout=10)
+
+        if result.returncode != 0:
+            return {"error": "Not a git repository or git command failed"}
+
+        # Get branch name
+        branch_result = subprocess.run(["git", "branch", "--show-current"],
+                                     capture_output=True, text=True, timeout=5)
+        branch = branch_result.stdout.strip() if branch_result.returncode == 0 else "unknown"
+
+        # Parse status
+        lines = result.stdout.strip().split('\n') if result.stdout.strip() else []
+        modified = []
+        untracked = []
+        staged = []
+
+        for line in lines:
+            if line:
+                status = line[:2]
+                file_path = line[3:]
+
+                if status.startswith('??'):
+                    untracked.append(file_path)
+                elif status[0] in 'MADRC':
+                    staged.append(file_path)
+                elif status[1] in 'MADRC':
+                    modified.append(file_path)
+
+        return {
+            "status": "success",
+            "repository": "/opt/tower-echo-brain",
+            "branch": branch,
+            "modified_files": modified,
+            "untracked_files": untracked,
+            "staged_files": staged,
+            "is_clean": len(lines) == 0,
+            "git_available": True
+        }
+
+    except subprocess.TimeoutExpired:
+        return {"error": "Git command timed out"}
+    except Exception as e:
+        return {"error": f"Git status error: {str(e)}", "git_available": False}
 
 # ============= ROOT LEVEL ENDPOINTS FOR MONITORING =============
 

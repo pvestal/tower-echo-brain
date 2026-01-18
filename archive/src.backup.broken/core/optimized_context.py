@@ -444,9 +444,9 @@ def get_optimized_omniscient_context() -> OptimizedOmniscientContext:
 
     if optimized_context is None:
         db_config = {
-            'host': '***REMOVED***',
+            'host': '192.168.50.135',
             'user': 'patrick',
-            'password': '***REMOVED***',
+            'password': 'tower_echo_brain_secret_key_2025',
             'database': 'echo_brain'
         }
         optimized_context = OptimizedOmniscientContext(db_config)

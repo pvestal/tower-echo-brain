@@ -23,7 +23,7 @@ class AuthMiddleware:
     """Authentication middleware for Echo Brain Board"""
 
     def __init__(self):
-        self.auth_service_url = os.environ.get("AUTH_SERVICE_URL", "http://***REMOVED***:8088")
+        self.auth_service_url = os.environ.get("AUTH_SERVICE_URL", "http://192.168.50.135:8088")
         self.jwt_secret = os.environ.get("JWT_SECRET", "")
         self.token_expiry_minutes = int(os.environ.get("TOKEN_EXPIRY_MINUTES", "30"))
 

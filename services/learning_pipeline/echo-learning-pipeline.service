@@ -11,7 +11,7 @@ Group=patrick
 WorkingDirectory=/opt/tower-echo-brain/services/learning_pipeline
 Environment=PATH=/opt/tower-echo-brain/venv/bin:/usr/local/bin:/usr/bin:/bin
 Environment=PYTHONPATH=/opt/tower-echo-brain/services/learning_pipeline
-Environment=ECHO_BRAIN_DB_PASSWORD=***REMOVED***
+Environment=ECHO_BRAIN_DB_PASSWORD=tower_echo_brain_secret_key_2025
 ExecStartPre=/bin/bash -c 'source /opt/tower-echo-brain/venv/bin/activate'
 ExecStart=/opt/tower-echo-brain/venv/bin/python /opt/tower-echo-brain/services/learning_pipeline/run_pipeline.py
 StandardOutput=journal

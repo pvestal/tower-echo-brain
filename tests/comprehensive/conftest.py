@@ -144,7 +144,7 @@ def test_config() -> Dict[str, Any]:
         "db_name": os.getenv("DB_NAME", "echo_brain"),
         "db_user": os.getenv("DB_USER", "echo_user"),
         "anime_db_name": "anime_production",
-        "tower_ip": "***REMOVED***",
+        "tower_ip": "192.168.50.135",
     }
 
 

@@ -22,7 +22,7 @@ app = FastAPI(title="Echo Financial Services")
 # CORS for dashboard access
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://***REMOVED***", "http://localhost:8080"],
+    allow_origins=["https://192.168.50.135", "http://localhost:8080"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"]

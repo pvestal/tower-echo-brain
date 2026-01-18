@@ -84,7 +84,7 @@ curl -X POST http://localhost:8309/api/agent-development/develop-agent \
 
 Environment variables required:
 ```bash
-JWT_SECRET=tower-***REMOVED***
+JWT_SECRET=tower-echo-brain-secret-key-2025
 DB_PASSWORD=patrick123
 ```
 

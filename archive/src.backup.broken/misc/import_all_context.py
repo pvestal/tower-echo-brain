@@ -20,7 +20,7 @@ class EchoMemoryImporter:
             'host': 'localhost',
             'database': 'echo_brain',
             'user': 'patrick',
-            'password': '***REMOVED***'
+            'password': 'tower_echo_brain_secret_key_2025'
         }
         self.echo_api = "http://localhost:8309"
         self.kb_api = "http://localhost:8307"

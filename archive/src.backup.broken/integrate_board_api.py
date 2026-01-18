@@ -163,7 +163,7 @@ async def board_status():
             "recent_decisions": recent_decisions,
             "average_confidence": avg_confidence,
             "mlflow_tracking": "enabled",
-            "mlflow_url": "http://***REMOVED***:5000"
+            "mlflow_url": "http://192.168.50.135:5000"
         }
     except Exception as e:
         return {
@@ -398,6 +398,6 @@ if __name__ == "__main__":
     print("\n✅ Board API module saved to /opt/tower-echo-brain/src/")
     print("\n📝 Next steps:")
     print("   1. Restart Echo Brain to load Board API")
-    print("   2. Access Board at http://***REMOVED***:8309/api/board/status")
-    print("   3. View MLflow at http://***REMOVED***:5000")
-    print("   4. Check Grafana dashboard at http://***REMOVED***:3000")
+    print("   2. Access Board at http://192.168.50.135:8309/api/board/status")
+    print("   3. View MLflow at http://192.168.50.135:5000")
+    print("   4. Check Grafana dashboard at http://192.168.50.135:3000")

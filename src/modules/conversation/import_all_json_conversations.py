@@ -25,7 +25,7 @@ class JSONConversationImporter:
             'host': 'localhost',
             'database': 'echo_brain',
             'user': 'patrick',
-            'password': '***REMOVED***'
+            'password': 'tower_echo_brain_secret_key_2025'
         }
         self.echo_api = "http://localhost:8309"
         self.conversations_dir = Path.home() / ".claude" / "conversations"

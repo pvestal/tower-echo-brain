@@ -62,7 +62,7 @@ The Echo Brain system represents a sophisticated AI orchestration platform with 
 ### 2. SCALABILITY CHALLENGES (Severity: HIGH)
 
 #### 2.1 Single-Node Architecture Limitations ⭐⭐⭐⭐⭐
-- **Constraint**: All processing on single machine (***REMOVED***)
+- **Constraint**: All processing on single machine (192.168.50.135)
 - **Bottleneck**: CPU, memory, GPU resources shared across 24+ models
 - **Impact**: Cannot scale beyond current hardware limits
 - **Solution Required**: Distributed architecture design

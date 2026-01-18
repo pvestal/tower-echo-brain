@@ -12,7 +12,7 @@ export DB_NAME=echo_brain
 export DB_USER=echo_user
 export DB_PASSWORD=echo_password
 export POSTGRES_DB=echo_brain
-export JWT_SECRET="***REMOVED***"
+export JWT_SECRET="echo-brain-secret-key-2025"
 export PYTHONPATH=/opt/tower-echo-brain
 
 # Start Echo with full configuration

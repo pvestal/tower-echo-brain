@@ -20,7 +20,7 @@ NC='\033[0m' # No Color
 export PYTHONPATH="/opt/tower-echo-brain:$PYTHONPATH"
 export DB_HOST="localhost"
 export DB_USER="patrick"
-export DB_PASSWORD="***REMOVED***"
+export DB_PASSWORD="tower_echo_brain_secret_key_2025"
 
 # Test counters
 total_tests=0

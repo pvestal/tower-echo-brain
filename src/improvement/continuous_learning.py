@@ -25,14 +25,14 @@ class ContinuousImprovement:
             host="localhost",
             database="echo_brain",
             user="patrick",
-            password="***REMOVED***"
+            password="tower_echo_brain_secret_key_2025"
         )
 
         # Knowledge sources
         self.sources = {
             'claude_conversations': Path.home() / ".claude" / "conversations",
             'tower_codebase': ["/opt/tower-*", "/home/patrick/Tower"],
-            'kb_articles': "https://***REMOVED***/api/kb/articles",
+            'kb_articles': "https://192.168.50.135/api/kb/articles",
             'database': "echo_unified_interactions",
             'qdrant': "http://localhost:6333",
         }

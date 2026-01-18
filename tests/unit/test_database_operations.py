@@ -793,10 +793,10 @@ class TestDatabaseConsistency:
     @pytest.fixture
     def db_config(self):
         return {
-            "host": "***REMOVED***",
+            "host": "192.168.50.135",
             "database": "echo_brain",
             "user": "patrick",
-            "password": "***REMOVED***"
+            "password": "tower_echo_brain_secret_key_2025"
         }
 
     @pytest.fixture
@@ -901,7 +901,7 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description="Database consistency testing")
-    parser.add_argument("--host", default="***REMOVED***", help="Database host")
+    parser.add_argument("--host", default="192.168.50.135", help="Database host")
     parser.add_argument("--database", default="echo_brain", help="Database name")
     parser.add_argument("--user", default="patrick", help="Database user")
     parser.add_argument("--password", required=True, help="Database password")

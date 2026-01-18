@@ -619,7 +619,7 @@ class IntegrationSecurityScanner:
 
 async def main():
     """Main function for running security scanner"""
-    test_url = "https://***REMOVED***/api/echo/health"
+    test_url = "https://192.168.50.135/api/echo/health"
 
     async with IntegrationSecurityScanner() as scanner:
         report = await scanner.run_comprehensive_security_scan(test_url)

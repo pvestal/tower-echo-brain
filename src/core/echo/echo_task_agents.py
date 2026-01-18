@@ -303,7 +303,7 @@ class KnowledgeAgent(TaskAgent):
 
     def __init__(self):
         super().__init__(AgentType.KNOWLEDGE, "Echo-Knowledge")
-        self.kb_endpoint = "https://***REMOVED***/api/kb"
+        self.kb_endpoint = "https://192.168.50.135/api/kb"
 
     async def execute(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Execute knowledge operations"""

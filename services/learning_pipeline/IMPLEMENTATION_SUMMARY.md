@@ -12,7 +12,7 @@ A comprehensive production-ready learning pipeline architecture has been designe
 - **Location**: `/opt/tower-echo-brain/services/learning_pipeline/scripts/create_systemd_timer.sh`
 
 ### 2. **Database Connection Issues Fixed**
-- **Problem**: Services trying to connect to `***REMOVED***` instead of localhost
+- **Problem**: Services trying to connect to `192.168.50.135` instead of localhost
 - **Solution**: Updated configuration to use `localhost` with proper database schema
 - **Configuration**: `/opt/tower-echo-brain/services/learning_pipeline/config/production.yaml`
 
@@ -99,7 +99,7 @@ A comprehensive production-ready learning pipeline architecture has been designe
 ### Production Settings Fixed
 ```yaml
 database:
-  host: "localhost"  # Fixed: was ***REMOVED***
+  host: "localhost"  # Fixed: was 192.168.50.135
   port: 5432
   name: "echo_brain"
   user: "patrick"

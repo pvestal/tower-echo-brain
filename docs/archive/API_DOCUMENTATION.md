@@ -28,7 +28,7 @@ The Tower AI Assist system is a comprehensive AI-powered service that consolidat
 
 All Board API endpoints require JWT authentication. The system integrates with Tower's centralized auth service.
 
-**Auth Service URL**: `http://***REMOVED***:8088`
+**Auth Service URL**: `http://192.168.50.135:8088`
 
 #### Required Headers
 ```http
@@ -1190,7 +1190,7 @@ curl -X POST http://localhost:8309/api/echo/voice/notify \
 ## Integration Patterns
 
 ### Tower Service Integration
-- All services accessible via nginx proxy at `https://***REMOVED***/`
+- All services accessible via nginx proxy at `https://192.168.50.135/`
 - Unified authentication with Tower auth service (port 8088)
 - PostgreSQL database integration for persistence
 - Redis caching for session management

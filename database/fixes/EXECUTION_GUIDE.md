@@ -13,7 +13,7 @@
 ### Step 1: Create Backup (5-10 minutes)
 ```bash
 # Create backup before any changes
-PGPASSWORD=***REMOVED*** pg_dump -h ***REMOVED*** -U patrick echo_brain > /tmp/echo_brain_backup_$(date +%Y%m%d_%H%M%S).sql
+PGPASSWORD=tower_echo_brain_secret_key_2025 pg_dump -h 192.168.50.135 -U patrick echo_brain > /tmp/echo_brain_backup_$(date +%Y%m%d_%H%M%S).sql
 
 # Verify backup created successfully
 ls -lh /tmp/echo_brain_backup_*
@@ -22,7 +22,7 @@ ls -lh /tmp/echo_brain_backup_*
 ### Step 2: Check Current Status (2 minutes)
 ```bash
 # Connect to database and check current size
-PGPASSWORD=***REMOVED*** psql -h ***REMOVED*** -U patrick -d echo_brain -c "
+PGPASSWORD=tower_echo_brain_secret_key_2025 psql -h 192.168.50.135 -U patrick -d echo_brain -c "
 SELECT
     pg_size_pretty(pg_total_relation_size('echo_context_registry')) as table_size,
     COUNT(*) as total_records,
@@ -34,7 +34,7 @@ FROM echo_context_registry;
 ### Step 3: Execute Critical Cleanup (30-45 minutes)
 ```bash
 # Run the critical cleanup script
-PGPASSWORD=***REMOVED*** psql -h ***REMOVED*** -U patrick -d echo_brain -f /opt/tower-echo-brain/database/fixes/critical-bloat-cleanup.sql
+PGPASSWORD=tower_echo_brain_secret_key_2025 psql -h 192.168.50.135 -U patrick -d echo_brain -f /opt/tower-echo-brain/database/fixes/critical-bloat-cleanup.sql
 ```
 
 **This will:**
@@ -47,19 +47,19 @@ PGPASSWORD=***REMOVED*** psql -h ***REMOVED*** -U patrick -d echo_brain -f /opt/
 ### Step 4: Performance Optimization (15-20 minutes)
 ```bash
 # Run performance optimization script
-PGPASSWORD=***REMOVED*** psql -h ***REMOVED*** -U patrick -d echo_brain -f /opt/tower-echo-brain/database/fixes/performance-optimization.sql
+PGPASSWORD=tower_echo_brain_secret_key_2025 psql -h 192.168.50.135 -U patrick -d echo_brain -f /opt/tower-echo-brain/database/fixes/performance-optimization.sql
 ```
 
 ### Step 5: Implement Retention Policy (10 minutes)
 ```bash
 # Set up automated retention to prevent future bloat
-PGPASSWORD=***REMOVED*** psql -h ***REMOVED*** -U patrick -d echo_brain -f /opt/tower-echo-brain/database/fixes/data-retention-policy.sql
+PGPASSWORD=tower_echo_brain_secret_key_2025 psql -h 192.168.50.135 -U patrick -d echo_brain -f /opt/tower-echo-brain/database/fixes/data-retention-policy.sql
 ```
 
 ### Step 6: Verify Results (5 minutes)
 ```bash
 # Check final table size and record count
-PGPASSWORD=***REMOVED*** psql -h ***REMOVED*** -U patrick -d echo_brain -c "
+PGPASSWORD=tower_echo_brain_secret_key_2025 psql -h 192.168.50.135 -U patrick -d echo_brain -c "
 SELECT
     'echo_context_registry' as table_name,
     pg_size_pretty(pg_total_relation_size('echo_context_registry')) as new_size,
@@ -70,7 +70,7 @@ FROM echo_context_registry;
 "
 
 # Check dead tuple count
-PGPASSWORD=***REMOVED*** psql -h ***REMOVED*** -U patrick -d echo_brain -c "
+PGPASSWORD=tower_echo_brain_secret_key_2025 psql -h 192.168.50.135 -U patrick -d echo_brain -c "
 SELECT relname, n_dead_tup, n_live_tup
 FROM pg_stat_user_tables
 WHERE relname = 'echo_context_registry';
@@ -105,9 +105,9 @@ WHERE relname = 'echo_context_registry';
 1. **Stop immediately** - Don't continue with broken operations
 2. **Restore from backup:**
    ```bash
-   PGPASSWORD=***REMOVED*** dropdb -h ***REMOVED*** -U patrick echo_brain
-   PGPASSWORD=***REMOVED*** createdb -h ***REMOVED*** -U patrick echo_brain
-   PGPASSWORD=***REMOVED*** psql -h ***REMOVED*** -U patrick echo_brain < /tmp/echo_brain_backup_TIMESTAMP.sql
+   PGPASSWORD=tower_echo_brain_secret_key_2025 dropdb -h 192.168.50.135 -U patrick echo_brain
+   PGPASSWORD=tower_echo_brain_secret_key_2025 createdb -h 192.168.50.135 -U patrick echo_brain
+   PGPASSWORD=tower_echo_brain_secret_key_2025 psql -h 192.168.50.135 -U patrick echo_brain < /tmp/echo_brain_backup_TIMESTAMP.sql
    ```
 3. **Contact Claude for alternative approach**
 
@@ -116,14 +116,14 @@ WHERE relname = 'echo_context_registry';
 ### Check Progress During Cleanup:
 ```bash
 # Monitor active queries
-PGPASSWORD=***REMOVED*** psql -h ***REMOVED*** -U patrick -d echo_brain -c "
+PGPASSWORD=tower_echo_brain_secret_key_2025 psql -h 192.168.50.135 -U patrick -d echo_brain -c "
 SELECT query, state, query_start
 FROM pg_stat_activity
 WHERE datname = 'echo_brain' AND state = 'active';
 "
 
 # Check current table size
-PGPASSWORD=***REMOVED*** psql -h ***REMOVED*** -U patrick -d echo_brain -c "
+PGPASSWORD=tower_echo_brain_secret_key_2025 psql -h 192.168.50.135 -U patrick -d echo_brain -c "
 SELECT pg_size_pretty(pg_total_relation_size('echo_context_registry')) as current_size;
 "
 ```

@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class HomeAssistantConfig:
     """Home Assistant connection configuration"""
-    host: str = "***REMOVED***"  # Default tower server
+    host: str = "192.168.50.135"  # Default tower server
     port: int = 8123
     token: Optional[str] = None
     ssl: bool = False

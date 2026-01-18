@@ -22,8 +22,8 @@ from dataclasses import dataclass
 QDRANT_URL = "http://localhost:6333"
 ECHO_BRAIN_URL = "http://localhost:8309"
 OLLAMA_URL = "http://localhost:11434"
-ANIME_DB_URL = "postgresql://patrick:***REMOVED***@localhost/tower_anime"
-ECHO_DB_URL = "postgresql://patrick:***REMOVED***@localhost/tower_consolidated"
+ANIME_DB_URL = "postgresql://patrick:tower_echo_brain_secret_key_2025@localhost/tower_anime"
+ECHO_DB_URL = "postgresql://patrick:tower_echo_brain_secret_key_2025@localhost/tower_consolidated"
 EMBEDDING_MODEL = "mxbai-embed-large"
 
 

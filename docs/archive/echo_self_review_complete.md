@@ -36,7 +36,7 @@ User: That sounds helpful. Can you help me set up my smart thermostat?
 **After Fix:**
 ```
 I am Echo Brain, Patrick's AI cognitive assistant. I am capable of 
-running Tower (***REMOVED***) on the internet as well as providing 
+running Tower (192.168.50.135) on the internet as well as providing 
 various services to you...
 ```
 ✅ Clean, honest response with no hallucination!

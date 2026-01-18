@@ -10,7 +10,7 @@ from pathlib import Path
 from datetime import datetime
 
 class DeduplicationEngine:
-    def __init__(self, db_url="postgresql://patrick:***REMOVED***@localhost/echo_brain"):
+    def __init__(self, db_url="postgresql://patrick:tower_echo_brain_secret_key_2025@localhost/echo_brain"):
         self.db_url = db_url
         self.old_takeout = Path("/mnt/10TB2/Google_Takeout_2025")
         self.new_takeout = Path("/opt/tower-echo-brain/data/takeout")

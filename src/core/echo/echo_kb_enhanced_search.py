@@ -218,7 +218,7 @@ class EnhancedKBSearch:
     """Enhanced KB search with pattern learning and auto-optimization"""
 
     def __init__(self):
-        self.kb_endpoint = "https://***REMOVED***/api/kb"
+        self.kb_endpoint = "https://192.168.50.135/api/kb"
         self.pattern_db = PatternDatabase()
         self.search_cache = {}  # Simple in-memory cache
 

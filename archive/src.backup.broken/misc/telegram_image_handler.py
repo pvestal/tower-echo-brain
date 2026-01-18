@@ -197,7 +197,7 @@ class TelegramImageProcessor:
                 host="localhost",
                 database="echo_brain",
                 user="patrick",
-                password="***REMOVED***"
+                password="tower_echo_brain_secret_key_2025"
             )
             cur = conn.cursor()
 

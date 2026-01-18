@@ -74,7 +74,7 @@ db_config = {
     "host": "localhost",
     "database": "echo_brain",  # Fixed from tower_consolidated
     "user": "patrick",
-    "password": "***REMOVED***"
+    "password": "tower_echo_brain_secret_key_2025"
 }
 ```
 
@@ -166,7 +166,7 @@ sudo systemctl restart tower-echo-brain
 ### Database Management
 ```bash
 # Connect to database
-PGPASSWORD=***REMOVED*** psql -h localhost -U patrick -d echo_brain
+PGPASSWORD=tower_echo_brain_secret_key_2025 psql -h localhost -U patrick -d echo_brain
 
 # Check conversation count
 SELECT COUNT(*) FROM echo_conversations;

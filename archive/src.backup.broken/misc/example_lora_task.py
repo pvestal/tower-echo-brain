@@ -118,7 +118,7 @@ async def example_manual_task_insertion():
         "database": "echo_brain",
         "user": "patrick",
         "host": "localhost",
-        "password": os.environ.get("DB_PASSWORD", "***REMOVED***"),
+        "password": os.environ.get("DB_PASSWORD", "tower_echo_brain_secret_key_2025"),
         "port": 5432
     }
 

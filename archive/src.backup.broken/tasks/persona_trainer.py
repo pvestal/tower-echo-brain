@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 class PersonaTrainer:
     """Trains and evolves Echo's Agentic Persona based on interactions"""
 
-    def __init__(self, db_url: str = "postgresql://patrick:***REMOVED***@localhost/echo_brain"):
+    def __init__(self, db_url: str = "postgresql://patrick:tower_echo_brain_secret_key_2025@localhost/echo_brain"):
         self.db_url = db_url
         self.pool = None
         self.current_persona = {}

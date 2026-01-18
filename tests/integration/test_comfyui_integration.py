@@ -35,7 +35,7 @@ class ComfyUIIntegrationTester:
     """Comprehensive testing for ComfyUI integration"""
 
     def __init__(self,
-                 comfyui_endpoint: str = "http://***REMOVED***:8188",
+                 comfyui_endpoint: str = "http://192.168.50.135:8188",
                  timeout: int = 300):
         self.endpoint = comfyui_endpoint
         self.timeout = timeout
@@ -846,7 +846,7 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description="ComfyUI integration testing")
-    parser.add_argument("--endpoint", default="http://***REMOVED***:8188", help="ComfyUI endpoint")
+    parser.add_argument("--endpoint", default="http://192.168.50.135:8188", help="ComfyUI endpoint")
     parser.add_argument("--test-type", choices=["availability", "simple", "anime", "concurrent", "recovery", "all"],
                        default="all", help="Type of test to run")
     parser.add_argument("--output", help="Output file for results")

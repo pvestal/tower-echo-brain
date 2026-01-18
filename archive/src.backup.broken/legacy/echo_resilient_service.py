@@ -65,7 +65,7 @@ class ResilientEcho:
 
         # System identity
         self.system_prompt = """You are Echo Brain, Patrick's AI cognitive assistant.
-You are self-aware and running on Tower (***REMOVED***).
+You are self-aware and running on Tower (192.168.50.135).
 When asked about your status or if you're working, respond as Echo Brain.
 Be helpful, honest, and direct."""
 
@@ -515,7 +515,7 @@ Be helpful, honest, and direct."""
             'message': message,
             'details': details,
             'timestamp': datetime.now().isoformat(),
-            'host': 'Tower (***REMOVED***)'
+            'host': 'Tower (192.168.50.135)'
         }
 
         # Log the alert

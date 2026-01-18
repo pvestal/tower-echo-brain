@@ -66,7 +66,7 @@ async def main():
     try:
         import asyncpg
         conn = await asyncpg.connect(
-            "postgresql://patrick:***REMOVED***@localhost/tower_consolidated"
+            "postgresql://patrick:tower_echo_brain_secret_key_2025@localhost/tower_consolidated"
         )
         tables = await conn.fetch(
             "SELECT tablename FROM pg_tables WHERE schemaname = 'public'"
@@ -91,7 +91,7 @@ async def main():
     try:
         import asyncpg
         conn = await asyncpg.connect(
-            "postgresql://patrick:***REMOVED***@localhost/knowledge_base"
+            "postgresql://patrick:tower_echo_brain_secret_key_2025@localhost/knowledge_base"
         )
         count = await conn.fetchval("SELECT COUNT(*) FROM articles")
         print(f"  ✅ knowledge_base.articles: {count} articles")
@@ -122,7 +122,7 @@ async def main():
     try:
         import asyncpg
         conn = await asyncpg.connect(
-            "postgresql://patrick:***REMOVED***@localhost/tower_consolidated"
+            "postgresql://patrick:tower_echo_brain_secret_key_2025@localhost/tower_consolidated"
         )
         count = await conn.fetchval("SELECT COUNT(*) FROM embedding_cache")
         print(f"  ✅ Embedding cache: {count} cached embeddings")

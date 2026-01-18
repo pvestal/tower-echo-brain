@@ -124,7 +124,7 @@ board_permissions_map = {
 **Environment Variables Required**:
 - `DB_PASSWORD` (mandatory)
 - `JWT_SECRET` (mandatory)
-- `DB_HOST` (optional, defaults to ***REMOVED***)
+- `DB_HOST` (optional, defaults to 192.168.50.135)
 - `DB_NAME` (optional, defaults to tower_consolidated)
 - `DB_USER` (optional, defaults to patrick)
 

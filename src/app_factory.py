@@ -376,6 +376,14 @@ def create_app() -> FastAPI:
     except ImportError as e:
         print(f"❌ Failed to import coding agent: {e}")
 
+    # Autonomous repair system integration
+    try:
+        from src.api.repair_api import router as repair_router
+        app.include_router(repair_router, prefix="", tags=["autonomous-repair"])
+        print("✅ Autonomous Repair API routes added to app at /api/repair/*")
+    except ImportError as e:
+        print(f"❌ Failed to import repair API: {e}")
+
     # Static files
     static_dir = "/opt/tower-echo-brain/static"
     if os.path.exists(static_dir):

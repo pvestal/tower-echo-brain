@@ -783,7 +783,7 @@ def test_quality_assessment():
     qa = VideoQualityAssessment()
 
     # Test with a sample video (you can replace with actual path)
-    test_video = "***REMOVED***/AnimeGenerated/goblin_slayer_20250918_150401_4be133d5.mp4"
+    test_video = "/home/patrick/Videos/AnimeGenerated/goblin_slayer_20250918_150401_4be133d5.mp4"
     test_prompt = "Goblin Slayer anime warrior in epic battle scene"
 
     if os.path.exists(test_video):

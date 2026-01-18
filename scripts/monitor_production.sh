@@ -9,7 +9,7 @@ ECHO_BRAIN_URL="http://localhost:8309"
 DB_HOST="localhost"
 DB_NAME="echo_brain"
 DB_USER="patrick"
-DB_PASSWORD="***REMOVED***"
+DB_PASSWORD="tower_echo_brain_secret_key_2025"
 LOG_FILE="/var/log/echo-brain/monitoring.log"
 ALERT_EMAIL="patrick.vestal@gmail.com"
 SLACK_WEBHOOK=""  # Add Slack webhook URL if desired
@@ -211,7 +211,7 @@ db_config = {
     'host': 'localhost',
     'database': 'echo_brain',
     'user': 'patrick',
-    'password': '***REMOVED***'
+    'password': 'tower_echo_brain_secret_key_2025'
 }
 
 learning = ContinuousLearningSystem(db_config)
@@ -256,7 +256,7 @@ db_config = {
     'host': 'localhost',
     'database': 'echo_brain',
     'user': 'patrick',
-    'password': '***REMOVED***'
+    'password': 'tower_echo_brain_secret_key_2025'
 }
 
 learning = ContinuousLearningSystem(db_config)

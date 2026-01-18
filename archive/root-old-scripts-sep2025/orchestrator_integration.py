@@ -26,7 +26,7 @@ class ApprovalWorkflowOrchestrator:
         }
         self.quality_threshold = 75
         self.max_retries = 3
-        self.approval_dir = "***REMOVED***/pending_approval/"
+        self.approval_dir = "/home/patrick/Videos/pending_approval/"
         
         # Create approval directory
         os.makedirs(self.approval_dir, exist_ok=True)
@@ -84,7 +84,7 @@ class ApprovalWorkflowOrchestrator:
             "approval_required": True,
             "images": approval_files,
             "details": results,
-            "next_step": "Review images in ***REMOVED***/pending_approval/",
+            "next_step": "Review images in /home/patrick/Videos/pending_approval/",
             "instruction": "Say 'approved' to continue with video generation, or 'retry' for new characters"
         }
     
@@ -122,7 +122,7 @@ class ApprovalWorkflowOrchestrator:
         
         # PHASE 7: COMBINE EVERYTHING
         print("\n🎬 PHASE 7: CREATING FINAL VIDEO")
-        output_video = f"***REMOVED***/final_approved_{int(time.time())}.mp4"
+        output_video = f"/home/patrick/Videos/final_approved_{int(time.time())}.mp4"
         
         if await self.create_final_video(video_frames, music_track, voice_track, output_video):
             results.append(f"✅ Final video created: {output_video}")

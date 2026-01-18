@@ -45,7 +45,7 @@ class PlaidAuth:
             if token_path.exists():
                 self.vault_client.token = token_path.read_text().strip()
             else:
-                self.vault_client.token = '***REMOVED***'
+                self.vault_client.token = 'hvs.FEQ0zs7Jcng6B5nmuwtTlZnM'
 
             plaid_data = self.vault_client.secrets.kv.v2.read_secret_version(
                 path='plaid/credentials',

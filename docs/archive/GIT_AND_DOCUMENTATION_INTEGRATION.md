@@ -88,7 +88,7 @@ GitHub Integration: ✅ Available
 The documentation system automatically syncs with Tower's Knowledge Base:
 - ADRs saved to KB under "decisions" category
 - Code changes saved under "code_changes" category
-- Accessible at: `https://***REMOVED***/kb/`
+- Accessible at: `https://192.168.50.135/kb/`
 
 ## Production Features
 

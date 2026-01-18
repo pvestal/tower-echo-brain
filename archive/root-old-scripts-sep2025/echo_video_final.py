@@ -23,8 +23,8 @@ import os
 from pathlib import Path
 
 COMFYUI_API = "http://127.0.0.1:8188"
-OUTPUT_DIR = "***REMOVED***/ComfyUI-Working/output"
-VIDEO_DIR = "***REMOVED***"
+OUTPUT_DIR = "/home/patrick/Projects/ComfyUI-Working/output"
+VIDEO_DIR = "/home/patrick/Videos"
 
 def generate_frames(base_prompt, num_frames=10):
     workflow = {

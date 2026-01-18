@@ -16,7 +16,7 @@ class VideoGenerationSystemFixed:
     
     def __init__(self, comfyui_url="http://localhost:8188"):
         self.comfyui_url = comfyui_url
-        self.output_dir = Path("***REMOVED***")
+        self.output_dir = Path("/home/patrick/Videos")
         self.output_dir.mkdir(exist_ok=True)
         
     def generate_base_image(self, prompt: str) -> Optional[str]:
@@ -106,7 +106,7 @@ class VideoGenerationSystemFixed:
                         for node_id, output in outputs.items():
                             if 'images' in output and output['images']:
                                 filename = output['images'][0]['filename']
-                                image_path = f"***REMOVED***/ComfyUI-Working/output/{filename}"
+                                image_path = f"/home/patrick/Projects/ComfyUI-Working/output/{filename}"
                                 print(f"Base image generated: {image_path}")
                                 return image_path
         except Exception as e:
@@ -121,8 +121,8 @@ class VideoGenerationSystemFixed:
         if not os.path.exists(image_path):
             # Try to use existing image
             test_images = [
-                "***REMOVED***/ComfyUI-Working/output/goblin_solo_00001_.png",
-                "***REMOVED***/ComfyUI-Working/output/video_base_00001_.png"
+                "/home/patrick/Projects/ComfyUI-Working/output/goblin_solo_00001_.png",
+                "/home/patrick/Projects/ComfyUI-Working/output/video_base_00001_.png"
             ]
             for test_image in test_images:
                 if os.path.exists(test_image):
@@ -161,7 +161,7 @@ class VideoGenerationSystemFixed:
         
         if not image_path:
             # Use existing image as fallback
-            image_path = "***REMOVED***/ComfyUI-Working/output/goblin_solo_00001_.png"
+            image_path = "/home/patrick/Projects/ComfyUI-Working/output/goblin_solo_00001_.png"
         
         # Generate video from image
         video_path = self.generate_ffmpeg_video(image_path, duration)

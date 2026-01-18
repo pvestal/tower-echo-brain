@@ -277,14 +277,14 @@ This documentation overhaul addresses critical pain points:
 ### Health Check Your Setup
 ```bash
 # Quick system verification
-curl -k https://***REMOVED***/api/echo/health | jq .status
+curl -k https://192.168.50.135/api/echo/health | jq .status
 
 # Test your authentication
 curl -H "Authorization: Bearer $JWT_TOKEN" \
-  https://***REMOVED***/api/echo/board/status
+  https://192.168.50.135/api/echo/board/status
 
 # Verify service integration
-curl -X POST https://***REMOVED***/api/echo/test/echo-brain
+curl -X POST https://192.168.50.135/api/echo/test/echo-brain
 ```
 
 ### Advanced Diagnostics
@@ -293,10 +293,10 @@ curl -X POST https://***REMOVED***/api/echo/test/echo-brain
 bash /opt/tower-echo-brain/scripts/health-check.sh
 
 # Check all service dependencies
-curl https://***REMOVED***/api/echo/tower/status | jq .
+curl https://192.168.50.135/api/echo/tower/status | jq .
 
 # Monitor real-time activity
-curl -N https://***REMOVED***/api/echo/stream
+curl -N https://192.168.50.135/api/echo/stream
 ```
 
 ---
@@ -325,9 +325,9 @@ This documentation is designed for long-term maintainability:
 ## 📚 Related Resources
 
 ### Tower Ecosystem Documentation
-- **[Tower Dashboard](https://***REMOVED***/)** - Main system interface
-- **[Knowledge Base](https://***REMOVED***/kb/)** - System-wide documentation
-- **[Auth Service](https://***REMOVED***/api/auth/docs)** - Authentication API
+- **[Tower Dashboard](https://192.168.50.135/)** - Main system interface
+- **[Knowledge Base](https://192.168.50.135/kb/)** - System-wide documentation
+- **[Auth Service](https://192.168.50.135/api/auth/docs)** - Authentication API
 
 ### External References
 - **[FastAPI Documentation](https://fastapi.tiangolo.com/)** - API framework

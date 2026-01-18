@@ -2,7 +2,7 @@
 """
 AI Assist Media Scanner - Local Media File Analysis
 Scans and analyzes local media files for AI Assist training
-Processes images and videos in ***REMOVED*** and /home/patrick/Pictures
+Processes images and videos in /home/patrick/Videos and /home/patrick/Pictures
 """
 
 import os
@@ -448,7 +448,7 @@ async def main():
     
     # Directories to scan from learning schedule
     directories_to_scan = [
-        "***REMOVED***",
+        "/home/patrick/Videos",
         "/home/patrick/Pictures"
     ]
     

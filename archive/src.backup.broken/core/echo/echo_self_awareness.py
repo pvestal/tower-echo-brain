@@ -136,7 +136,7 @@ class EchoSelfAwareness:
                 "name": "AI Assist",
                 "version": "2.0.0",
                 "architecture": "Modular Refactored",
-                "location": "Tower (***REMOVED***)",
+                "location": "Tower (192.168.50.135)",
                 "port": 8309,
             },
             "capabilities": self.capabilities,

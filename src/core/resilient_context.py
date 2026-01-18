@@ -663,7 +663,7 @@ def get_resilient_omniscient_context() -> ResilientOmniscientContext:
         db_config = {
             'host': 'localhost',
             'user': 'patrick',
-            'password': '***REMOVED***',
+            'password': 'tower_echo_brain_secret_key_2025',
             'database': 'echo_brain'
         }
         resilient_context = ResilientOmniscientContext(db_config)

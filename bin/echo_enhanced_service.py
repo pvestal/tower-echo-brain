@@ -79,7 +79,7 @@ class IntrospectionTrigger(BaseModel):
 class VaultClient:
     def __init__(self):
         self.vault_addr = "http://127.0.0.1:8200"
-        self.vault_token = "***REMOVED***"
+        self.vault_token = "hvs.FEQ0zs7Jcng6B5nmuwtTlZnM"
         
     async def get_secret(self, path: str, field: str = None) -> Union[str, Dict]:
         """Get secret from HashiCorp Vault"""

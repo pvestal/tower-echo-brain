@@ -74,7 +74,7 @@ DATABASE_CONFIG = {
     'host': 'localhost',
     'port': 5432,
     'user': 'patrick',
-    'password': '***REMOVED***',
+    'password': 'tower_echo_brain_secret_key_2025',
     'database': 'echo_brain',
     'max_connections': 10,
     'connection_timeout': 5

@@ -30,7 +30,7 @@ POST /api/veteran-guardian/webhook/{secret}
 **Example Webhook Setup**:
 ```bash
 curl -X POST "https://api.telegram.org/bot{VETERAN_BOT_TOKEN}/setWebhook" \
-  -d "url=https://***REMOVED***/api/veteran-guardian/webhook/veteran_guardian_secret_2025"
+  -d "url=https://192.168.50.135/api/veteran-guardian/webhook/veteran_guardian_secret_2025"
 ```
 
 ### 2. **Health Check** ❤️
@@ -198,7 +198,7 @@ export DB_PASSWORD="patrick123"
 2. **Configure Webhook**:
    ```bash
    curl -X POST "https://api.telegram.org/bot{VETERAN_BOT_TOKEN}/setWebhook" \
-     -d "url=https://***REMOVED***/api/veteran-guardian/webhook/veteran_guardian_secret_2025"
+     -d "url=https://192.168.50.135/api/veteran-guardian/webhook/veteran_guardian_secret_2025"
    ```
 
 3. **Set Bot Commands** (optional):
