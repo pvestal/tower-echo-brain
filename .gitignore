@@ -35,3 +35,36 @@ outputs/
 snapshots/
 backups/
 tmp/
+archive/
+test_results/
+src.backup*/
+*.backup*
+*.old
+*.tmp
+*_backup.*
+*_old.*
+*.bak
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+.coverage
+htmlcov/
+.mypy_cache/
+.hypothesis/
+coverage.xml
+*.cover
+
+# Project specific
+data/user_contexts/*.json
+!data/user_contexts/default.json
+improvement_metrics.json
