@@ -1,0 +1,104 @@
+{
+  "timestamp": "2026-01-18T22:41:15.116063",
+  "total_tests": 8,
+  "passed": 3,
+  "failed": 5,
+  "success_rate": 0.375,
+  "test_results": [
+    {
+      "test": "Health Endpoint",
+      "passed": true,
+      "is_healthy": true,
+      "uptime_seconds": 1070,
+      "version": "1.0.0"
+    },
+    {
+      "test": "Echo Status Endpoint",
+      "passed": true,
+      "has_status": true,
+      "has_recent_messages": true,
+      "has_stats": true,
+      "message_count": 5,
+      "conversations_24h": 75
+    },
+    {
+      "test": "System Diagnosis (Real)",
+      "passed": false,
+      "has_response": true,
+      "database_logged": false,
+      "log_count": 0,
+      "capability_used": "autonomous_repair",
+      "response_preview": "\ud83d\udcca System Diagnosis Complete:\n\u2705 Active Services (4): tower-dashboard, tower-auth, tower-echo-brain, t"
+    },
+    {
+      "test": "Service Restart (Real)",
+      "passed": false,
+      "response_claimed_success": true,
+      "service_actually_restarted": true,
+      "database_logged": false,
+      "log_count": 0,
+      "service_timestamp": "ActiveEnterTimestamp=Sun 2026-01-18 22:41:07 UTC",
+      "response_preview": "\u2705 Successfully restarted tower-dashboard. The service should now be operational."
+    },
+    {
+      "test": "Service Monitoring (Real)",
+      "passed": false,
+      "has_response": true,
+      "database_logged": false,
+      "log_count": 0,
+      "intent": "action_execution",
+      "response_length": 53,
+      "response_preview": "\u274c Failed to execute service monitoring: Unknown error"
+    },
+    {
+      "test": "Send Notification (Real)",
+      "passed": false,
+      "notification_sent": true,
+      "database_logged": false,
+      "log_count": 0,
+      "intent_detected": "action_execution",
+      "response_preview": "\ud83d\udce2 Notification sent successfully via 1 channel(s)."
+    },
+    {
+      "test": "Conversation Memory",
+      "passed": false,
+      "has_memory": true,
+      "database_entries": 0,
+      "response1_preview": "Can you tell me more about what you're trying to a",
+      "response2_preview": "Your name is TestUser. How else can I assist you t"
+    },
+    {
+      "test": "Intent Classification",
+      "passed": true,
+      "total_cases": 4,
+      "correct_classifications": 3,
+      "accuracy": 0.75,
+      "details": [
+        {
+          "query": "Restart tower-auth",
+          "expected_type": "action_execution",
+          "actual_intent": "action_execution",
+          "correct": true
+        },
+        {
+          "query": "What is the weather?",
+          "expected_type": "general",
+          "actual_intent": "explanation",
+          "correct": false
+        },
+        {
+          "query": "Send notification: test",
+          "expected_type": "action_execution",
+          "actual_intent": "action_execution",
+          "correct": true
+        },
+        {
+          "query": "How are you?",
+          "expected_type": "general",
+          "actual_intent": "general",
+          "correct": true
+        }
+      ]
+    }
+  ]
+}
