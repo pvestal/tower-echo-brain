@@ -381,10 +381,10 @@ class EchoBrainStartup:
             else:
                 logger.info("⚠️ Persona trainer not available - skipping learning loop")
 
-            # ADDED: Start autonomous systems
-            if self.autonomous_loop:
-                asyncio.create_task(self.autonomous_loop.start())
-                logger.info("🔄 Autonomous event loop STARTED")
+            # DISABLED: Autonomous loop was stuck trying to restart non-existent services
+            # if self.autonomous_loop:
+            #     asyncio.create_task(self.autonomous_loop.start())
+            #     logger.info("🔄 Autonomous event loop STARTED")
 
         except Exception as e:
             logger.error(f"❌ Background service startup failed: {e}")
