@@ -51,7 +51,7 @@ class TestAutonomousCoordinator:
             }
 
             if hasattr(coordinator, 'submit_task'):
-                task_id = await coordinator.submit_task(task)
+                task_id = await coordinator.submit_task(task["type"], task["payload"])
                 assert task_id is not None
         except ImportError:
             pytest.skip("Autonomous coordinator not available")
