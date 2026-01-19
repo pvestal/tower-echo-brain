@@ -68,18 +68,59 @@ logging:
 
 # Processing Configuration
 processing:
+  batch_size: 100
+  max_concurrent_workers: 4
   supported_formats:
-    images: [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp"]
+    images: [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp", ".heic"]
     videos: [".mp4", ".avi", ".mov", ".mkv", ".webm", ".m4v"]
     documents: [".pdf", ".doc", ".docx", ".txt", ".rtf"]
-    emails: [".eml", ".msg"]
+    emails: [".eml", ".msg", ".mbox"]
     data: [".json", ".csv", ".xml", ".html"]
+    databases: [".db", ".sqlite", ".sqlite3"]
 
   metadata_extraction:
     enabled: true
     include_exif: true
     include_location: true
     include_timestamp: true
+    face_recognition_enabled: true
+    object_detection_enabled: true
+    sentiment_analysis_enabled: true
+
+# Omniscient Collection Configuration
+omniscient:
+  data_sources:
+    google_photos: true
+    gmail: true
+    google_calendar: true
+    browser_history: true
+    chrome_passwords: false  # High risk - disabled by default
+    firefox_passwords: false  # High risk - disabled by default
+    system_keychain: false  # High risk - disabled by default
+
+  face_recognition:
+    enabled: true
+    confidence_threshold: 0.6
+    max_faces_per_image: 20
+    store_face_encodings: true
+
+  privacy_settings:
+    classify_sensitive_content: true
+    encrypt_classified_data: true
+    anonymize_personal_data: false
+
+  intelligence_extraction:
+    relationship_mapping: true
+    pattern_recognition: true
+    predictive_modeling: true
+    behavioral_analysis: true
+
+# Vector Embedding Configuration
+embedding:
+  model: "text-embedding-3-small"
+  dimension: 1536
+  batch_size: 50
+  similarity_threshold: 0.7
 
 # Backup and Archival
 backup:

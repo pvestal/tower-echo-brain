@@ -1,0 +1,68 @@
+{
+  "cameras": [
+    {
+      "id": "wyze_living_room",
+      "name": "Living Room Pan Camera",
+      "ip": "192.168.50.200",
+      "rtmp_url": "rtmp://192.168.50.200:1935/live/stream",
+      "username": "admin",
+      "password": "your_camera_password",
+      "enabled": true,
+      "motion_detection": true,
+      "facial_recognition": true,
+      "recording": true,
+      "location": "Living Room"
+    },
+    {
+      "id": "wyze_kitchen",
+      "name": "Kitchen Pan Camera",
+      "ip": "192.168.50.201",
+      "rtmp_url": "rtmp://192.168.50.201:1935/live/stream",
+      "username": "admin",
+      "password": "your_camera_password",
+      "enabled": true,
+      "motion_detection": true,
+      "facial_recognition": true,
+      "recording": true,
+      "location": "Kitchen"
+    },
+    {
+      "id": "wyze_office",
+      "name": "Office Pan Camera",
+      "ip": "192.168.50.202",
+      "rtmp_url": "rtmp://192.168.50.202:1935/live/stream",
+      "username": "admin",
+      "password": "your_camera_password",
+      "enabled": true,
+      "motion_detection": true,
+      "facial_recognition": true,
+      "recording": true,
+      "location": "Home Office"
+    },
+    {
+      "id": "wyze_bedroom",
+      "name": "Bedroom Pan Camera",
+      "ip": "192.168.50.203",
+      "rtmp_url": "rtmp://192.168.50.203:1935/live/stream",
+      "username": "admin",
+      "password": "your_camera_password",
+      "enabled": false,
+      "motion_detection": true,
+      "facial_recognition": false,
+      "recording": true,
+      "location": "Master Bedroom"
+    }
+  ],
+  "global_settings": {
+    "max_concurrent_streams": 4,
+    "detection_interval_seconds": 30,
+    "motion_threshold": 5000,
+    "face_recognition_threshold": 0.6,
+    "recording_duration_seconds": 300,
+    "privacy_mode_schedule": {
+      "enabled": false,
+      "start_time": "22:00",
+      "end_time": "08:00"
+    }
+  }
+}
