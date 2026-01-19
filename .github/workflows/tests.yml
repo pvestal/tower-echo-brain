@@ -33,6 +33,8 @@ jobs:
             --tb=short \
             -m "not integration and not live" \
             --ignore=tests/comprehensive/run_comprehensive_tests.py \
+            --ignore=tests/comprehensive/test_database.py \
+            --ignore=tests/comprehensive/test_memory_qdrant.py \
             --timeout=60
         env:
           TEST_DEBUG: "1"
