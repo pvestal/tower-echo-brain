@@ -274,6 +274,14 @@ def create_app() -> FastAPI:
     app.include_router(solutions_router, prefix="", tags=["solutions"])  # Solutions already has /api/echo prefix
     app.include_router(agents_router, tags=["agents"])
 
+    # Claude Bridge integration
+    try:
+        from src.api.claude_bridge import router as claude_bridge_router
+        app.include_router(claude_bridge_router, tags=["claude_bridge"])
+        print("✅ Claude Bridge router included at /api/echo/session-context")
+    except Exception as e:
+        print(f"❌ Could not import Claude Bridge router: {e}")
+
     # Personal Dashboard APIs
     if dashboard_available:
         if knowledge_router:
