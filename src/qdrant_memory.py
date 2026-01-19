@@ -16,6 +16,8 @@ import httpx
 import hashlib
 from datetime import datetime
 import uuid
+import asyncio
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -30,11 +32,21 @@ class QdrantMemory:
             port=6333,
             timeout=30
         )
-        
+
         self.collection_name = collection_name
         self.vector_size = 768  # nomic-embed-text dimension
         self.ollama_url = "http://localhost:11434"
-        
+
+        # Embedding models in priority order
+        self.embedding_models = [
+            "nomic-embed-text:latest",
+            "mxbai-embed-large:latest"
+        ]
+
+        # Retry configuration
+        self.max_retries = 3
+        self.base_delay = 1.0  # seconds
+
         # Ensure collection exists
         self._ensure_collection()
         
@@ -60,25 +72,57 @@ class QdrantMemory:
             logger.error(f"Failed to ensure collection: {e}")
 
     async def generate_embedding(self, text: str) -> Optional[List[float]]:
-        """Generate embedding using Ollama"""
-        async with httpx.AsyncClient(timeout=120) as client:
-            try:
-                response = await client.post(
-                    f"{self.ollama_url}/api/embeddings",
-                    json={
-                        "model": "nomic-embed-text:latest",
-                        "prompt": text
-                    },
-                    timeout=120.0
-                )
-                if response.status_code == 200:
-                    data = response.json()
-                    return data.get("embedding")
-                else:
-                    logger.error(f"Embedding generation failed: {response.status_code}")
-            except Exception as e:
-                logger.error(f"Error generating embedding: {e}")
+        """Generate embedding with retry logic and model fallback"""
+        models_to_try = self.embedding_models.copy()
+
+        for model_name in models_to_try:
+            for attempt in range(self.max_retries):
+                try:
+                    embedding = await self._generate_single_embedding(text, model_name)
+                    if embedding:
+                        if attempt > 0 or models_to_try.index(model_name) > 0:
+                            logger.info(f"Successfully generated embedding with {model_name} "
+                                      f"(attempt {attempt + 1}, model {models_to_try.index(model_name) + 1})")
+                        return embedding
+                except Exception as e:
+                    delay = self.base_delay * (2 ** attempt)
+                    logger.warning(f"Attempt {attempt + 1} failed for {model_name}: {e}. "
+                                 f"Retrying in {delay}s...")
+                    await asyncio.sleep(delay)
+
+        logger.error(f"All embedding attempts failed for text: {text[:100]}...")
         return None
+
+    async def _generate_single_embedding(self, text: str, model: str) -> Optional[List[float]]:
+        """Generate a single embedding attempt"""
+        async with httpx.AsyncClient(timeout=120) as client:
+            response = await client.post(
+                f"{self.ollama_url}/api/embeddings",
+                json={
+                    "model": model,
+                    "prompt": text
+                },
+                timeout=120.0
+            )
+
+            if response.status_code == 200:
+                data = response.json()
+                embedding = data.get("embedding")
+                if embedding:
+                    # Validate dimension
+                    if len(embedding) != self.vector_size:
+                        # Resize if needed (for mxbai which is 1024D)
+                        if len(embedding) == 1024:
+                            embedding = embedding[:self.vector_size]
+                        else:
+                            logger.warning(f"Unexpected embedding dimension: {len(embedding)}")
+                    return embedding
+            else:
+                raise httpx.HTTPStatusError(
+                    f"HTTP {response.status_code}",
+                    request=response.request,
+                    response=response
+                )
 
     async def store_memory(self, text: str, metadata: Optional[Dict] = None) -> bool:
         """Store a memory in Qdrant"""
