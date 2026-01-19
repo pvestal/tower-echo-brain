@@ -8,6 +8,7 @@ import os
 import sys
 import logging
 import pytest
+import pytest_asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass
@@ -209,7 +210,7 @@ def mock_embedding():
 # HTTP Client Fixtures
 # ============================================================
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def async_client(test_config):
     """Async HTTP client for API tests"""
     async with httpx.AsyncClient(
