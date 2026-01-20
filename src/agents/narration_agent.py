@@ -3,7 +3,7 @@ import logging
 import psycopg2
 from psycopg2.extras import DictCursor
 from typing import Dict, List, Optional
-from .base_agent import BaseAgent
+from .context_aware_base import ContextAwareAgent
 
 logger = logging.getLogger(__name__)
 
@@ -15,15 +15,10 @@ ANIME_DB_CONFIG = {
     'password': 'RP78eIrW7cI2jYvL5akt1yurE'
 }
 
-class NarrationAgent(BaseAgent):
+class NarrationAgent(ContextAwareAgent):
     """Agent for anime scene narration and creative content"""
-    
-    def __init__(self):
-        super().__init__(
-            name="NarrationAgent",
-            model="gemma2:9b"  # Good balance for creative writing
-        )
-        self.system_prompt = """You are a creative anime scene narrator. You excel at:
+
+    SYSTEM_PROMPT = """You are a creative anime scene narrator. You excel at:
 1. Writing vivid, atmospheric scene descriptions
 2. Capturing character emotions and motivations
 3. Using cinematic language and pacing
@@ -43,26 +38,45 @@ Output your response as:
 ## ComfyUI Prompt
 [A detailed prompt for image generation, if applicable]"""
 
-    async def process(self, task: str, context: Dict = None) -> Dict:
+    def __init__(self):
+        super().__init__(
+            model_name="gemma2:9b",  # Good balance for creative writing
+            system_prompt=self.SYSTEM_PROMPT
+        )
+
+    async def process(self, task: str, include_context: bool = True, context: Dict = None) -> Dict:
         """Generate narration for a scene"""
         context = context or {}
-        
+
+        # Get unified context from Qdrant and PostgreSQL
+        unified_context = {}
+        if include_context:
+            unified_context = await self.context_provider.get_context(task)
+
         # Get character info if specified
         character_info = None
         if context.get("character"):
             character_info = self._get_character_info(context["character"])
-        
+
         # Get project style if specified
         project_info = None
         if context.get("project_id"):
             project_info = self._get_project_info(context["project_id"])
-        
-        # Build prompt
-        prompt = self._build_prompt(task, character_info, project_info, context)
-        
+
+        # Combine all context
+        combined_context = {
+            **unified_context,
+            "character_info": character_info,
+            "project_info": project_info,
+            "user_context": context
+        }
+
+        # Build prompt with unified context
+        prompt = self.build_prompt_with_context(task, combined_context)
+
         # Generate narration
         logger.info(f"NarrationAgent processing: {task[:50]}...")
-        response = await self.call_model(prompt, self.system_prompt)
+        response = await self.call_model(prompt)
         
         # Extract components
         narration = self._extract_section(response, "Narration")
@@ -78,10 +92,21 @@ Output your response as:
             "comfyui_prompt": comfyui_prompt,
             "character": context.get("character"),
             "project_id": context.get("project_id"),
-            "model": self.model
+            "model": self.model_name,
+            "context_used": {
+                "memories": len(unified_context.get("memories", [])),
+                "facts": len(unified_context.get("facts", [])),
+                "recent_conversations": len(unified_context.get("recent_conversations", [])),
+                "has_character": bool(character_info),
+                "has_project": bool(project_info)
+            }
         }
-        
-        self.add_to_history(task, {"mood": mood, "has_comfyui": bool(comfyui_prompt)})
+
+        # Update history (handled by parent class now)
+        self.history.append(result)
+        if len(self.history) > 50:
+            self.history = self.history[-50:]
+
         return result
     
     def _get_character_info(self, character_name: str) -> Optional[Dict]:

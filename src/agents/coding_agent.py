@@ -6,7 +6,7 @@ import os
 import psycopg2
 from psycopg2.extras import DictCursor
 from typing import Dict, List, Optional
-from .base_agent import BaseAgent
+from .context_aware_base import ContextAwareAgent
 
 logger = logging.getLogger(__name__)
 
@@ -17,15 +17,10 @@ DB_CONFIG = {
     'password': 'RP78eIrW7cI2jYvL5akt1yurE'
 }
 
-class CodingAgent(BaseAgent):
+class CodingAgent(ContextAwareAgent):
     """Agent specialized for code generation and debugging"""
-    
-    def __init__(self):
-        super().__init__(
-            name="CodingAgent",
-            model="deepseek-coder-v2:16b"  # Best code model available
-        )
-        self.system_prompt = """You are an expert coding agent. You MUST:
+
+    SYSTEM_PROMPT = """You are an expert coding agent. You MUST:
 1. READ THE PRIMARY TASK CAREFULLY and solve EXACTLY what is asked
 2. Write clean, working code that directly addresses the task
 3. Include error handling where appropriate
@@ -49,24 +44,43 @@ When debugging:
 - Explain the issue briefly
 - Provide the corrected code"""
 
-    async def process(self, task: str, context: Dict = None) -> Dict:
+    def __init__(self):
+        super().__init__(
+            model_name="deepseek-coder-v2:16b",  # Best code model available
+            system_prompt=self.SYSTEM_PROMPT
+        )
+
+    async def process(self, task: str, include_context: bool = True, context: Dict = None) -> Dict:
         """Process a coding task"""
         context = context or {}
-        
-        # 1. Search for relevant past solutions
+
+        # 1. Get unified context from Qdrant and PostgreSQL
+        unified_context = {}
+        if include_context:
+            unified_context = await self.context_provider.get_context(task)
+
+        # 2. Search for relevant past solutions (PostgreSQL specific)
         past_solutions = self._search_past_solutions(task)
-        
-        # 2. Search codebase for context
+
+        # 3. Search codebase for context
         codebase_context = self._search_codebase(task)
+
+        # 4. Combine all context sources
+        combined_context = {
+            **unified_context,
+            "past_solutions": past_solutions,
+            "codebase_context": codebase_context,
+            "user_context": context
+        }
+
+        # 5. Build enhanced prompt with unified context
+        enhanced_prompt = self.build_prompt_with_context(task, combined_context)
         
-        # 3. Build enhanced prompt
-        enhanced_prompt = self._build_prompt(task, past_solutions, codebase_context, context)
-        
-        # 4. Generate code
+        # 6. Generate code
         logger.info(f"CodingAgent processing: {task[:50]}...")
-        response = await self.call_model(enhanced_prompt, self.system_prompt)
+        response = await self.call_model(enhanced_prompt)
         
-        # 5. Extract and validate code
+        # 7. Extract and validate code
         code = self._extract_code(response)
         validation = None
         if code and context.get("validate", True):
@@ -78,8 +92,11 @@ When debugging:
             "response": response,
             "code": code,
             "validation": validation,
-            "model": self.model,
+            "model": self.model_name,
             "context_used": {
+                "memories": len(unified_context.get("memories", [])),
+                "facts": len(unified_context.get("facts", [])),
+                "recent_conversations": len(unified_context.get("recent_conversations", [])),
                 "past_solutions": len(past_solutions),
                 "codebase_refs": len(codebase_context)
             }
@@ -89,7 +106,11 @@ When debugging:
         if validation and validation.get("valid"):
             self._save_solution(task, code, context)
         
-        self.add_to_history(task, {"code_length": len(code) if code else 0, "valid": validation.get("valid") if validation else None})
+        # Update history (handled by parent class now)
+        self.history.append(result)
+        if len(self.history) > 50:
+            self.history = self.history[-50:]
+
         return result
     
     def _search_past_solutions(self, query: str) -> List[Dict]:
@@ -140,21 +161,48 @@ When debugging:
             logger.warning(f"Codebase search failed: {e}")
             return []
     
-    def _build_prompt(self, task: str, solutions: List, codebase: List, context: Dict) -> str:
-        """Build enhanced prompt with context"""
+    def build_prompt_with_context(self, task: str, context: Dict) -> str:
+        """Override parent method to handle coding-specific context formatting"""
         parts = []
 
+        # Add system prompt
+        parts.append(self.system_prompt)
+
+        # Add unified context (memories, facts, recent conversations)
+        if context:
+            memories = context.get("memories", [])
+            facts = context.get("facts", [])
+            recent = context.get("recent_conversations", [])
+
+            if memories or facts or recent:
+                parts.append("\n## Relevant Context from Knowledge Base")
+
+                if memories:
+                    parts.append("\n### Related Memories")
+                    for mem in memories[:3]:
+                        parts.append(f"- {mem.get('text', '')[:150]}")
+
+                if facts:
+                    parts.append("\n### Known Facts")
+                    for fact in facts[:5]:
+                        parts.append(f"- {fact['subject']} {fact['predicate']} {fact['object']}")
+
         # CRITICAL: Task comes FIRST to ensure it's the primary focus
-        parts.append(f"## PRIMARY TASK (MUST FOLLOW EXACTLY)\n{task}")
+        parts.append(f"\n## PRIMARY TASK (MUST FOLLOW EXACTLY)\n{task}")
         parts.append("\nIMPORTANT: Generate code that directly solves the above task. Reference material below is for context only.\n")
 
-        if context.get("requirements"):
-            parts.append(f"Requirements: {context['requirements']}\n")
+        # Add user context
+        user_context = context.get("user_context", {})
+        if user_context.get("requirements"):
+            parts.append(f"Requirements: {user_context['requirements']}\n")
 
-        if context.get("language"):
-            parts.append(f"Language: {context['language']}\n")
+        if user_context.get("language"):
+            parts.append(f"Language: {user_context['language']}\n")
 
         # Only include past solutions if they closely match the task
+        solutions = context.get("past_solutions", [])
+        codebase = context.get("codebase_context", [])
+
         if solutions:
             # Filter solutions to only those that seem relevant
             task_lower = task.lower()
@@ -178,9 +226,9 @@ When debugging:
                 parts.append(f"- {c['entity_type']}: {c['entity_name']} in {c['file_path']}")
             parts.append("")
 
-        if context.get("files"):
+        if user_context.get("files"):
             parts.append("## Files to Consider")
-            for f in context["files"][:2]:
+            for f in user_context["files"][:2]:
                 parts.append(f"- {f}")
             parts.append("")
 
