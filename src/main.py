@@ -261,6 +261,14 @@ try:
 except ImportError:
     logger.info("ℹ️ Individual agent endpoints not available")
 
+# Include autonomous system routes
+try:
+    from src.api.autonomous import router as autonomous_router
+    app.include_router(autonomous_router)
+    logger.info("✅ Autonomous system endpoints loaded")
+except ImportError as e:
+    logger.info(f"ℹ️ Autonomous system endpoints not available: {e}")
+
 if __name__ == "__main__":
     uvicorn.run(
         "main:app",

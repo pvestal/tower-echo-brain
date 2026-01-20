@@ -1,9 +1,9 @@
 # Production configuration for Echo Brain Learning Pipeline
 
 database:
-  host: "localhost"  # Fixed: was 192.168.50.135
+  host: "localhost"  # Using local PostgreSQL
   port: 5432
-  name: "echo_brain"
+  name: "tower_consolidated"
   user: "patrick"
   password_env: "ECHO_BRAIN_DB_PASSWORD"
   pool_size: 10

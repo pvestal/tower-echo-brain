@@ -32,7 +32,7 @@ def create_default_config() -> dict:
         'database': {
             'host': 'localhost',
             'port': 5432,
-            'name': 'echo_brain',
+            'name': 'tower_consolidated',
             'user': 'patrick',
             'password_env': 'ECHO_BRAIN_DB_PASSWORD'
         },
@@ -46,7 +46,7 @@ def create_default_config() -> dict:
         'sources': {
             'claude_conversations': {
                 'path': os.path.expanduser('~/.claude/conversations'),
-                'file_pattern': '*.md',
+                'file_pattern': '*.json',
                 'watch_for_changes': True,
                 'exclude_patterns': ['**/test_*', '**/.tmp_*'],
                 'max_file_age_days': 365
