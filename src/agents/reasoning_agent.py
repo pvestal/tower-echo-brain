@@ -1,19 +1,14 @@
 """Reasoning Agent - Complex multi-step reasoning and analysis"""
 import logging
 from typing import Dict, List, Optional
-from .base_agent import BaseAgent
+from .context_aware_base import ContextAwareAgent
 
 logger = logging.getLogger(__name__)
 
-class ReasoningAgent(BaseAgent):
+class ReasoningAgent(ContextAwareAgent):
     """Agent for complex reasoning, analysis, and decision-making"""
-    
-    def __init__(self):
-        super().__init__(
-            name="ReasoningAgent",
-            model="deepseek-r1:8b"  # R1 is optimized for reasoning
-        )
-        self.system_prompt = """You are an expert reasoning agent. You excel at:
+
+    SYSTEM_PROMPT = """You are an expert reasoning agent. You excel at:
 1. Breaking complex problems into manageable steps
 2. Analyzing tradeoffs and alternatives
 3. Providing structured, logical analysis
@@ -30,16 +25,33 @@ Format your response with clear sections:
 ## Conclusion
 [Your final answer with confidence assessment]"""
 
-    async def process(self, task: str, context: Dict = None) -> Dict:
+    def __init__(self):
+        super().__init__(
+            model_name="deepseek-r1:8b",  # R1 is optimized for reasoning
+            system_prompt=self.SYSTEM_PROMPT
+        )
+
+    async def process(self, task: str, include_context: bool = True, context: Dict = None) -> Dict:
         """Process a reasoning task"""
         context = context or {}
-        
-        # Build chain-of-thought prompt
-        prompt = self._build_prompt(task, context)
-        
+
+        # Get unified context from Qdrant and PostgreSQL
+        unified_context = {}
+        if include_context:
+            unified_context = await self.context_provider.get_context(task)
+
+        # Combine all context
+        combined_context = {
+            **unified_context,
+            "user_context": context
+        }
+
+        # Build chain-of-thought prompt with unified context
+        prompt = self.build_prompt_with_context(task, combined_context)
+
         # Get reasoning response
         logger.info(f"ReasoningAgent processing: {task[:50]}...")
-        response = await self.call_model(prompt, self.system_prompt)
+        response = await self.call_model(prompt)
         
         # Extract structured components
         analysis = self._extract_section(response, "Analysis")
@@ -52,30 +64,51 @@ Format your response with clear sections:
             "analysis": analysis,
             "reasoning": reasoning,
             "conclusion": conclusion,
-            "model": self.model
+            "model": self.model_name,
+            "context_used": {
+                "memories": len(unified_context.get("memories", [])),
+                "facts": len(unified_context.get("facts", [])),
+                "recent_conversations": len(unified_context.get("recent_conversations", []))
+            }
         }
-        
-        self.add_to_history(task, {"has_conclusion": bool(conclusion)})
+
+        # Update history (handled by parent class now)
+        self.history.append(result)
+        if len(self.history) > 50:
+            self.history = self.history[-50:]
+
         return result
     
-    def _build_prompt(self, task: str, context: Dict) -> str:
-        """Build reasoning prompt with context"""
+    def build_prompt_with_context(self, task: str, context: Dict) -> str:
+        """Override parent method to handle reasoning-specific context formatting"""
         parts = []
+
+        # Add system prompt
+        parts.append(self.system_prompt)
+
+        # Add unified context (memories, facts, recent conversations)
+        if context:
+            parent_formatted = self._format_context(context)
+            if parent_formatted:
+                parts.append("\n## Knowledge Base Context")
+                parts.append(parent_formatted)
+
+        # Add user-provided context
+        user_context = context.get("user_context", {})
+        if user_context.get("background"):
+            parts.append(f"\nBackground: {user_context['background']}")
+
+        if user_context.get("constraints"):
+            parts.append(f"Constraints: {user_context['constraints']}")
         
-        if context.get("background"):
-            parts.append(f"Background: {context['background']}")
-        
-        if context.get("constraints"):
-            parts.append(f"Constraints: {context['constraints']}")
-        
-        if context.get("options"):
+        if user_context.get("options"):
             parts.append("Options to consider:")
-            for opt in context["options"]:
+            for opt in user_context["options"]:
                 parts.append(f"- {opt}")
-        
-        if context.get("examples"):
+
+        if user_context.get("examples"):
             parts.append("Examples:")
-            for ex in context["examples"]:
+            for ex in user_context["examples"]:
                 parts.append(f"- {ex}")
         
         parts.append(f"\nQuestion/Task: {task}")
