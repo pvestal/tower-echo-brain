@@ -168,12 +168,12 @@ class QdrantMemory:
             if not embedding:
                 return []
             
-            # Search in Qdrant
-            results = self.client.search_points(
+            # Search in Qdrant using query method
+            results = self.client.query_points(
                 collection_name=self.collection_name,
-                query_vector=embedding,
+                query=embedding,
                 limit=limit
-            )
+            ).points
             
             # Format results
             memories = []

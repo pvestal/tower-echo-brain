@@ -4,6 +4,7 @@ Parses Claude conversation files and extracts insights, code, solutions, and com
 """
 
 import asyncio
+import json
 import logging
 import re
 from pathlib import Path
@@ -84,12 +85,18 @@ class ConversationProcessor:
                 return result
 
             # Read file content
-            content = await self._read_file_async(file_path)
-            if not content:
+            raw_content = await self._read_file_async(file_path)
+            if not raw_content:
                 result.add_error(f"Empty or unreadable file: {file_path}")
                 return result
 
-            logger.debug(f"Processing conversation file: {file_path}")
+            # Extract text content (handles both JSON and markdown formats)
+            content = self._extract_text_from_json_conversation(raw_content)
+            if not content:
+                result.add_error(f"No extractable content found in: {file_path}")
+                return result
+
+            logger.debug(f"Processing conversation file: {file_path} (extracted {len(content)} chars)")
 
             # Extract different types of learning items
             if self.extract_code_blocks:
@@ -127,6 +134,51 @@ class ConversationProcessor:
         """Read file content asynchronously."""
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, file_path.read_text, 'utf-8')
+
+    def _extract_text_from_json_conversation(self, content: str) -> str:
+        """Extract relevant text content from JSON conversation format."""
+        try:
+            data = json.loads(content)
+
+            # Extract text from various possible fields in the JSON
+            text_parts = []
+
+            # Common conversation fields that might contain meaningful content
+            text_fields = [
+                'task', 'result', 'content', 'text', 'message', 'response',
+                'question', 'answer', 'description', 'summary', 'notes',
+                'conversation', 'dialogue', 'transcript'
+            ]
+
+            # Extract from top-level fields
+            for field in text_fields:
+                if field in data and isinstance(data[field], str) and len(data[field]) > 20:
+                    text_parts.append(f"## {field.title()}\n{data[field]}")
+
+            # Extract from nested objects (like messages in conversation arrays)
+            if isinstance(data.get('messages'), list):
+                for i, msg in enumerate(data['messages']):
+                    if isinstance(msg, dict):
+                        for field in ['content', 'text', 'message']:
+                            if field in msg and isinstance(msg[field], str) and len(msg[field]) > 20:
+                                role = msg.get('role', msg.get('type', f'message_{i}'))
+                                text_parts.append(f"## {role.title()}\n{msg[field]}")
+
+            # If we found text content, join it with newlines
+            if text_parts:
+                extracted_text = "\n\n".join(text_parts)
+                logger.debug(f"Extracted {len(extracted_text)} characters from JSON conversation")
+                return extracted_text
+            else:
+                logger.debug("No extractable text found in JSON conversation")
+                return ""
+
+        except json.JSONDecodeError:
+            # Not JSON, return original content for markdown processing
+            return content
+        except Exception as e:
+            logger.warning(f"Error extracting text from JSON conversation: {e}")
+            return content
 
     async def _extract_code_blocks(self, content: str, file_path: Path) -> List[LearningItem]:
         """Extract code blocks from content."""

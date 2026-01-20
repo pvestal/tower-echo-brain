@@ -4,6 +4,7 @@ Handles connection pooling, transactions, and data operations.
 """
 
 import asyncio
+import json
 import logging
 from datetime import datetime
 from typing import List, Optional, Dict, Any
@@ -176,7 +177,7 @@ class DatabaseConnector:
                 pipeline_run.vectors_updated,
                 pipeline_run.errors_encountered,
                 pipeline_run.error_message,
-                pipeline_run.performance_metrics
+                json.dumps(pipeline_run.performance_metrics) if pipeline_run.performance_metrics else None
             )
 
     async def update_pipeline_run(self, pipeline_run: PipelineRun) -> None:
@@ -204,7 +205,7 @@ class DatabaseConnector:
                 pipeline_run.vectors_updated,
                 pipeline_run.errors_encountered,
                 pipeline_run.error_message,
-                pipeline_run.performance_metrics
+                json.dumps(pipeline_run.performance_metrics) if pipeline_run.performance_metrics else None
             )
 
     async def get_pipeline_run(self, run_id: str) -> Optional[PipelineRun]:
@@ -262,7 +263,7 @@ class DatabaseConnector:
                                 getattr(item, 'tags', None),
                                 getattr(item, 'category', None),
                                 getattr(item, 'importance_score', None),
-                                getattr(item, 'metadata', None)
+                                json.dumps(getattr(item, 'metadata', None)) if getattr(item, 'metadata', None) else None
                             )
                         else:
                             # Insert new item
@@ -280,7 +281,7 @@ class DatabaseConnector:
                                 getattr(item, 'category', None),
                                 getattr(item, 'importance_score', None),
                                 item.unique_id,
-                                getattr(item, 'metadata', None)
+                                json.dumps(getattr(item, 'metadata', None)) if getattr(item, 'metadata', None) else None
                             )
                     else:
                         # Insert new item without unique_id
@@ -297,7 +298,7 @@ class DatabaseConnector:
                             getattr(item, 'tags', None),
                             getattr(item, 'category', None),
                             getattr(item, 'importance_score', None),
-                            getattr(item, 'metadata', None)
+                            json.dumps(getattr(item, 'metadata', None)) if getattr(item, 'metadata', None) else None
                         )
 
                     saved_count += 1
