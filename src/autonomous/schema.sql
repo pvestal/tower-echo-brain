@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS autonomous_tasks (
     goal_id INTEGER REFERENCES autonomous_goals(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     task_type VARCHAR(100) NOT NULL, -- e.g., 'api_call', 'file_operation', 'analysis', 'model_inference'
-    status VARCHAR(50) NOT NULL DEFAULT 'pending', -- 'pending', 'in_progress', 'completed', 'failed', 'requires_approval'
+    status VARCHAR(50) NOT NULL DEFAULT 'pending', -- 'pending', 'in_progress', 'completed', 'failed', 'needs_approval', 'interrupted', 'rejected'
     safety_level VARCHAR(50) NOT NULL DEFAULT 'auto', -- 'auto', 'notify', 'review', 'forbidden'
     priority INTEGER NOT NULL DEFAULT 5, -- 1 (highest) to 10 (lowest)
     scheduled_at TIMESTAMP WITH TIME ZONE,
@@ -30,7 +30,8 @@ CREATE TABLE IF NOT EXISTS autonomous_tasks (
     completed_at TIMESTAMP WITH TIME ZONE,
     result TEXT, -- Task execution result/output
     error TEXT, -- Error message if task failed
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    metadata JSONB DEFAULT '{}' -- Task metadata including safety_level and other details
 );
 
 -- Approvals table: Human approval workflow for sensitive tasks
@@ -43,6 +44,17 @@ CREATE TABLE IF NOT EXISTS autonomous_approvals (
     status VARCHAR(50) NOT NULL DEFAULT 'pending', -- 'pending', 'approved', 'rejected'
     reviewed_at TIMESTAMP WITH TIME ZONE,
     reviewed_by VARCHAR(255), -- Username or identifier of reviewer
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Notifications table: User notifications for tasks requiring attention
+CREATE TABLE IF NOT EXISTS autonomous_notifications (
+    id SERIAL PRIMARY KEY,
+    notification_type VARCHAR(100) NOT NULL, -- 'approval_required', 'task_executed', 'forbidden_attempt', etc.
+    title VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    task_id INTEGER REFERENCES autonomous_tasks(id) ON DELETE CASCADE,
+    read BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -72,6 +84,11 @@ CREATE INDEX IF NOT EXISTS idx_autonomous_tasks_scheduled_at ON autonomous_tasks
 CREATE INDEX IF NOT EXISTS idx_autonomous_approvals_task_id ON autonomous_approvals(task_id);
 CREATE INDEX IF NOT EXISTS idx_autonomous_approvals_status ON autonomous_approvals(status);
 CREATE INDEX IF NOT EXISTS idx_autonomous_approvals_created_at ON autonomous_approvals(created_at);
+
+CREATE INDEX IF NOT EXISTS idx_autonomous_notifications_task_id ON autonomous_notifications(task_id);
+CREATE INDEX IF NOT EXISTS idx_autonomous_notifications_read ON autonomous_notifications(read);
+CREATE INDEX IF NOT EXISTS idx_autonomous_notifications_type ON autonomous_notifications(notification_type);
+CREATE INDEX IF NOT EXISTS idx_autonomous_notifications_created_at ON autonomous_notifications(created_at);
 
 CREATE INDEX IF NOT EXISTS idx_autonomous_audit_log_timestamp ON autonomous_audit_log(timestamp);
 CREATE INDEX IF NOT EXISTS idx_autonomous_audit_log_event_type ON autonomous_audit_log(event_type);
@@ -105,7 +122,7 @@ COMMENT ON COLUMN autonomous_goals.progress_percent IS 'Completion percentage fr
 COMMENT ON COLUMN autonomous_goals.metadata IS 'Flexible JSONB storage for goal-specific configuration';
 
 COMMENT ON COLUMN autonomous_tasks.task_type IS 'Type of task: api_call, file_operation, analysis, model_inference, etc.';
-COMMENT ON COLUMN autonomous_tasks.status IS 'Current status: pending, in_progress, completed, failed, requires_approval';
+COMMENT ON COLUMN autonomous_tasks.status IS 'Current status: pending, in_progress, completed, failed, needs_approval, interrupted, rejected';
 COMMENT ON COLUMN autonomous_tasks.safety_level IS 'Safety classification: auto, notify, review, forbidden';
 COMMENT ON COLUMN autonomous_tasks.priority IS 'Priority level from 1 (highest) to 10 (lowest)';
 

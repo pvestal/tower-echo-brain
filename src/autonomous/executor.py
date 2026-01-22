@@ -24,6 +24,9 @@ from src.agents.coding_agent import CodingAgent
 from src.agents.reasoning_agent import ReasoningAgent
 from src.agents.narration_agent import NarrationAgent
 
+# Import Tower LLM delegation for heavy reasoning tasks
+from src.core.tower_llm_executor import TowerLLMExecutor
+
 # Import context provider
 from src.core.unified_context import get_context_provider
 
@@ -65,6 +68,17 @@ class Executor:
         self.coding_agent = None
         self.reasoning_agent = None
         self.narration_agent = None
+
+        # Initialize Tower LLM executor for delegation
+        self.tower_executor = TowerLLMExecutor()
+
+        # Model preferences for different task types
+        self.model_preferences = {
+            'heavy_reasoning': 'deepseek-r1:8b',  # DeepSeek for complex reasoning
+            'code_generation': 'deepseek-coder-v2:16b',  # DeepSeek Coder for programming
+            'quick_analysis': 'qwen2.5-coder:7b',  # Qwen for quick tasks
+            'documentation': 'qwen2.5:3b'  # Small model for simple docs
+        }
 
         # Context provider
         self.context_provider = get_context_provider()
@@ -121,6 +135,7 @@ class Executor:
     async def execute(self, task_id: int) -> TaskResult:
         """
         Execute a task by routing it to the appropriate agent.
+        Enforces safety levels before execution.
 
         Args:
             task_id: Database ID of the task to execute
@@ -131,7 +146,7 @@ class Executor:
         start_time = datetime.now()
 
         try:
-            # Get task details from database
+            # Get task details from database including safety level
             async with self.get_connection() as conn:
                 task = await conn.fetchrow("""
                     SELECT id, name, task_type, goal_id, result, metadata
@@ -146,49 +161,165 @@ class Executor:
                         error=f"Task {task_id} not found in database"
                     )
 
+            # Extract safety level from metadata
+            metadata = task.get('metadata')
+            if isinstance(metadata, str):
+                # If metadata is a JSON string, parse it
+                import json
+                try:
+                    metadata = json.loads(metadata) if metadata else {}
+                except:
+                    metadata = {}
+            elif metadata is None:
+                metadata = {}
+
+            safety_level = metadata.get('safety_level', 'review').lower()  # Default to REVIEW for safety
+
+            # FORBIDDEN - Reject immediately
+            if safety_level == 'forbidden':
+                error_msg = f"Task {task_id} has FORBIDDEN safety level and cannot be executed"
+                logger.warning(error_msg)
+
+                # Log the attempt in notifications
+                await self._create_notification(
+                    notification_type='forbidden_attempt',
+                    title=f"Forbidden Task Attempted: {task['name']}",
+                    message=f"Task {task_id} with FORBIDDEN safety level was attempted but blocked",
+                    task_id=task_id
+                )
+
+                await self._update_task_status(task_id, 'rejected')
+
+                return TaskResult(
+                    task_id=task_id,
+                    success=False,
+                    error=error_msg,
+                    metadata={'safety_level': 'forbidden', 'blocked': True}
+                )
+
+            # REVIEW - Mark for approval, do not execute
+            elif safety_level == 'review':
+                logger.info(f"Task {task_id} requires human approval (REVIEW safety level)")
+
+                # Mark as needing approval
+                await self._update_task_status(task_id, 'needs_approval')
+
+                # Create notification for approval
+                await self._create_notification(
+                    notification_type='approval_required',
+                    title=f"Approval Required: {task['name']}",
+                    message=f"Task {task_id} requires your approval before execution",
+                    task_id=task_id
+                )
+
+                return TaskResult(
+                    task_id=task_id,
+                    success=True,  # Successfully queued for approval
+                    result="Task queued for human approval",
+                    metadata={'safety_level': 'review', 'status': 'needs_approval'}
+                )
+
+            # AUTO or NOTIFY - Proceed with execution
             # Update task status to in_progress
             await self._update_task_status(task_id, 'in_progress', start_time)
 
             # Prepare context for the task
             context = await self._prepare_context(task)
 
-            # Route to appropriate agent
-            agent = await self._route_to_agent(task['task_type'])
+            # Check if task should be delegated to Tower LLM
+            should_delegate, model = await self._should_delegate_to_tower(task, context)
 
-            if not agent:
-                return TaskResult(
-                    task_id=task_id,
-                    success=False,
-                    error=f"No agent available for task type: {task['task_type']}",
-                    agent_used="none"
+            if should_delegate:
+                # Delegate to Tower LLM for execution
+                logger.info(f"Delegating task {task_id} to Tower LLM ({model})")
+
+                # Set the appropriate model
+                self.tower_executor.model = model
+
+                # Build delegation request
+                delegation_result = await self.tower_executor.delegate_task(
+                    task=f"{task['name']}: {task.get('description', '')}",
+                    context={
+                        'task_type': task['task_type'],
+                        'goal': task.get('goal_name', ''),
+                        'context_summary': context.get('context_summary', ''),
+                        'facts': context.get('facts', [])[:5],  # Include top 5 relevant facts
+                        'recent_memories': context.get('memories', [])[:3]  # Include 3 recent memories
+                    }
                 )
 
-            # Execute the task
-            logger.info(f"Executing task {task_id} ({task['task_type']}) with {agent.__class__.__name__}")
+                if delegation_result.get('success'):
+                    result = f"Tower LLM ({model}) executed: {delegation_result.get('results', [])}"
+                    agent_used = f"TowerLLM-{model}"
+                else:
+                    # Fallback to regular agent if delegation fails
+                    logger.warning(f"Delegation failed, falling back to regular agent")
+                    agent = await self._route_to_agent(task['task_type'])
 
-            # Build the prompt with context
-            prompt = self._build_task_prompt(task, context)
+                    if not agent:
+                        return TaskResult(
+                            task_id=task_id,
+                            success=False,
+                            error=f"No agent available for task type: {task['task_type']}",
+                            agent_used="none"
+                        )
 
-            # Execute with the agent
-            result = await agent.process_request(
-                user_input=prompt,
-                context=context.get('context_summary', '')
-            )
+                    prompt = self._build_task_prompt(task, context)
+                    result = await agent.process_request(
+                        user_input=prompt,
+                        context=context.get('context_summary', '')
+                    )
+                    agent_used = agent.__class__.__name__
+            else:
+                # Route to appropriate agent
+                agent = await self._route_to_agent(task['task_type'])
+
+                if not agent:
+                    return TaskResult(
+                        task_id=task_id,
+                        success=False,
+                        error=f"No agent available for task type: {task['task_type']}",
+                        agent_used="none"
+                    )
+
+                # Execute the task
+                logger.info(f"Executing task {task_id} ({task['task_type']}) with {agent.__class__.__name__}")
+
+                # Build the prompt with context
+                prompt = self._build_task_prompt(task, context)
+
+                # Execute with the agent
+                result = await agent.process_request(
+                    user_input=prompt,
+                    context=context.get('context_summary', '')
+                )
+                agent_used = agent.__class__.__name__
 
             execution_time = (datetime.now() - start_time).total_seconds()
 
             # Update task in database
             await self._update_task_completion(task_id, result, None, execution_time)
 
+            # NOTIFY - Create notification after successful execution
+            if safety_level == 'notify':
+                await self._create_notification(
+                    notification_type='task_executed',
+                    title=f"Task Executed: {task['name']}",
+                    message=f"Task {task_id} was automatically executed with NOTIFY safety level",
+                    task_id=task_id
+                )
+                logger.info(f"Notification created for NOTIFY task {task_id}")
+
             return TaskResult(
                 task_id=task_id,
                 success=True,
                 result=result,
-                agent_used=agent.__class__.__name__,
+                agent_used=agent_used if 'agent_used' in locals() else agent.__class__.__name__,
                 execution_time=execution_time,
                 metadata={
                     'task_type': task['task_type'],
                     'goal_id': task['goal_id'],
+                    'safety_level': safety_level,
                     'context_items': {
                         'memories': len(context.get('memories', [])),
                         'facts': len(context.get('facts', [])),
@@ -280,6 +411,49 @@ class Executor:
                 'error': str(e)
             }
 
+    async def _should_delegate_to_tower(self, task: Dict[str, Any], context: Dict[str, Any]) -> tuple[bool, str]:
+        """
+        Determine if a task should be delegated to Tower LLM.
+
+        Returns:
+            Tuple of (should_delegate, model_to_use)
+        """
+        task_type = task.get('task_type', '').lower()
+        task_name = task.get('name', '').lower()
+
+        # Keywords indicating heavy reasoning tasks for DeepSeek
+        heavy_reasoning_keywords = [
+            'analyze', 'research', 'investigate', 'complex', 'reasoning',
+            'decision', 'strategy', 'optimize', 'evaluate', 'compare',
+            'multi-step', 'deep', 'comprehensive'
+        ]
+
+        # Keywords indicating code generation for DeepSeek Coder
+        code_keywords = [
+            'implement', 'code', 'program', 'script', 'function',
+            'class', 'api', 'algorithm', 'refactor', 'debug'
+        ]
+
+        # Check for heavy reasoning tasks
+        if any(keyword in task_name for keyword in heavy_reasoning_keywords):
+            return True, self.model_preferences['heavy_reasoning']  # DeepSeek-R1
+
+        # Check for complex coding tasks
+        if task_type in ['coding', 'programming', 'code_generation']:
+            # Complex coding goes to DeepSeek Coder
+            if 'complex' in task_name or 'implement' in task_name:
+                return True, self.model_preferences['code_generation']  # DeepSeek Coder V2
+            # Simple coding can go to Qwen
+            else:
+                return True, self.model_preferences['quick_analysis']  # Qwen 2.5
+
+        # Documentation tasks
+        if 'document' in task_name or 'explain' in task_name:
+            return True, self.model_preferences['documentation']  # Small Qwen
+
+        # Default: Don't delegate simple tasks
+        return False, None
+
     def _build_task_prompt(self, task: Dict[str, Any], context: Dict[str, Any]) -> str:
         """
         Build the prompt for the agent based on task and context.
@@ -316,6 +490,20 @@ class Executor:
 
         return "\n\n".join(prompt_parts)
 
+    async def _create_notification(self, notification_type: str, title: str,
+                                  message: str, task_id: Optional[int] = None) -> None:
+        """Create a notification in the database."""
+        try:
+            async with self.get_connection() as conn:
+                await conn.execute("""
+                    INSERT INTO autonomous_notifications
+                    (notification_type, title, message, task_id, read, created_at)
+                    VALUES ($1, $2, $3, $4, false, $5)
+                """, notification_type, title, message, task_id, datetime.now())
+
+        except Exception as e:
+            logger.error(f"Failed to create notification: {e}")
+
     async def _update_task_status(self, task_id: int, status: str, timestamp: Optional[datetime] = None) -> None:
         """Update task status in database."""
         try:
@@ -326,6 +514,12 @@ class Executor:
                         SET status = $1, started_at = $2
                         WHERE id = $3
                     """, status, timestamp or datetime.now(), task_id)
+                elif status in ('needs_approval', 'rejected'):
+                    await conn.execute("""
+                        UPDATE autonomous_tasks
+                        SET status = $1, updated_at = $2
+                        WHERE id = $3
+                    """, status, datetime.now(), task_id)
                 else:
                     await conn.execute("""
                         UPDATE autonomous_tasks

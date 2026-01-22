@@ -45,8 +45,8 @@ def create_default_config() -> dict:
         },
         'sources': {
             'claude_conversations': {
-                'path': os.path.expanduser('~/.claude/conversations'),
-                'file_pattern': '*.json',
+                'path': os.path.expanduser('~/.claude/projects'),
+                'file_pattern': '*.jsonl',
                 'watch_for_changes': True,
                 'exclude_patterns': ['**/test_*', '**/.tmp_*'],
                 'max_file_age_days': 365

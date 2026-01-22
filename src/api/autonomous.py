@@ -16,6 +16,7 @@ from src.autonomous import (
     AutonomousCore, AutonomousState, SystemStatus,
     GoalManager, Scheduler, Executor, SafetyController, AuditLogger
 )
+from src.autonomous.notifications import get_notification_manager
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/autonomous", tags=["autonomous"])
@@ -97,6 +98,19 @@ class AuditLogResponse(BaseModel):
 
 class ControlRequest(BaseModel):
     reason: Optional[str] = Field(None, max_length=500, description="Reason for the action")
+
+class NotificationResponse(BaseModel):
+    id: int
+    notification_type: str
+    title: str
+    message: str
+    task_id: Optional[int]
+    read: bool
+    created_at: datetime
+
+class NotificationCountResponse(BaseModel):
+    unread_count: int
+    total_count: Optional[int] = None
 
 # Utility functions
 async def get_autonomous_core() -> AutonomousCore:
@@ -479,3 +493,81 @@ async def get_audit_logs(
     except Exception as e:
         logger.error(f"Failed to get audit logs: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to get audit logs: {str(e)}")
+
+# Notification endpoints
+@router.get("/notifications", response_model=List[NotificationResponse])
+async def get_notifications(
+    unread_only: bool = Query(True, description="Only return unread notifications"),
+    limit: int = Query(50, ge=1, le=500, description="Maximum number of notifications to return")
+):
+    """Get notifications, defaulting to unread only."""
+    try:
+        notification_manager = get_notification_manager()
+
+        if unread_only:
+            notifications = await notification_manager.get_unread_notifications(limit=limit)
+        else:
+            notifications = await notification_manager.get_all_notifications(limit=limit)
+
+        return [
+            NotificationResponse(
+                id=notif['id'],
+                notification_type=notif['notification_type'],
+                title=notif['title'],
+                message=notif['message'],
+                task_id=notif.get('task_id'),
+                read=notif['read'],
+                created_at=notif['created_at']
+            )
+            for notif in notifications
+        ]
+    except Exception as e:
+        logger.error(f"Failed to get notifications: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get notifications: {str(e)}")
+
+@router.get("/notifications/count", response_model=NotificationCountResponse)
+async def get_notification_count(
+    notification_type: Optional[str] = Query(None, description="Filter by notification type")
+):
+    """Get count of unread notifications. Patrick can poll this endpoint."""
+    try:
+        notification_manager = get_notification_manager()
+        unread_count = await notification_manager.get_unread_count(notification_type=notification_type)
+
+        return NotificationCountResponse(unread_count=unread_count)
+    except Exception as e:
+        logger.error(f"Failed to get notification count: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get count: {str(e)}")
+
+@router.post("/notifications/{notification_id}/read")
+async def mark_notification_as_read(
+    notification_id: int = Path(..., description="Notification ID to mark as read")
+):
+    """Mark a specific notification as read."""
+    try:
+        notification_manager = get_notification_manager()
+        success = await notification_manager.mark_as_read(notification_id)
+
+        if not success:
+            raise HTTPException(status_code=404, detail="Notification not found")
+
+        return {"message": f"Notification {notification_id} marked as read"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to mark notification as read: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to mark as read: {str(e)}")
+
+@router.post("/notifications/mark-all-read")
+async def mark_all_notifications_as_read(
+    notification_type: Optional[str] = Query(None, description="Only mark this type as read")
+):
+    """Mark all notifications as read."""
+    try:
+        notification_manager = get_notification_manager()
+        count = await notification_manager.mark_all_as_read(notification_type=notification_type)
+
+        return {"message": f"Marked {count} notifications as read"}
+    except Exception as e:
+        logger.error(f"Failed to mark all as read: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to mark all as read: {str(e)}")

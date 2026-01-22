@@ -269,6 +269,14 @@ try:
 except ImportError as e:
     logger.info(f"ℹ️ Autonomous system endpoints not available: {e}")
 
+# Include model management routes
+try:
+    from src.api.models_manager import router as models_router
+    app.include_router(models_router)
+    logger.info("✅ Model management endpoints loaded")
+except ImportError as e:
+    logger.info(f"ℹ️ Model management endpoints not available: {e}")
+
 if __name__ == "__main__":
     uvicorn.run(
         "main:app",
