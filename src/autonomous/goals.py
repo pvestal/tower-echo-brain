@@ -9,6 +9,7 @@ progress tracking, and completion management.
 import logging
 import asyncio
 import os
+import json
 from typing import Dict, List, Optional, Any
 from datetime import datetime, timedelta
 import asyncpg
@@ -77,10 +78,10 @@ class GoalManager:
                 goal_id = await conn.fetchval(
                     """
                     INSERT INTO autonomous_goals (name, description, goal_type, priority, metadata)
-                    VALUES ($1, $2, $3, $4, $5)
+                    VALUES ($1, $2, $3, $4, $5::jsonb)
                     RETURNING id
                     """,
-                    name, description, goal_type, priority, metadata
+                    name, description, goal_type, priority, json.dumps(metadata)
                 )
 
                 logger.info(f"Created goal '{name}' with ID {goal_id}")
@@ -248,7 +249,8 @@ class GoalManager:
 
     async def create_task(self, goal_id: int, name: str, task_type: str,
                          safety_level: str = 'auto', priority: int = 5,
-                         scheduled_at: Optional[datetime] = None) -> int:
+                         scheduled_at: Optional[datetime] = None,
+                         metadata: Optional[Dict[str, Any]] = None) -> int:
         """
         Create a new task under a goal.
 
@@ -275,6 +277,15 @@ class GoalManager:
         if not 1 <= priority <= 10:
             raise ValueError("Priority must be between 1 and 10")
 
+        # If safety_level is in metadata, extract and use it
+        if metadata and 'safety_level' in metadata:
+            safety_level = metadata['safety_level']
+
+        # Ensure metadata includes safety_level for consistency
+        if metadata is None:
+            metadata = {}
+        metadata['safety_level'] = safety_level
+
         try:
             async with self.get_connection() as conn:
                 # Verify goal exists
@@ -286,11 +297,11 @@ class GoalManager:
 
                 task_id = await conn.fetchval(
                     """
-                    INSERT INTO autonomous_tasks (goal_id, name, task_type, safety_level, priority, scheduled_at)
-                    VALUES ($1, $2, $3, $4, $5, $6)
+                    INSERT INTO autonomous_tasks (goal_id, name, task_type, safety_level, priority, scheduled_at, metadata)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb)
                     RETURNING id
                     """,
-                    goal_id, name, task_type, safety_level, priority, scheduled_at
+                    goal_id, name, task_type, safety_level, priority, scheduled_at, json.dumps(metadata)
                 )
 
                 logger.info(f"Created task '{name}' with ID {task_id} for goal {goal_id}")

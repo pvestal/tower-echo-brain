@@ -9,16 +9,20 @@ Connects to Qdrant vector database and PostgreSQL for comprehensive knowledge re
 import asyncio
 import json
 import logging
-import os
 import sys
+import os
+from typing import Dict, List, Optional, Any
 from datetime import datetime, timedelta
-from typing import Any, List, Dict, Optional
 from pathlib import Path
 
-import asyncpg
-import httpx
+# Handle nested event loops
+import nest_asyncio
+nest_asyncio.apply()
+
+# Vector database and async imports
 from qdrant_client import QdrantClient
-from qdrant_client.models import PointStruct, Filter, FieldCondition, MatchValue
+import httpx
+import asyncpg
 
 # MCP imports
 from mcp.server import Server
@@ -55,9 +59,9 @@ class EchoBrainMCPServer:
         self.qdrant_client = None
         self.db_pool = None
         self.ollama_url = "http://localhost:11434"
-        self.embedding_model = "nomic-embed-text:latest"
-        self.vector_collection = "echo_memory_768"  # Use 768-dim collection when ready
-        self.fallback_collection = "claude_conversations"  # Fallback to existing collection
+        self.embedding_model = "mxbai-embed-large:latest"  # Using 1024-dim model
+        self.vector_collection = "echo_memory"  # Standard collection with 1024 dimensions
+        self.fallback_collection = None  # No fallback needed
 
         # Database configuration
         self.db_config = {
@@ -325,11 +329,8 @@ class EchoBrainMCPServer:
 
                 if self.vector_collection in collection_names:
                     logger.info(f"Using vector collection: {self.vector_collection}")
-                elif self.fallback_collection in collection_names:
-                    logger.info(f"Using fallback collection: {self.fallback_collection}")
-                    self.vector_collection = self.fallback_collection
                 else:
-                    logger.error("No suitable vector collection found")
+                    logger.error(f"Vector collection '{self.vector_collection}' not found. Please ensure it exists.")
 
             except Exception as e:
                 logger.error(f"Error checking Qdrant collections: {e}")

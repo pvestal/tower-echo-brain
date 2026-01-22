@@ -133,6 +133,16 @@ class AutonomousCore:
             # Start all components
             await self.start_components()
 
+            # Recover interrupted tasks and goals
+            recovered = await self.recover_interrupted_state()
+            if recovered['goals'] > 0 or recovered['tasks'] > 0:
+                logger.info(f"Recovered {recovered['goals']} active goals and {recovered['tasks']} interrupted tasks")
+                await self.audit_logger.log(
+                    "state_recovered",
+                    f"Recovered {recovered['goals']} goals, {recovered['tasks']} tasks",
+                    details=recovered
+                )
+
             # Setup signal handlers for graceful shutdown
             self.setup_signal_handlers()
 
@@ -142,7 +152,7 @@ class AutonomousCore:
             self.main_task = asyncio.create_task(self.run_main_loop())
 
             self.state = AutonomousState.RUNNING
-            await self.audit_logger.log_event("system_started", "Autonomous core started successfully")
+            await self.audit_logger.log("system_started", "Autonomous core started successfully")
 
             logger.info("AutonomousCore started successfully")
             return True
@@ -164,6 +174,16 @@ class AutonomousCore:
         self.running = False
 
         try:
+            # Save current state before stopping
+            saved = await self.save_current_state()
+            if saved['tasks'] > 0:
+                logger.info(f"Saved state: {saved['tasks']} running tasks marked as interrupted")
+                await self.audit_logger.log(
+                    "state_saved",
+                    f"Saved {saved['tasks']} interrupted tasks for recovery",
+                    details=saved
+                )
+
             # Cancel main loop
             if self.main_task:
                 self.main_task.cancel()
@@ -176,7 +196,7 @@ class AutonomousCore:
             await self.stop_components()
 
             self.state = AutonomousState.STOPPED
-            await self.audit_logger.log_event("system_stopped", "Autonomous core stopped")
+            await self.audit_logger.log("system_stopped", "Autonomous core stopped")
 
             logger.info("AutonomousCore stopped successfully")
 
@@ -193,7 +213,7 @@ class AutonomousCore:
 
         logger.info("Pausing AutonomousCore...")
         self.state = AutonomousState.PAUSED
-        await self.audit_logger.log_event("system_paused", "Autonomous core paused")
+        await self.audit_logger.log("system_paused", "Autonomous core paused")
 
         return True
 
@@ -205,7 +225,7 @@ class AutonomousCore:
 
         logger.info("Resuming AutonomousCore...")
         self.state = AutonomousState.RUNNING
-        await self.audit_logger.log_event("system_resumed", "Autonomous core resumed")
+        await self.audit_logger.log("system_resumed", "Autonomous core resumed")
 
         return True
 
@@ -282,7 +302,7 @@ class AutonomousCore:
 
             # Log successful cycle
             if cycle_results['tasks_processed'] > 0 or cycle_results['events_processed'] > 0:
-                await self.audit_logger.log_event(
+                await self.audit_logger.log(
                     "cycle_completed",
                     f"Processed {cycle_results['tasks_processed']} tasks, "
                     f"{cycle_results['events_processed']} events",
@@ -306,7 +326,7 @@ class AutonomousCore:
                 cycle_results['events_processed'] += 1
 
                 # Audit the event processing
-                await self.audit_logger.log_event(
+                await self.audit_logger.log(
                     "event_processed",
                     f"Processed event: {event.event_type}",
                     details={
@@ -334,7 +354,7 @@ class AutonomousCore:
                 # Check if goal is completed
                 if goal['progress_percent'] >= 100.0:
                     await self.goal_manager.update_goal_status(goal['id'], 'completed')
-                    await self.audit_logger.log_event(
+                    await self.audit_logger.log(
                         "goal_completed",
                         f"Goal completed: {goal['name']}",
                         goal_id=goal['id']
@@ -358,7 +378,7 @@ class AutonomousCore:
 
                 if not safety_check.can_execute:
                     logger.info(f"Task {task.id} blocked by safety controller: {safety_check.reason}")
-                    await self.audit_logger.log_event(
+                    await self.audit_logger.log(
                         "task_blocked",
                         f"Task {task.id} blocked: {safety_check.reason}",
                         task_id=task.id,
@@ -376,7 +396,7 @@ class AutonomousCore:
 
                 # Handle result
                 if result.success:
-                    await self.audit_logger.log_event(
+                    await self.audit_logger.log(
                         "task_executed",
                         f"Task {task.id} executed successfully",
                         task_id=task.id,
@@ -388,7 +408,7 @@ class AutonomousCore:
                         await self.scheduler.handle_recurring_task_completion(task.id)
 
                 else:
-                    await self.audit_logger.log_event(
+                    await self.audit_logger.log(
                         "task_failed",
                         f"Task {task.id} failed: {result.error}",
                         task_id=task.id,
@@ -561,7 +581,7 @@ class AutonomousCore:
             )
 
             if goal_id:
-                await self.audit_logger.log_event(
+                await self.audit_logger.log(
                     "goal_created",
                     f"New goal created: {name}",
                     goal_id=goal_id,
@@ -587,3 +607,119 @@ class AutonomousCore:
             'total_tasks': self.tasks_executed,
             'uptime_seconds': (datetime.now() - self.start_time).total_seconds() if self.start_time else 0
         }
+
+    async def save_current_state(self) -> Dict[str, int]:
+        """
+        Save current state before shutdown.
+        Marks running tasks as interrupted for later recovery.
+
+        Returns:
+            Dictionary with counts of saved items
+        """
+        saved = {'tasks': 0, 'goals': 0}
+
+        try:
+            async with self.get_connection() as conn:
+                # Mark all in_progress tasks as interrupted
+                result = await conn.execute("""
+                    UPDATE autonomous_tasks
+                    SET status = 'interrupted'
+                    WHERE status = 'in_progress'
+                """)
+
+                # Extract count from result
+                saved['tasks'] = int(result.split()[-1]) if result else 0
+
+                # Mark paused goals for recovery
+                result = await conn.execute("""
+                    UPDATE autonomous_goals
+                    SET metadata = jsonb_set(
+                        COALESCE(metadata, '{}'),
+                        '{needs_recovery}',
+                        'true'
+                    )
+                    WHERE status = 'active'
+                """)
+
+                saved['goals'] = int(result.split()[-1]) if result else 0
+
+                logger.info(f"State saved: {saved['tasks']} tasks, {saved['goals']} goals")
+
+        except Exception as e:
+            logger.error(f"Failed to save current state: {e}")
+
+        return saved
+
+    async def recover_interrupted_state(self) -> Dict[str, int]:
+        """
+        Recover interrupted tasks and goals after restart.
+
+        Returns:
+            Dictionary with counts of recovered items
+        """
+        recovered = {'tasks': 0, 'goals': 0}
+
+        try:
+            async with self.get_connection() as conn:
+                # Get interrupted tasks
+                interrupted_tasks = await conn.fetch("""
+                    SELECT id, name, task_type, goal_id
+                    FROM autonomous_tasks
+                    WHERE status = 'interrupted'
+                    ORDER BY priority ASC, created_at ASC
+                """)
+
+                # Reset interrupted tasks to pending for re-execution
+                for task in interrupted_tasks:
+                    await conn.execute("""
+                        UPDATE autonomous_tasks
+                        SET status = 'pending',
+                            started_at = NULL,
+                            result = NULL,
+                            error = 'Task interrupted by system shutdown - will retry'
+                        WHERE id = $1
+                    """, task['id'])
+
+                    recovered['tasks'] += 1
+
+                    # Log recovery
+                    await self.audit_logger.log(
+                        "task_recovered",
+                        f"Recovered interrupted task: {task['name']}",
+                        task_id=task['id'],
+                        details={'task_type': task['task_type'], 'goal_id': task['goal_id']}
+                    )
+
+                # Recover goals that need recovery
+                goals_needing_recovery = await conn.fetch("""
+                    SELECT id, name, goal_type
+                    FROM autonomous_goals
+                    WHERE status = 'active'
+                    AND metadata->>'needs_recovery' = 'true'
+                """)
+
+                for goal in goals_needing_recovery:
+                    # Remove recovery flag
+                    await conn.execute("""
+                        UPDATE autonomous_goals
+                        SET metadata = metadata - 'needs_recovery'
+                        WHERE id = $1
+                    """, goal['id'])
+
+                    recovered['goals'] += 1
+
+                    # Log recovery
+                    await self.audit_logger.log(
+                        "goal_recovered",
+                        f"Recovered active goal: {goal['name']}",
+                        goal_id=goal['id'],
+                        details={'goal_type': goal['goal_type']}
+                    )
+
+                if recovered['tasks'] > 0 or recovered['goals'] > 0:
+                    logger.info(f"State recovery complete: {recovered['tasks']} tasks, {recovered['goals']} goals")
+
+        except Exception as e:
+            logger.error(f"Failed to recover interrupted state: {e}")
+
+        return recovered
