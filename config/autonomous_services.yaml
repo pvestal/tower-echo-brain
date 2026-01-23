@@ -1,0 +1,108 @@
+# Autonomous Services Configuration
+# Define which services to monitor and their properties
+
+services:
+  tower-echo-brain:
+    enabled: true
+    port: 8309
+    health_endpoint: "/health"
+    restart_command: "sudo systemctl restart tower-echo-brain"
+    max_retries: 3
+    backoff_base: 30  # seconds
+    critical: true
+
+  tower-dashboard:
+    enabled: true
+    port: 8080
+    health_endpoint: "/api/health"
+    restart_command: "sudo systemctl restart tower-dashboard"
+    max_retries: 3
+    backoff_base: 30
+    critical: true
+
+  tower-auth:
+    enabled: true
+    port: 8088
+    health_endpoint: "/health"
+    restart_command: "sudo systemctl restart tower-auth"
+    max_retries: 3
+    backoff_base: 30
+    critical: true
+
+  tower-kb:
+    enabled: true
+    port: 8307
+    health_endpoint: "/api/health"
+    restart_command: "sudo systemctl restart tower-kb"
+    max_retries: 3
+    backoff_base: 30
+    critical: false
+    auto_fix:
+      - type: "password_fix"
+        condition: "password authentication failed"
+        action: "fix_kb_password"
+
+  tower-anime-production:
+    enabled: true
+    port: 8305
+    health_endpoint: "/health"
+    restart_command: "sudo systemctl restart tower-anime-production"
+    max_retries: 3
+    backoff_base: 30
+    critical: false
+
+  tower-apple-music:
+    enabled: true
+    port: 8306
+    health_endpoint: "/health"
+    restart_command: "sudo systemctl restart tower-apple-music"
+    max_retries: 3
+    backoff_base: 30
+    critical: false
+
+  comfyui:
+    enabled: false  # DISABLED - not installed on this system
+    port: 8188
+    health_endpoint: "/system_stats"
+    restart_command: "cd /mnt/1TB-storage/ComfyUI && python main.py"
+    max_retries: 1
+    backoff_base: 60
+    critical: false
+    note: "ComfyUI not installed on primary Tower system"
+
+  qdrant:
+    enabled: true
+    port: 6333
+    health_endpoint: "/health"
+    restart_command: "sudo systemctl restart qdrant"
+    max_retries: 3
+    backoff_base: 30
+    critical: true
+
+  ollama:
+    enabled: true
+    port: 11434
+    health_endpoint: "/api/version"
+    restart_command: "sudo systemctl restart ollama"
+    max_retries: 3
+    backoff_base: 30
+    critical: false
+
+# Monitoring configuration
+monitoring:
+  check_interval: 60  # seconds
+  enable_auto_restart: true
+  enable_notifications: false
+  enable_audit_log: true
+
+# Circuit breaker configuration
+circuit_breaker:
+  failure_threshold: 5  # failures before opening circuit
+  success_threshold: 2  # successes before closing circuit
+  timeout: 300  # seconds before trying half-open state
+
+# Exponential backoff configuration
+backoff:
+  max_delay: 3600  # maximum delay in seconds (1 hour)
+  multiplier: 2     # exponential multiplier
+  jitter: true      # add random jitter to prevent thundering herd
