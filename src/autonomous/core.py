@@ -8,6 +8,7 @@ operations, managing the lifecycle and coordination of all autonomous components
 import asyncio
 import logging
 import os
+import json
 from typing import Dict, List, Optional, Any
 from datetime import datetime, timedelta
 from enum import Enum
@@ -21,6 +22,7 @@ import time
 from .goals import GoalManager
 from .scheduler import Scheduler, ScheduleConfig
 from .executor import Executor, TaskResult
+from .celery_executor import CeleryExecutor
 from .events import EventWatcher
 from .safety import SafetyController
 from .audit import AuditLogger
@@ -63,6 +65,15 @@ class AutonomousCore:
         """Initialize the AutonomousCore with configuration."""
         self.config = config or {}
 
+        # Database configuration - MUST be set before creating executors
+        self.db_config = {
+            'host': 'localhost',
+            'port': 5432,
+            'database': 'echo_brain',
+            'user': 'patrick',
+            'password': os.environ.get('ECHO_BRAIN_DB_PASSWORD', 'RP78eIrW7cI2jYvL5akt1yurE')
+        }
+
         # System state
         self.state = AutonomousState.STOPPED
         self.start_time = None
@@ -78,7 +89,13 @@ class AutonomousCore:
             max_tasks_per_minute=self.config.get('max_tasks_per_minute', 10),
             max_tasks_per_hour=self.config.get('max_tasks_per_hour', 100)
         ))
-        self.executor = Executor()
+        # Use Celery executor for distributed execution
+        try:
+            self.executor = CeleryExecutor(self.db_config)
+            logger.info("Using CeleryExecutor for distributed task execution")
+        except Exception as e:
+            logger.warning(f"Failed to initialize CeleryExecutor: {e}, falling back to regular Executor")
+            self.executor = Executor()
         self.event_watcher = EventWatcher()
         self.safety_controller = SafetyController()
         self.audit_logger = AuditLogger()
@@ -92,14 +109,7 @@ class AutonomousCore:
         self.kill_switch_file = self.config.get('kill_switch_file', '/tmp/echo_brain_kill_switch')
         self.check_kill_switch = self.config.get('check_kill_switch', True)
 
-        # Database configuration
-        self.db_config = {
-            'host': 'localhost',
-            'port': 5432,
-            'database': 'tower_consolidated',
-            'user': 'patrick',
-            'password': os.environ.get('ECHO_BRAIN_DB_PASSWORD', 'RP78eIrW7cI2jYvL5akt1yurE')
-        }
+        # Database pool (db_config already set above)
         self._pool = None
 
         # Performance tracking
@@ -351,6 +361,9 @@ class AutonomousCore:
                 await self.goal_manager.update_goal_progress(goal['id'])
                 cycle_results['goals_updated'] += 1
 
+                # Check if goal needs more tasks (autonomous task generation)
+                await self._generate_tasks_for_goal(goal)
+
                 # Check if goal is completed
                 if goal['progress_percent'] >= 100.0:
                     await self.goal_manager.update_goal_status(goal['id'], 'completed')
@@ -374,15 +387,52 @@ class AutonomousCore:
                     break
 
                 # Check safety requirements
-                safety_check = await self.safety_controller.evaluate_task_safety(task.id)
+                # Convert ScheduledTask to dict for safety evaluation
+                if hasattr(task, 'id'):  # ScheduledTask object
+                    task_dict = {
+                        "id": task.id,
+                        "name": task.name,
+                        "task_type": task.task_type,
+                        "goal_id": task.goal_id,
+                        "priority": task.priority,
+                        "safety_level": task.safety_level,
+                        "metadata": task.metadata,
+                        "status": task.status if hasattr(task, 'status') else 'pending'
+                    }
+                else:
+                    task_dict = task  # Already a dict
 
-                if not safety_check.can_execute:
-                    logger.info(f"Task {task.id} blocked by safety controller: {safety_check.reason}")
+                # Skip safety evaluation for already approved tasks
+                if task_dict.get('status') == 'approved':
+                    is_safe = True
+                    safety_level = task_dict.get('safety_level', 'auto')
+                    approval_data = None
+                    logger.info(f"Task {task_dict['id']} is pre-approved, skipping safety evaluation")
+                else:
+                    is_safe, safety_level, approval_data = await self.safety_controller.evaluate_task_safety(task_dict)
+
+                if not is_safe:
+                    # Debug logging to identify the type error
+                    logger.debug(f"Approval data type: {type(approval_data)}, value: {approval_data}")
+
+                    # Safe handling of approval_data
+                    if approval_data and isinstance(approval_data, dict):
+                        reason = approval_data.get('reason', 'Safety check failed')
+                    else:
+                        reason = str(approval_data) if approval_data else 'Safety check failed'
+
+                    # Safe handling of task_id extraction
+                    if isinstance(task_dict, dict):
+                        task_id = task_dict.get('id', 'unknown')
+                    else:
+                        task_id = getattr(task, 'id', 'unknown')
+
+                    logger.info(f"Task {task_id} blocked by safety controller: {reason}")
                     await self.audit_logger.log(
                         "task_blocked",
-                        f"Task {task.id} blocked: {safety_check.reason}",
-                        task_id=task.id,
-                        safety_level=task.safety_level
+                        f"Task {task_id} blocked: {reason}",
+                        task_id=task_id,
+                        safety_level=safety_level
                     )
                     continue
 
@@ -428,8 +478,7 @@ class AutonomousCore:
         try:
             # Cleanup old audit logs (keep last 30 days)
             if self.cycles_completed % 100 == 0:  # Every 100 cycles
-                cutoff = datetime.now() - timedelta(days=30)
-                await self.audit_logger.cleanup_old_logs(cutoff)
+                await self.audit_logger.cleanup_old_logs(30)
 
             # Update system health metrics
             await self.update_health_metrics()
@@ -442,6 +491,17 @@ class AutonomousCore:
         """Initialize database tables for autonomous operations."""
         try:
             async with self.get_connection() as conn:
+                # Check if tables already exist
+                table_check = await conn.fetchval("""
+                    SELECT COUNT(*) FROM information_schema.tables
+                    WHERE table_schema = 'public'
+                    AND table_name = 'autonomous_goals'
+                """)
+
+                if table_check > 0:
+                    logger.info("Autonomous tables already exist, skipping schema initialization")
+                    return
+
                 # Read and execute schema
                 schema_path = os.path.join(os.path.dirname(__file__), 'schema.sql')
 
@@ -553,17 +613,21 @@ class AutonomousCore:
 
             # Store health metrics
             async with self.get_connection() as conn:
-                await conn.execute("""
-                    INSERT INTO autonomous_audit_log (event_type, action, details)
-                    VALUES ('health_metrics', 'System health update', $1)
-                """, {
+                # Prepare health data with proper serialization
+                health_data = {
                     'uptime_seconds': status.uptime_seconds,
                     'cycles_completed': status.cycles_completed,
                     'tasks_executed': status.tasks_executed,
                     'avg_cycle_time': avg_cycle_time,
                     'components_status': status.components_status,
-                    'state': status.state.value
-                })
+                    'state': status.state.value,
+                    'timestamp': datetime.now().isoformat()
+                }
+
+                await conn.execute("""
+                    INSERT INTO autonomous_audit_log (event_type, action, details)
+                    VALUES ('health_metrics', 'System health update', $1)
+                """, json.dumps(health_data, default=str))
 
         except Exception as e:
             logger.error(f"Failed to update health metrics: {e}")
@@ -723,3 +787,111 @@ class AutonomousCore:
             logger.error(f"Failed to recover interrupted state: {e}")
 
         return recovered
+
+    async def _generate_tasks_for_goal(self, goal: Dict[str, Any]):
+        """
+        Generate tasks automatically for a goal that needs more tasks.
+
+        Args:
+            goal: Goal dictionary from database
+        """
+        try:
+            # Check how many tasks this goal already has
+            async with self.get_connection() as conn:
+                task_count = await conn.fetchval("""
+                    SELECT COUNT(*) FROM autonomous_tasks
+                    WHERE goal_id = $1
+                """, goal['id'])
+
+            goal_type = goal['goal_type']
+            goal_id = goal['id']
+
+            # Generate tasks based on goal type and current task count
+            new_tasks = []
+
+            if goal_type == 'testing' and task_count < 2:
+                new_tasks = [
+                    {
+                        "name": "Run Self-Test Suite",
+                        "task_type": "testing",
+                        "description": "Execute comprehensive self-test validation",
+                        "safety_level": "auto",
+                        "priority": 3
+                    },
+                    {
+                        "name": "Validate API Endpoints",
+                        "task_type": "testing",
+                        "description": "Test all autonomous API endpoints for functionality",
+                        "safety_level": "auto",
+                        "priority": 4
+                    }
+                ]
+            elif goal_type == 'analysis' and task_count < 3:
+                new_tasks = [
+                    {
+                        "name": "Analyze System Performance",
+                        "task_type": "analysis",
+                        "description": "Review system metrics and identify optimization opportunities",
+                        "safety_level": "auto",
+                        "priority": 5
+                    },
+                    {
+                        "name": "Review Service Health Trends",
+                        "task_type": "monitoring",
+                        "description": "Analyze historical service health data for patterns",
+                        "safety_level": "auto",
+                        "priority": 6
+                    }
+                ]
+            elif goal_type == 'research' and task_count < 2:
+                new_tasks = [
+                    {
+                        "name": "Analyze User Interaction Patterns",
+                        "task_type": "analysis",
+                        "description": "Study user interaction data to identify learning opportunities",
+                        "safety_level": "notify",
+                        "priority": 7
+                    }
+                ]
+            elif goal_type == 'coding' and task_count < 2:
+                new_tasks = [
+                    {
+                        "name": "Review Code Quality Metrics",
+                        "task_type": "analysis",
+                        "description": "Analyze codebase for potential improvements and optimizations",
+                        "safety_level": "notify",
+                        "priority": 8
+                    }
+                ]
+
+            # Create the tasks in database
+            if new_tasks:
+                async with self.get_connection() as conn:
+                    for task in new_tasks:
+                        task_id = await conn.fetchval("""
+                            INSERT INTO autonomous_tasks
+                            (goal_id, name, task_type, safety_level, priority, metadata)
+                            VALUES ($1, $2, $3, $4, $5, $6::jsonb)
+                            RETURNING id
+                        """,
+                        goal_id,
+                        task["name"],
+                        task["task_type"],
+                        task["safety_level"],
+                        task["priority"],
+                        json.dumps({"auto_generated": True, "description": task["description"]})
+                        )
+
+                        logger.info(f"Auto-generated task '{task['name']}' for goal '{goal['name']}' (ID: {task_id})")
+
+                        # Audit the task creation
+                        await self.audit_logger.log(
+                            "task_created",
+                            f"Auto-generated task: {task['name']}",
+                            goal_id=goal_id,
+                            task_id=task_id,
+                            details={"auto_generated": True, "goal_type": goal_type}
+                        )
+
+        except Exception as e:
+            logger.error(f"Failed to generate tasks for goal {goal['name']}: {e}")

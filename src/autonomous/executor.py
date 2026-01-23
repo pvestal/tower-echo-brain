@@ -33,16 +33,8 @@ from src.core.unified_context import get_context_provider
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class TaskResult:
-    """Structured result from task execution"""
-    task_id: int
-    success: bool
-    result: Optional[str] = None
-    error: Optional[str] = None
-    agent_used: Optional[str] = None
-    execution_time: Optional[float] = None
-    metadata: Optional[Dict[str, Any]] = None
+# Import TaskResult from models module
+from .models import TaskResult
 
 
 class Executor:
@@ -58,7 +50,7 @@ class Executor:
         self.db_config = {
             'host': 'localhost',
             'port': 5432,
-            'database': 'tower_consolidated',
+            'database': 'echo_brain',
             'user': 'patrick',
             'password': os.environ.get('ECHO_BRAIN_DB_PASSWORD', 'RP78eIrW7cI2jYvL5akt1yurE')
         }
@@ -146,10 +138,10 @@ class Executor:
         start_time = datetime.now()
 
         try:
-            # Get task details from database including safety level
+            # Get task details from database including safety level and status
             async with self.get_connection() as conn:
                 task = await conn.fetchrow("""
-                    SELECT id, name, task_type, goal_id, result, metadata
+                    SELECT id, name, task_type, goal_id, result, metadata, safety_level, status
                     FROM autonomous_tasks
                     WHERE id = $1
                 """, task_id)
@@ -161,7 +153,7 @@ class Executor:
                         error=f"Task {task_id} not found in database"
                     )
 
-            # Extract safety level from metadata
+            # Extract safety level and status from task
             metadata = task.get('metadata')
             if isinstance(metadata, str):
                 # If metadata is a JSON string, parse it
@@ -173,51 +165,61 @@ class Executor:
             elif metadata is None:
                 metadata = {}
 
-            safety_level = metadata.get('safety_level', 'review').lower()  # Default to REVIEW for safety
+            # Use the actual safety_level column from database
+            safety_level = (task.get('safety_level') or 'review').lower()
+            task_status = task.get('status')
 
-            # FORBIDDEN - Reject immediately
-            if safety_level == 'forbidden':
-                error_msg = f"Task {task_id} has FORBIDDEN safety level and cannot be executed"
-                logger.warning(error_msg)
+            # Skip safety checks for already approved tasks
+            if task_status == 'approved':
+                logger.info(f"Task {task_id} is pre-approved with safety level '{safety_level}', proceeding with execution")
+                # Continue to actual execution below
+            else:
+                # Apply safety level restrictions for non-approved tasks
+                safety_level = safety_level.lower()  # Ensure lowercase for comparison
 
-                # Log the attempt in notifications
-                await self._create_notification(
-                    notification_type='forbidden_attempt',
-                    title=f"Forbidden Task Attempted: {task['name']}",
-                    message=f"Task {task_id} with FORBIDDEN safety level was attempted but blocked",
-                    task_id=task_id
-                )
+                # FORBIDDEN - Reject immediately
+                if safety_level == 'forbidden':
+                    error_msg = f"Task {task_id} has FORBIDDEN safety level and cannot be executed"
+                    logger.warning(error_msg)
 
-                await self._update_task_status(task_id, 'rejected')
+                    # Log the attempt in notifications
+                    await self._create_notification(
+                        notification_type='forbidden_attempt',
+                        title=f"Forbidden Task Attempted: {task['name']}",
+                        message=f"Task {task_id} with FORBIDDEN safety level was attempted but blocked",
+                        task_id=task_id
+                    )
 
-                return TaskResult(
-                    task_id=task_id,
-                    success=False,
-                    error=error_msg,
-                    metadata={'safety_level': 'forbidden', 'blocked': True}
-                )
+                    await self._update_task_status(task_id, 'rejected')
 
-            # REVIEW - Mark for approval, do not execute
-            elif safety_level == 'review':
-                logger.info(f"Task {task_id} requires human approval (REVIEW safety level)")
+                    return TaskResult(
+                        task_id=task_id,
+                        success=False,
+                        error=error_msg,
+                        metadata={'safety_level': 'forbidden', 'blocked': True}
+                    )
 
-                # Mark as needing approval
-                await self._update_task_status(task_id, 'needs_approval')
+                # REVIEW - Mark for approval, do not execute
+                elif safety_level == 'review':
+                    logger.info(f"Task {task_id} requires human approval (REVIEW safety level)")
 
-                # Create notification for approval
-                await self._create_notification(
-                    notification_type='approval_required',
-                    title=f"Approval Required: {task['name']}",
-                    message=f"Task {task_id} requires your approval before execution",
-                    task_id=task_id
-                )
+                    # Mark as needing approval
+                    await self._update_task_status(task_id, 'needs_approval')
 
-                return TaskResult(
-                    task_id=task_id,
-                    success=True,  # Successfully queued for approval
-                    result="Task queued for human approval",
-                    metadata={'safety_level': 'review', 'status': 'needs_approval'}
-                )
+                    # Create notification for approval
+                    await self._create_notification(
+                        notification_type='approval_required',
+                        title=f"Approval Required: {task['name']}",
+                        message=f"Task {task_id} requires your approval before execution",
+                        task_id=task_id
+                    )
+
+                    return TaskResult(
+                        task_id=task_id,
+                        success=True,  # Successfully queued for approval
+                        result="Task queued for human approval",
+                        metadata={'safety_level': 'review', 'status': 'needs_approval'}
+                    )
 
             # AUTO or NOTIFY - Proceed with execution
             # Update task status to in_progress
@@ -265,9 +267,10 @@ class Executor:
                         )
 
                     prompt = self._build_task_prompt(task, context)
-                    result = await agent.process_request(
-                        user_input=prompt,
-                        context=context.get('context_summary', '')
+                    result = await agent.process(
+                        task=prompt,
+                        include_context=True,
+                        context=context
                     )
                     agent_used = agent.__class__.__name__
             else:
@@ -289,9 +292,10 @@ class Executor:
                 prompt = self._build_task_prompt(task, context)
 
                 # Execute with the agent
-                result = await agent.process_request(
-                    user_input=prompt,
-                    context=context.get('context_summary', '')
+                result = await agent.process(
+                    task=prompt,
+                    include_context=True,
+                    context=context
                 )
                 agent_used = agent.__class__.__name__
 
