@@ -56,7 +56,7 @@ class Scheduler:
         self.db_config = {
             'host': 'localhost',
             'port': 5432,
-            'database': 'tower_consolidated',
+            'database': 'echo_brain',
             'user': 'patrick',
             'password': os.environ.get('ECHO_BRAIN_DB_PASSWORD', 'RP78eIrW7cI2jYvL5akt1yurE')
         }
@@ -116,7 +116,7 @@ class Scheduler:
                     SELECT id, goal_id, name, task_type, priority, scheduled_at,
                            safety_level, status, created_at, metadata
                     FROM autonomous_tasks
-                    WHERE status = 'pending'
+                    WHERE status IN ('pending', 'approved')  -- Include approved tasks
                       AND safety_level IN ('auto', 'notify')  -- Only auto-executable tasks
                       AND (scheduled_at IS NULL OR scheduled_at <= NOW())
                     ORDER BY

@@ -38,9 +38,11 @@ class QdrantMemory:
         self.ollama_url = "http://localhost:11434"
 
         # Embedding models in priority order
+        # Using tinyllama as fallback since it's available
         self.embedding_models = [
             "nomic-embed-text:latest",
-            "mxbai-embed-large:latest"
+            "mxbai-embed-large:latest",
+            "tinyllama:latest"  # Fallback to available model
         ]
 
         # Retry configuration
