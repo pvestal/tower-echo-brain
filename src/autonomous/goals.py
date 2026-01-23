@@ -31,7 +31,7 @@ class GoalManager:
         self.db_config = {
             'host': 'localhost',
             'port': 5432,
-            'database': 'tower_consolidated',
+            'database': 'echo_brain',
             'user': 'patrick',
             'password': os.environ.get('ECHO_BRAIN_DB_PASSWORD', 'RP78eIrW7cI2jYvL5akt1yurE')
         }
@@ -123,6 +123,117 @@ class GoalManager:
             logger.error(f"Failed to retrieve active goals: {e}")
             raise
 
+    async def get_goals(self, status: Optional[str] = None, goal_type: Optional[str] = None, limit: int = 100) -> List[Dict[str, Any]]:
+        """
+        Retrieve goals with optional status and type filtering.
+
+        Args:
+            status: Optional status filter ('active', 'paused', 'completed', 'failed')
+            goal_type: Optional type filter ('research', 'coding', 'analysis', 'maintenance')
+            limit: Maximum number of goals to return, default 100
+
+        Returns:
+            List[Dict]: List of goal dictionaries
+        """
+        try:
+            async with self.get_connection() as conn:
+                # Build query dynamically based on filters
+                conditions = []
+                params = []
+                param_count = 0
+
+                if status:
+                    param_count += 1
+                    conditions.append(f"status = ${param_count}")
+                    params.append(status)
+
+                if goal_type:
+                    param_count += 1
+                    conditions.append(f"goal_type = ${param_count}")
+                    params.append(goal_type)
+
+                where_clause = f"WHERE {' AND '.join(conditions)}" if conditions else ""
+                param_count += 1
+                params.append(limit)
+
+                query = f"""
+                    SELECT id, name, description, goal_type, status, priority,
+                           progress_percent, created_at, updated_at, completed_at, metadata
+                    FROM autonomous_goals
+                    {where_clause}
+                    ORDER BY priority ASC, created_at DESC
+                    LIMIT ${param_count}
+                """
+
+                rows = await conn.fetch(query, *params)
+                goals = []
+                for row in rows:
+                    goal = dict(row)
+                    # Parse metadata if it's a string
+                    if 'metadata' in goal and isinstance(goal['metadata'], str):
+                        goal['metadata'] = json.loads(goal['metadata'])
+                    goals.append(goal)
+                return goals
+        except Exception as e:
+            logger.error(f"Failed to retrieve goals: {e}")
+            return []
+
+    async def get_tasks(self, goal_id: Optional[int] = None, status: Optional[str] = None,
+                       task_type: Optional[str] = None, limit: int = 100) -> List[Dict[str, Any]]:
+        """
+        Retrieve tasks with optional filtering.
+
+        Args:
+            goal_id: Optional goal ID to filter tasks
+            status: Optional status filter
+            task_type: Optional task type filter
+            limit: Maximum number of tasks to return, default 100
+
+        Returns:
+            List[Dict]: List of task dictionaries
+        """
+        try:
+            async with self.get_connection() as conn:
+                # Build query dynamically based on filters
+                conditions = []
+                params = []
+                param_count = 0
+
+                if goal_id:
+                    param_count += 1
+                    conditions.append(f"t.goal_id = ${param_count}")
+                    params.append(goal_id)
+
+                if status:
+                    param_count += 1
+                    conditions.append(f"t.status = ${param_count}")
+                    params.append(status)
+
+                if task_type:
+                    param_count += 1
+                    conditions.append(f"t.task_type = ${param_count}")
+                    params.append(task_type)
+
+                where_clause = f"WHERE {' AND '.join(conditions)}" if conditions else ""
+                param_count += 1
+                params.append(limit)
+
+                query = f"""
+                    SELECT t.*, g.name as goal_name
+                    FROM autonomous_tasks t
+                    LEFT JOIN autonomous_goals g ON t.goal_id = g.id
+                    {where_clause}
+                    ORDER BY t.priority ASC, t.scheduled_at ASC
+                    LIMIT ${param_count}
+                """
+
+                rows = await conn.fetch(query, *params)
+                tasks = [dict(row) for row in rows]
+                return tasks
+        except Exception as e:
+            logger.error(f"Failed to retrieve tasks: {e}")
+            return []
+
     async def update_progress(self, goal_id: int, progress_percent: float) -> bool:
         """
         Update the progress percentage for a goal.
@@ -161,6 +272,79 @@ class GoalManager:
         except Exception as e:
             logger.error(f"Failed to update progress for goal {goal_id}: {e}")
             raise
+
+    async def update_goal_progress(self, goal_id: int) -> bool:
+        """
+        Update goal progress based on completed tasks.
+
+        Args:
+            goal_id: ID of the goal to update
+
+        Returns:
+            bool: True if updated successfully
+        """
+        try:
+            async with self.get_connection() as conn:
+                # Calculate progress based on completed tasks
+                result = await conn.fetchrow("""
+                    SELECT
+                        COUNT(*) as total_tasks,
+                        COUNT(*) FILTER (WHERE status = 'completed') as completed_tasks
+                    FROM autonomous_tasks
+                    WHERE goal_id = $1
+                """, goal_id)
+
+                if result['total_tasks'] == 0:
+                    progress = 0.0
+                else:
+                    progress = (result['completed_tasks'] / result['total_tasks']) * 100.0
+
+                # Update the goal progress
+                await self.update_progress(goal_id, progress)
+                logger.debug(f"Updated goal {goal_id} progress to {progress:.1f}%")
+                return True
+
+        except Exception as e:
+            logger.error(f"Failed to update goal progress for {goal_id}: {e}")
+            return False
+
+    async def update_goal_status(self, goal_id: int, status: str) -> bool:
+        """
+        Update goal status.
+
+        Args:
+            goal_id: ID of the goal to update
+            status: New status ('active', 'paused', 'completed', 'failed')
+
+        Returns:
+            bool: True if updated successfully
+        """
+        try:
+            async with self.get_connection() as conn:
+                # Set completed_at if status is completed
+                if status == 'completed':
+                    result = await conn.execute("""
+                        UPDATE autonomous_goals
+                        SET status = $1, completed_at = NOW(), updated_at = NOW()
+                        WHERE id = $2
+                    """, status, goal_id)
+                else:
+                    result = await conn.execute("""
+                        UPDATE autonomous_goals
+                        SET status = $1, updated_at = NOW()
+                        WHERE id = $2
+                    """, status, goal_id)
+
+                if result == "UPDATE 1":
+                    logger.info(f"Updated goal {goal_id} status to {status}")
+                    return True
+                else:
+                    logger.warning(f"Goal {goal_id} not found")
+                    return False
+
+        except Exception as e:
+            logger.error(f"Failed to update goal {goal_id} status: {e}")
+            return False
 
     async def complete_goal(self, goal_id: int) -> bool:
         """

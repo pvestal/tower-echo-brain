@@ -1,7 +1,7 @@
 """Agent API endpoints"""
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Any
 import logging
 import subprocess
 import tempfile
@@ -211,3 +211,15 @@ async def get_agents_status():
             }
         ]
     }
+
+@router.post("/api/echo/agents/narration/anime")
+async def narrate_and_generate(request: Dict[str, Any]):
+    """Develop narrative and generate anime image."""
+    scene_concept = request.get("scene_concept", "")
+    project_id = request.get("project_id")
+
+    if not scene_concept:
+        raise HTTPException(status_code=400, detail="scene_concept is required")
+
+    result = await narration_agent.generate_anime_scene(scene_concept, project_id)
+    return result

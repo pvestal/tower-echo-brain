@@ -30,7 +30,7 @@ class AuditLogger:
         self.db_config = {
             'host': 'localhost',
             'port': 5432,
-            'database': 'tower_consolidated',
+            'database': 'echo_brain',
             'user': 'patrick',
             'password': os.environ.get('ECHO_BRAIN_DB_PASSWORD', 'RP78eIrW7cI2jYvL5akt1yurE')
         }
@@ -97,6 +97,10 @@ class AuditLogger:
             raise ValueError("Outcome must be one of: success, failure, pending, blocked")
 
         details = details or {}
+
+        # Convert details to JSON string if it's a dict
+        if isinstance(details, dict):
+            details = json.dumps(details)
 
         try:
             async with self.get_connection() as conn:
@@ -502,6 +506,37 @@ class AuditLogger:
         except Exception as e:
             logger.error(f"Failed to get audit statistics: {e}")
             raise
+
+    async def cleanup_old_logs(self, days_to_keep: int = 90):
+        """
+        Clean up old audit log entries.
+
+        Args:
+            days_to_keep: Number of days of logs to keep (default: 90)
+
+        Returns:
+            int: Number of records deleted
+        """
+        try:
+            async with self.get_connection() as conn:
+                result = await conn.execute(
+                    f"""
+                    DELETE FROM autonomous_audit_log
+                    WHERE timestamp < NOW() - INTERVAL '{days_to_keep} days'
+                    """
+                )
+
+                # Extract count from result
+                deleted_count = int(result.split()[-1]) if result and result.split()[-1].isdigit() else 0
+
+                if deleted_count > 0:
+                    logger.info(f"Cleaned up {deleted_count} old audit log entries")
+
+                return deleted_count
+
+        except Exception as e:
+            logger.error(f"Failed to cleanup old audit logs: {e}")
+            return 0
 
     async def close(self):
         """Close the database connection pool."""

@@ -15,9 +15,8 @@ from typing import Dict, List, Optional, Any
 from datetime import datetime, timedelta
 from pathlib import Path
 
-# Handle nested event loops
+# Handle nested event loops only when needed
 import nest_asyncio
-nest_asyncio.apply()
 
 # Vector database and async imports
 from qdrant_client import QdrantClient
@@ -538,17 +537,30 @@ async def main():
     await echo_server.initialize()
 
     try:
-        # Run the stdio server
+        # Run the stdio server with proper exception handling
         async with stdio_server() as streams:
-            await echo_server.server.run(
-                streams[0], streams[1], InitializationOptions(
-                    server_name="echo-brain",
-                    server_version="1.0.0",
-                    capabilities=echo_server.server.get_capabilities()
+            try:
+                await echo_server.server.run(
+                    streams[0], streams[1], InitializationOptions(
+                        server_name="echo-brain",
+                        server_version="1.0.0",
+                        capabilities=echo_server.server.get_capabilities(
+                            notification_options={},
+                            experimental_capabilities={}
+                        )
+                    )
                 )
-            )
+            except Exception as e:
+                logger.error(f"Server run error: {e}")
+                # Try to handle gracefully
+                pass
+    except Exception as e:
+        logger.error(f"stdio_server error: {e}")
     finally:
-        await echo_server.cleanup()
+        try:
+            await echo_server.cleanup()
+        except Exception as e:
+            logger.error(f"Cleanup error: {e}")
 
 
 if __name__ == "__main__":
@@ -556,6 +568,16 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
     try:
+        # Remove nest_asyncio for systemd service - it conflicts
+        if hasattr(nest_asyncio, 'apply'):
+            try:
+                loop = asyncio.get_running_loop()
+                logger.info("Existing event loop detected, skipping nest_asyncio")
+            except RuntimeError:
+                # No running loop, safe to apply nest_asyncio
+                nest_asyncio.apply()
+                logger.info("Applied nest_asyncio for nested loop support")
+
         asyncio.run(main())
     except KeyboardInterrupt:
         logger.info("Server shutdown by user")

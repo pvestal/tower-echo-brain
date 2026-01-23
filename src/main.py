@@ -103,6 +103,39 @@ async def startup_event():
     except Exception as e:
         logger.warning(f"⚠️ Agent initialization failed (non-critical): {e}")
 
+    # Start improved autonomous loop v2 with proper error handling
+    try:
+        from src.autonomous.autonomous_loop_v2 import AutonomousLoopV2
+        autonomous_loop = AutonomousLoopV2()
+        asyncio.create_task(autonomous_loop.start())
+        logger.info("🤖 Autonomous Loop v2 ENABLED - monitoring with circuit breakers and backoff")
+
+        # Also register status endpoint
+        @app.get("/api/autonomous/status")
+        async def get_autonomous_status():
+            """Get status of autonomous monitoring"""
+            return autonomous_loop.get_status()
+
+    except Exception as e:
+        logger.warning(f"⚠️ Could not start Autonomous Loop v2: {e}")
+
+    # Start the ACTUAL Autonomous Core for goal-driven behavior
+    try:
+        from src.autonomous.core import AutonomousCore
+        autonomous_core = AutonomousCore()
+        asyncio.create_task(autonomous_core.start())
+        logger.info("🧠 Autonomous Core STARTED - goal-driven task execution enabled")
+    except Exception as e:
+        logger.warning(f"⚠️ Could not start Autonomous Core: {e}")
+        # Fallback to simple monitor
+        try:
+            from src.autonomous.tower_monitor import TowerServicesMonitor
+            monitor = TowerServicesMonitor()
+            asyncio.create_task(monitor.start())
+            logger.info("🔍 Fallback Tower Services Monitor ENABLED")
+        except Exception as e2:
+            logger.error(f"❌ Both monitoring systems failed: {e}, {e2}")
+
 @app.get("/health")
 async def health_check():
     """Enhanced health check with agent status"""
@@ -272,7 +305,9 @@ except ImportError as e:
 # Include model management routes
 try:
     from src.api.models_manager import router as models_router
+    from src.api.tasks import router as tasks_router
     app.include_router(models_router)
+    app.include_router(tasks_router)
     logger.info("✅ Model management endpoints loaded")
 except ImportError as e:
     logger.info(f"ℹ️ Model management endpoints not available: {e}")
