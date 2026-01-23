@@ -191,5 +191,60 @@ Output your response as:
             return text[start:].strip()
         return ""
 
+    async def generate_anime_scene(self, scene_concept: str, project_id: int = None) -> Dict:
+        """Generate a complete anime scene: narrative -> visual -> image."""
+        import httpx
+
+        # Step 1: Develop narrative
+        narrative_prompt = f"""Develop this anime scene into a detailed visual narrative:
+
+Scene: {scene_concept}
+
+Provide:
+1. Visual description (what we see)
+2. Character emotions and body language
+3. Environmental details
+4. Suggested camera angle
+5. Lighting mood
+"""
+
+        narrative_response = await self.process(narrative_prompt)
+        narrative = narrative_response.get("response", "")
+
+        # Step 2: Extract ComfyUI prompt from response
+        comfyui_prompt = self._extract_section(narrative, "ComfyUI Prompt")
+        if not comfyui_prompt:
+            # Generate one if not present
+            comfyui_prompt = f"Photorealistic anime scene: {scene_concept}, cinematic lighting, detailed environment, emotional depth"
+
+        # Step 3: Try to submit to anime API (if available)
+        generation_result = None
+        for port in [8328, 8305]:
+            try:
+                async with httpx.AsyncClient(timeout=300.0) as client:
+                    response = await client.post(
+                        f"http://localhost:{port}/api/anime/generate",
+                        json={
+                            "prompt": comfyui_prompt,
+                            "project_id": project_id,
+                            "source": "narration_agent"
+                        }
+                    )
+                    if response.status_code == 200:
+                        generation_result = response.json()
+                        break
+            except Exception as e:
+                continue
+
+        if not generation_result:
+            generation_result = {"error": "Anime API not available", "prompt_only": True}
+
+        return {
+            "scene_concept": scene_concept,
+            "narrative": narrative,
+            "comfyui_prompt": comfyui_prompt,
+            "generation": generation_result
+        }
+
 # Singleton
 narration_agent = NarrationAgent()

@@ -36,7 +36,7 @@ class SafetyController:
         self.db_config = {
             'host': 'localhost',
             'port': 5432,
-            'database': 'tower_consolidated',
+            'database': 'echo_brain',
             'user': 'patrick',
             'password': os.environ.get('ECHO_BRAIN_DB_PASSWORD', 'RP78eIrW7cI2jYvL5akt1yurE')
         }
@@ -456,6 +456,74 @@ class SafetyController:
         except Exception as e:
             logger.error(f"Failed to execute emergency halt: {e}")
             raise
+
+    async def evaluate_task_safety(self, task: Dict[str, Any]) -> Tuple[bool, str, Optional[Dict]]:
+        """
+        Evaluate if a task is safe to execute.
+
+        Args:
+            task: Task dictionary with details
+
+        Returns:
+            Tuple of (is_safe, safety_level, approval_data)
+        """
+        # Check kill switch first
+        kill_active, kill_reason = self.is_kill_switch_active()
+        if kill_active:
+            return False, "forbidden", {"reason": f"Kill switch active: {kill_reason}"}
+
+        # Check rate limits
+        within_limit, rate_msg = self.check_rate_limit()
+        if not within_limit:
+            return False, "review", {"reason": rate_msg}
+
+        # Determine safety level based on task type
+        task_type = task.get('task_type', 'unknown')
+        safety_level = task.get('safety_level', 'auto')
+
+        # Override safety levels for certain task types
+        dangerous_types = ['system_modification', 'data_deletion', 'security_change']
+        if task_type in dangerous_types:
+            safety_level = 'review'
+
+        # Forbidden task types
+        forbidden_types = ['credential_access', 'private_data_exposure']
+        if task_type in forbidden_types:
+            safety_level = 'forbidden'
+
+        # System review tasks are auto-approved
+        if task_type in ['system_review', 'monitoring', 'analysis', 'testing']:
+            safety_level = 'auto'
+
+        # Return evaluation
+        if safety_level == 'forbidden':
+            return False, safety_level, {"reason": f"Task type {task_type} is forbidden"}
+        elif safety_level == 'review':
+            approval_data = {
+                "task_id": task.get('id'),
+                "action_description": task.get('name', 'Unknown task'),
+                "risk_assessment": f"Task type {task_type} requires human approval",
+                "proposed_action": task
+            }
+            return False, safety_level, approval_data
+        elif safety_level == 'notify':
+            return True, safety_level, {"notification": f"Executing {task_type} task"}
+        else:  # auto
+            return True, safety_level, None
+
+    async def cleanup(self):
+        """Clean up old approval records."""
+        try:
+            async with self.get_connection() as conn:
+                # Clean up old approved/rejected approvals older than 30 days
+                result = await conn.execute("""
+                    DELETE FROM autonomous_approvals
+                    WHERE status IN ('approved', 'rejected')
+                    AND created_at < NOW() - INTERVAL '30 days'
+                """)
+                logger.info(f"Cleaned up old approval records")
+        except Exception as e:
+            logger.error(f"Failed to cleanup approvals: {e}")
 
     async def close(self):
         """Close the database connection pool."""

@@ -571,3 +571,55 @@ async def mark_all_notifications_as_read(
     except Exception as e:
         logger.error(f"Failed to mark all as read: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to mark all as read: {str(e)}")
+
+@router.get("/diagnosis")
+async def run_diagnosis():
+    """Run a full system diagnosis."""
+    try:
+        from src.autonomous.self_diagnosis import diagnosis
+        results = await diagnosis.run_full_diagnosis()
+        return results
+    except Exception as e:
+        logger.error(f"Failed to run diagnosis: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to run diagnosis: {str(e)}")
+
+@router.post("/repair")
+async def run_repair(enable_auto: bool = False):
+    """Run diagnosis and attempt repairs."""
+    try:
+        from src.autonomous.self_diagnosis import diagnosis
+        from src.autonomous.self_repair import repair
+
+        # Run diagnosis first
+        diagnosis_result = await diagnosis.run_full_diagnosis()
+
+        # Enable auto-repair if requested
+        if enable_auto:
+            repair.enable_auto_repair(True)
+
+        # Attempt repairs
+        repair_result = await repair.auto_repair_from_diagnosis(diagnosis_result)
+
+        return {
+            "diagnosis": diagnosis_result,
+            "repair": repair_result
+        }
+    except Exception as e:
+        logger.error(f"Failed to run repair: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to run repair: {str(e)}")
+
+@router.post("/cycle")
+async def run_cycle():
+    """Manually trigger one autonomous cycle."""
+    try:
+        core = await get_autonomous_core()
+        if core.state == "stopped":
+            # Try to start first
+            await core.start()
+
+        # Run one cycle
+        result = await core.run_cycle()
+        return result
+    except Exception as e:
+        logger.error(f"Failed to run cycle: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to run cycle: {str(e)}")

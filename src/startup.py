@@ -370,9 +370,18 @@ class EchoBrainStartup:
             asyncio.create_task(self.background_worker.start())
             logger.info("🔄 Background worker started")
 
-            # Start autonomous behaviors - DISABLED due to blocking issues
+            # Start Tower services monitor - Lightweight autonomous monitoring
+            try:
+                from autonomous.tower_monitor import TowerServicesMonitor
+                self.tower_monitor = TowerServicesMonitor()
+                asyncio.create_task(self.tower_monitor.start())
+                logger.info("🔍 Tower Services Monitor ENABLED - monitoring critical services")
+            except Exception as e:
+                logger.warning(f"Could not start Tower Monitor: {e}")
+
+            # Original autonomous behaviors still DISABLED due to blocking issues
             # asyncio.create_task(self.autonomous_behaviors.start())
-            logger.info("🤖 Autonomous behaviors DISABLED - preventing startup blocking")
+            logger.info("🤖 Full autonomous behaviors DISABLED - using lightweight monitor instead")
 
             # Start persona trainer learning loop (if available)
             if self.persona_trainer:
