@@ -44,7 +44,7 @@ class UnifiedModelRouter:
     def __init__(self):
         self.db_config = {
             'host': 'localhost',
-            'database': 'tower_consolidated',
+            'database': 'echo_brain',
             'user': 'patrick',
             'password': 'RP78eIrW7cI2jYvL5akt1yurE'
         }

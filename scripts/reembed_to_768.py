@@ -45,7 +45,7 @@ class ReembeddingProcessor:
         # PostgreSQL settings
         self.pg_host = "localhost"
         self.pg_port = 5432
-        self.pg_db = "tower_consolidated"
+        self.pg_db = "echo_brain"
         self.pg_user = "patrick"
         self.pg_password = os.environ.get("ECHO_BRAIN_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE")
 

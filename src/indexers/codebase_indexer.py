@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 DB_CONFIG = {
     'host': 'localhost',
-    'database': 'tower_consolidated',
+    'database': 'echo_brain',
     'user': 'patrick',
     'password': 'RP78eIrW7cI2jYvL5akt1yurE'
 }

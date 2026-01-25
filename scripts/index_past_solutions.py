@@ -16,7 +16,7 @@ from qdrant_client.models import PointStruct
 
 from src.services.embedding_service import create_embedding_service
 
-DATABASE_URL = "postgresql://patrick:tower_echo_brain_secret_key_2025@localhost/tower_consolidated"
+DATABASE_URL = "postgresql://patrick:tower_echo_brain_secret_key_2025@localhost/echo_brain"
 QDRANT_URL = "http://192.168.50.135:6333"
 
 async def index_past_solutions():

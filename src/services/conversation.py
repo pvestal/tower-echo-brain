@@ -281,7 +281,7 @@ class ConversationManager:
 
     def update_conversation(self, conversation_id: str, query_text: str,
                           intent: str, response: str, requires_clarification: bool):
-        """Update conversation history in memory"""
+        """Update conversation history in memory and persist to database"""
         if conversation_id not in self.conversations:
             self.conversations[conversation_id] = {
                 "history": [],
@@ -290,6 +290,7 @@ class ConversationManager:
                 "thought_log": []
             }
 
+        # Add to memory
         self.conversations[conversation_id]["history"].append({
             "query_text": query_text,
             "intent": intent,
@@ -307,62 +308,144 @@ class ConversationManager:
             self.conversations[conversation_id]["history"] = \
                 self.conversations[conversation_id]["history"][-10:]
 
-    async def get_conversation_context(self, conversation_id: str) -> Dict:
-        """Get conversation context from memory or database"""
-        # Check memory cache first
-        if conversation_id in self.conversations:
-            conv = self.conversations[conversation_id]
-            return {
-                "history": conv["history"],
-                "last_intent": conv.get("last_intent"),
-                "created_at": conv.get("created_at"),
-                "interaction_count": len(conv["history"]),
-                "thought_log": conv.get("thought_log", [])
-            }
+        # Persist to database asynchronously
+        import asyncio
+        asyncio.create_task(self._persist_conversation_to_db(
+            conversation_id, query_text, intent, response, requires_clarification
+        ))
 
-        # If not in memory, check database
+    async def _persist_conversation_to_db(self, conversation_id: str, query_text: str,
+                                         intent: str, response: str, requires_clarification: bool):
+        """Persist conversation messages to database"""
+        import psycopg2
+        import psycopg2.extras
         try:
-            if self._database is None:
-                from src.db.database import database
-                self._database = database
+            # Get database config from centralized pool
+            from src.db.connection_pool import get_database_config
+            db_config = get_database_config()
 
-            # Get conversation history from database
-            db_history = await self._database.get_conversation_history(conversation_id)
+            conn = psycopg2.connect(**db_config)
+            cursor = conn.cursor()
 
-            if db_history:
-                # Convert database records to conversation manager format
-                history = []
-                last_intent = None
+            # Store user message
+            cursor.execute("""
+                INSERT INTO conversation_messages (conversation_id, role, content, metadata)
+                VALUES (%s, 'user', %s, %s)
+            """, (conversation_id, query_text, psycopg2.extras.Json({
+                "intent": intent,
+                "requires_clarification": requires_clarification
+            })))
 
-                for record in db_history:
-                    history.append({
-                        "query_text": record["query"],
-                        "intent": record["intent"] or "general",
-                        "response": record["response"],
-                        "requires_clarification": False,  # Assume completed conversations
-                        "timestamp": record["timestamp"],
-                        "thoughts": []  # Historical thoughts not available
-                    })
-                    last_intent = record["intent"] or "general"
+            # Store assistant response
+            cursor.execute("""
+                INSERT INTO conversation_messages (conversation_id, role, content, metadata)
+                VALUES (%s, 'assistant', %s, %s)
+            """, (conversation_id, response, psycopg2.extras.Json({
+                "intent": intent,
+                "thoughts": self.thought_log[-5:] if self.thought_log else []  # Last 5 thoughts
+            })))
 
-                # Store in memory cache for future access
-                self.conversations[conversation_id] = {
-                    "history": history,
-                    "created_at": history[0]["timestamp"] if history else datetime.now(),
-                    "last_intent": last_intent,
-                    "thought_log": []
-                }
+            conn.commit()
+            cursor.close()
+            conn.close()
 
-                return {
-                    "history": history,
-                    "last_intent": last_intent,
-                    "created_at": history[0]["timestamp"] if history else datetime.now(),
-                    "interaction_count": len(history),
-                    "thought_log": []
-                }
+            logger.info(f"✅ Persisted conversation {conversation_id} to database")
 
         except Exception as e:
-            logger.error(f"Failed to retrieve conversation context from database: {e}")
+            logger.error(f"❌ Failed to persist conversation to database: {e}")
+
+    async def get_conversation_context(self, conversation_id: str) -> Dict:
+        """Get conversation context from memory AND database for complete history"""
+        import psycopg2
+        import psycopg2.extras
+        try:
+            # Get database config from centralized pool
+            from src.db.connection_pool import get_database_config
+            db_config = get_database_config()
+
+            conn = psycopg2.connect(**db_config)
+            cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+            # ALWAYS load from database to get complete history
+            cursor.execute("""
+                SELECT role, content, metadata, timestamp
+                FROM conversation_messages
+                WHERE conversation_id = %s
+                ORDER BY timestamp ASC
+            """, (conversation_id,))
+
+            db_messages = cursor.fetchall()
+            cursor.close()
+            conn.close()
+
+            history = []
+            last_intent = None
+
+            if db_messages:
+                # Group messages into query/response pairs
+                i = 0
+                while i < len(db_messages):
+                    msg = db_messages[i]
+                    if msg['role'] == 'user':
+                        # Look for matching assistant response
+                        response_text = ""
+                        response_metadata = {}
+                        if i + 1 < len(db_messages) and db_messages[i + 1]['role'] == 'assistant':
+                            response_text = db_messages[i + 1]['content']
+                            response_metadata = db_messages[i + 1].get('metadata', {})
+                            i += 1  # Skip the assistant message in next iteration
+
+                        intent = msg.get('metadata', {}).get('intent', 'general')
+                        history.append({
+                            "query_text": msg['content'],
+                            "intent": intent,
+                            "response": response_text,
+                            "requires_clarification": msg.get('metadata', {}).get('requires_clarification', False),
+                            "timestamp": msg['timestamp'],
+                            "thoughts": response_metadata.get('thoughts', [])
+                        })
+                        last_intent = intent
+                    i += 1
+
+                logger.info(f"📚 Loaded {len(history)} conversation pairs from database for {conversation_id}")
+
+            # Check if we have recent memory cache too
+            memory_history = []
+            if conversation_id in self.conversations:
+                memory_history = self.conversations[conversation_id]["history"]
+                # Only add memory items that aren't already in database (very recent)
+                if history and memory_history:
+                    last_db_time = history[-1]["timestamp"]
+                    for mem_item in memory_history:
+                        if mem_item.get("timestamp", datetime.now()) > last_db_time:
+                            history.append(mem_item)
+                            logger.info(f"📝 Added recent memory item to history")
+                elif not history and memory_history:
+                    # No database history, use memory
+                    history = memory_history
+
+            # Update memory cache with complete history
+            if conversation_id not in self.conversations:
+                self.conversations[conversation_id] = {
+                    "history": [],
+                    "created_at": history[0]["timestamp"] if history else datetime.now(),
+                    "last_intent": last_intent,
+                    "thought_log": []
+                }
+
+            # Keep only last 10 in memory but return ALL for context
+            self.conversations[conversation_id]["history"] = history[-10:] if len(history) > 10 else history
+
+            return {
+                "history": history,  # Return FULL history
+                "last_intent": last_intent,
+                "created_at": history[0]["timestamp"] if history else datetime.now(),
+                "interaction_count": len(history),
+                "thought_log": self.conversations[conversation_id].get("thought_log", [])
+            }
+
+        except Exception as e:
+            logger.error(f"Failed to retrieve conversation context: {e}")
 
         # Return empty context if not found anywhere
         return {

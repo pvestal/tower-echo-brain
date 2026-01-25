@@ -18,7 +18,7 @@ router = APIRouter(prefix="/api/models", tags=["models"])
 # Database connection configuration
 DB_CONFIG = {
     "host": "localhost",
-    "database": "tower_consolidated",
+    "database": "echo_brain",
     "user": "patrick",
     "password": "RP78eIrW7cI2jYvL5akt1yurE"
 }

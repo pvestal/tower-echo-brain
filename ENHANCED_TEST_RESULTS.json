@@ -1,0 +1,158 @@
+[
+  {
+    "feature": "Core",
+    "endpoint": "/",
+    "status": "\u2705 PASS",
+    "details": "Success"
+  },
+  {
+    "feature": "Core",
+    "endpoint": "/health",
+    "status": "\u2705 PASS",
+    "details": "Success"
+  },
+  {
+    "feature": "Core",
+    "endpoint": "/api/status",
+    "status": "\u2705 PASS",
+    "details": "Success"
+  },
+  {
+    "feature": "Chat",
+    "endpoint": "/api/chat/simple",
+    "status": "\u2705 PASS",
+    "details": "Success"
+  },
+  {
+    "feature": "Echo Chat",
+    "endpoint": "/api/echo/chat",
+    "status": "\u274c FAIL",
+    "details": "Endpoint not found (404)"
+  },
+  {
+    "feature": "Echo Query",
+    "endpoint": "/api/echo/query",
+    "status": "\u274c FAIL",
+    "details": "Endpoint not found (404)"
+  },
+  {
+    "feature": "Context",
+    "endpoint": "/api/context",
+    "status": "\u274c FAIL",
+    "details": "Internal Server Error (500)"
+  },
+  {
+    "feature": "Context",
+    "endpoint": "/api/context/unified",
+    "status": "\u2705 PASS",
+    "details": "Success"
+  },
+  {
+    "feature": "Context",
+    "endpoint": "/api/collections",
+    "status": "\u2705 PASS",
+    "details": "Success"
+  },
+  {
+    "feature": "Agents",
+    "endpoint": "/api/echo/agents/status",
+    "status": "\u274c FAIL",
+    "details": "Internal Server Error (500)"
+  },
+  {
+    "feature": "Agents",
+    "endpoint": "/api/echo/agents/coding/history",
+    "status": "\u274c FAIL",
+    "details": ""
+  },
+  {
+    "feature": "Agents",
+    "endpoint": "/api/echo/agents/reasoning/history",
+    "status": "\u274c FAIL",
+    "details": "Internal Server Error (500)"
+  },
+  {
+    "feature": "Agents",
+    "endpoint": "/api/echo/agents/narration/history",
+    "status": "\u274c FAIL",
+    "details": ""
+  },
+  {
+    "feature": "Autonomous",
+    "endpoint": "/api/autonomous/status",
+    "status": "\u2705 PASS",
+    "details": "Success"
+  },
+  {
+    "feature": "Autonomous",
+    "endpoint": "/api/autonomous/goals",
+    "status": "\u274c FAIL",
+    "details": "Endpoint not found (404)"
+  },
+  {
+    "feature": "Autonomous",
+    "endpoint": "/api/autonomous/tasks",
+    "status": "\u274c FAIL",
+    "details": "Endpoint not found (404)"
+  },
+  {
+    "feature": "Autonomous",
+    "endpoint": "/api/autonomous/approvals",
+    "status": "\u274c FAIL",
+    "details": "Endpoint not found (404)"
+  },
+  {
+    "feature": "Codebase",
+    "endpoint": "/api/echo/codebase/stats",
+    "status": "\u274c FAIL",
+    "details": "Internal Server Error (500)"
+  },
+  {
+    "feature": "Codebase",
+    "endpoint": "/api/echo/codebase/search?query=test",
+    "status": "\u274c FAIL",
+    "details": "HTTP 422"
+  },
+  {
+    "feature": "Anime",
+    "endpoint": "/api/echo/anime/scene/plan",
+    "status": "\u2705 PASS",
+    "details": "Success"
+  },
+  {
+    "feature": "Anime",
+    "endpoint": "/api/echo/anime/prompt/refine",
+    "status": "\u2705 PASS",
+    "details": "Success"
+  },
+  {
+    "feature": "Models",
+    "endpoint": "/api/echo/models/list",
+    "status": "\u274c FAIL",
+    "details": "Endpoint not found (404)"
+  },
+  {
+    "feature": "Models",
+    "endpoint": "/api/models/list",
+    "status": "\u274c FAIL",
+    "details": "Internal Server Error (500)"
+  },
+  {
+    "feature": "Models",
+    "endpoint": "/api/models/manifests",
+    "status": "\u274c FAIL",
+    "details": "Internal Server Error (500)"
+  },
+  {
+    "feature": "Diagnostics",
+    "endpoint": "/api/diagnostics/health",
+    "status": "\u274c FAIL",
+    "details": "Endpoint not found (404)"
+  },
+  {
+    "feature": "Diagnostics",
+    "endpoint": "/api/diagnostics/full",
+    "status": "\u274c FAIL",
+    "details": "Endpoint not found (404)"
+  }
+]

@@ -13,7 +13,7 @@ from datetime import datetime
 
 router = APIRouter(tags=["vault"])
 
-DATABASE_URL = "postgresql://patrick:RP78eIrW7cI2jYvL5akt1yurE@localhost/tower_consolidated"
+DATABASE_URL = "postgresql://patrick:RP78eIrW7cI2jYvL5akt1yurE@localhost/echo_brain"
 
 def get_vault_client() -> hvac.Client:
     """Get authenticated Vault client"""

@@ -19,7 +19,7 @@ from src.services.embedding_service import create_embedding_service
 from src.services.vector_search import get_vector_search
 
 CLAUDE_DIR = Path("/home/patrick/.claude")
-DATABASE_URL = "postgresql://patrick:tower_echo_brain_secret_key_2025@localhost/tower_consolidated"
+DATABASE_URL = "postgresql://patrick:tower_echo_brain_secret_key_2025@localhost/echo_brain"
 BATCH_SIZE = 20
 
 async def import_conversations():

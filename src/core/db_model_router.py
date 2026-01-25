@@ -140,7 +140,7 @@ class DatabaseModelRouter:
 
     def __init__(self):
         self.db_config = {
-            'dbname': 'tower_consolidated',
+            'dbname': 'echo_brain',
             'user': 'patrick',
             'password': 'RP78eIrW7cI2jYvL5akt1yurE',
             'host': 'localhost'

@@ -128,7 +128,7 @@ class ConversationExtractor:
             # Try multiple possible database configurations
             db_configs = [
                 {**self.db_config, 'database': 'echo_brain'},
-                {**self.db_config, 'database': 'tower_consolidated'},
+                {**self.db_config, 'database': 'echo_brain'},
                 self.db_config  # Default
             ]
 
