@@ -15,9 +15,9 @@ from fastapi import APIRouter, HTTPException, BackgroundTasks
 from pydantic import BaseModel
 
 # Import git automation modules
-from src.execution.git_operations import GitOperationsManager, GitHubOperations
-from src.tasks.git_manager import git_manager
-from src.tasks.github_integration import github_integration
+from ..execution.git_operations import GitOperationsManager, GitHubOperations
+from ..tasks.git_manager import git_manager
+from ..tasks.github_integration import github_integration
 
 logger = logging.getLogger(__name__)
 router = APIRouter()

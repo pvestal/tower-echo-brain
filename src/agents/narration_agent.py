@@ -49,9 +49,9 @@ Output your response as:
         context = context or {}
 
         # Get unified context from Qdrant and PostgreSQL
-        unified_context = {}
+        context = {}
         if include_context:
-            unified_context = await self.context_provider.get_context(task)
+            context = await self.context_provider.get_context(task)
 
         # Get character info if specified
         character_info = None
@@ -65,7 +65,7 @@ Output your response as:
 
         # Combine all context
         combined_context = {
-            **unified_context,
+            **context,
             "character_info": character_info,
             "project_info": project_info,
             "user_context": context
@@ -94,9 +94,9 @@ Output your response as:
             "project_id": context.get("project_id"),
             "model": self.model_name,
             "context_used": {
-                "memories": len(unified_context.get("memories", [])),
-                "facts": len(unified_context.get("facts", [])),
-                "recent_conversations": len(unified_context.get("recent_conversations", [])),
+                "memories": len(context.get("memories", [])),
+                "facts": len(context.get("facts", [])),
+                "recent_conversations": len(context.get("recent_conversations", [])),
                 "has_character": bool(character_info),
                 "has_project": bool(project_info)
             }

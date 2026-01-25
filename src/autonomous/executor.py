@@ -28,7 +28,7 @@ from src.agents.narration_agent import NarrationAgent
 from src.core.tower_llm_executor import TowerLLMExecutor
 
 # Import context provider
-from src.core.unified_context import get_context_provider
+from src.core.context import get_context_provider
 
 logger = logging.getLogger(__name__)
 

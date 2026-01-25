@@ -103,7 +103,7 @@ class AgentResponse(BaseModel):
 
 # Import main Echo API with intent classification and routing
 try:
-    from api.echo import router as echo_router
+    from .api.echo import router as echo_router
     app.include_router(echo_router)  # No prefix - routes already have /api/echo/
     logger.info("✅ Echo Brain API with intent classification loaded")
 except Exception as e:
@@ -111,7 +111,7 @@ except Exception as e:
 
 # Import agents router for coding, reasoning, narration
 try:
-    from api.agents import router as agents_router
+    from .api.agents import router as agents_router
     app.include_router(agents_router)  # Routes have /api/echo/agents/ prefix
     logger.info("✅ Agents router loaded (coding, reasoning, narration)")
 except Exception as e:
@@ -119,15 +119,15 @@ except Exception as e:
 
 # Import autonomous operations router
 try:
-    from api.autonomous import router as autonomous_router
-    app.include_router(autonomous_router, prefix="/api/autonomous")
+    from .api.autonomous import router as autonomous_router
+    app.include_router(autonomous_router)
     logger.info("✅ Autonomous operations router loaded")
 except Exception as e:
     logger.warning(f"Could not load autonomous router: {e}")
 
 # Import codebase interaction router
 try:
-    from api.codebase import router as codebase_router
+    from .api.codebase import router as codebase_router
     app.include_router(codebase_router)  # Routes have /api/echo/codebase/ prefix
     logger.info("✅ Codebase interaction router loaded")
 except Exception as e:
@@ -135,7 +135,7 @@ except Exception as e:
 
 # Import git operations router
 try:
-    from api.git_operations import router as git_router
+    from .api.git_operations import router as git_router
     app.include_router(git_router)  # Check what prefix it needs
     logger.info("✅ Git operations router loaded")
 except Exception as e:
@@ -143,7 +143,7 @@ except Exception as e:
 
 # Import anime module
 try:
-    from modules.anime.anime_router import router as anime_router
+    from .modules.anime.anime_router import router as anime_router
     app.include_router(anime_router)
     logger.info("✅ Anime module loaded")
 except Exception as e:
@@ -151,7 +151,7 @@ except Exception as e:
 
 # Import diagnostics module
 try:
-    from modules.diagnostics.self_diagnostics import router as diagnostics_router, echo_diagnostics, handle_diagnosis_request
+    from .api.diagnostics import router as diagnostics_router, echo_diagnostics, handle_diagnosis_request
     app.include_router(diagnostics_router)
     logger.info("✅ Diagnostics module loaded")
 except Exception as e:
@@ -159,7 +159,7 @@ except Exception as e:
 
 # Import autonomous features
 try:
-    from autonomous.core import AutonomousCore
+    from .autonomous.core import AutonomousCore
     autonomous_core = AutonomousCore()
     logger.info("✅ Autonomous core loaded")
 except Exception as e:
@@ -168,7 +168,7 @@ except Exception as e:
 
 # Import agent manager
 try:
-    from managers.agent_manager import AgentManager
+    from .managers.agent_manager import AgentManager
     agent_manager = AgentManager()
     logger.info("✅ Agent manager loaded")
 except Exception as e:
@@ -177,20 +177,83 @@ except Exception as e:
 
 # Import Qdrant client
 try:
-    from qdrant_client_resilient import QdrantClientResilient
-    qdrant_client = QdrantClientResilient()
+    from .qdrant_client_resilient import ResilientQdrantMemory
+    qdrant_client = ResilientQdrantMemory()
     logger.info("✅ Qdrant client loaded")
 except Exception as e:
     logger.warning(f"Could not load Qdrant client: {e}")
     qdrant_client = None
 
-# Import model management router
-try:
-    from api.models_manager import router as models_router
-    app.include_router(models_router)
-    logger.info("✅ Model management router loaded")
-except Exception as e:
-    logger.warning(f"Could not load model management router: {e}")
+# Mount all API routers
+mounted_count = 0
+failed_routers = []
+
+# List of all routers to mount
+# Empty prefix means router has its own prefix
+routers_to_mount = [
+    ("agents", ""),  # Has own prefix
+    ("autonomous", ""),  # Has own prefix
+    ("claude_bridge", ""),  # Has own prefix
+    ("codebase", ""),  # Has own prefix
+    ("db_metrics", ""),  # Has own prefix
+    ("delegation_routes", ""),  # Has own prefix
+    ("diagnostics", ""),  # Has own prefix
+    ("echo", ""),
+    ("git_operations", ""),  # Has own prefix
+    ("google_calendar_api", ""),  # Has own prefix
+    ("health", ""),  # Has own prefix
+    ("home_assistant_api", ""),  # Has own prefix
+    ("integrations", ""),  # Has own prefix
+    ("knowledge", ""),  # Has own prefix
+    ("models", ""),
+    ("models_manager", ""),  # Has own prefix
+    ("notifications_api", ""),  # Has own prefix
+    ("preferences", ""),  # Has own prefix
+    ("repair_api", ""),  # Has own prefix
+    ("resilience_status", ""),  # Has own prefix
+    ("solutions", ""),  # Has own prefix
+    ("system_metrics", ""),  # Has own prefix
+    ("tasks", ""),  # Has own prefix
+    ("training_status", ""),
+    ("vault", ""),  # Has own prefix
+]
+
+for router_name, prefix in routers_to_mount:
+    try:
+        module = __import__(f"src.api.{router_name}", fromlist=["router"])
+        router = getattr(module, "router")
+        app.include_router(router, prefix=prefix)
+        mounted_count += 1
+        logger.info(f"✅ Mounted {router_name} router at {prefix if prefix else '/'}")
+    except Exception as e:
+        failed_routers.append(router_name)
+        logger.warning(f"❌ Could not mount {router_name}: {e}")
+
+logger.info(f"✅ Successfully mounted {mounted_count}/{len(routers_to_mount)} API routers")
+if failed_routers:
+    logger.warning(f"⚠️ Failed to mount: {', '.join(failed_routers)}")
+
+# Mount additional routers from src/
+additional_routers = [
+    ("echo_settings_api", ""),  # Has prefix /api/echo
+    ("photo_comparison", ""),  # Has own routes
+    ("integrate_board_api", ""),  # Has prefix /api/board
+    ("services.testing", ""),  # Has prefix /test
+]
+
+for router_module, prefix in additional_routers:
+    try:
+        if "." in router_module:
+            parts = router_module.split(".")
+            module = __import__(f"src.{router_module}", fromlist=["router"])
+        else:
+            module = __import__(f"src.{router_module}", fromlist=["router"])
+        router = getattr(module, "router")
+        app.include_router(router, prefix=prefix)
+        mounted_count += 1
+        logger.info(f"✅ Mounted {router_module} router at {prefix}")
+    except Exception as e:
+        logger.warning(f"❌ Could not mount {router_module}: {e}")
 
 # ============= Core Endpoints =============
 
@@ -682,21 +745,170 @@ async def startup_event():
     logger.info("Echo Brain Unified Service Starting")
     logger.info("=" * 60)
 
-    # Initialize autonomous core
+    # Autonomous core and agent manager are initialized in their constructors
     if autonomous_core:
-        try:
-            await autonomous_core.initialize()
-            logger.info("✅ Autonomous core initialized")
-        except Exception as e:
-            logger.error(f"Failed to initialize autonomous core: {e}")
-
-    # Initialize agent manager
+        logger.info("✅ Autonomous core ready")
     if agent_manager:
-        try:
-            await agent_manager.initialize()
-            logger.info("✅ Agent manager initialized")
-        except Exception as e:
-            logger.error(f"Failed to initialize agent manager: {e}")
+        logger.info("✅ Agent manager ready")
+
+    # Initialize capability coordinator for system actions
+    try:
+        from .capabilities.capability_registry import CapabilityRegistry, CapabilityType
+        from .capabilities.echo_capability_coordinator import initialize_coordinator
+        import subprocess
+        import asyncio
+
+        capability_registry = CapabilityRegistry()
+
+        # Register service monitoring capability
+        async def check_services_status(**kwargs):
+            """Check Tower services using systemctl"""
+            try:
+                # Check key Tower services
+                services = ['tower-echo-brain', 'ollama', 'nginx', 'postgresql']
+                healthy_services = []
+                failed_services = []
+
+                for service in services:
+                    try:
+                        result = subprocess.run(['systemctl', 'is-active', service],
+                                              capture_output=True, text=True)
+                        if result.stdout.strip() == 'active':
+                            healthy_services.append(service)
+                        else:
+                            failed_services.append(service)
+                    except:
+                        failed_services.append(service)
+
+                total = len(services)
+                healthy = len(healthy_services)
+
+                # Check Ollama specifically
+                ollama_models = []
+                try:
+                    result = subprocess.run(['ollama', 'list'], capture_output=True, text=True)
+                    if result.returncode == 0:
+                        ollama_models = result.stdout.split('\n')[1:]  # Skip header
+                        ollama_models = [line.split()[0] for line in ollama_models if line.strip()]
+                except:
+                    pass
+
+                return {
+                    "capability": "service_monitoring",
+                    "success": True,
+                    "summary": {
+                        "total": total,
+                        "healthy": healthy,
+                        "health_rate": (healthy/total)*100,
+                        "healthy_services": healthy_services,
+                        "failed_services": failed_services,
+                        "ollama_models": len(ollama_models),
+                        "ollama_model_list": ollama_models[:5]  # First 5 models
+                    }
+                }
+            except Exception as e:
+                return {
+                    "capability": "service_monitoring",
+                    "success": False,
+                    "error": str(e)
+                }
+
+        capability_registry.register_capability(
+            name="service_monitoring",
+            capability_type=CapabilityType.ANALYSIS,
+            description="Monitor Tower service health",
+            handler=check_services_status,
+            requirements=[],
+            permissions=["system_read"]
+        )
+
+        # Register autonomous repair capability
+        async def autonomous_repair(**kwargs):
+            """System diagnosis and repair operations"""
+            issue_type = kwargs.get('issue_type', 'diagnose')
+            try:
+                if issue_type == 'diagnose':
+                    # Run basic system diagnosis
+                    result = subprocess.run(['df', '-h'], capture_output=True, text=True)
+                    disk_usage = result.stdout if result.returncode == 0 else "Could not check disk"
+
+                    return {
+                        "capability": "autonomous_repair",
+                        "success": True,
+                        "diagnosis": f"System diagnosis completed. Disk usage: {disk_usage[:100]}..."
+                    }
+                else:
+                    return {
+                        "capability": "autonomous_repair",
+                        "success": False,
+                        "error": "Unknown repair type"
+                    }
+            except Exception as e:
+                return {
+                    "capability": "autonomous_repair",
+                    "success": False,
+                    "error": str(e)
+                }
+
+        capability_registry.register_capability(
+            name="autonomous_repair",
+            capability_type=CapabilityType.ANALYSIS,
+            description="System diagnosis and repair",
+            handler=autonomous_repair,
+            requirements=[],
+            permissions=["system_write"]
+        )
+
+        # Register model management capability
+        async def model_management(**kwargs):
+            """Manage AI models including Ollama"""
+            try:
+                # Check Ollama models
+                result = subprocess.run(['ollama', 'list'], capture_output=True, text=True)
+                if result.returncode == 0:
+                    models = result.stdout.split('\n')[1:]  # Skip header
+                    model_list = []
+                    for line in models:
+                        if line.strip():
+                            parts = line.split()
+                            if parts:
+                                model_list.append(parts[0])
+
+                    # For update requests, we would run ollama pull here
+                    # But for safety, we'll just report current status
+                    return {
+                        "capability": "model_management",
+                        "success": True,
+                        "current_models": model_list,
+                        "total_models": len(model_list),
+                        "message": f"Found {len(model_list)} Ollama models. To update, run: ollama pull <model_name>"
+                    }
+                else:
+                    return {
+                        "capability": "model_management",
+                        "success": False,
+                        "error": "Could not access Ollama"
+                    }
+            except Exception as e:
+                return {
+                    "capability": "model_management",
+                    "success": False,
+                    "error": str(e)
+                }
+
+        capability_registry.register_capability(
+            name="model_management",
+            capability_type=CapabilityType.ANALYSIS,
+            description="Manage AI models and Ollama",
+            handler=model_management,
+            requirements=[],
+            permissions=["system_read"]
+        )
+
+        capability_coordinator = initialize_coordinator(capability_registry)
+        logger.info("✅ Echo Capability Coordinator initialized with system monitoring")
+    except Exception as e:
+        logger.warning(f"Could not initialize capability coordinator: {e}")
 
     logger.info("Available endpoints:")
     logger.info("  - /health - System health check")

@@ -88,6 +88,21 @@ class EchoCapabilityCoordinator:
                 "capability": "autonomous_repair",
                 "extract": lambda m: {"issue_type": "diagnose"},
                 "description": "System diagnosis"
+            },
+            {
+                "patterns": [
+                    r"update.*ollama.*models?",
+                    r"refresh.*ollama.*models?",
+                    r"update.*models?",
+                    r"check.*ollama.*models?",
+                    r"list.*ollama.*models?",
+                    r"manage.*models?",
+                    r"ollama.*update",
+                    r"ollama.*refresh"
+                ],
+                "capability": "model_management",
+                "extract": lambda m: {"action": "update"},
+                "description": "AI model management"
             }
         ]
 
@@ -200,6 +215,12 @@ class EchoCapabilityCoordinator:
                 total = summary.get("total", 0)
                 healthy = summary.get("healthy", 0)
                 return f"📊 Service Status: {healthy}/{total} services are healthy. Health rate: {summary.get('health_rate', 0):.1f}%"
+
+            elif capability == "model_management":
+                models = result.get("current_models", [])
+                total = result.get("total_models", 0)
+                message = result.get("message", "")
+                return f"🤖 Ollama Models: Found {total} models ({', '.join(models[:3])}{'...' if len(models) > 3 else ''}). {message}"
 
             elif capability == "send_notification":
                 channels = result.get("channels_successful", 0)

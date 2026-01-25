@@ -55,9 +55,9 @@ When debugging:
         context = context or {}
 
         # 1. Get unified context from Qdrant and PostgreSQL
-        unified_context = {}
+        context = {}
         if include_context:
-            unified_context = await self.context_provider.get_context(task)
+            context = await self.context_provider.get_context(task)
 
         # 2. Search for relevant past solutions (PostgreSQL specific)
         past_solutions = self._search_past_solutions(task)
@@ -67,7 +67,7 @@ When debugging:
 
         # 4. Combine all context sources
         combined_context = {
-            **unified_context,
+            **context,
             "past_solutions": past_solutions,
             "codebase_context": codebase_context,
             "user_context": context
@@ -94,9 +94,9 @@ When debugging:
             "validation": validation,
             "model": self.model_name,
             "context_used": {
-                "memories": len(unified_context.get("memories", [])),
-                "facts": len(unified_context.get("facts", [])),
-                "recent_conversations": len(unified_context.get("recent_conversations", [])),
+                "memories": len(context.get("memories", [])),
+                "facts": len(context.get("facts", [])),
+                "recent_conversations": len(context.get("recent_conversations", [])),
                 "past_solutions": len(past_solutions),
                 "codebase_refs": len(codebase_context)
             }

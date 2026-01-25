@@ -11,7 +11,7 @@ import os
 sys.path.insert(0, '/opt/tower-echo-brain')
 
 try:
-    from src.indexers.codebase_indexer import CodebaseIndexer
+    from ..indexers.codebase_indexer import CodebaseIndexer
 except ImportError:
     # Fallback import path
     import importlib.util
@@ -48,10 +48,10 @@ async def search_codebase(
 
                 # Base search conditions
                 query_parts.append("""
-                    (entity_name ILIKE %s OR signature ILIKE %s OR docstring ILIKE %s)
+                    (entity_name ILIKE %s OR content ILIKE %s)
                 """)
                 search_term = f'%{q}%'
-                params.extend([search_term, search_term, search_term])
+                params.extend([search_term, search_term])
 
                 # Optional entity type filter
                 if entity_type:
@@ -63,7 +63,7 @@ async def search_codebase(
                 params.append(limit)
 
                 cur.execute(f"""
-                    SELECT entity_type, entity_name, file_path, line_number, signature, docstring
+                    SELECT entity_type, entity_name, file_path, line_number, content
                     FROM codebase_index
                     WHERE {where_clause}
                     ORDER BY entity_name
@@ -146,7 +146,7 @@ async def get_file_entities(file_path: str):
         with psycopg2.connect(**DB_CONFIG) as conn:
             with conn.cursor(cursor_factory=DictCursor) as cur:
                 cur.execute("""
-                    SELECT entity_type, entity_name, line_number, signature, docstring
+                    SELECT entity_type, entity_name, line_number, content
                     FROM codebase_index
                     WHERE file_path LIKE %s
                     ORDER BY line_number

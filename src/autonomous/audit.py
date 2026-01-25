@@ -538,6 +538,42 @@ class AuditLogger:
             logger.error(f"Failed to cleanup old audit logs: {e}")
             return 0
 
+    async def get_audit_logs(self, hours: int = 24, limit: int = 100) -> List[Dict[str, Any]]:
+        """
+        Retrieve all audit logs within a time window.
+
+        Args:
+            hours: Number of hours back to search (default: 24)
+            limit: Maximum number of entries to return (default: 100)
+
+        Returns:
+            List[Dict]: List of audit log entries
+        """
+        try:
+            cutoff_time = datetime.now() - timedelta(hours=hours)
+
+            async with self.get_connection() as conn:
+                rows = await conn.fetch(
+                    """
+                    SELECT l.id, l.timestamp, l.event_type, l.goal_id, l.task_id,
+                           l.action, l.details, l.safety_level, l.outcome,
+                           g.name as goal_name, t.name as task_name
+                    FROM autonomous_audit_log l
+                    LEFT JOIN autonomous_goals g ON l.goal_id = g.id
+                    LEFT JOIN autonomous_tasks t ON l.task_id = t.id
+                    WHERE l.timestamp >= $1
+                    ORDER BY l.timestamp DESC
+                    LIMIT $2
+                    """,
+                    cutoff_time, limit
+                )
+
+                return [dict(row) for row in rows]
+
+        except Exception as e:
+            logger.error(f"Failed to retrieve audit logs: {e}")
+            return []
+
     async def close(self):
         """Close the database connection pool."""
         if self._pool:

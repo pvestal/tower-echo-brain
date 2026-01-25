@@ -9,7 +9,7 @@ from typing import Dict, Any, Optional, Literal
 from src.agents.coding_agent import coding_agent
 from src.agents.reasoning_agent import reasoning_agent
 from src.agents.narration_agent import narration_agent
-from src.core.unified_context import get_context_provider
+from src.core.context import get_context_provider
 
 logger = logging.getLogger(__name__)
 
