@@ -1009,7 +1009,7 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
         # ============================================
         # UNIFIED MODEL ROUTING - SINGLE SOURCE OF TRUTH
         # ============================================
-        from src.routing.unified_router import unified_router
+        from src.routing.router import router as unified_router
 
         # Get model selection from unified router
         selection = unified_router.select_model(augmented_query)

@@ -382,7 +382,7 @@ class ProactiveCodeQuality:
                 # Create GitHub PR if we have successful fixes
                 if successful_fixes:
                     try:
-                        from src.tasks.github_integration import github_integration
+                        from .github_integration import github_integration
                         pr_url = await github_integration.create_quality_improvement_pr(successful_fixes)
                         if pr_url:
                             logger.info(f"🎉 Created PR with {len(successful_fixes)} improvements: {pr_url}")

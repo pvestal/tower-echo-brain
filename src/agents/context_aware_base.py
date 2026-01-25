@@ -14,7 +14,7 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.core.unified_context import get_context_provider
+from src.core.context import get_context_provider
 
 logger = logging.getLogger(__name__)
 

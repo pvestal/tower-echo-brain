@@ -36,13 +36,13 @@ Format your response with clear sections:
         context = context or {}
 
         # Get unified context from Qdrant and PostgreSQL
-        unified_context = {}
+        context = {}
         if include_context:
-            unified_context = await self.context_provider.get_context(task)
+            context = await self.context_provider.get_context(task)
 
         # Combine all context
         combined_context = {
-            **unified_context,
+            **context,
             "user_context": context
         }
 
@@ -66,9 +66,9 @@ Format your response with clear sections:
             "conclusion": conclusion,
             "model": self.model_name,
             "context_used": {
-                "memories": len(unified_context.get("memories", [])),
-                "facts": len(unified_context.get("facts", [])),
-                "recent_conversations": len(unified_context.get("recent_conversations", []))
+                "memories": len(context.get("memories", [])),
+                "facts": len(context.get("facts", [])),
+                "recent_conversations": len(context.get("recent_conversations", []))
             }
         }
 

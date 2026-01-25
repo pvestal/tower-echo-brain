@@ -55,13 +55,13 @@ class TaskResponse(BaseModel):
     id: int
     goal_id: int
     name: str
-    description: str
+    description: Optional[str] = None
     task_type: str
     status: str
     priority: int
-    scheduled_at: Optional[datetime]
-    started_at: Optional[datetime]
-    completed_at: Optional[datetime]
+    scheduled_at: Optional[datetime] = None
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
     result: Optional[Dict[str, Any]]
     metadata: Optional[Dict[str, Any]]
 
@@ -296,7 +296,7 @@ async def list_tasks(
                 id=task['id'],
                 goal_id=task['goal_id'],
                 name=task['name'],
-                description=task['description'],
+                description=task.get('description'),
                 task_type=task['task_type'],
                 status=task['status'],
                 priority=task['priority'],
@@ -304,7 +304,7 @@ async def list_tasks(
                 started_at=task.get('started_at'),
                 completed_at=task.get('completed_at'),
                 result=task.get('result'),
-                metadata=task.get('metadata')
+                metadata=task.get('metadata') if isinstance(task.get('metadata'), dict) else {}
             )
             for task in tasks
         ]
@@ -469,12 +469,9 @@ async def get_audit_logs(
     """Get audit logs with optional filtering."""
     try:
         core = await get_autonomous_core()
+        # The audit logger only accepts hours and limit parameters
         logs = await core.audit_logger.get_audit_logs(
-            component=component,
-            event_type=event_type,
-            level=level,
-            start_time=start_time,
-            end_time=end_time,
+            hours=24 if not start_time else int((datetime.now() - start_time).total_seconds() / 3600),
             limit=limit
         )
 
@@ -482,11 +479,11 @@ async def get_audit_logs(
             AuditLogResponse(
                 id=log['id'],
                 timestamp=log['timestamp'],
-                event_type=log['event_type'],
-                component=log['component'],
-                message=log['message'],
-                level=log['level'],
-                metadata=log.get('metadata')
+                event_type=log.get('event_type', 'unknown'),
+                component=log.get('goal_name', 'autonomous'),
+                message=log.get('action', str(log.get('details', ''))),
+                level=log.get('safety_level', 'info'),
+                metadata=log.get('details')
             )
             for log in logs
         ]

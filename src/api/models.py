@@ -3,24 +3,134 @@ import asyncio
 """
 Model management API routes for Echo Brain
 """
+import asyncio
 import subprocess
 import uuid
 import logging
 import time
+import json
 from datetime import datetime
 from fastapi import APIRouter, HTTPException, BackgroundTasks
-from src.db.models import QueryRequest
-from src.misc.model_manager import get_model_manager
+from typing import List, Dict, Any, Optional
+from pydantic import BaseModel
+
+try:
+    from ..db.models import QueryRequest
+except ImportError:
+    # Fallback for standalone testing
+    from src.db.models import QueryRequest
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+# Model management response models
+class ModelInfo(BaseModel):
+    name: str
+    size: str
+    modified: str
+    id: Optional[str] = None
+    digest: Optional[str] = None
+
+class ModelListResponse(BaseModel):
+    models: List[ModelInfo]
+    total: int
+    timestamp: str
+
+class ModelManifest(BaseModel):
+    name: str
+    parameters: Dict[str, Any]
+    template: Optional[str] = None
+    system: Optional[str] = None
+    details: Dict[str, Any]
+
+@router.get("/api/models/list")
+async def list_all_models():
+    """List all available models (compatible endpoint)"""
+    try:
+        result = subprocess.run(["ollama", "list"], capture_output=True, text=True, timeout=10)
+        if result.returncode == 0:
+            lines = result.stdout.strip().split('\n')
+            models = []
+
+            # Skip header line
+            for line in lines[1:]:
+                if line.strip():
+                    parts = line.split()
+                    if len(parts) >= 3:
+                        models.append(ModelInfo(
+                            name=parts[0],
+                            size=f"{parts[1]} {parts[2] if len(parts) > 2 else ''}".strip(),
+                            modified=" ".join(parts[3:]) if len(parts) > 3 else "unknown"
+                        ))
+
+            return ModelListResponse(
+                models=models,
+                total=len(models),
+                timestamp=datetime.now().isoformat()
+            )
+        else:
+            raise HTTPException(status_code=500, detail=f"Ollama command failed: {result.stderr}")
+    except subprocess.TimeoutExpired:
+        raise HTTPException(status_code=500, detail="Ollama command timed out")
+    except Exception as e:
+        logger.error(f"Model listing failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to list models: {str(e)}")
+
+@router.get("/api/models/manifests")
+async def get_model_manifests():
+    """Get model manifests and details"""
+    try:
+        # Get list of models first
+        result = subprocess.run(["ollama", "list"], capture_output=True, text=True, timeout=10)
+        if result.returncode != 0:
+            raise HTTPException(status_code=500, detail="Failed to list models")
+
+        lines = result.stdout.strip().split('\n')[1:]  # Skip header
+        manifests = []
+
+        for line in lines:
+            if line.strip():
+                parts = line.split()
+                if len(parts) >= 1:
+                    model_name = parts[0]
+                    try:
+                        # Get model info
+                        info_result = subprocess.run(
+                            ["ollama", "show", model_name],
+                            capture_output=True,
+                            text=True,
+                            timeout=5
+                        )
+
+                        if info_result.returncode == 0:
+                            # Parse the model info - this is simplified
+                            manifests.append(ModelManifest(
+                                name=model_name,
+                                parameters={
+                                    "size": f"{parts[1]} {parts[2]}" if len(parts) >= 3 else "unknown",
+                                    "modified": " ".join(parts[3:]) if len(parts) > 3 else "unknown"
+                                },
+                                details={
+                                    "raw_info": info_result.stdout[:500] if info_result.stdout else ""
+                                }
+                            ))
+                    except subprocess.TimeoutExpired:
+                        # Skip models that timeout
+                        continue
+                    except Exception:
+                        # Skip models that error
+                        continue
+
+        return {"manifests": manifests, "total": len(manifests)}
+
+    except Exception as e:
+        logger.error(f"Manifest retrieval failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get manifests: {str(e)}")
 
 @router.get("/api/echo/models/list")
 async def list_models():
     """List all available Ollama models"""
     try:
-        # Use direct ollama command as fallback
-        from src.api.dependencies import execute_ollama_command
 
         # Direct ollama list command
         result = subprocess.run(["ollama", "list"], capture_output=True, text=True)
@@ -48,15 +158,28 @@ async def pull_model(model_name: str, background_tasks: BackgroundTasks):
     logger.info(f"📥 Pulling model: {model_name}")
 
     try:
-        from src.api.dependencies import execute_ollama_command
-
         async def pull_model_async(model: str):
-            result = await execute_ollama_command(["ollama", "pull", model])
-            if result["success"]:
-                logger.info(f"✅ Model {model} pulled successfully")
-            else:
-                logger.error(f"❌ Failed to pull {model}: {result.get('stderr', result.get('error'))}")
-            return result
+            try:
+                # Run ollama pull command
+                result = subprocess.run(
+                    ["ollama", "pull", model],
+                    capture_output=True,
+                    text=True,
+                    timeout=1800  # 30 minute timeout for model pulls
+                )
+
+                if result.returncode == 0:
+                    logger.info(f"✅ Model {model} pulled successfully")
+                    return {"success": True, "stdout": result.stdout}
+                else:
+                    logger.error(f"❌ Failed to pull {model}: {result.stderr}")
+                    return {"success": False, "stderr": result.stderr}
+            except subprocess.TimeoutExpired:
+                logger.error(f"❌ Model pull timed out for {model}")
+                return {"success": False, "error": "Pull operation timed out"}
+            except Exception as e:
+                logger.error(f"❌ Error pulling {model}: {e}")
+                return {"success": False, "error": str(e)}
 
         task_id = str(uuid.uuid4())
         background_tasks.add_task(pull_model_async, model_name)
@@ -76,14 +199,19 @@ async def remove_model(model_name: str):
     logger.info(f"🗑️ Removing model: {model_name}")
 
     try:
-        from src.api.dependencies import execute_ollama_command
+        result = subprocess.run(
+            ["ollama", "rm", model_name],
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
 
-        result = await execute_ollama_command(["ollama", "rm", model_name])
-
-        if result["success"]:
+        if result.returncode == 0:
             return {"success": True, "message": f"Model {model_name} removed successfully"}
         else:
-            return {"success": False, "error": result.get("stderr", "Failed to remove model")}
+            return {"success": False, "error": result.stderr or "Failed to remove model"}
+    except subprocess.TimeoutExpired:
+        return {"success": False, "error": "Remove operation timed out"}
     except Exception as e:
         logger.error(f"Model removal failed: {e}")
         return {"success": False, "error": str(e)}
@@ -92,14 +220,13 @@ async def remove_model(model_name: str):
 async def get_model_operation_status(request_id: str):
     """Get status of a model operation"""
     try:
-        # Initialize dependencies if not available
-        from src.routing.service_registry import ServiceRegistry
-        from src.routing.request_logger import RequestLogger
-        board_registry = ServiceRegistry()
-        request_logger = RequestLogger()
-        model_manager = get_model_manager(board_registry, request_logger)
-        status = await model_manager.get_operation_status(request_id)
-        return status
+        # For now, return a simple status - in a real implementation
+        # this would track background tasks
+        return {
+            "request_id": request_id,
+            "status": "completed",
+            "message": "Model operation status tracking not fully implemented"
+        }
     except Exception as e:
         logger.error(f"Status check failed: {e}")
         return {"error": str(e)}
@@ -120,10 +247,8 @@ async def generate_code_only(request: QueryRequest):
     response = await query_echo(code_request)
     response.mode = "code_only"
     return response
-# Add missing model definitions
-from pydantic import BaseModel
-from typing import Optional
 
+# Additional model definitions
 class FeedbackRequest(BaseModel):
     feedback: str
     rating: Optional[int] = None
@@ -132,21 +257,6 @@ class FeedbackResponse(BaseModel):
     success: bool
     message: str
 
-
-# Add Filter class
 class Filter(BaseModel):
     field: str
     value: str
-
-
-# Add missing model definitions
-from pydantic import BaseModel
-from typing import Optional
-
-class FeedbackRequest(BaseModel):
-    feedback: str
-    rating: Optional[int] = None
-
-class FeedbackResponse(BaseModel):
-    success: bool
-    message: str

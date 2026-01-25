@@ -255,6 +255,49 @@ class ResilientQdrantMemory:
 
         return memories
 
+    async def search(
+        self,
+        collection: str,
+        query: str = None,
+        query_vector: List[float] = None,
+        limit: int = 10,
+        score_threshold: float = 0.7
+    ) -> List[Any]:
+        """Search method for compatibility with main.py"""
+        # If we have a query string, embed it
+        if query and not query_vector:
+            query_vector = await self.embed_text(query)
+
+        # Use the existing search_similar method
+        return await self.search_similar(
+            collection_name=collection,
+            query_vector=query_vector,
+            limit=limit,
+            score_threshold=score_threshold
+        )
+
+    async def search_similar(
+        self,
+        collection_name: str,
+        query_vector: List[float],
+        limit: int = 10,
+        score_threshold: float = 0.7
+    ) -> List[Dict[str, Any]]:
+        """Search for similar vectors (compatibility method)"""
+        # Use the existing client
+        client = await self._get_client()
+
+        # Search
+        results = client.search(
+            collection_name=collection_name,
+            query_vector=query_vector,
+            limit=limit,
+            score_threshold=score_threshold
+        )
+
+        # Return results directly (they're already ScoredPoint objects)
+        return results
+
     async def search_memories(
         self,
         query: str,

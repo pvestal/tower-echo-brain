@@ -11,9 +11,15 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 # Import agents
-from src.agents.coding_agent import coding_agent
-from src.agents.reasoning_agent import reasoning_agent
-from src.agents.narration_agent import narration_agent
+try:
+    from ..agents.coding_agent import coding_agent
+    from ..agents.reasoning_agent import reasoning_agent
+    from ..agents.narration_agent import narration_agent
+except ImportError:
+    # Fallback for standalone testing
+    from src.agents.coding_agent import coding_agent
+    from src.agents.reasoning_agent import reasoning_agent
+    from src.agents.narration_agent import narration_agent
 
 class CodingTaskRequest(BaseModel):
     task: str
@@ -54,9 +60,9 @@ async def get_coding_history():
     """Get coding agent task history"""
     return {
         "agent": "CodingAgent",
-        "model": coding_agent.model,
-        "history_count": len(coding_agent.history),
-        "history": coding_agent.history[-20:]
+        "model": getattr(coding_agent, 'model_name', 'unknown'),
+        "history_count": len(coding_agent.history) if hasattr(coding_agent, 'history') else 0,
+        "history": getattr(coding_agent, 'history', [])[-20:]
     }
 
 class ReasoningTaskRequest(BaseModel):
@@ -121,9 +127,9 @@ async def get_reasoning_history():
     """Get reasoning agent task history"""
     return {
         "agent": "ReasoningAgent",
-        "model": reasoning_agent.model,
-        "history_count": len(reasoning_agent.history),
-        "history": reasoning_agent.history[-20:]
+        "model": getattr(reasoning_agent, 'model_name', 'unknown'),
+        "history_count": len(reasoning_agent.history) if hasattr(reasoning_agent, 'history') else 0,
+        "history": getattr(reasoning_agent, 'history', [])[-20:]
     }
 
 @router.post("/api/echo/agents/narration", response_model=NarrationTaskResponse)
@@ -151,9 +157,9 @@ async def get_narration_history():
     """Get narration agent task history"""
     return {
         "agent": "NarrationAgent",
-        "model": narration_agent.model,
-        "history_count": len(narration_agent.history),
-        "history": narration_agent.history[-20:]
+        "model": getattr(narration_agent, 'model_name', 'unknown'),
+        "history_count": len(narration_agent.history) if hasattr(narration_agent, 'history') else 0,
+        "history": getattr(narration_agent, 'history', [])[-20:]
     }
 
 @router.post("/api/echo/agents/execute")
@@ -193,21 +199,21 @@ async def get_agents_status():
         "agents": [
             {
                 "name": "CodingAgent",
-                "model": coding_agent.model,
+                "model": getattr(coding_agent, 'model_name', 'unknown'),
                 "status": "active",
-                "tasks_processed": len(coding_agent.history)
+                "tasks_processed": len(coding_agent.history) if hasattr(coding_agent, 'history') else 0
             },
             {
                 "name": "ReasoningAgent",
-                "model": reasoning_agent.model,
+                "model": getattr(reasoning_agent, 'model_name', 'unknown'),
                 "status": "active",
-                "tasks_processed": len(reasoning_agent.history)
+                "tasks_processed": len(reasoning_agent.history) if hasattr(reasoning_agent, 'history') else 0
             },
             {
                 "name": "NarrationAgent",
-                "model": narration_agent.model,
+                "model": getattr(narration_agent, 'model_name', 'unknown'),
                 "status": "active",
-                "tasks_processed": len(narration_agent.history)
+                "tasks_processed": len(narration_agent.history) if hasattr(narration_agent, 'history') else 0
             }
         ]
     }

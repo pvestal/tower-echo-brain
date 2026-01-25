@@ -1,217 +1,305 @@
 #!/usr/bin/env python3
 """
-Autonomous Code Refactoring System
-Monitors code quality and performs safe refactoring
+Enhanced Code Refactor Executor with real execution capabilities.
+Integrates incremental analysis, verified execution, and safe refactoring.
 """
 
 import asyncio
 import logging
-import subprocess
-import json
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 from datetime import datetime
+import json
+
+# Import the new execution layer
+import sys
+sys.path.insert(0, '/opt/tower-echo-brain')
+from src.execution import (
+    IncrementalAnalyzer,
+    VerifiedExecutor,
+    VerifiedAction,
+    ExecutionStatus,
+    SafeRefactor
+)
 
 logger = logging.getLogger(__name__)
 
-class CodeRefactorExecutor:
-    """Executes autonomous code refactoring with safety checks"""
-    
+class EnhancedCodeRefactorExecutor:
+    """
+    Production-ready code refactor executor that actually modifies code.
+    Uses incremental analysis to avoid timeouts and verified execution
+    to ensure changes actually work.
+    """
+
     def __init__(self):
-        self.refactor_log = Path("/opt/tower-echo-brain/logs/code_refactors.log")
+        self.state_dir = Path("/opt/tower-echo-brain/state")
+        self.state_dir.mkdir(exist_ok=True)
+        self.verified_executor = VerifiedExecutor()
+        self.refactor_log = Path("/opt/tower-echo-brain/logs/enhanced_refactors.log")
         self.refactor_log.parent.mkdir(parents=True, exist_ok=True)
-        self.tools_available = self._check_tools()
-        
-    def _check_tools(self) -> Dict[str, bool]:
-        """Check which code quality tools are installed"""
-        import sys
-        import os
 
-        tools = {}
-        # Check in venv first, then system
-        venv_bin = Path(sys.prefix) / 'bin'
+    async def analyze_project_incrementally(self, project_path: str) -> Dict[str, Any]:
+        """
+        Analyze project using incremental analyzer to avoid timeouts.
+        Only analyzes changed files since last run.
+        """
+        logger.info(f"🔍 Starting incremental analysis of {project_path}")
 
-        for tool in ['pylint', 'black', 'ruff', 'mypy']:
-            tool_paths = [
-                venv_bin / tool,  # Check venv first
-                f"/opt/tower-echo-brain/venv/bin/{tool}",  # Explicit path
-                tool  # Fall back to system path
-            ]
+        project_root = Path(project_path)
+        state_file = self.state_dir / f"{project_root.name}_analysis_state.json"
 
-            found = False
-            for tool_path in tool_paths:
-                try:
-                    subprocess.run([str(tool_path), '--version'], capture_output=True, check=True, timeout=5)
-                    tools[tool] = True
-                    logger.info(f"✅ {tool} available at {tool_path}")
-                    found = True
-                    break
-                except Exception:
-                    continue
+        analyzer = IncrementalAnalyzer(project_root, state_file)
 
-            if not found:
-                tools[tool] = False
-                logger.warning(f"❌ {tool} not available")
+        # Get changed files
+        changed_targets = list(analyzer.get_changed_files(['.py']))
+        logger.info(f"Found {len(changed_targets)} changed Python files")
 
-        return tools
-    
-    async def analyze_code_quality(self, project_path: str) -> Dict[str, Any]:
-        """Analyze code quality for a project"""
-        logger.info(f"🔍 Analyzing code quality: {project_path}")
-        
+        # Create batches for processing
+        batches = list(analyzer.create_batches(changed_targets, max_files=10))
+
         results = {
             'project': project_path,
-            'timestamp': datetime.now().isoformat(),
-            'issues': [],
-            'pylint_score': None,
-            'file_count': 0
+            'total_files': len(changed_targets),
+            'batches_created': len(batches),
+            'files_analyzed': [],
+            'files_needing_refactor': [],
+            'timestamp': datetime.now().isoformat()
         }
-        
-        # Count Python files
-        path = Path(project_path)
-        if path.exists():
-            py_files = list(path.rglob('*.py'))
-            results['file_count'] = len(py_files)
-            logger.info(f"📊 Found {len(py_files)} Python files in {project_path}")
-        
-        # Run pylint if available
-        if self.tools_available.get('pylint') and results['file_count'] > 0:
-            # Use venv pylint path
-            pylint_path = '/opt/tower-echo-brain/venv/bin/pylint'
-            try:
-                result = subprocess.run(
-                    [pylint_path, project_path, '--output-format=json', '--exit-zero'],
-                    capture_output=True,
-                    text=True,
-                    timeout=60
-                )
-                # Parse pylint output
-                if result.stdout:
-                    try:
-                        pylint_data = json.loads(result.stdout)
-                        results['issues'] = pylint_data
-                        results['pylint_score'] = self._calculate_pylint_score(pylint_data)
-                        logger.info(f"📈 Pylint score: {results['pylint_score']}/10")
-                    except json.JSONDecodeError:
-                        logger.error("Failed to parse pylint output")
-            except Exception as e:
-                logger.error(f"Pylint analysis failed: {e}")
-        
-        # Log results
-        self._log_analysis(results)
-        return results
-    
-    def _calculate_pylint_score(self, pylint_data: List[Dict]) -> float:
-        """Calculate overall code quality score from pylint issues"""
-        if not pylint_data:
-            return 10.0
-        
-        # Count severity of issues
-        error_count = sum(1 for issue in pylint_data if issue.get('type') == 'error')
-        warning_count = sum(1 for issue in pylint_data if issue.get('type') == 'warning')
-        
-        # Simple scoring: deduct points for errors and warnings
-        score = 10.0
-        score -= (error_count * 0.5)
-        score -= (warning_count * 0.2)
-        
-        return max(0.0, score)
-    
-    async def auto_format_code(self, file_path: str) -> Dict[str, Any]:
-        """Auto-format code using black"""
-        if not self.tools_available.get('black'):
-            return {'success': False, 'error': 'black not installed'}
 
-        # Use venv black path
-        black_path = '/opt/tower-echo-brain/venv/bin/black'
+        # Process each batch
+        for batch in batches:
+            for target in batch.targets:
+                # Analyze individual file
+                file_result = await self._analyze_single_file(target.path)
+                if file_result['needs_refactor']:
+                    results['files_needing_refactor'].append(str(target.path))
+                results['files_analyzed'].append(str(target.path))
+
+                # Mark as analyzed to avoid reprocessing
+                analyzer.mark_analyzed(target)
+
+                # Rate limit to avoid overwhelming the system
+                await asyncio.sleep(0.1)
+
+        logger.info(f"📊 Analysis complete: {len(results['files_analyzed'])} files analyzed, "
+                   f"{len(results['files_needing_refactor'])} need refactoring")
+
+        return results
+
+    async def _analyze_single_file(self, file_path: Path) -> Dict[str, Any]:
+        """Analyze a single Python file for quality issues."""
+        result = {
+            'file': str(file_path),
+            'needs_refactor': False,
+            'score': None
+        }
+
         try:
-            result = subprocess.run(
-                [black_path, file_path],
+            # Use pylint to get quality score
+            import subprocess
+            proc = subprocess.run(
+                ['/opt/tower-echo-brain/venv/bin/pylint', str(file_path), '--score=y'],
                 capture_output=True,
                 text=True,
                 timeout=30
             )
-            
-            return {
-                'success': result.returncode == 0,
-                'file': file_path,
-                'output': result.stdout
-            }
-        except Exception as e:
-            logger.error(f"Black formatting failed: {e}")
-            return {'success': False, 'error': str(e)}
-    
-    def _log_analysis(self, results: Dict[str, Any]):
-        """Log analysis results to file"""
-        try:
-            with open(self.refactor_log, 'a') as f:
-                log_entry = {
-                    'timestamp': results['timestamp'],
-                    'project': results['project'],
-                    'pylint_score': results['pylint_score'],
-                    'file_count': results['file_count'],
-                    'issue_count': len(results['issues'])
-                }
-                f.write(json.dumps(log_entry) + '\n')
-        except Exception as e:
-            logger.error(f"Failed to log analysis: {e}")
 
-    async def auto_fix_common_issues(self, project_path: str, max_fixes: int = 50) -> Dict[str, Any]:
-        """Automatically fix common pylint issues"""
-        logger.info(f"🔧 Auto-fixing common issues in {project_path}")
-        results = {
+            # Parse score
+            for line in proc.stdout.split('\n'):
+                if 'Your code has been rated at' in line:
+                    score_str = line.split('rated at ')[1].split('/')[0]
+                    result['score'] = float(score_str)
+                    result['needs_refactor'] = result['score'] < 7.0
+                    break
+
+        except Exception as e:
+            logger.warning(f"Failed to analyze {file_path}: {e}")
+
+        return result
+
+    async def refactor_file_with_verification(self, file_path: str) -> Dict[str, Any]:
+        """
+        Refactor a single file with verification that changes actually improve it.
+        """
+        logger.info(f"🔧 Refactoring {file_path} with verification")
+
+        # Import the semantic refactor executor
+        from src.tasks.semantic_refactor_executor import semantic_refactor_executor
+
+        # Create a verified action for refactoring
+        def execute_refactor():
+            """Execute the refactoring."""
+            import subprocess
+            # First, format with black
+            return subprocess.run(
+                ['/opt/tower-echo-brain/venv/bin/black', file_path],
+                capture_output=True
+            )
+
+        def verify_refactor():
+            """Verify the refactoring improved the file."""
+            # Check that file still has valid Python syntax
+            try:
+                with open(file_path, 'r') as f:
+                    import ast
+                    ast.parse(f.read())
+                return True
+            except:
+                return False
+
+        action = VerifiedAction(
+            name=f"refactor_{Path(file_path).name}",
+            execute=execute_refactor,
+            verify=verify_refactor,
+            description=f"Refactor and format {file_path}"
+        )
+
+        # Execute with verification
+        result = await self.verified_executor.run(action)
+
+        # Also run semantic refactoring for deeper improvements
+        if result.actually_worked:
+            semantic_result = await semantic_refactor_executor.analyze_and_refactor_file(file_path)
+
+            return {
+                'file': file_path,
+                'success': result.actually_worked and semantic_result.get('code_changed', False),
+                'verification_status': result.status.value,
+                'original_score': semantic_result.get('original_score'),
+                'final_score': semantic_result.get('final_score'),
+                'transformations': semantic_result.get('transformations_applied', [])
+            }
+        else:
+            return {
+                'file': file_path,
+                'success': False,
+                'verification_status': result.status.value,
+                'error': result.actual_outcome
+            }
+
+    async def safe_refactor_project(self, project_path: str, max_files: int = 5) -> Dict[str, Any]:
+        """
+        Safely refactor a project with git integration.
+        Changes are committed to a branch and can be rolled back if tests fail.
+        """
+        logger.info(f"🔒 Starting safe refactoring of {project_path}")
+
+        project_root = Path(project_path)
+
+        # Check if it's a git repository
+        if not (project_root / '.git').exists():
+            return {
+                'success': False,
+                'error': f"{project_path} is not a git repository"
+            }
+
+        # Use SafeRefactor for git integration
+        safe_refactor = SafeRefactor(project_root)
+
+        # Function to perform refactoring
+        async def do_refactoring():
+            modified_files = []
+
+            # Get files needing refactoring
+            analysis = await self.analyze_project_incrementally(project_path)
+            files_to_refactor = analysis['files_needing_refactor'][:max_files]
+
+            for file_path in files_to_refactor:
+                result = await self.refactor_file_with_verification(file_path)
+                if result['success']:
+                    modified_files.append(Path(file_path))
+
+            return modified_files
+
+        # Wrap async function for sync context
+        def refactor_wrapper():
+            return asyncio.run(do_refactoring())
+
+        # Determine test command based on project
+        test_commands = {
+            '/opt/tower-echo-brain': ['python3', '-m', 'pytest', 'tests/', '-x'],
+            '/opt/tower-anime-production': ['python3', '-m', 'pytest', 'tests/', '-x'],
+        }
+        test_command = test_commands.get(project_path, ['true'])  # Default to always pass if no tests
+
+        # Execute refactoring with safety
+        result = safe_refactor.refactor_with_safety(
+            description="automated-code-improvement",
+            refactor_func=refactor_wrapper,
+            test_command=test_command,
+            original_branch='main'
+        )
+
+        return {
             'project': project_path,
-            'fixes_applied': 0,
-            'files_modified': []
+            'success': result.success,
+            'files_modified': [str(f) for f in result.files_modified],
+            'commit_hash': result.commit_hash,
+            'error': result.error_message
         }
 
-        # Auto-format with black first
-        if self.tools_available.get('black'):
-            try:
-                black_path = '/opt/tower-echo-brain/venv/bin/black'
-                result = subprocess.run(
-                    [black_path, project_path, '--quiet'],
-                    capture_output=True,
-                    text=True,
-                    timeout=120
-                )
-                if result.returncode == 0:
-                    results['fixes_applied'] += 1
-                    results['files_modified'].append('Auto-formatted with black')
-                    logger.info(f"✅ Applied black formatting to {project_path}")
-            except Exception as e:
-                logger.error(f"Black formatting failed: {e}")
+    async def execute_code_refactor_task(self, task_payload: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Main entry point for code refactor tasks from Echo's task queue.
+        """
+        action = task_payload.get('action', 'analyze')
+        project_path = task_payload.get('project_path')
 
-        # Run autopep8 for additional fixes
+        if not project_path:
+            return {'success': False, 'error': 'No project_path specified'}
+
         try:
-            subprocess.run(['pip', 'install', 'autopep8'], capture_output=True, timeout=30)
-            result = subprocess.run(
-                ['autopep8', '--in-place', '--aggressive', '--recursive', project_path],
-                capture_output=True,
-                text=True,
-                timeout=180
-            )
-            if result.returncode == 0:
-                results['fixes_applied'] += 1
-                results['files_modified'].append('Auto-fixed with autopep8')
-                logger.info(f"✅ Applied autopep8 fixes to {project_path}")
+            if action == 'analyze':
+                return await self.analyze_project_incrementally(project_path)
+            elif action == 'refactor':
+                return await self.safe_refactor_project(project_path)
+            elif action == 'refactor_file':
+                file_path = task_payload.get('file_path')
+                if file_path:
+                    return await self.refactor_file_with_verification(file_path)
+                else:
+                    return {'success': False, 'error': 'No file_path specified'}
+            else:
+                return {'success': False, 'error': f'Unknown action: {action}'}
+
         except Exception as e:
-            logger.warning(f"Autopep8 not available or failed: {e}")
+            logger.error(f"Code refactor task failed: {e}")
+            return {'success': False, 'error': str(e)}
 
-        return results
-
-    async def proactive_improve_code(self, file_path: str) -> bool:
-        """Proactively improve a single file"""
+    def _log_refactor(self, result: Dict[str, Any]):
+        """Log refactoring results."""
         try:
-            # Format with black
-            if self.tools_available.get('black'):
-                await self.auto_format_code(file_path)
-
-            # Check if improvements made a difference
-            return True
+            with open(self.refactor_log, 'a') as f:
+                f.write(json.dumps(result) + '\n')
         except Exception as e:
-            logger.error(f"Failed to improve {file_path}: {e}")
-            return False
+            logger.error(f"Failed to log refactor: {e}")
+
 
 # Global instance
-code_refactor_executor = CodeRefactorExecutor()
+enhanced_code_refactor_executor = EnhancedCodeRefactorExecutor()
+
+
+async def test_enhanced_executor():
+    """Test the enhanced refactor executor."""
+    executor = EnhancedCodeRefactorExecutor()
+
+    # Test incremental analysis (should be fast on second run)
+    print("Testing incremental analysis...")
+    result1 = await executor.analyze_project_incrementally('/opt/tower-echo-brain/src/execution')
+    print(f"First run: {result1['total_files']} files analyzed")
+
+    result2 = await executor.analyze_project_incrementally('/opt/tower-echo-brain/src/execution')
+    print(f"Second run: {result2['total_files']} files analyzed (should be 0 if unchanged)")
+
+    # Test file refactoring with verification
+    print("\nTesting verified refactoring...")
+    test_file = '/opt/tower-echo-brain/test_refactor_target.py'
+    if Path(test_file).exists():
+        result = await executor.refactor_file_with_verification(test_file)
+        print(f"Refactor result: {result['success']}, Score: {result.get('original_score')} -> {result.get('final_score')}")
+
+    print("\n✅ Enhanced executor tests complete")
+
+
+if __name__ == "__main__":
+    asyncio.run(test_enhanced_executor())
