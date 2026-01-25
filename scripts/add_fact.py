@@ -15,7 +15,7 @@ import asyncpg
 import httpx
 from src.services.embedding_service import create_embedding_service
 
-DATABASE_URL = "postgresql://patrick:tower_echo_brain_secret_key_2025@localhost/tower_consolidated"
+DATABASE_URL = "postgresql://patrick:tower_echo_brain_secret_key_2025@localhost/echo_brain"
 QDRANT_URL = "http://localhost:6333"
 
 async def add_fact(subject: str, predicate: str, obj: str):
@@ -83,7 +83,7 @@ async def main():
             ("Tower server", "has GPU", "AMD RX 9070 16GB"),
             ("Echo Brain", "runs on port", "8309"),
             ("Echo Brain", "uses embeddings", "OpenAI text-embedding-3-small 1536D"),
-            ("Echo Brain", "database", "tower_consolidated"),
+            ("Echo Brain", "database", "echo_brain"),
             ("Qdrant", "runs on port", "6333"),
         ]
         for s, p, o in core_facts:

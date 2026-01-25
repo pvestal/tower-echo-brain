@@ -8,7 +8,7 @@ import asyncpg
 import httpx
 from src.services.embedding_service import create_embedding_service
 
-DATABASE_URL = "postgresql://patrick:tower_echo_brain_secret_key_2025@localhost/tower_consolidated"
+DATABASE_URL = "postgresql://patrick:tower_echo_brain_secret_key_2025@localhost/echo_brain"
 QDRANT_URL = "http://localhost:6333"
 
 async def query_facts(query: str):

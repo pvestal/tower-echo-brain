@@ -1,6 +1,0 @@
-model,test_id,test_name,category,time_to_first_token_ms,total_generation_time_ms,tokens_generated,tokens_per_second,vram_before_mb,vram_during_mb,output,classification_correct,quality_score,quality_notes,timestamp,error
-qwen2.5:3b,cls_001,Simple greeting,classification,88.74,105.28,1,9.5,,5564.0,greeting,True,,,2026-01-06T19:49:24.089633,
-qwen2.5:3b,cls_002,Coding request,classification,90.43,98.67,1,10.14,,5564.0,coding,True,,,2026-01-06T19:49:24.339945,
-qwen2.5:3b,cls_003,Reasoning request,classification,84.72,93.34,1,10.71,,5564.0,coding,False,,,2026-01-06T19:49:24.586170,
-qwen2.5:3b,cls_004,Financial query,classification,90.18,98.57,1,10.15,,5564.0,financial,True,,,2026-01-06T19:49:24.820752,
-qwen2.5:3b,cls_005,Ambiguous technical,classification,96.49,105.05,1,9.52,,5564.0,coding,True,,,2026-01-06T19:49:25.068916,

@@ -47,7 +47,7 @@ class GoalSeeder:
         self.db_config = {
             'host': os.environ.get('ECHO_BRAIN_DB_HOST', 'localhost'),
             'port': int(os.environ.get('ECHO_BRAIN_DB_PORT', '5432')),
-            'database': os.environ.get('ECHO_BRAIN_DB_NAME', 'tower_consolidated'),
+            'database': os.environ.get('ECHO_BRAIN_DB_NAME', 'echo_brain'),
             'user': os.environ.get('ECHO_BRAIN_DB_USER', 'patrick'),
             'password': os.environ.get('ECHO_BRAIN_DB_PASSWORD', 'RP78eIrW7cI2jYvL5akt1yurE')
         }

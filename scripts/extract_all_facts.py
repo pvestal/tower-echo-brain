@@ -25,7 +25,7 @@ import httpx
 from src.services.embedding_service import create_embedding_service
 
 # Config
-DATABASE_URL = "postgresql://patrick:tower_echo_brain_secret_key_2025@localhost/tower_consolidated"
+DATABASE_URL = "postgresql://patrick:tower_echo_brain_secret_key_2025@localhost/echo_brain"
 OLLAMA_URL = "http://localhost:11434"
 QDRANT_URL = "http://localhost:6333"
 

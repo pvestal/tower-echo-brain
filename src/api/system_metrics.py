@@ -19,7 +19,7 @@ router = APIRouter()
 # Database configuration
 DB_CONFIG = {
     "host": "localhost",
-    "database": "tower_consolidated",
+    "database": "echo_brain",
     "user": "patrick",
     "password": "RP78eIrW7cI2jYvL5akt1yurE"
 }
@@ -112,7 +112,7 @@ async def get_db_stats():
         db_activity = await conn.fetch("""
             SELECT state, COUNT(*) as count
             FROM pg_stat_activity
-            WHERE datname = 'tower_consolidated'
+            WHERE datname = 'echo_brain'
             GROUP BY state
         """)
 

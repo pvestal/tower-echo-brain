@@ -28,7 +28,7 @@ class NotificationManager:
         self.db_config = {
             'host': 'localhost',
             'port': 5432,
-            'database': 'tower_consolidated',
+            'database': 'echo_brain',
             'user': 'patrick',
             'password': os.environ.get('ECHO_BRAIN_DB_PASSWORD', 'RP78eIrW7cI2jYvL5akt1yurE')
         }
