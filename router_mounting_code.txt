@@ -1,0 +1,30 @@
+# Add these imports after line 189 in main.py:
+
+# Mount all missing routers
+try:
+    from .api.agents import router as agents_router
+    from .api.codebase import router as codebase_router
+    from .api.echo import router as echo_router
+    from .api.git_operations import router as git_operations_router
+    from .api.health import router as health_router
+    from .api.models import router as models_router
+    from .api.secured_routes import router as secured_routes_router
+    from .api.solutions import router as solutions_router
+    from .api.system_metrics import router as system_metrics_router
+    from .api.system_stub import router as system_stub_router
+    from .api.takeout_stub import router as takeout_stub_router
+    from .api.training_status import router as training_status_router
+
+    app.include_router(agents_router, prefix="/api/echo/agents")
+    app.include_router(codebase_router, prefix="/api/echo/codebase")
+    app.include_router(echo_router, prefix="")
+    app.include_router(git_operations_router, prefix="/api/git")
+    app.include_router(health_router, prefix="/api/echo")
+    app.include_router(models_router, prefix="")
+    app.include_router(secured_routes_router, prefix="")
+    app.include_router(solutions_router, prefix="/api/echo/solutions")
+    app.include_router(system_metrics_router, prefix="/api/echo/metrics")
+    app.include_router(training_status_router, prefix="")
+    logger.info(f'✅ Mounted {len(includes)} routers')
+except Exception as e:
+    logger.error(f'Failed to mount routers: {e}')
