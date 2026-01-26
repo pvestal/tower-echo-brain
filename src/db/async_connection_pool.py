@@ -5,6 +5,7 @@ Prevents connection exhaustion and improves performance
 """
 
 import asyncpg
+import os
 import asyncio
 import logging
 from typing import Optional, Dict, Any
@@ -34,7 +35,7 @@ class DatabasePool:
                     'port': 5432,
                     'database': kwargs.get('database', 'echo_brain'),
                     'user': kwargs.get('user', 'patrick'),
-                    'password': kwargs.get('password', 'RP78eIrW7cI2jYvL5akt1yurE'),
+                    'password': kwargs.get('password', os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE")),
                     'min_size': kwargs.get('min_size', 5),
                     'max_size': kwargs.get('max_size', 20),
                     'max_queries': kwargs.get('max_queries', 50000),

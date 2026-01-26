@@ -277,7 +277,7 @@ async def main():
             capture_output=True,
             text=True,
             timeout=5,
-            env={**os.environ, "PGPASSWORD": "RP78eIrW7cI2jYvL5akt1yurE"}
+            env={**os.environ, "PGPASSWORD": os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE")}
         )
         postgres_running = result.returncode == 0
     except:

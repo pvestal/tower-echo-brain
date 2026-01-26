@@ -5,6 +5,7 @@ This server communicates via stdin/stdout using JSON-RPC protocol.
 """
 
 import sys
+import os
 import json
 import asyncio
 import logging
@@ -26,7 +27,7 @@ DB_CONFIG = {
     'host': 'localhost',
     'database': 'echo_brain',
     'user': 'patrick',
-    'password': 'RP78eIrW7cI2jYvL5akt1yurE'
+    'password': os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE")
 }
 
 QDRANT_HOST = 'localhost'
@@ -72,8 +73,8 @@ class EchoBrainMCP:
 
             return [{
                 "score": hit.score,
-                "content": hit.payload.get("content", "")[:500],
-                "source": hit.payload.get("source", "unknown"),
+                "content": hit.payload.get("text", hit.payload.get("content", ""))[:500],
+                "source": hit.payload.get("source_file", hit.payload.get("original_cache_id", "unknown")),
                 "type": hit.payload.get("type", "unknown")
             } for hit in results]
 

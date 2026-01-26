@@ -5,6 +5,7 @@ Automatically saves important conversations and extracts knowledge
 """
 
 import logging
+import os
 import asyncio
 from typing import Dict, Any, Optional
 from datetime import datetime
@@ -24,7 +25,7 @@ class LearningMiddleware:
             "host": "localhost",
             "database": "echo_brain",
             "user": "patrick",
-            "password": "RP78eIrW7cI2jYvL5akt1yurE"
+            "password": os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE")
         }
         self.importance_threshold = 0.3
 

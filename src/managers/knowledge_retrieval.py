@@ -5,6 +5,7 @@ Queries the knowledge_items table using vector similarity search
 """
 
 import psycopg2
+import os
 import psycopg2.pool
 import logging
 from typing import List, Dict, Any, Optional
@@ -23,7 +24,7 @@ class KnowledgeRetrieval:
             'host': 'localhost',
             'database': 'echo_brain',
             'user': 'patrick',
-            'password': 'RP78eIrW7cI2jYvL5akt1yurE'
+            'password': os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE")
         }
         self.model = None
         self._load_model()

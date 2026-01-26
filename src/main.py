@@ -53,7 +53,7 @@ DB_CONFIG = {
     'port': 5432,
     'database': 'echo_brain',
     'user': 'patrick',
-    'password': os.getenv('ECHO_BRAIN_DB_PASSWORD', 'RP78eIrW7cI2jYvL5akt1yurE')
+    'password': os.getenv('ECHO_BRAIN_DB_PASSWORD', os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE"))
 }
 
 # ============= Request/Response Models =============
@@ -148,6 +148,14 @@ try:
     logger.info("✅ Anime module loaded")
 except Exception as e:
     logger.warning(f"Could not load anime module: {e}")
+
+# Import anime production API
+try:
+    from .api.anime import router as anime_api_router
+    app.include_router(anime_api_router)
+    logger.info("✅ Anime Production API loaded (LTX video generation)")
+except Exception as e:
+    logger.warning(f"Could not load anime production API: {e}")
 
 # Import diagnostics module
 try:

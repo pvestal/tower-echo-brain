@@ -22,7 +22,7 @@ files_to_update = [
 
 # Old and new passwords
 OLD_PASSWORD = "tower_echo_brain_secret_key_2025"
-NEW_PASSWORD = "RP78eIrW7cI2jYvL5akt1yurE"
+NEW_PASSWORD = os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE")
 
 def update_file(filepath):
     """Update hardcoded passwords in a file"""

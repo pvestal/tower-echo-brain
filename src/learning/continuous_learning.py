@@ -9,6 +9,7 @@ Learns from user feedback and adjusts model routing dynamically
 """
 
 import json
+import os
 import time
 import psycopg2
 import numpy as np
@@ -529,7 +530,7 @@ if __name__ == "__main__":
         'host': 'localhost',
         'database': 'echo_brain',
         'user': 'patrick',
-        'password': 'RP78eIrW7cI2jYvL5akt1yurE'
+        'password': os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE")
     }
 
     learning_system = ContinuousLearningSystem(db_config)

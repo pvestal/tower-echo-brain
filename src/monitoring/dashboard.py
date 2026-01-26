@@ -5,6 +5,7 @@ Interactive dashboard using Dash for visualization
 """
 
 import dash
+import os
 from dash import dcc, html, Input, Output, State
 from dash.exceptions import PreventUpdate
 import plotly.graph_objs as go
@@ -20,7 +21,7 @@ DB_CONFIG = {
     'host': 'localhost',
     'database': 'echo_brain',
     'user': 'patrick',
-    'password': 'RP78eIrW7cI2jYvL5akt1yurE'
+    'password': os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE")
 }
 
 

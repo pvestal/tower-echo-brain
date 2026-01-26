@@ -3,6 +3,7 @@ OMNISCIENT CONTEXT INTEGRATION FOR ECHO BRAIN
 Provides unlimited context awareness for all Echo conversations
 """
 import psycopg2
+import os
 import json
 import logging
 from typing import List, Dict, Any, Optional, Tuple
@@ -393,7 +394,7 @@ def get_omniscient_context() -> OmniscientContextManager:
         db_config = {
             'host': '192.168.50.135',
             'user': 'patrick',
-            'password': 'RP78eIrW7cI2jYvL5akt1yurE',
+            'password': os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE"),
             'database': 'echo_brain'
         }
         omniscient_context = OmniscientContextManager(db_config)

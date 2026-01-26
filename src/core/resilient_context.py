@@ -3,6 +3,7 @@ RESILIENT OMNISCIENT CONTEXT SYSTEM FOR ECHO BRAIN
 Ultra-fast search with comprehensive error handling, retries, and failover strategies
 """
 import asyncio
+import os
 import psycopg2
 import json
 import hashlib
@@ -663,7 +664,7 @@ def get_resilient_omniscient_context() -> ResilientOmniscientContext:
         db_config = {
             'host': 'localhost',
             'user': 'patrick',
-            'password': 'RP78eIrW7cI2jYvL5akt1yurE',
+            'password': os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE"),
             'database': 'echo_brain'
         }
         resilient_context = ResilientOmniscientContext(db_config)

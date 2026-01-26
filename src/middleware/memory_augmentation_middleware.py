@@ -4,6 +4,7 @@ Memory Augmentation Middleware - Automatically adds memory context to all querie
 """
 
 import psycopg2
+import os
 import logging
 import uuid
 from typing import Dict, List, Optional
@@ -18,7 +19,7 @@ class MemoryAugmentationMiddleware:
             'host': 'localhost',
             'database': 'echo_brain',
             'user': 'patrick',
-            'password': 'RP78eIrW7cI2jYvL5akt1yurE'
+            'password': os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE")
         }
         # Request-scoped memory cache to prevent cross-contamination
         self._request_cache = {}

@@ -5,6 +5,7 @@ Provides intelligent scene planning, prompt refinement, and learning from feedba
 """
 
 from fastapi import APIRouter, HTTPException, Depends
+import os
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 import asyncio
@@ -22,7 +23,7 @@ DB_CONFIG = {
     'host': 'localhost',
     'database': 'echo_brain',
     'user': 'patrick',
-    'password': 'RP78eIrW7cI2jYvL5akt1yurE'
+    'password': os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE")
 }
 
 # ============= Pydantic Models =============

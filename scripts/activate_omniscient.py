@@ -171,7 +171,7 @@ class OmniscientActivator:
             db_config = {
                 "host": "192.168.50.135",
                 "user": "patrick",
-                "password": "RP78eIrW7cI2jYvL5akt1yurE",
+                "password": os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE"),
                 "database": "echo_brain",
                 "port": 5432
             }

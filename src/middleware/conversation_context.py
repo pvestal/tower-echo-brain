@@ -5,6 +5,7 @@ Maintains conversation history and context across messages
 """
 
 import logging
+import os
 import json
 from typing import Dict, List, Optional, Any, Tuple
 from datetime import datetime, timedelta
@@ -24,7 +25,7 @@ class ConversationContextManager:
             "host": "localhost",
             "database": "echo_brain",
             "user": "patrick",
-            "password": "RP78eIrW7cI2jYvL5akt1yurE"
+            "password": os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE")
         }
         # In-memory cache for recent conversations
         self.context_cache = {}

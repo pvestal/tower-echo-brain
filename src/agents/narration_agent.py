@@ -1,5 +1,6 @@
 """Narration Agent - Anime scene narration and creative writing"""
 import logging
+import os
 import psycopg2
 from psycopg2.extras import DictCursor
 from typing import Dict, List, Optional
@@ -12,7 +13,7 @@ ANIME_DB_CONFIG = {
     'host': 'localhost',
     'database': 'tower_anime',
     'user': 'patrick',
-    'password': 'RP78eIrW7cI2jYvL5akt1yurE'
+    'password': os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE")
 }
 
 class NarrationAgent(ContextAwareAgent):

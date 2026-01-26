@@ -5,6 +5,7 @@ No mocks, no fake shit, just real learning.
 """
 
 import json
+import os
 import psycopg2
 from qdrant_client import QdrantClient
 from src.api.models import Distance, VectorParams, PointStruct
@@ -22,7 +23,7 @@ def feed_echo_everything():
         host="localhost",
         database="echo_brain",
         user="patrick",
-        password="RP78eIrW7cI2jYvL5akt1yurE"
+        password=os.getenv("TOWER_DB_PASSWORD", os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE"))
     )
     echo_cursor = echo_conn.cursor()
     
@@ -30,7 +31,7 @@ def feed_echo_everything():
         host="localhost",
         database="knowledge_base",
         user="patrick",
-        password="RP78eIrW7cI2jYvL5akt1yurE"
+        password=os.getenv("TOWER_DB_PASSWORD", os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE"))
     )
     kb_cursor = kb_conn.cursor()
     

@@ -5,6 +5,7 @@ Integrates all conversation, memory, and context systems
 """
 
 import logging
+import os
 import json
 from typing import Dict, List, Optional, Any, Tuple
 from datetime import datetime
@@ -27,7 +28,7 @@ class ConversationManager:
             "host": "localhost",
             "database": "echo_brain",
             "user": "patrick",
-            "password": "RP78eIrW7cI2jYvL5akt1yurE"
+            "password": os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE")
         }
 
         # Cache for conversation data

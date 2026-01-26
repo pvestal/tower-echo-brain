@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Echo Brain Dashboard</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #0d1117; color: #f0f6fc; margin: 0; padding: 2rem; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 2rem; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; }
+        .card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 1.5rem; }
+        .card h3 { margin-top: 0; color: #58a6ff; }
+        .status { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; }
+        .status.healthy { background: #238636; color: white; }
+        .status.warning { background: #d29922; color: black; }
+        a { color: #58a6ff; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Echo Brain Dashboard</h1>
+            <p>AI-powered memory and knowledge management system</p>
+        </div>
+        
+        <div class="grid">
+            <div class="card">
+                <h3>System Status</h3>
+                <p><span class="status healthy">OPERATIONAL</span></p>
+                <p><strong>Health Score:</strong> 85.7%</p>
+                <p><a href="/api/status">View API Status</a></p>
+            </div>
+            
+            <div class="card">
+                <h3>Knowledge Base</h3>
+                <p>Memory collections and facts storage</p>
+                <p><a href="/api/knowledge/facts">Browse Facts</a></p>
+                <p><a href="/api/collections">View Collections</a></p>
+            </div>
+            
+            <div class="card">
+                <h3>Agents</h3>
+                <p>Coding, reasoning, and narration agents</p>
+                <p><a href="/api/agents/status">Agent Status</a></p>
+                <p><span class="status healthy">3 ACTIVE</span></p>
+            </div>
+            
+            <div class="card">
+                <h3>Git Operations</h3>
+                <p>Repository management and automation</p>
+                <p><a href="/git/status">Git Status</a></p>
+                <p><a href="/git/health">Git Health</a></p>
+            </div>
+            
+            <div class="card">
+                <h3>Services</h3>
+                <p><a href="/api/coordination/services">Service Coordination</a></p>
+                <p><a href="/api/vault/health">Vault Status</a></p>
+                <p><a href="/api/diagnostics/health">Diagnostics</a></p>
+            </div>
+            
+            <div class="card">
+                <h3>Quick Actions</h3>
+                <p><a href="/api/echo/query">Echo Query Interface</a></p>
+                <p><a href="/api/models/list">Available Models</a></p>
+                <p><a href="/api/autonomous/status">Autonomous Tasks</a></p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

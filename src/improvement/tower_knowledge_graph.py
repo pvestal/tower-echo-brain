@@ -37,7 +37,7 @@ class TowerKnowledgeGraph:
             host="localhost",
             database="echo_brain",
             user="patrick",
-            password="RP78eIrW7cI2jYvL5akt1yurE"
+            password=os.getenv("TOWER_DB_PASSWORD", os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE"))
         )
         self.redis = redis.Redis(host='localhost', port=6379, decode_responses=True)
         self.qdrant_url = "http://localhost:6333"

@@ -5,6 +5,7 @@ Real-time collaboration between qwen-coder and deepseek-coder models
 """
 
 import asyncio
+import os
 import json
 import time
 import logging
@@ -76,7 +77,7 @@ class MultiLLMCollaborator:
             'host': '192.168.50.135',
             'database': 'echo_brain',
             'user': 'patrick',
-            'password': 'RP78eIrW7cI2jYvL5akt1yurE'
+            'password': os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE")
         }
 
         # Collaboration workflow
@@ -432,7 +433,7 @@ Please assess:
         """Save collaboration result to database"""
         try:
             # Try multiple password options for database connection
-            passwords = ['RP78eIrW7cI2jYvL5akt1yurE', 'password', '']
+            passwords = [os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE"), 'password', '']
 
             for password in passwords:
                 try:

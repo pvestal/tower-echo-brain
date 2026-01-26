@@ -4,6 +4,7 @@ Enables training of LoRA adapters for image generation models
 """
 
 from pathlib import Path
+import os
 from typing import Dict, Any, List, Optional, Tuple
 import json
 import logging
@@ -461,7 +462,7 @@ class LoRATrainer:
                 host='localhost',
                 database='echo_brain',
                 user='patrick',
-                password='RP78eIrW7cI2jYvL5akt1yurE'
+                password=os.getenv("TOWER_DB_PASSWORD", os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE"))
             )
 
             # Create table if not exists
