@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.env
+.venv
+venv/
+env/
+
+# Logs
+logs/*.log
+*.log
+
+# Datasets and temporary files
+datasets/*/frame_*.png
+datasets/*/video_*.mp4
+temp/
+tmp/
+
+# Training outputs
+*.safetensors
+*.pt
+*.pth
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# AI Toolkit cache
+ai-toolkit/cache/
+ai-toolkit/output/
+
+# Large model files
+*.ckpt
+models/

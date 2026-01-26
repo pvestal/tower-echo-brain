@@ -1,0 +1,14 @@
+{
+  "concept_name": "cowgirl_position",
+  "created_at": "2026-01-26T17:13:21.953526",
+  "video_sources": [
+    {
+      "original_path": "/mnt/1TB-storage/ComfyUI/output/custom_lora_test_00001.mp4",
+      "scene_type": "fallback",
+      "frames_extracted": 5,
+      "prompt_id": "fallback"
+    }
+  ],
+  "total_frames": 5,
+  "fps": 6
+}
