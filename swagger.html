@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Echo Brain API Documentation</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.10.3/swagger-ui.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+        }
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+        }
+        .stats {
+            background: #f7f7f7;
+            padding: 15px 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            margin-top: 5px;
+        }
+        #swagger-ui {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .working { color: #28a745; }
+        .not-found { color: #ffc107; }
+        .error { color: #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🧠 Echo Brain API Documentation</h1>
+        <p>Complete API reference for Echo Brain v2.0.0</p>
+    </div>
+
+    <div class="stats">
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-value">225</div>
+                <div class="stat-label">Total Endpoints</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value class="working">57</div>
+                <div class="stat-label">Working (25.3%)</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value class="not-found">144</div>
+                <div class="stat-label">Not Mounted (64%)</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value class="error">8</div>
+                <div class="stat-label">Server Errors (3.6%)</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="swagger-ui"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.10.3/swagger-ui-bundle.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.10.3/swagger-ui-standalone-preset.js"></script>
+    <script>
+        window.onload = function() {
+            // Fetch the OpenAPI spec
+            fetch('/openapi.json')
+                .then(response => response.json())
+                .then(spec => {
+                    // Initialize Swagger UI
+                    const ui = SwaggerUIBundle({
+                        spec: spec,
+                        dom_id: '#swagger-ui',
+                        deepLinking: true,
+                        presets: [
+                            SwaggerUIBundle.presets.apis,
+                            SwaggerUIStandalonePreset
+                        ],
+                        plugins: [
+                            SwaggerUIBundle.plugins.DownloadUrl
+                        ],
+                        layout: "StandaloneLayout",
+                        docExpansion: "list",
+                        filter: true,
+                        showExtensions: true,
+                        showCommonExtensions: true,
+                        defaultModelsExpandDepth: 1,
+                        defaultModelExpandDepth: 1
+                    });
+                    window.ui = ui;
+                })
+                .catch(error => {
+                    console.error('Error loading OpenAPI spec:', error);
+                    document.getElementById('swagger-ui').innerHTML =
+                        '<p style="color: red; padding: 20px;">Error loading API documentation. Make sure Echo Brain is running and openapi.json is accessible.</p>';
+                });
+        };
+    </script>
+</body>
+</html>
