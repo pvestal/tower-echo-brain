@@ -49,7 +49,7 @@ class EndpointHealthMonitor:
             ("GET", "/api/status", None),
             ("POST", "/api/echo/query", {"query": "test"}),
             ("POST", "/api/echo/chat", {"query": "test"}),
-            ("GET", "/api/echo/agents/status", None),
+            ("GET", "/api/agents/status", None),
             ("GET", "/api/models/list", None),
             ("GET", "/api/autonomous/status", None),
             ("GET", "/api/echo/codebase/stats", None),

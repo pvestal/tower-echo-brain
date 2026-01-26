@@ -94,6 +94,6 @@ async def test_server_functionality():
 if __name__ == "__main__":
     # Set environment variables if not set
     if not os.environ.get("ECHO_BRAIN_DB_PASSWORD"):
-        os.environ["ECHO_BRAIN_DB_PASSWORD"] = "RP78eIrW7cI2jYvL5akt1yurE"
+        os.environ["ECHO_BRAIN_DB_PASSWORD"] = os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE")
 
     asyncio.run(test_server_functionality())

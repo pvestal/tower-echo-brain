@@ -13,6 +13,7 @@ Based on benchmark results from 2026-01-06:
 """
 
 import logging
+import os
 import psycopg2
 from psycopg2.extras import DictCursor
 from typing import Optional, Dict, Any
@@ -46,7 +47,7 @@ class UnifiedModelRouter:
             'host': 'localhost',
             'database': 'echo_brain',
             'user': 'patrick',
-            'password': 'RP78eIrW7cI2jYvL5akt1yurE'
+            'password': os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE")
         }
 
         # Fallback mappings (used if database is unavailable)

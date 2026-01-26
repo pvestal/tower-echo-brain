@@ -4,6 +4,7 @@ Safe SQL Executor for Echo Brain - Remote Installation
 """
 
 import asyncio
+import os
 import psycopg2
 import json
 import logging
@@ -124,7 +125,7 @@ def test_real_execution():
         'host': '192.168.50.135',
         'database': 'echo_brain',
         'user': 'patrick',
-        'password': 'RP78eIrW7cI2jYvL5akt1yurE'
+        'password': os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE")
     }
 
     executor = SafeSQLExecutor(config)

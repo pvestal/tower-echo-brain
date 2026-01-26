@@ -4,6 +4,7 @@ Memory integration for Echo - connects 134k+ existing memories
 """
 
 import psycopg2
+import os
 import logging
 from typing import Dict, List, Any, Optional
 from fastapi import APIRouter
@@ -21,43 +22,104 @@ class MemorySearch:
             'host': 'localhost',
             'database': 'echo_brain',
             'user': 'patrick',
-            'password': 'RP78eIrW7cI2jYvL5akt1yurE'
+            'password': os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE")
         }
+        self.conn = None
+        self.cur = None
+
+        # Import Qdrant client for vector search
+        try:
+            from qdrant_client import QdrantClient
+            self.qdrant_client = QdrantClient(host="localhost", port=6333)
+            self.qdrant_enabled = True
+            logger.info("✅ Qdrant client initialized for memory search")
+        except Exception as e:
+            logger.warning(f"⚠️ Qdrant unavailable: {e}")
+            self.qdrant_client = None
+            self.qdrant_enabled = False
+
+    def _ensure_connection(self):
+        """Ensure database connection is established"""
+        if not self.conn or self.conn.closed:
+            self.conn = psycopg2.connect(**self.db_config)
+            self.cur = self.conn.cursor()
+
+    def close(self):
+        """Close database connection"""
+        if self.cur:
+            self.cur.close()
+        if self.conn:
+            self.conn.close()
 
     def search_all(self, query: str) -> Dict[str, List]:
         """Search all memory sources"""
         memories = {}
 
+        # Search Qdrant vectors using MCP API (proven to work)
+        if query:
+            try:
+                import requests
+                response = requests.post(
+                    'http://localhost:8312/mcp',
+                    json={
+                        'method': 'tools/call',
+                        'params': {
+                            'name': 'search_memory',
+                            'arguments': {'query': query, 'limit': 5}
+                        }
+                    },
+                    timeout=5
+                )
+
+                if response.status_code == 200:
+                    result = response.json()
+                    if 'content' in result and len(result['content']) > 0:
+                        # Parse the text response
+                        memories['qdrant'] = []
+                        for item in result.get('content', []):
+                            if isinstance(item, dict) and 'text' in item:
+                                # Parse the formatted text into structured data
+                                for line in item['text'].split('\n'):
+                                    if '•' in line and 'Score:' in line:
+                                        parts = line.split('Score:')
+                                        content = parts[0].replace('•', '').strip()
+                                        score = float(parts[1].split('|')[0].strip()) if len(parts) > 1 else 1.0
+                                        memories['qdrant'].append({
+                                            'content': content[:500],
+                                            'score': score
+                                        })
+                        logger.info(f"📚 Found {len(memories['qdrant'])} MCP memories for '{query}'")
+            except Exception as e:
+                logger.error(f"MCP memory search error: {e}")
+                memories['qdrant'] = []
+
+        # Use single connection for all database queries
+        self._ensure_connection()
+
         # Search conversations
         try:
-            conn = psycopg2.connect(**self.db_config)
-            cur = conn.cursor()
-            cur.execute("""
-                SELECT query, response, timestamp
+            self.cur.execute("""
+                SELECT user_query, response, timestamp
                 FROM echo_unified_interactions
-                WHERE query ILIKE %s OR response ILIKE %s
+                WHERE user_query ILIKE %s OR response ILIKE %s
                 ORDER BY timestamp DESC
                 LIMIT 5
             """, (f'%{query}%', f'%{query}%'))
 
             memories['conversations'] = []
-            for row in cur.fetchall():
+            for row in self.cur.fetchall():
                 memories['conversations'].append({
                     'query': row[0][:200] if row[0] else '',
                     'response': row[1][:200] if row[1] else '',
                     'date': row[2]
                 })
-            cur.close()
-            conn.close()
         except Exception as e:
             logger.error(f"Conversation search error: {e}")
             memories['conversations'] = []
 
         # Search learned patterns (Work documents)
         try:
-            conn = psycopg2.connect(**self.db_config)
-            cur = conn.cursor()
-            cur.execute("""
+            self.cur.execute("""
                 SELECT pattern_text, confidence
                 FROM echo_learned_patterns
                 WHERE pattern_text ILIKE %s
@@ -66,22 +128,18 @@ class MemorySearch:
             """, (f'%{query}%',))
 
             memories['learned_patterns'] = []
-            for row in cur.fetchall():
+            for row in self.cur.fetchall():
                 memories['learned_patterns'].append({
                     'text': row[0][:500] if row[0] else '',
-                    'confidence': row[1]
+                    'confidence': row[1] if row[1] else 0.0
                 })
-            cur.close()
-            conn.close()
         except Exception as e:
             logger.error(f"Pattern search error: {e}")
             memories['learned_patterns'] = []
 
         # Search photos
         try:
-            conn = psycopg2.connect(**self.db_config)
-            cur = conn.cursor()
-            cur.execute("""
+            self.cur.execute("""
                 SELECT filename, file_path, metadata
                 FROM photo_index
                 WHERE filename ILIKE %s OR metadata::text ILIKE %s
@@ -89,14 +147,12 @@ class MemorySearch:
             """, (f'%{query}%', f'%{query}%'))
 
             memories['photos'] = []
-            for row in cur.fetchall():
+            for row in self.cur.fetchall():
                 memories['photos'].append({
                     'name': row[0],
                     'path': row[1],
                     'metadata': row[2]
                 })
-            cur.close()
-            conn.close()
         except Exception as e:
             logger.error(f"Photo search error: {e}")
             memories['photos'] = []

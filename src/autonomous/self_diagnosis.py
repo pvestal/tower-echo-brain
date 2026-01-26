@@ -3,6 +3,7 @@ Echo Brain Self-Diagnosis
 Runs checks and reports problems without human intervention.
 """
 import asyncio
+import os
 import httpx
 import psutil
 import logging
@@ -89,7 +90,7 @@ class SelfDiagnosis:
                 host="localhost",
                 database="echo_brain",
                 user="patrick",
-                password="RP78eIrW7cI2jYvL5akt1yurE"
+                password=os.getenv("TOWER_DB_PASSWORD", os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE"))
             )
             # Test query
             result = await conn.fetchval("SELECT COUNT(*) FROM task_results")

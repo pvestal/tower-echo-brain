@@ -165,7 +165,7 @@ class TaskQueue:
             "database": os.environ.get("DB_NAME", "echo_brain"),
             "user": os.environ.get("DB_USER", "patrick"),
             "host": os.environ.get("DB_HOST", "localhost"),
-            "password": os.environ.get("DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE"),
+            "password": os.environ.get("DB_PASSWORD", os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE")),
             "port": int(os.environ.get("DB_PORT", 5432))
         }
         

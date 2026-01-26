@@ -4,6 +4,7 @@ Maintains context and learned knowledge across restarts
 """
 
 import json
+import os
 import asyncio
 from pathlib import Path
 from typing import Dict, Any, List, Optional
@@ -49,7 +50,7 @@ class PersistentMemorySystem:
                 host=self.db_config.get('host', 'localhost'),
                 port=self.db_config.get('port', 5432),
                 user=self.db_config.get('user', 'patrick'),
-                password=self.db_config.get('password', 'RP78eIrW7cI2jYvL5akt1yurE'),
+                password=self.db_config.get('password', os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE")),
                 database=self.db_config.get('database', 'echo_brain')
             )
             logger.info("Connected to persistent memory database")
@@ -345,7 +346,7 @@ async def test_persistent_memory():
     memory = PersistentMemorySystem({
         'host': 'localhost',
         'user': 'patrick',
-        'password': 'RP78eIrW7cI2jYvL5akt1yurE',
+        'password': os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE"),
         'database': 'echo_brain'
     })
 

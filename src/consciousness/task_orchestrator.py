@@ -4,6 +4,7 @@ Manages autonomous task execution and prioritization
 """
 
 import asyncio
+import os
 import json
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
@@ -42,7 +43,7 @@ class TaskOrchestrator:
                 host=self.db_config.get('host', 'localhost'),
                 port=self.db_config.get('port', 5432),
                 user=self.db_config.get('user', 'patrick'),
-                password=self.db_config.get('password', 'RP78eIrW7cI2jYvL5akt1yurE'),
+                password=self.db_config.get('password', os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE")),
                 database=self.db_config.get('database', 'echo_brain')
             )
 

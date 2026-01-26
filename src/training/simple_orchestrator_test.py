@@ -17,7 +17,7 @@ test_db_config = {
     "host": os.environ.get("DB_HOST", "localhost"),
     "database": "echo_brain",
     "user": "patrick",
-    "password": os.environ.get("DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE")
+    "password": os.environ.get("DB_PASSWORD", os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE"))
 }
 
 def test_database_setup():

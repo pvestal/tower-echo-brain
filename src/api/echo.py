@@ -479,7 +479,11 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
             'print ', 'test', 'hello', 'ping', 'status', '{"', '[', 'get ', 'show ', 'list '
         ]
 
-        if len(request.query) < 15 or any(query_lower.startswith(p) for p in bypass_patterns):
+        # Check if this is an identity or personal question that needs memory
+        identity_patterns = ['who am i', 'who i am', 'know me', 'know who', 'my name', 'remember me']
+        needs_memory = any(pattern in query_lower for pattern in identity_patterns)
+
+        if not needs_memory and (len(request.query) < 15 or any(query_lower.startswith(p) for p in bypass_patterns)):
             print(f"📋 BYPASSING MEMORY SEARCH for simple query: {request.query}")
             logger.info(f"📋 Bypassing memory search for simple query: {request.query[:50]}")
         else:
@@ -1009,7 +1013,7 @@ async def query_echo(request: QueryRequest, http_request: Request = None):
         # ============================================
         # UNIFIED MODEL ROUTING - SINGLE SOURCE OF TRUTH
         # ============================================
-        from src.routing.router import router as unified_router
+        from src.routing.router import unified_router
 
         # Get model selection from unified router
         selection = unified_router.select_model(augmented_query)
@@ -1413,7 +1417,7 @@ async def get_echo_status():
         cursor = conn.cursor(cursor_factory=RealDictCursor)
         
         cursor.execute("""
-            SELECT conversation_id, query, response, intent, timestamp
+            SELECT conversation_id, task as query, response, 'general' as intent, timestamp
             FROM echo_unified_interactions
             WHERE conversation_id NOT LIKE 'test_%'
               AND conversation_id NOT LIKE 'debug_%'

@@ -3,6 +3,7 @@ OPTIMIZED OMNISCIENT CONTEXT SYSTEM FOR ECHO BRAIN
 Ultra-fast search across 198K+ context items with intelligent caching
 """
 import asyncio
+import os
 import psycopg2
 import json
 import hashlib
@@ -446,7 +447,7 @@ def get_optimized_omniscient_context() -> OptimizedOmniscientContext:
         db_config = {
             'host': '192.168.50.135',
             'user': 'patrick',
-            'password': 'RP78eIrW7cI2jYvL5akt1yurE',
+            'password': os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE"),
             'database': 'echo_brain'
         }
         optimized_context = OptimizedOmniscientContext(db_config)

@@ -5,6 +5,7 @@ This is where Echo actually gets smarter over time.
 """
 
 import asyncio
+import os
 import logging
 from datetime import datetime
 from pathlib import Path
@@ -25,7 +26,7 @@ class ContinuousImprovement:
             host="localhost",
             database="echo_brain",
             user="patrick",
-            password="RP78eIrW7cI2jYvL5akt1yurE"
+            password=os.getenv("TOWER_DB_PASSWORD", os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE"))
         )
 
         # Knowledge sources

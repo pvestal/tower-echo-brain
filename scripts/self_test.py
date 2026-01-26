@@ -4,6 +4,7 @@ Echo Brain Self-Test Suite
 Validates all critical functionality without human intervention.
 """
 import asyncio
+import os
 import httpx
 import json
 import sys
@@ -64,7 +65,7 @@ async def test_database():
     import asyncpg
     conn = await asyncpg.connect(
         host="localhost", database="echo_brain",
-        user="patrick", password="RP78eIrW7cI2jYvL5akt1yurE"
+        user="patrick", password=os.getenv("TOWER_DB_PASSWORD", os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE"))
     )
     count = await conn.fetchval("SELECT COUNT(*) FROM task_results")
     await conn.close()

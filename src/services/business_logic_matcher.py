@@ -5,6 +5,7 @@ Matches queries against Patrick's learned business logic patterns (pattern retri
 """
 
 import psycopg2
+import os
 import json
 import logging
 from typing import Dict, List, Optional, Tuple
@@ -20,7 +21,7 @@ class BusinessLogicPatternMatcher:
             'host': 'localhost',
             'database': 'echo_brain',
             'user': 'patrick',
-            'password': 'RP78eIrW7cI2jYvL5akt1yurE'
+            'password': os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE")
         }
         self._cached_patterns = None
         self._cache_timestamp = None

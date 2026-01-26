@@ -4,6 +4,7 @@ Integration helper for memory system with database.
 """
 
 import json
+import os
 import logging
 from typing import Dict, Any, Optional
 
@@ -46,7 +47,7 @@ async def save_conversation_with_entities(
             host="localhost",
             database="echo_brain",
             user="patrick",
-            password="RP78eIrW7cI2jYvL5akt1yurE"
+            password=os.getenv("TOWER_DB_PASSWORD", os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE"))
         )
         cursor = conn.cursor()
 

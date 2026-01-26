@@ -1,6 +1,7 @@
 """Database-driven intelligent model routing"""
 
 import logging
+import os
 import hashlib
 import json
 from typing import List, Optional, Dict, Any
@@ -142,7 +143,7 @@ class DatabaseModelRouter:
         self.db_config = {
             'dbname': 'echo_brain',
             'user': 'patrick',
-            'password': 'RP78eIrW7cI2jYvL5akt1yurE',
+            'password': os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE"),
             'host': 'localhost'
         }
         self._query_cache = {}

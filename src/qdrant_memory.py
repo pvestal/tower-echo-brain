@@ -46,8 +46,8 @@ class QdrantMemory:
         ]
 
         # Retry configuration
-        self.max_retries = 3
-        self.base_delay = 1.0  # seconds
+        self.max_retries = 2  # Reduce retries for faster failure
+        self.base_delay = 0.5  # Reduce delay between retries
 
         # Ensure collection exists
         self._ensure_collection()
@@ -97,14 +97,14 @@ class QdrantMemory:
 
     async def _generate_single_embedding(self, text: str, model: str) -> Optional[List[float]]:
         """Generate a single embedding attempt"""
-        async with httpx.AsyncClient(timeout=120) as client:
+        async with httpx.AsyncClient(timeout=10) as client:  # Reduced timeout
             response = await client.post(
                 f"{self.ollama_url}/api/embeddings",
                 json={
                     "model": model,
-                    "prompt": text
+                    "prompt": text[:1000]  # Limit text length for faster processing
                 },
-                timeout=120.0
+                timeout=10.0  # 10 second timeout instead of 120
             )
 
             if response.status_code == 200:
