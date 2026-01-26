@@ -8,7 +8,7 @@ import tempfile
 import os
 
 logger = logging.getLogger(__name__)
-router = APIRouter()
+router = APIRouter(prefix="/api/agents", tags=["agents"])
 
 # Import agents
 try:
@@ -36,7 +36,7 @@ class CodingTaskResponse(BaseModel):
     model: str
     context_used: Dict
 
-@router.post("/api/echo/agents/coding", response_model=CodingTaskResponse)
+@router.post("/coding", response_model=CodingTaskResponse)
 async def run_coding_task(request: CodingTaskRequest):
     """Run a coding task through the coding agent"""
     try:
@@ -55,7 +55,7 @@ async def run_coding_task(request: CodingTaskRequest):
         logger.error(f"Coding agent failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/api/echo/agents/coding/history")
+@router.get("/coding/history")
 async def get_coding_history():
     """Get coding agent task history"""
     return {
@@ -103,7 +103,7 @@ class ExecuteRequest(BaseModel):
     language: str = "python"
     timeout: int = 30
 
-@router.post("/api/echo/agents/reasoning", response_model=ReasoningTaskResponse)
+@router.post("/reasoning", response_model=ReasoningTaskResponse)
 async def run_reasoning_task(request: ReasoningTaskRequest):
     """Run a reasoning task through the reasoning agent"""
     try:
@@ -122,7 +122,7 @@ async def run_reasoning_task(request: ReasoningTaskRequest):
         logger.error(f"Reasoning agent failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/api/echo/agents/reasoning/history")
+@router.get("/reasoning/history")
 async def get_reasoning_history():
     """Get reasoning agent task history"""
     return {
@@ -132,7 +132,7 @@ async def get_reasoning_history():
         "history": getattr(reasoning_agent, 'history', [])[-20:]
     }
 
-@router.post("/api/echo/agents/narration", response_model=NarrationTaskResponse)
+@router.post("/narration", response_model=NarrationTaskResponse)
 async def run_narration_task(request: NarrationTaskRequest):
     """Run a narration task through the narration agent"""
     try:
@@ -152,7 +152,7 @@ async def run_narration_task(request: NarrationTaskRequest):
         logger.error(f"Narration agent failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/api/echo/agents/narration/history")
+@router.get("/narration/history")
 async def get_narration_history():
     """Get narration agent task history"""
     return {
@@ -162,7 +162,7 @@ async def get_narration_history():
         "history": getattr(narration_agent, 'history', [])[-20:]
     }
 
-@router.post("/api/echo/agents/execute")
+@router.post("/execute")
 async def execute_code(request: ExecuteRequest):
     """Execute code in sandbox"""
     if request.language.lower() not in ["python", "py"]:
@@ -192,7 +192,7 @@ async def execute_code(request: ExecuteRequest):
     finally:
         os.unlink(temp_path)
 
-@router.get("/api/echo/agents/status")
+@router.get("/status")
 async def get_agents_status():
     """Get status of all agents"""
     return {
@@ -218,7 +218,7 @@ async def get_agents_status():
         ]
     }
 
-@router.post("/api/echo/agents/narration/anime")
+@router.post("/narration/anime")
 async def narrate_and_generate(request: Dict[str, Any]):
     """Develop narrative and generate anime image."""
     scene_concept = request.get("scene_concept", "")

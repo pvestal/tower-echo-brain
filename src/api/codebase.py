@@ -35,12 +35,16 @@ DB_CONFIG = {
 
 @router.get("/api/echo/codebase/search")
 async def search_codebase(
-    q: str = Query(..., description="Search query"),
+    q: str = Query("", description="Search query"),
     limit: int = Query(10, description="Max results"),
     entity_type: Optional[str] = Query(None, description="Filter by entity type (function, class, etc.)")
 ):
     """Search codebase entities"""
     try:
+        # Return empty result if no query
+        if not q.strip():
+            return {"results": [], "total": 0, "message": "No search query provided"}
+
         with psycopg2.connect(**DB_CONFIG) as conn:
             with conn.cursor(cursor_factory=DictCursor) as cur:
                 query_parts = []

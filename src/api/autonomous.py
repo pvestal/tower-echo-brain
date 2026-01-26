@@ -303,7 +303,7 @@ async def list_tasks(
                 scheduled_at=task.get('scheduled_at'),
                 started_at=task.get('started_at'),
                 completed_at=task.get('completed_at'),
-                result=task.get('result'),
+                result=task.get('result') if isinstance(task.get('result'), dict) else {},
                 metadata=task.get('metadata') if isinstance(task.get('metadata'), dict) else {}
             )
             for task in tasks

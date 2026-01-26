@@ -28,7 +28,7 @@ from src.agents.narration_agent import NarrationAgent
 from src.core.tower_llm_executor import TowerLLMExecutor
 
 # Import context provider
-from src.core.context import get_context_provider
+from src.core.context import get_optimized_omniscient_context
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +73,7 @@ class Executor:
         }
 
         # Context provider
-        self.context_provider = get_context_provider()
+        self.context_provider = get_optimized_omniscient_context()
 
         # Task type routing map
         self.agent_routing = {
