@@ -13,7 +13,8 @@ load_dotenv()
 # Core routers
 from src.api.routes import router as main_router
 from src.api.takeout_stub import router as takeout_stub_router
-from src.api.echo_refactored import router as refactored_router
+# from src.api.echo_refactored import router as refactored_router
+refactored_router = None
 
 # Try to import real metrics, fall back to stub if fails
 try:
@@ -59,6 +60,7 @@ from src.api.delegation_routes import router as delegation_router
 from src.api.codebase import router as codebase_router
 from src.api.solutions import router as solutions_router
 from src.api.agents import router as agents_router
+from src.api.lora_training import router as lora_router
 
 # Personal Dashboard APIs
 try:
@@ -247,8 +249,10 @@ def create_app() -> FastAPI:
     app.include_router(main_router, prefix="", tags=["main"])
     app.include_router(takeout_stub_router, prefix="", tags=["takeout"])
     app.include_router(system_metrics_router, prefix="", tags=["system"])
-    app.include_router(refactored_router, prefix="", tags=["refactored"])
-    print("✅ Refactored API routes added with proper endpoints")
+    # app.include_router(refactored_router, prefix="", tags=["refactored"])
+    app.include_router(lora_router, prefix="", tags=["lora-training"])
+    # print("✅ Refactored API routes added with proper endpoints")
+    print("✅ LoRA training API routes added")
     # TODO: Fix legacy router inclusions after restructuring
     # app.include_router(feedback_router, prefix="", tags=["feedback"])
     # app.include_router(learning_pipeline_router, prefix="", tags=["learning-pipeline"])
