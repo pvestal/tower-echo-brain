@@ -17,11 +17,14 @@ DB_CONFIG = {
 
 @router.get("/api/echo/solutions/search")
 async def search_solutions(
-    q: str = Query(..., description="Search query"),
+    q: str = Query("", description="Search query"),
     limit: int = Query(10, description="Max results")
 ):
     """Search past solutions"""
     try:
+        # Return empty result if no query
+        if not q.strip():
+            return {"solutions": [], "total": 0, "message": "No search query provided"}
         with psycopg2.connect(**DB_CONFIG) as conn:
             with conn.cursor(cursor_factory=DictCursor) as cur:
                 cur.execute("""

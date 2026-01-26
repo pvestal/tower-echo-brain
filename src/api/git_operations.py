@@ -20,7 +20,7 @@ from ..tasks.git_manager import git_manager
 from ..tasks.github_integration import github_integration
 
 logger = logging.getLogger(__name__)
-router = APIRouter()
+router = APIRouter(prefix="/git", tags=["git"])
 
 # Initialize git components
 git_ops = GitOperationsManager()
@@ -51,7 +51,7 @@ class TowerSyncRequest(BaseModel):
     enable_auto_commit: bool = False
     services: Optional[List[str]] = None
 
-@router.get("/git/status")
+@router.get("/status")
 async def get_git_status(repo_path: str = "/opt/tower-echo-brain"):
     """Get git repository status"""
     try:
@@ -77,7 +77,7 @@ async def get_git_status(repo_path: str = "/opt/tower-echo-brain"):
         logger.error(f"Error getting git status: {e}")
         raise HTTPException(status_code=500, detail=f"Git status error: {str(e)}")
 
-@router.post("/git/commit")
+@router.post("/commit")
 async def smart_commit(request: GitCommitRequest):
     """Create a smart commit with auto-generated message"""
     try:
@@ -100,7 +100,7 @@ async def smart_commit(request: GitCommitRequest):
         logger.error(f"Error creating commit: {e}")
         raise HTTPException(status_code=500, detail=f"Git commit error: {str(e)}")
 
-@router.post("/git/branch")
+@router.post("/branch")
 async def create_feature_branch(request: GitBranchRequest):
     """Create a new feature branch"""
     try:
@@ -121,7 +121,7 @@ async def create_feature_branch(request: GitBranchRequest):
         logger.error(f"Error creating branch: {e}")
         raise HTTPException(status_code=500, detail=f"Git branch error: {str(e)}")
 
-@router.post("/git/pr")
+@router.post("/pr")
 async def create_pull_request(request: GitPullRequestRequest):
     """Create a GitHub pull request"""
     try:
@@ -150,7 +150,7 @@ async def create_pull_request(request: GitPullRequestRequest):
         logger.error(f"Error creating PR: {e}")
         raise HTTPException(status_code=500, detail=f"Git PR error: {str(e)}")
 
-@router.get("/git/tower/status")
+@router.get("/tower/status")
 async def get_tower_ecosystem_status():
     """Get git status for all Tower services"""
     try:
@@ -184,7 +184,7 @@ async def get_tower_ecosystem_status():
         logger.error(f"Error getting Tower status: {e}")
         raise HTTPException(status_code=500, detail=f"Tower status error: {str(e)}")
 
-@router.post("/git/tower/sync")
+@router.post("/tower/sync")
 async def sync_tower_ecosystem(request: TowerSyncRequest, background_tasks: BackgroundTasks):
     """Sync all Tower repositories with intelligent commits"""
     try:
@@ -240,7 +240,7 @@ async def sync_tower_ecosystem(request: TowerSyncRequest, background_tasks: Back
         logger.error(f"Error syncing Tower ecosystem: {e}")
         raise HTTPException(status_code=500, detail=f"Tower sync error: {str(e)}")
 
-@router.get("/git/github/status")
+@router.get("/github/status")
 async def get_github_status():
     """Get GitHub integration status and open PRs"""
     try:
@@ -260,7 +260,7 @@ async def get_github_status():
         logger.error(f"Error getting GitHub status: {e}")
         raise HTTPException(status_code=500, detail=f"GitHub status error: {str(e)}")
 
-@router.post("/git/automation/enable")
+@router.post("/automation/enable")
 async def enable_git_automation(background_tasks: BackgroundTasks):
     """Enable autonomous git monitoring and commits"""
     try:
@@ -279,7 +279,7 @@ async def enable_git_automation(background_tasks: BackgroundTasks):
         logger.error(f"Error enabling git automation: {e}")
         raise HTTPException(status_code=500, detail=f"Git automation error: {str(e)}")
 
-@router.post("/git/automation/disable")
+@router.post("/automation/disable")
 async def disable_git_automation():
     """Disable autonomous git commits"""
     try:
@@ -294,7 +294,7 @@ async def disable_git_automation():
         logger.error(f"Error disabling git automation: {e}")
         raise HTTPException(status_code=500, detail=f"Git automation error: {str(e)}")
 
-@router.get("/git/health")
+@router.get("/health")
 async def git_health_check():
     """Health check for git automation system"""
     try:
@@ -320,7 +320,7 @@ async def git_health_check():
         raise HTTPException(status_code=500, detail=f"Git health error: {str(e)}")
 
 # Autonomous workflow endpoints
-@router.post("/git/autonomous/quality-pr")
+@router.post("/autonomous/quality-pr")
 async def create_autonomous_quality_pr():
     """Create automated quality improvement PR"""
     try:
@@ -336,7 +336,7 @@ async def create_autonomous_quality_pr():
         logger.error(f"Error creating quality PR: {e}")
         raise HTTPException(status_code=500, detail=f"Quality PR error: {str(e)}")
 
-@router.get("/git/logs")
+@router.get("/logs")
 async def get_git_automation_logs():
     """Get git automation activity logs"""
     try:

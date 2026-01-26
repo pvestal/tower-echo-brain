@@ -14,7 +14,7 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.core.context import get_context_provider
+from src.core.context import get_optimized_omniscient_context
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ class ContextAwareAgent:
     """Base class that all agents inherit from"""
 
     def __init__(self, model_name: str, system_prompt: str):
-        self.context_provider = get_context_provider()
+        self.context_provider = get_optimized_omniscient_context()
         self.model_name = model_name
         self.system_prompt = system_prompt
         self.ollama_url = "http://localhost:11434"
