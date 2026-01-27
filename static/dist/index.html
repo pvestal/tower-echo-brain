@@ -3,655 +3,502 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Echo Brain Dashboard</title>
+    <title>Echo Brain Console</title>
     <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'SF Mono', Consolas, 'Liberation Mono', monospace;
             background: #0d1117;
             color: #f0f6fc;
-            margin: 0;
-            padding: 1rem;
-            line-height: 1.5;
+            line-height: 1.4;
         }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
+
         .header {
-            text-align: center;
-            margin-bottom: 2rem;
-            border-bottom: 1px solid #30363d;
-            padding-bottom: 1rem;
-        }
-        .header h1 {
-            font-size: 2.5rem;
-            margin: 0 0 0.5rem 0;
-            background: linear-gradient(90deg, #58a6ff, #79c0ff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        .nav-tabs {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 2rem;
-            border-bottom: 1px solid #30363d;
-            overflow-x: auto;
-        }
-        .nav-tab {
-            padding: 0.75rem 1.5rem;
-            background: none;
-            border: none;
-            color: #7d8590;
-            cursor: pointer;
-            border-bottom: 3px solid transparent;
-            transition: all 0.2s ease;
-            white-space: nowrap;
-        }
-        .nav-tab:hover {
-            color: #f0f6fc;
-            background: rgba(88, 166, 255, 0.1);
-        }
-        .nav-tab.active {
-            color: #58a6ff;
-            border-bottom-color: #58a6ff;
-        }
-        .tab-content {
-            display: none;
-        }
-        .tab-content.active {
-            display: block;
-        }
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 1.5rem;
-        }
-        .card {
             background: #161b22;
-            border: 1px solid #30363d;
-            border-radius: 12px;
-            padding: 1.5rem;
-            transition: all 0.3s ease;
+            border-bottom: 1px solid #30363d;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: between;
+            align-items: center;
         }
-        .card:hover {
-            border-color: #58a6ff;
-            box-shadow: 0 8px 32px rgba(88, 166, 255, 0.1);
-            transform: translateY(-2px);
-        }
-        .card h3 {
-            margin: 0 0 1rem 0;
+
+        .header h1 {
             color: #58a6ff;
-            font-size: 1.25rem;
+            font-size: 18px;
+            font-weight: normal;
         }
-        .status {
-            display: inline-block;
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            font-weight: 600;
+
+        .header .status {
+            margin-left: auto;
+            font-size: 12px;
+            color: #7d8590;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 250px 1fr 280px;
+            height: calc(100vh - 60px);
+            gap: 1px;
+        }
+
+        .panel {
+            background: #161b22;
+            border-right: 1px solid #30363d;
+            overflow-y: auto;
+        }
+
+        .panel h2 {
+            background: #21262d;
+            padding: 8px 12px;
+            font-size: 12px;
+            color: #7d8590;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            font-weight: normal;
+            border-bottom: 1px solid #30363d;
         }
-        .status.healthy {
-            background: #238636;
-            color: white;
+
+        .content {
+            padding: 12px;
         }
-        .status.warning {
-            background: #d29922;
-            color: black;
+
+        .log-line {
+            font-size: 11px;
+            padding: 2px 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
-        .status.error {
-            background: #da3633;
-            color: white;
+
+        .log-line.error { color: #f85149; }
+        .log-line.warn { color: #d29922; }
+        .log-line.info { color: #79c0ff; }
+        .log-line.success { color: #3fb950; }
+
+        .search-box {
+            width: 100%;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            color: #f0f6fc;
+            padding: 6px 8px;
+            font-size: 11px;
+            margin-bottom: 8px;
+            font-family: inherit;
         }
-        a {
-            color: #58a6ff;
-            text-decoration: none;
+
+        .search-box:focus {
+            outline: none;
+            border-color: #58a6ff;
         }
-        a:hover {
-            text-decoration: underline;
+
+        .memory-result {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            padding: 8px;
+            margin: 4px 0;
+            font-size: 10px;
+            border-radius: 3px;
         }
+
+        .memory-score {
+            color: #3fb950;
+            font-weight: bold;
+        }
+
+        .service-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 0;
+            font-size: 11px;
+        }
+
+        .service-status {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .service-status.up { background: #3fb950; }
+        .service-status.down { background: #f85149; }
+        .service-status.unknown { background: #d29922; }
+
+        .pipeline-item {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            padding: 6px 8px;
+            margin: 2px 0;
+            font-size: 10px;
+        }
+
+        .pipeline-status {
+            color: #7d8590;
+            float: right;
+        }
+
+        .pipeline-status.running { color: #79c0ff; }
+        .pipeline-status.complete { color: #3fb950; }
+        .pipeline-status.failed { color: #f85149; }
+
         .btn {
-            background: #238636;
-            color: white;
-            border: none;
-            padding: 0.75rem 1rem;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: all 0.2s ease;
-            margin: 0.25rem 0.25rem 0.25rem 0;
-            display: inline-block;
-            text-decoration: none;
-        }
-        .btn:hover {
-            background: #2ea043;
-            transform: translateY(-1px);
-        }
-        .btn.secondary {
             background: #21262d;
             border: 1px solid #30363d;
             color: #f0f6fc;
+            padding: 4px 8px;
+            font-size: 10px;
+            cursor: pointer;
+            font-family: inherit;
+            margin: 2px;
         }
-        .btn.secondary:hover {
+
+        .btn:hover {
             background: #30363d;
         }
-        .input-group {
-            margin: 1rem 0;
-        }
-        .input-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-            color: #f0f6fc;
-        }
-        input, textarea, select {
-            width: 100%;
-            padding: 0.75rem;
+
+        .approval-item {
             background: #0d1117;
-            border: 1px solid #30363d;
-            border-radius: 6px;
-            color: #f0f6fc;
-            font-size: 0.9rem;
-            box-sizing: border-box;
+            border-left: 3px solid #d29922;
+            padding: 6px 8px;
+            margin: 4px 0;
+            font-size: 10px;
         }
-        input:focus, textarea:focus, select:focus {
-            outline: none;
-            border-color: #58a6ff;
-            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
+
+        .approval-item.urgent {
+            border-left-color: #f85149;
         }
-        textarea {
-            min-height: 100px;
-            resize: vertical;
-            font-family: inherit;
-        }
-        .response-area {
-            background: #0d1117;
-            border: 1px solid #30363d;
-            border-radius: 6px;
-            padding: 1rem;
-            margin-top: 1rem;
-            white-space: pre-wrap;
-            max-height: 300px;
-            overflow-y: auto;
-            font-family: 'SF Mono', Consolas, monospace;
-            font-size: 0.85rem;
-        }
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #30363d;
-            border-radius: 50%;
-            border-top-color: #58a6ff;
-            animation: spin 1s ease-in-out infinite;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        .model-list {
-            max-height: 200px;
-            overflow-y: auto;
-            border: 1px solid #30363d;
-            border-radius: 6px;
-            background: #0d1117;
-        }
-        .model-item {
-            padding: 0.75rem;
-            border-bottom: 1px solid #30363d;
-            cursor: pointer;
-            transition: background 0.2s ease;
-        }
-        .model-item:hover {
-            background: #161b22;
-        }
-        .model-item.selected {
-            background: rgba(88, 166, 255, 0.1);
-            border-color: #58a6ff;
-        }
-        .model-name {
-            font-weight: 600;
-            color: #f0f6fc;
-        }
-        .model-details {
-            font-size: 0.8rem;
+
+        .timestamp {
             color: #7d8590;
-            margin-top: 0.25rem;
+            font-size: 9px;
         }
-        @media (max-width: 768px) {
-            body { padding: 0.5rem; }
-            .container { padding: 0; }
-            .grid { grid-template-columns: 1fr; gap: 1rem; }
-            .nav-tabs { flex-wrap: wrap; }
-            .header h1 { font-size: 2rem; }
+
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 12px;
         }
-        .alert {
-            padding: 1rem;
-            border-radius: 6px;
-            margin: 1rem 0;
+
+        .log-viewer {
+            flex: 1;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            padding: 8px;
+            overflow-y: auto;
+            font-size: 10px;
         }
-        .alert.success {
-            background: rgba(35, 134, 54, 0.1);
-            border: 1px solid #238636;
-            color: #3fb950;
+
+        .chat-history {
+            height: 200px;
+            overflow-y: auto;
+            border: 1px solid #30363d;
+            background: #0d1117;
+            padding: 8px;
         }
-        .alert.error {
-            background: rgba(218, 54, 51, 0.1);
-            border: 1px solid #da3633;
-            color: #f85149;
+
+        .chat-entry {
+            margin: 4px 0;
+            font-size: 10px;
+            border-bottom: 1px solid #21262d;
+            padding-bottom: 4px;
+        }
+
+        .chat-query {
+            color: #79c0ff;
+            font-weight: bold;
+        }
+
+        .chat-response {
+            color: #7d8590;
+            margin-top: 2px;
         }
     </style>
 </head>
 <body>
+    <div class="header">
+        <h1>ECHO BRAIN CONSOLE</h1>
+        <div class="status" id="system-time"></div>
+    </div>
+
     <div class="container">
-        <div class="header">
-            <h1>Echo Brain Dashboard</h1>
-            <p>AI-powered memory and knowledge management system</p>
+        <!-- Left Panel: Service Status & Quick Actions -->
+        <div class="panel">
+            <h2>Service Status</h2>
+            <div class="content">
+                <div id="service-status"></div>
+                <button class="btn" onclick="checkServices()">Check All</button>
+            </div>
+
+            <h2>Model Status</h2>
+            <div class="content">
+                <div id="model-actions"></div>
+                <button class="btn" onclick="refreshModelActions()">Refresh</button>
+            </div>
+
+            <h2>Memory Search</h2>
+            <div class="content">
+                <input type="text" class="search-box" id="memory-search" placeholder="Search vectors...">
+                <button class="btn" onclick="searchMemory()">Search</button>
+                <button class="btn" onclick="getFacts()">Facts</button>
+                <div id="memory-results"></div>
+            </div>
         </div>
 
-        <nav class="nav-tabs">
-            <button class="nav-tab active" onclick="switchTab('overview')">Overview</button>
-            <button class="nav-tab" onclick="switchTab('chat')">Chat Interface</button>
-            <button class="nav-tab" onclick="switchTab('memory')">Memory Search</button>
-            <button class="nav-tab" onclick="switchTab('models')">Models</button>
-            <button class="nav-tab" onclick="switchTab('api')">API Explorer</button>
-        </nav>
-
-        <div id="overview" class="tab-content active">
-            <div class="grid">
-                <div class="card">
-                    <h3>System Status</h3>
-                    <p><span id="system-status" class="status healthy">CHECKING...</span></p>
-                    <p><strong>Service:</strong> <span id="service-version">Loading...</span></p>
-                    <p><strong>Uptime:</strong> <span id="uptime">Loading...</span></p>
-                    <a href="/docs" target="_blank" class="btn secondary">API Documentation</a>
+        <!-- Center Panel: Live Logs & Chat History -->
+        <div class="panel">
+            <h2>Live System Logs & Activity</h2>
+            <div class="main-content">
+                <div class="log-viewer" id="system-logs" style="height: 350px; margin-bottom: 8px;"></div>
+                <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                    <button class="btn" onclick="refreshLogs()">Refresh Logs</button>
+                    <button class="btn" onclick="clearLogs()">Clear</button>
+                    <button class="btn" onclick="loadServiceLogs()">Service Logs</button>
                 </div>
+            </div>
 
-                <div class="card">
-                    <h3>Active Models</h3>
-                    <p id="models-count">Loading models...</p>
-                    <div id="models-preview"></div>
-                    <button class="btn" onclick="switchTab('models')">Manage Models</button>
-                </div>
-
-                <div class="card">
-                    <h3>Memory & Knowledge</h3>
-                    <p>Search through 54,000+ vectors of conversation history</p>
-                    <p><strong>MCP Server:</strong> <span id="mcp-status" class="status warning">CHECKING...</span></p>
-                    <button class="btn" onclick="switchTab('memory')">Search Memory</button>
-                </div>
-
-                <div class="card">
-                    <h3>Working Endpoints</h3>
-                    <ul style="margin: 0; padding-left: 1rem;">
-                        <li><a href="/api/echo/chat" target="_blank">/api/echo/chat</a> - Chat interface</li>
-                        <li><a href="/api/echo/models" target="_blank">/api/echo/models</a> - Model management</li>
-                        <li><a href="/api/echo/query" target="_blank">/api/echo/query</a> - Query endpoint</li>
-                        <li><a href="/health" target="_blank">/health</a> - System health</li>
-                    </ul>
-                </div>
-
-                <div class="card">
-                    <h3>Quick Actions</h3>
-                    <button class="btn" onclick="switchTab('chat')">Start Chat Session</button>
-                    <button class="btn secondary" onclick="testAllEndpoints()">Test All APIs</button>
-                    <div id="quick-test-results"></div>
+            <h2>Echo Brain Activity & Recent Tasks</h2>
+            <div class="main-content">
+                <div class="chat-history" id="chat-history" style="height: 280px; margin-bottom: 8px;"></div>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn" onclick="loadChatHistory()">Refresh Chat</button>
+                    <button class="btn" onclick="loadRecentTasks()">Recent Tasks</button>
+                    <button class="btn" onclick="loadErrors()">Show Errors</button>
                 </div>
             </div>
         </div>
 
-        <div id="chat" class="tab-content">
-            <div class="grid">
-                <div class="card" style="grid-column: 1 / -1;">
-                    <h3>Echo Brain Chat Interface</h3>
-                    <div class="input-group">
-                        <label for="chat-model">Select Model:</label>
-                        <select id="chat-model">
-                            <option value="">Loading models...</option>
-                        </select>
-                    </div>
-                    <div class="input-group">
-                        <label for="chat-message">Message:</label>
-                        <textarea id="chat-message" placeholder="Ask Echo Brain anything..."></textarea>
-                    </div>
-                    <button class="btn" onclick="sendChatMessage()" id="chat-send-btn">Send Message</button>
-                    <div class="response-area" id="chat-response">Chat responses will appear here...</div>
-                </div>
+        <!-- Right Panel: Pipeline & System Metrics -->
+        <div class="panel">
+            <h2>System Metrics</h2>
+            <div class="content">
+                <div id="system-metrics"></div>
+                <button class="btn" onclick="refreshMetrics()">Refresh</button>
             </div>
-        </div>
 
-        <div id="memory" class="tab-content">
-            <div class="grid">
-                <div class="card" style="grid-column: 1 / -1;">
-                    <h3>Echo Brain Memory Search</h3>
-                    <div class="input-group">
-                        <label for="memory-query">Search Query:</label>
-                        <input type="text" id="memory-query" placeholder="Search through Echo Brain's memory...">
-                    </div>
-                    <div class="input-group">
-                        <label for="memory-limit">Results Limit:</label>
-                        <input type="number" id="memory-limit" value="5" min="1" max="20">
-                    </div>
-                    <button class="btn" onclick="searchMemory()" id="memory-search-btn">Search Memory</button>
-                    <button class="btn secondary" onclick="getFacts()" id="facts-btn">Get Facts</button>
-                    <div class="response-area" id="memory-response">Memory search results will appear here...</div>
-                </div>
+            <h2>Training Pipeline</h2>
+            <div class="content">
+                <div id="training-pipeline"></div>
+                <button class="btn" onclick="refreshPipeline()">Refresh</button>
             </div>
-        </div>
 
-        <div id="models" class="tab-content">
-            <div class="grid">
-                <div class="card" style="grid-column: 1 / -1;">
-                    <h3>Model Management</h3>
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                        <p>Available models from Ollama integration:</p>
-                        <button class="btn secondary" onclick="refreshModels()">Refresh Models</button>
-                    </div>
-                    <div class="model-list" id="models-list">
-                        <div style="text-align: center; padding: 2rem; color: #7d8590;">Loading models...</div>
-                    </div>
-                </div>
+            <h2>Pending Approvals</h2>
+            <div class="content">
+                <div id="pending-approvals"></div>
+                <button class="btn" onclick="refreshApprovals()">Refresh</button>
             </div>
-        </div>
 
-        <div id="api" class="tab-content">
-            <div class="grid">
-                <div class="card">
-                    <h3>API Test Console</h3>
-                    <div class="input-group">
-                        <label for="api-endpoint">Endpoint:</label>
-                        <select id="api-endpoint">
-                            <option value="/health">GET /health</option>
-                            <option value="/api/echo/models">GET /api/echo/models</option>
-                            <option value="/api/echo/status">GET /api/echo/status</option>
-                            <option value="/api/echo/conversations">GET /api/echo/conversations</option>
-                            <option value="/api/anime/projects">GET /api/anime/projects</option>
-                        </select>
-                    </div>
-                    <button class="btn" onclick="testEndpoint()" id="api-test-btn">Test Endpoint</button>
-                    <div class="response-area" id="api-response">API responses will appear here...</div>
-                </div>
-
-                <div class="card">
-                    <h3>System Information</h3>
-                    <div id="system-info">
-                        <p><strong>Echo Brain Service:</strong> Port 8309</p>
-                        <p><strong>MCP Server:</strong> Port 8312</p>
-                        <p><strong>Documentation:</strong> <a href="/docs" target="_blank">/docs</a></p>
-                        <p><strong>Health Check:</strong> <a href="/health" target="_blank">/health</a></p>
-                    </div>
-                </div>
+            <h2>Quick Actions</h2>
+            <div class="content">
+                <button class="btn" onclick="restartEchoBrain()">Restart Echo Brain</button>
+                <button class="btn" onclick="clearCache()">Clear Cache</button>
+                <button class="btn" onclick="syncModels()">Sync Models</button>
             </div>
         </div>
     </div>
 
     <script>
-        // Tab switching functionality
-        function switchTab(tabName) {
-            // Hide all tab contents
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-
-            // Remove active class from all nav tabs
-            document.querySelectorAll('.nav-tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-
-            // Show selected tab
-            document.getElementById(tabName).classList.add('active');
-
-            // Activate corresponding nav tab
-            event.target.classList.add('active');
-
-            // Load tab-specific data
-            if (tabName === 'models') {
-                loadModels();
-            } else if (tabName === 'chat') {
-                loadChatModels();
-            }
+        // Update system time
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('system-time').textContent = now.toLocaleString();
         }
-
-        // Load system status on page load
-        async function loadSystemStatus() {
-            try {
-                const response = await fetch('/health');
-                const data = await response.json();
-
-                document.getElementById('system-status').textContent = 'HEALTHY';
-                document.getElementById('system-status').className = 'status healthy';
-                document.getElementById('service-version').textContent = `Echo Brain v${data.version}`;
-                document.getElementById('uptime').textContent = `${Math.floor(data.uptime_seconds / 60)} minutes`;
-            } catch (error) {
-                document.getElementById('system-status').textContent = 'ERROR';
-                document.getElementById('system-status').className = 'status error';
-                console.error('Failed to load system status:', error);
-            }
-        }
-
-        // Test MCP server connectivity
-        async function testMCPServer() {
-            try {
-                const response = await fetch('/api/mcp', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ method: 'tools/list', params: {} })
-                });
-
-                if (response.ok) {
-                    document.getElementById('mcp-status').textContent = 'ONLINE';
-                    document.getElementById('mcp-status').className = 'status healthy';
-                } else {
-                    throw new Error('MCP server not responding');
-                }
-            } catch (error) {
-                document.getElementById('mcp-status').textContent = 'OFFLINE';
-                document.getElementById('mcp-status').className = 'status error';
-            }
-        }
-
-        // Load and display models
-        async function loadModels() {
-            try {
-                const response = await fetch('/api/echo/models');
-                const models = await response.json();
-
-                const modelsList = document.getElementById('models-list');
-                const modelsCount = document.getElementById('models-count');
-                const modelsPreview = document.getElementById('models-preview');
-
-                modelsCount.textContent = `${models.length} models available`;
-                modelsPreview.innerHTML = models.slice(0, 3).map(m => `<small>${m.name}</small>`).join('<br>');
-
-                modelsList.innerHTML = models.map(model => `
-                    <div class="model-item">
-                        <div class="model-name">${model.name}</div>
-                        <div class="model-details">
-                            Size: ${(model.size / 1024 / 1024 / 1024).toFixed(2)} GB |
-                            Status: ${model.active ? 'Active' : 'Inactive'} |
-                            Loaded: ${model.loaded ? 'Yes' : 'No'}
-                        </div>
-                    </div>
-                `).join('');
-            } catch (error) {
-                document.getElementById('models-list').innerHTML = `<div style="text-align: center; padding: 2rem; color: #f85149;">Error loading models: ${error.message}</div>`;
-            }
-        }
-
-        // Load models for chat interface
-        async function loadChatModels() {
-            try {
-                const response = await fetch('/api/echo/models');
-                const models = await response.json();
-
-                const select = document.getElementById('chat-model');
-                select.innerHTML = models.filter(m => m.active && m.loaded).map(model =>
-                    `<option value="${model.name}">${model.name}</option>`
-                ).join('');
-            } catch (error) {
-                document.getElementById('chat-model').innerHTML = '<option value="">Error loading models</option>';
-            }
-        }
-
-        // Send chat message
-        async function sendChatMessage() {
-            const model = document.getElementById('chat-model').value;
-            const message = document.getElementById('chat-message').value;
-            const responseArea = document.getElementById('chat-response');
-            const sendBtn = document.getElementById('chat-send-btn');
-
-            if (!model || !message.trim()) {
-                responseArea.textContent = 'Please select a model and enter a message.';
-                return;
-            }
-
-            sendBtn.innerHTML = '<span class="loading"></span> Sending...';
-            sendBtn.disabled = true;
-
-            try {
-                const response = await fetch('/api/echo/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        query: message,
-                        model: model
-                    })
-                });
-
-                const data = await response.json();
-                responseArea.textContent = JSON.stringify(data, null, 2);
-            } catch (error) {
-                responseArea.textContent = `Error: ${error.message}`;
-            } finally {
-                sendBtn.innerHTML = 'Send Message';
-                sendBtn.disabled = false;
-            }
-        }
+        setInterval(updateTime, 1000);
+        updateTime();
 
         // Search Echo Brain memory
         async function searchMemory() {
-            const query = document.getElementById('memory-query').value;
-            const limit = document.getElementById('memory-limit').value;
-            const responseArea = document.getElementById('memory-response');
-            const searchBtn = document.getElementById('memory-search-btn');
+            const query = document.getElementById('memory-search').value;
+            if (!query.trim()) return;
 
-            if (!query.trim()) {
-                responseArea.textContent = 'Please enter a search query.';
-                return;
-            }
-
-            searchBtn.innerHTML = '<span class="loading"></span> Searching...';
-            searchBtn.disabled = true;
+            const resultsDiv = document.getElementById('memory-results');
+            resultsDiv.innerHTML = '<div class="log-line info">Searching...</div>';
 
             try {
-                const response = await fetch('/api/mcp', {
+                const response = await fetch('/api/dashboard/mcp/search', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        method: 'tools/call',
-                        params: {
-                            name: 'search_memory',
-                            arguments: { query: query, limit: parseInt(limit) }
-                        }
-                    })
+                    body: JSON.stringify({ query: query, limit: 5 })
                 });
 
                 const data = await response.json();
-                responseArea.textContent = JSON.stringify(data, null, 2);
+                const content = data.content?.[0]?.text || JSON.stringify(data);
+
+                resultsDiv.innerHTML = `<div class="memory-result">${content.slice(0, 500)}...</div>`;
             } catch (error) {
-                responseArea.textContent = `Error: ${error.message}`;
-            } finally {
-                searchBtn.innerHTML = 'Search Memory';
-                searchBtn.disabled = false;
+                resultsDiv.innerHTML = `<div class="log-line error">Error: ${error.message}</div>`;
             }
         }
 
         // Get facts from Echo Brain
         async function getFacts() {
-            const query = document.getElementById('memory-query').value || 'general';
-            const responseArea = document.getElementById('memory-response');
-            const factsBtn = document.getElementById('facts-btn');
-
-            factsBtn.innerHTML = '<span class="loading"></span> Loading...';
-            factsBtn.disabled = true;
+            const query = document.getElementById('memory-search').value || 'general';
+            const resultsDiv = document.getElementById('memory-results');
 
             try {
-                const response = await fetch('/api/mcp', {
+                const response = await fetch('/api/dashboard/mcp/facts', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        method: 'tools/call',
-                        params: {
-                            name: 'get_facts',
-                            arguments: { topic: query }
-                        }
-                    })
+                    body: JSON.stringify({ topic: query })
                 });
 
                 const data = await response.json();
-                responseArea.textContent = JSON.stringify(data, null, 2);
+                const content = data.content?.[0]?.text || JSON.stringify(data);
+
+                resultsDiv.innerHTML = `<div class="memory-result">${content}</div>`;
             } catch (error) {
-                responseArea.textContent = `Error: ${error.message}`;
-            } finally {
-                factsBtn.innerHTML = 'Get Facts';
-                factsBtn.disabled = false;
+                resultsDiv.innerHTML = `<div class="log-line error">Facts error: ${error.message}</div>`;
             }
         }
 
-        // Test API endpoint
-        async function testEndpoint() {
-            const endpoint = document.getElementById('api-endpoint').value;
-            const responseArea = document.getElementById('api-response');
-            const testBtn = document.getElementById('api-test-btn');
-
-            testBtn.innerHTML = '<span class="loading"></span> Testing...';
-            testBtn.disabled = true;
+        // Load recent chat history from Echo Brain
+        async function loadChatHistory() {
+            const historyDiv = document.getElementById('chat-history');
 
             try {
-                const response = await fetch(endpoint);
+                // Get recent conversations from echo brain
+                const response = await fetch('/api/dashboard/mcp/search', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: 'claude conversation', limit: 10 })
+                });
+
                 const data = await response.json();
-                responseArea.textContent = JSON.stringify(data, null, 2);
+                const content = data.content?.[0]?.text || '';
+
+                // Parse and display recent entries
+                const lines = content.split('\n').slice(0, 20);
+                historyDiv.innerHTML = lines.map(line =>
+                    `<div class="chat-entry">
+                        <div class="chat-query">${line.slice(0, 60)}...</div>
+                        <div class="timestamp">${new Date().toLocaleTimeString()}</div>
+                    </div>`
+                ).join('');
+
             } catch (error) {
-                responseArea.textContent = `Error: ${error.message}`;
-            } finally {
-                testBtn.innerHTML = 'Test Endpoint';
-                testBtn.disabled = false;
+                historyDiv.innerHTML = `<div class="log-line error">Chat history error: ${error.message}</div>`;
             }
         }
 
-        // Test all endpoints
-        async function testAllEndpoints() {
-            const resultsDiv = document.getElementById('quick-test-results');
-            resultsDiv.innerHTML = '<div class="loading"></div> Testing endpoints...';
+        // Check service status
+        async function checkServices() {
+            const statusDiv = document.getElementById('service-status');
 
-            const endpoints = ['/health', '/api/echo/models', '/api/echo/status'];
-            const results = [];
+            try {
+                const response = await fetch('/api/dashboard/services/status');
+                const data = await response.json();
 
-            for (const endpoint of endpoints) {
-                try {
-                    const response = await fetch(endpoint);
-                    results.push(`✅ ${endpoint}: ${response.status}`);
-                } catch (error) {
-                    results.push(`❌ ${endpoint}: ${error.message}`);
+                let html = '';
+                for (const service of data.services) {
+                    html += `
+                        <div class="service-item">
+                            <span><span class="service-status ${service.status}"></span>${service.name}</span>
+                            <span>:${service.port}</span>
+                        </div>
+                    `;
                 }
+                statusDiv.innerHTML = html;
+            } catch (error) {
+                statusDiv.innerHTML = `<div class="log-line error">Service check error: ${error.message}</div>`;
             }
-
-            resultsDiv.innerHTML = `<div class="alert success"><strong>Endpoint Tests:</strong><br>${results.join('<br>')}</div>`;
         }
 
-        // Refresh models
-        function refreshModels() {
-            loadModels();
-            loadChatModels();
+        // Refresh system logs
+        async function refreshLogs() {
+            const logsDiv = document.getElementById('system-logs');
+
+            try {
+                const response = await fetch('/api/dashboard/logs/system');
+                const data = await response.json();
+
+                logsDiv.innerHTML = data.logs.map(log =>
+                    `<div class="log-line ${log.level}">[${new Date(log.timestamp).toLocaleTimeString()}] ${log.message}</div>`
+                ).join('');
+            } catch (error) {
+                logsDiv.innerHTML = `<div class="log-line error">[${new Date().toLocaleTimeString()}] Error loading logs: ${error.message}</div>`;
+            }
         }
 
-        // Initialize dashboard on page load
+        // Clear logs
+        function clearLogs() {
+            document.getElementById('system-logs').innerHTML = '';
+        }
+
+        // Refresh model actions
+        async function refreshModelActions() {
+            const actionsDiv = document.getElementById('model-actions');
+
+            try {
+                const response = await fetch('/api/dashboard/models/ollama');
+                const data = await response.json();
+
+                actionsDiv.innerHTML = data.models.slice(0, 8).map(model =>
+                    `<div class="pipeline-item">
+                        ${model.name}
+                        <span class="pipeline-status complete">${model.size}</span>
+                    </div>`
+                ).join('');
+            } catch (error) {
+                actionsDiv.innerHTML = `<div class="log-line error">Model error: ${error.message}</div>`;
+            }
+        }
+
+        // Refresh training pipeline
+        async function refreshPipeline() {
+            const pipelineDiv = document.getElementById('training-pipeline');
+
+            try {
+                const response = await fetch('/api/dashboard/pipeline/status');
+                const data = await response.json();
+
+                pipelineDiv.innerHTML = data.pipelines.map(pipeline =>
+                    `<div class="pipeline-item">
+                        ${pipeline.name}
+                        <span class="pipeline-status ${pipeline.status}">${pipeline.progress}</span>
+                    </div>`
+                ).join('');
+            } catch (error) {
+                pipelineDiv.innerHTML = `<div class="log-line error">Pipeline error: ${error.message}</div>`;
+            }
+        }
+
+        // Refresh pending approvals
+        async function refreshApprovals() {
+            const approvalsDiv = document.getElementById('pending-approvals');
+
+            try {
+                const response = await fetch('/api/dashboard/approvals/pending');
+                const data = await response.json();
+
+                approvalsDiv.innerHTML = data.approvals.map(approval =>
+                    `<div class="approval-item ${approval.type}">
+                        ${approval.task}
+                        <div class="timestamp">${approval.time}</div>
+                    </div>`
+                ).join('');
+            } catch (error) {
+                approvalsDiv.innerHTML = `<div class="log-line error">Approvals error: ${error.message}</div>`;
+            }
+        }
+
+        // Initialize dashboard
         document.addEventListener('DOMContentLoaded', function() {
-            loadSystemStatus();
-            testMCPServer();
-            loadModels();
+            checkServices();
+            refreshLogs();
+            loadChatHistory();
+            refreshModelActions();
+            refreshPipeline();
+            refreshApprovals();
+
+            // Auto-refresh every 30 seconds
+            setInterval(() => {
+                checkServices();
+                refreshLogs();
+            }, 30000);
         });
+
+        // Auto-refresh chat history every 2 minutes
+        setInterval(loadChatHistory, 120000);
     </script>
 </body>
 </html>
