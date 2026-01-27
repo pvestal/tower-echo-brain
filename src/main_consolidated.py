@@ -50,6 +50,7 @@ try:
     from src.routers.production_router import router as production_router
     from src.routers.integration_router import router as integration_router
     from src.routers.system_router import router as system_router
+    from src.routers.dashboard_router import router as dashboard_router
     routers_loaded = True
     logger.info("All routers loaded successfully")
 except Exception as e:
@@ -133,6 +134,12 @@ if routers_loaded:
     app.include_router(
         system_router,
         tags=["System"]
+    )
+
+    # Dashboard API endpoints
+    app.include_router(
+        dashboard_router,
+        tags=["Dashboard"]
     )
 
 # ============= Static Files =============
