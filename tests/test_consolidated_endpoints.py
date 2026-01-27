@@ -228,8 +228,9 @@ async def test_anime_production_endpoints():
     # Project endpoints
     print(f"\n{YELLOW}=== PROJECT ENDPOINTS ==={RESET}")
     await tester.test_endpoint("GET", f"{base_url}/api/anime/projects", description="List projects")
+    import time
     await tester.test_endpoint("POST", f"{base_url}/api/anime/projects",
-                              {"name": "Test Project", "description": "Test"},
+                              {"name": f"Test Project {int(time.time())}", "description": "Test"},
                               description="Create project")
 
     # Episode endpoints
