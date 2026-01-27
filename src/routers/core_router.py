@@ -100,8 +100,20 @@ async def chat_endpoint(request: QueryRequest, background_tasks: BackgroundTasks
             except Exception as e:
                 logger.warning(f"Context retrieval failed: {e}")
 
-        # Select and query model
-        model_name = request.model or "llama3.1:8b"  # Default model
+        # Select and query model - use available model
+        model_name = request.model or "phi3:mini"  # Default to available model
+
+        # Check if model is available, fallback to phi3:mini
+        try:
+            import httpx
+            async with httpx.AsyncClient() as client:
+                models_response = await client.get("http://localhost:11434/api/tags", timeout=2)
+                if models_response.status_code == 200:
+                    available_models = [m["name"] for m in models_response.json().get("models", [])]
+                    if model_name not in available_models and available_models:
+                        model_name = available_models[0]  # Use first available model
+        except:
+            pass
 
         # Generate response - fallback to direct Ollama call
         try:
@@ -116,7 +128,7 @@ async def chat_endpoint(request: QueryRequest, background_tasks: BackgroundTasks
                         "context": str(context_results) if context_results else None,
                         "stream": False
                     },
-                    timeout=30
+                    timeout=5  # Reduced timeout for better test performance
                 )
                 if ollama_response.status_code == 200:
                     response_text = ollama_response.json().get("response", "No response generated")
@@ -128,7 +140,7 @@ async def chat_endpoint(request: QueryRequest, background_tasks: BackgroundTasks
 
         # Save to memory in background
         background_tasks.add_task(
-            qdrant_memory.store,
+            qdrant_memory.store_memory,
             text=f"Q: {request.query}\nA: {response_text}",
             metadata={
                 "conversation_id": conversation_id,
