@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Echo Brain Control Panel - Complete Endpoint Mapping</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0d1117 0%, #1a1f2e 100%);
+            color: #c9d1d9;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(90deg, #238636, #2ea043);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .endpoint-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .endpoint-category {
+            background: #161b22;
+            border-radius: 8px;
+            padding: 1.5rem;
+            border: 1px solid #30363d;
+        }
+
+        .category-title {
+            font-size: 1.2rem;
+            color: #58a6ff;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .endpoint-item {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .endpoint-path {
+            font-family: 'Monaco', 'Courier New', monospace;
+            color: #79c0ff;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .endpoint-controls {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 0.75rem;
+        }
+
+        .control-btn {
+            background: #238636;
+            color: white;
+            border: none;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .control-btn:hover {
+            background: #2ea043;
+            transform: translateY(-1px);
+        }
+
+        .control-btn.test { background: #1f6feb; }
+        .control-btn.test:hover { background: #388bfd; }
+
+        .control-btn.view { background: #6e40c9; }
+        .control-btn.view:hover { background: #8b5cf6; }
+
+        .control-btn.danger { background: #da3633; }
+        .control-btn.danger:hover { background: #f85149; }
+
+        .input-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .input-group input, .input-group textarea {
+            flex: 1;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+            padding: 0.4rem;
+            border-radius: 4px;
+            font-family: inherit;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-active { background: #238636; }
+        .status-inactive { background: #6e7681; }
+        .status-error { background: #da3633; }
+
+        .response-area {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 4px;
+            padding: 0.75rem;
+            margin-top: 0.75rem;
+            font-family: 'Monaco', monospace;
+            font-size: 0.85rem;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .response-area.show { display: block; }
+
+        .loading {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid #30363d;
+            border-top-color: #58a6ff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-left: 0.5rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>>à Echo Brain Control Panel - Complete Endpoint Mapping</h1>
+    </div>
+
+    <div class="container">
+        <!-- Core AI Operations -->
+        <div class="endpoint-grid">
+            <div class="endpoint-category">
+                <h2 class="category-title">> Core AI Operations</h2>
+
+                <div class="endpoint-item">
+                    <div class="endpoint-path">POST /api/echo/chat</div>
+                    <div class="input-group">
+                        <input type="text" id="chat-model" placeholder="Model (default: llama3.2)">
+                        <textarea id="chat-query" placeholder="Enter your message..."></textarea>
+                    </div>
+                    <div class="endpoint-controls">
+                        <button class="control-btn" onclick="sendChat()">Send Message</button>
+                        <button class="control-btn test" onclick="testEndpoint('/api/echo/chat', 'POST')">Test</button>
+                    </div>
+                    <div id="chat-response" class="response-area"></div>
+                </div>
+
+                <div class="endpoint-item">
+                    <div class="endpoint-path">GET /api/echo/models</div>
+                    <div class="endpoint-controls">
+                        <button class="control-btn view" onclick="getModels()">List Models</button>
+                        <button class="control-btn test" onclick="testEndpoint('/api/echo/models', 'GET')">Test</button>
+                    </div>
+                    <div id="models-response" class="response-area"></div>
+                </div>
+
+                <div class="endpoint-item">
+                    <div class="endpoint-path">POST /api/echo/agents</div>
+                    <div class="input-group">
+                        <input type="text" id="agent-type" placeholder="Agent type">
+                        <input type="text" id="agent-task" placeholder="Task description">
+                    </div>
+                    <div class="endpoint-controls">
+                        <button class="control-btn" onclick="createAgent()">Create Agent</button>
+                        <button class="control-btn test" onclick="testEndpoint('/api/echo/agents', 'POST')">Test</button>
+                    </div>
+                    <div id="agent-response" class="response-area"></div>
+                </div>
+
+                <div class="endpoint-item">
+                    <div class="endpoint-path">GET /api/echo/conversations</div>
+                    <div class="endpoint-controls">
+                        <button class="control-btn view" onclick="getConversations()">List Conversations</button>
+                        <button class="control-btn test" onclick="testEndpoint('/api/echo/conversations', 'GET')">Test</button>
+                    </div>
+                    <div id="conversations-response" class="response-area"></div>
+                </div>
+            </div>
+
+            <!-- Memory & Knowledge -->
+            <div class="endpoint-category">
+                <h2 class="category-title">>é Memory & Knowledge</h2>
+
+                <div class="endpoint-item">
+                    <div class="endpoint-path">MCP: search_memory (Port 8312)</div>
+                    <div class="input-group">
+                        <input type="text" id="memory-query" placeholder="Search query">
+                        <input type="number" id="memory-limit" placeholder="Limit" value="5">
+                    </div>
+                    <div class="endpoint-controls">
+                        <button class="control-btn" onclick="searchMemory()">Search Memory</button>
+                        <button class="control-btn view" onclick="getMemoryStats()">Stats</button>
+                    </div>
+                    <div id="memory-response" class="response-area"></div>
+                </div>
+
+                <div class="endpoint-item">
+                    <div class="endpoint-path">MCP: get_facts (Port 8312)</div>
+                    <div class="input-group">
+                        <input type="text" id="facts-topic" placeholder="Topic">
+                    </div>
+                    <div class="endpoint-controls">
+                        <button class="control-btn" onclick="getFacts()">Get Facts</button>
+                    </div>
+                    <div id="facts-response" class="response-area"></div>
+                </div>
+
+                <div class="endpoint-item">
+                    <div class="endpoint-path">MCP: store_fact (Port 8312)</div>
+                    <div class="input-group">
+                        <input type="text" id="fact-subject" placeholder="Subject">
+                        <input type="text" id="fact-predicate" placeholder="Predicate">
+                        <input type="text" id="fact-object" placeholder="Object">
+                    </div>
+                    <div class="endpoint-controls">
+                        <button class="control-btn" onclick="storeFact()">Store Fact</button>
+                    </div>
+                    <div id="store-fact-response" class="response-area"></div>
+                </div>
+            </div>
+
+            <!-- Production Systems -->
+            <div class="endpoint-category">
+                <h2 class="category-title"><¬ Production Systems</h2>
+
+                <div class="endpoint-item">
+                    <div class="endpoint-path">POST /api/anime/generate</div>
+                    <div class="input-group">
+                        <textarea id="anime-prompt" placeholder="Anime generation prompt"></textarea>
+                    </div>
+                    <div class="endpoint-controls">
+                        <button class="control-btn" onclick="generateAnime()">Generate</button>
+                        <button class="control-btn test" onclick="testEndpoint('/api/anime/generate', 'POST')">Test</button>
+                    </div>
+                    <div id="anime-response" class="response-area"></div>
+                </div>
+
+                <div class="endpoint-item">
+                    <div class="endpoint-path">GET /api/anime/projects</div>
+                    <div class="endpoint-controls">
+                        <button class="control-btn view" onclick="getAnimeProjects()">List Projects</button>
+                        <button class="control-btn test" onclick="testEndpoint('/api/anime/projects', 'GET')">Test</button>
+                    </div>
+                    <div id="projects-response" class="response-area"></div>
+                </div>
+
+                <div class="endpoint-item">
+                    <div class="endpoint-path">POST /api/lora/train</div>
+                    <div class="input-group">
+                        <input type="text" id="lora-name" placeholder="LoRA name">
+                        <input type="text" id="lora-dataset" placeholder="Dataset path">
+                    </div>
+                    <div class="endpoint-controls">
+                        <button class="control-btn" onclick="trainLora()">Start Training</button>
+                        <button class="control-btn test" onclick="testEndpoint('/api/lora/train', 'POST')">Test</button>
+                    </div>
+                    <div id="lora-response" class="response-area"></div>
+                </div>
+
+                <div class="endpoint-item">
+                    <div class="endpoint-path">POST /api/video/generate</div>
+                    <div class="input-group">
+                        <textarea id="video-prompt" placeholder="Video generation prompt"></textarea>
+                    </div>
+                    <div class="endpoint-controls">
+                        <button class="control-btn" onclick="generateVideo()">Generate Video</button>
+                        <button class="control-btn test" onclick="testEndpoint('/api/video/generate', 'POST')">Test</button>
+                    </div>
+                    <div id="video-response" class="response-area"></div>
+                </div>
+            </div>
+
+            <!-- System Management -->
+            <div class="endpoint-category">
+                <h2 class="category-title">™ System Management</h2>
+
+                <div class="endpoint-item">
+                    <div class="endpoint-path">GET /health</div>
+                    <div class="endpoint-controls">
+                        <button class="control-btn view" onclick="checkHealth()">Check Health</button>
+                        <button class="control-btn test" onclick="testEndpoint('/health', 'GET')">Test</button>
+                    </div>
+                    <div id="health-response" class="response-area"></div>
+                </div>
+
+                <div class="endpoint-item">
+                    <div class="endpoint-path">GET /api/echo/status</div>
+                    <div class="endpoint-controls">
+                        <button class="control-btn view" onclick="getStatus()">Get Status</button>
+                        <button class="control-btn test" onclick="testEndpoint('/api/echo/status', 'GET')">Test</button>
+                    </div>
+                    <div id="status-response" class="response-area"></div>
+                </div>
+
+                <div class="endpoint-item">
+                    <div class="endpoint-path">GET /metrics</div>
+                    <div class="endpoint-controls">
+                        <button class="control-btn view" onclick="getMetrics()">Get Metrics</button>
+                        <button class="control-btn test" onclick="testEndpoint('/metrics', 'GET')">Test</button>
+                    </div>
+                    <div id="metrics-response" class="response-area"></div>
+                </div>
+
+                <div class="endpoint-item">
+                    <div class="endpoint-path">POST /api/system/repair</div>
+                    <div class="input-group">
+                        <input type="text" id="repair-service" placeholder="Service name">
+                        <input type="text" id="repair-issue" placeholder="Issue description">
+                    </div>
+                    <div class="endpoint-controls">
+                        <button class="control-btn danger" onclick="executeRepair()">Execute Repair</button>
+                    </div>
+                    <div id="repair-response" class="response-area"></div>
+                </div>
+            </div>
+
+            <!-- External Integrations -->
+            <div class="endpoint-category">
+                <h2 class="category-title">= External Integrations</h2>
+
+                <div class="endpoint-item">
+                    <div class="endpoint-path">POST /api/google/search</div>
+                    <div class="input-group">
+                        <input type="text" id="google-query" placeholder="Search query">
+                    </div>
+                    <div class="endpoint-controls">
+                        <button class="control-btn" onclick="googleSearch()">Search Google</button>
+                        <button class="control-btn test" onclick="testEndpoint('/api/google/search', 'POST')">Test</button>
+                    </div>
+                    <div id="google-response" class="response-area"></div>
+                </div>
+
+                <div class="endpoint-item">
+                    <div class="endpoint-path">GET /api/vault/status</div>
+                    <div class="endpoint-controls">
+                        <button class="control-btn view" onclick="getVaultStatus()">Vault Status</button>
+                        <button class="control-btn test" onclick="testEndpoint('/api/vault/status', 'GET')">Test</button>
+                    </div>
+                    <div id="vault-response" class="response-area"></div>
+                </div>
+
+                <div class="endpoint-item">
+                    <div class="endpoint-path">GET /api/kb/articles</div>
+                    <div class="endpoint-controls">
+                        <button class="control-btn view" onclick="getKBArticles()">List KB Articles</button>
+                        <button class="control-btn test" onclick="testEndpoint('/api/kb/articles', 'GET')">Test</button>
+                    </div>
+                    <div id="kb-response" class="response-area"></div>
+                </div>
+
+                <div class="endpoint-item">
+                    <div class="endpoint-path">POST /api/comfyui/workflow</div>
+                    <div class="input-group">
+                        <textarea id="comfyui-workflow" placeholder="ComfyUI workflow JSON"></textarea>
+                    </div>
+                    <div class="endpoint-controls">
+                        <button class="control-btn" onclick="executeWorkflow()">Execute Workflow</button>
+                        <button class="control-btn test" onclick="testEndpoint('/api/comfyui/workflow', 'POST')">Test</button>
+                    </div>
+                    <div id="comfyui-response" class="response-area"></div>
+                </div>
+            </div>
+
+            <!-- Tower Control -->
+            <div class="endpoint-category">
+                <h2 class="category-title"><ð Tower Control (Port 8310)</h2>
+
+                <div class="endpoint-item">
+                    <div class="endpoint-path">GET http://localhost:8310/status</div>
+                    <div class="endpoint-controls">
+                        <button class="control-btn view" onclick="getTowerStatus()">Tower Status</button>
+                    </div>
+                    <div id="tower-status-response" class="response-area"></div>
+                </div>
+
+                <div class="endpoint-item">
+                    <div class="endpoint-path">POST http://localhost:8310/control</div>
+                    <div class="input-group">
+                        <input type="text" id="tower-action" placeholder="Action (start/stop/restart)">
+                        <input type="text" id="tower-service" placeholder="Service name">
+                    </div>
+                    <div class="endpoint-controls">
+                        <button class="control-btn danger" onclick="controlTower()">Execute</button>
+                    </div>
+                    <div id="tower-control-response" class="response-area"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8309';
+        const MCP_BASE = 'http://localhost:8312';
+        const TOWER_BASE = 'http://localhost:8310';
+
+        // Generic endpoint tester
+        async function testEndpoint(path, method = 'GET', body = null) {
+            const id = path.replace(/\//g, '-').substring(1) + '-test';
+            const responseArea = document.createElement('div');
+            responseArea.className = 'response-area show';
+            responseArea.innerHTML = '<span class="loading"></span> Testing endpoint...';
+
+            try {
+                const options = {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' }
+                };
+                if (body) options.body = JSON.stringify(body);
+
+                const response = await fetch(API_BASE + path, options);
+                const data = await response.json();
+                responseArea.innerHTML = `Status: ${response.status}\n${JSON.stringify(data, null, 2)}`;
+            } catch (error) {
+                responseArea.innerHTML = `Error: ${error.message}`;
+            }
+
+            alert(`Endpoint ${path} tested. Check console for details.`);
+            console.log('Test result:', responseArea.innerHTML);
+        }
+
+        // Core AI Operations
+        async function sendChat() {
+            const model = document.getElementById('chat-model').value || 'llama3.2';
+            const query = document.getElementById('chat-query').value;
+            const responseArea = document.getElementById('chat-response');
+
+            if (!query) {
+                alert('Please enter a message');
+                return;
+            }
+
+            responseArea.className = 'response-area show';
+            responseArea.innerHTML = '<span class="loading"></span> Sending...';
+
+            try {
+                const response = await fetch(API_BASE + '/api/echo/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query, model })
+                });
+
+                const data = await response.json();
+                responseArea.innerHTML = data.response || JSON.stringify(data, null, 2);
+            } catch (error) {
+                responseArea.innerHTML = `Error: ${error.message}`;
+            }
+        }
+
+        async function getModels() {
+            const responseArea = document.getElementById('models-response');
+            responseArea.className = 'response-area show';
+            responseArea.innerHTML = '<span class="loading"></span> Loading models...';
+
+            try {
+                const response = await fetch(API_BASE + '/api/echo/models');
+                const data = await response.json();
+                responseArea.innerHTML = JSON.stringify(data, null, 2);
+            } catch (error) {
+                responseArea.innerHTML = `Error: ${error.message}`;
+            }
+        }
+
+        async function createAgent() {
+            const type = document.getElementById('agent-type').value;
+            const task = document.getElementById('agent-task').value;
+            const responseArea = document.getElementById('agent-response');
+
+            responseArea.className = 'response-area show';
+            responseArea.innerHTML = '<span class="loading"></span> Creating agent...';
+
+            try {
+                const response = await fetch(API_BASE + '/api/echo/agents', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type, task })
+                });
+
+                const data = await response.json();
+                responseArea.innerHTML = JSON.stringify(data, null, 2);
+            } catch (error) {
+                responseArea.innerHTML = `Error: ${error.message}`;
+            }
+        }
+
+        async function getConversations() {
+            const responseArea = document.getElementById('conversations-response');
+            responseArea.className = 'response-area show';
+            responseArea.innerHTML = '<span class="loading"></span> Loading conversations...';
+
+            try {
+                const response = await fetch(API_BASE + '/api/echo/conversations');
+                const data = await response.json();
+                responseArea.innerHTML = JSON.stringify(data, null, 2);
+            } catch (error) {
+                responseArea.innerHTML = `Error: ${error.message}`;
+            }
+        }
+
+        // Memory & Knowledge
+        async function searchMemory() {
+            const query = document.getElementById('memory-query').value;
+            const limit = parseInt(document.getElementById('memory-limit').value) || 5;
+            const responseArea = document.getElementById('memory-response');
+
+            if (!query) {
+                alert('Please enter a search query');
+                return;
+            }
+
+            responseArea.className = 'response-area show';
+            responseArea.innerHTML = '<span class="loading"></span> Searching memory...';
+
+            try {
+                const response = await fetch(MCP_BASE + '/mcp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        method: 'tools/call',
+                        params: {
+                            name: 'search_memory',
+                            arguments: { query, limit }
+                        }
+                    })
+                });
+
+                const data = await response.json();
+                responseArea.innerHTML = JSON.stringify(data, null, 2);
+            } catch (error) {
+                responseArea.innerHTML = `Error: ${error.message}`;
+            }
+        }
+
+        async function getFacts() {
+            const topic = document.getElementById('facts-topic').value;
+            const responseArea = document.getElementById('facts-response');
+
+            if (!topic) {
+                alert('Please enter a topic');
+                return;
+            }
+
+            responseArea.className = 'response-area show';
+            responseArea.innerHTML = '<span class="loading"></span> Getting facts...';
+
+            try {
+                const response = await fetch(MCP_BASE + '/mcp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        method: 'tools/call',
+                        params: {
+                            name: 'get_facts',
+                            arguments: { topic }
+                        }
+                    })
+                });
+
+                const data = await response.json();
+                responseArea.innerHTML = JSON.stringify(data, null, 2);
+            } catch (error) {
+                responseArea.innerHTML = `Error: ${error.message}`;
+            }
+        }
+
+        async function storeFact() {
+            const subject = document.getElementById('fact-subject').value;
+            const predicate = document.getElementById('fact-predicate').value;
+            const object = document.getElementById('fact-object').value;
+            const responseArea = document.getElementById('store-fact-response');
+
+            if (!subject || !predicate || !object) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            responseArea.className = 'response-area show';
+            responseArea.innerHTML = '<span class="loading"></span> Storing fact...';
+
+            try {
+                const response = await fetch(MCP_BASE + '/mcp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        method: 'tools/call',
+                        params: {
+                            name: 'store_fact',
+                            arguments: { subject, predicate, object }
+                        }
+                    })
+                });
+
+                const data = await response.json();
+                responseArea.innerHTML = JSON.stringify(data, null, 2);
+            } catch (error) {
+                responseArea.innerHTML = `Error: ${error.message}`;
+            }
+        }
+
+        // Production Systems
+        async function generateAnime() {
+            const prompt = document.getElementById('anime-prompt').value;
+            const responseArea = document.getElementById('anime-response');
+
+            if (!prompt) {
+                alert('Please enter a prompt');
+                return;
+            }
+
+            responseArea.className = 'response-area show';
+            responseArea.innerHTML = '<span class="loading"></span> Generating anime...';
+
+            try {
+                const response = await fetch(API_BASE + '/api/anime/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt })
+                });
+
+                const data = await response.json();
+                responseArea.innerHTML = JSON.stringify(data, null, 2);
+            } catch (error) {
+                responseArea.innerHTML = `Error: ${error.message}`;
+            }
+        }
+
+        async function getAnimeProjects() {
+            const responseArea = document.getElementById('projects-response');
+            responseArea.className = 'response-area show';
+            responseArea.innerHTML = '<span class="loading"></span> Loading projects...';
+
+            try {
+                const response = await fetch(API_BASE + '/api/anime/projects');
+                const data = await response.json();
+                responseArea.innerHTML = JSON.stringify(data, null, 2);
+            } catch (error) {
+                responseArea.innerHTML = `Error: ${error.message}`;
+            }
+        }
+
+        async function trainLora() {
+            const name = document.getElementById('lora-name').value;
+            const dataset = document.getElementById('lora-dataset').value;
+            const responseArea = document.getElementById('lora-response');
+
+            responseArea.className = 'response-area show';
+            responseArea.innerHTML = '<span class="loading"></span> Starting training...';
+
+            try {
+                const response = await fetch(API_BASE + '/api/lora/train', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, dataset })
+                });
+
+                const data = await response.json();
+                responseArea.innerHTML = JSON.stringify(data, null, 2);
+            } catch (error) {
+                responseArea.innerHTML = `Error: ${error.message}`;
+            }
+        }
+
+        async function generateVideo() {
+            const prompt = document.getElementById('video-prompt').value;
+            const responseArea = document.getElementById('video-response');
+
+            if (!prompt) {
+                alert('Please enter a prompt');
+                return;
+            }
+
+            responseArea.className = 'response-area show';
+            responseArea.innerHTML = '<span class="loading"></span> Generating video...';
+
+            try {
+                const response = await fetch(API_BASE + '/api/video/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt })
+                });
+
+                const data = await response.json();
+                responseArea.innerHTML = JSON.stringify(data, null, 2);
+            } catch (error) {
+                responseArea.innerHTML = `Error: ${error.message}`;
+            }
+        }
+
+        // System Management
+        async function checkHealth() {
+            const responseArea = document.getElementById('health-response');
+            responseArea.className = 'response-area show';
+            responseArea.innerHTML = '<span class="loading"></span> Checking health...';
+
+            try {
+                const response = await fetch(API_BASE + '/health');
+                const data = await response.json();
+                responseArea.innerHTML = JSON.stringify(data, null, 2);
+            } catch (error) {
+                responseArea.innerHTML = `Error: ${error.message}`;
+            }
+        }
+
+        async function getStatus() {
+            const responseArea = document.getElementById('status-response');
+            responseArea.className = 'response-area show';
+            responseArea.innerHTML = '<span class="loading"></span> Getting status...';
+
+            try {
+                const response = await fetch(API_BASE + '/api/echo/status');
+                const data = await response.json();
+                responseArea.innerHTML = JSON.stringify(data, null, 2);
+            } catch (error) {
+                responseArea.innerHTML = `Error: ${error.message}`;
+            }
+        }
+
+        async function getMetrics() {
+            const responseArea = document.getElementById('metrics-response');
+            responseArea.className = 'response-area show';
+            responseArea.innerHTML = '<span class="loading"></span> Loading metrics...';
+
+            try {
+                const response = await fetch(API_BASE + '/metrics');
+                const text = await response.text();
+                responseArea.innerHTML = text;
+            } catch (error) {
+                responseArea.innerHTML = `Error: ${error.message}`;
+            }
+        }
+
+        async function executeRepair() {
+            const service = document.getElementById('repair-service').value;
+            const issue = document.getElementById('repair-issue').value;
+            const responseArea = document.getElementById('repair-response');
+
+            if (!service || !issue) {
+                alert('Please enter service and issue');
+                return;
+            }
+
+            responseArea.className = 'response-area show';
+            responseArea.innerHTML = '<span class="loading"></span> Executing repair...';
+
+            try {
+                const response = await fetch(API_BASE + '/api/system/repair', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ service, issue })
+                });
+
+                const data = await response.json();
+                responseArea.innerHTML = JSON.stringify(data, null, 2);
+            } catch (error) {
+                responseArea.innerHTML = `Error: ${error.message}`;
+            }
+        }
+
+        // External Integrations
+        async function googleSearch() {
+            const query = document.getElementById('google-query').value;
+            const responseArea = document.getElementById('google-response');
+
+            if (!query) {
+                alert('Please enter a search query');
+                return;
+            }
+
+            responseArea.className = 'response-area show';
+            responseArea.innerHTML = '<span class="loading"></span> Searching...';
+
+            try {
+                const response = await fetch(API_BASE + '/api/google/search', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query })
+                });
+
+                const data = await response.json();
+                responseArea.innerHTML = JSON.stringify(data, null, 2);
+            } catch (error) {
+                responseArea.innerHTML = `Error: ${error.message}`;
+            }
+        }
+
+        async function getVaultStatus() {
+            const responseArea = document.getElementById('vault-response');
+            responseArea.className = 'response-area show';
+            responseArea.innerHTML = '<span class="loading"></span> Checking vault...';
+
+            try {
+                const response = await fetch(API_BASE + '/api/vault/status');
+                const data = await response.json();
+                responseArea.innerHTML = JSON.stringify(data, null, 2);
+            } catch (error) {
+                responseArea.innerHTML = `Error: ${error.message}`;
+            }
+        }
+
+        async function getKBArticles() {
+            const responseArea = document.getElementById('kb-response');
+            responseArea.className = 'response-area show';
+            responseArea.innerHTML = '<span class="loading"></span> Loading articles...';
+
+            try {
+                const response = await fetch(API_BASE + '/api/kb/articles');
+                const data = await response.json();
+                responseArea.innerHTML = JSON.stringify(data, null, 2);
+            } catch (error) {
+                responseArea.innerHTML = `Error: ${error.message}`;
+            }
+        }
+
+        async function executeWorkflow() {
+            const workflow = document.getElementById('comfyui-workflow').value;
+            const responseArea = document.getElementById('comfyui-response');
+
+            responseArea.className = 'response-area show';
+            responseArea.innerHTML = '<span class="loading"></span> Executing workflow...';
+
+            try {
+                const response = await fetch(API_BASE + '/api/comfyui/workflow', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: workflow || '{}'
+                });
+
+                const data = await response.json();
+                responseArea.innerHTML = JSON.stringify(data, null, 2);
+            } catch (error) {
+                responseArea.innerHTML = `Error: ${error.message}`;
+            }
+        }
+
+        // Tower Control
+        async function getTowerStatus() {
+            const responseArea = document.getElementById('tower-status-response');
+            responseArea.className = 'response-area show';
+            responseArea.innerHTML = '<span class="loading"></span> Getting Tower status...';
+
+            try {
+                const response = await fetch(TOWER_BASE + '/status');
+                const data = await response.json();
+                responseArea.innerHTML = JSON.stringify(data, null, 2);
+            } catch (error) {
+                responseArea.innerHTML = `Error: ${error.message}`;
+            }
+        }
+
+        async function controlTower() {
+            const action = document.getElementById('tower-action').value;
+            const service = document.getElementById('tower-service').value;
+            const responseArea = document.getElementById('tower-control-response');
+
+            if (!action || !service) {
+                alert('Please enter action and service');
+                return;
+            }
+
+            responseArea.className = 'response-area show';
+            responseArea.innerHTML = '<span class="loading"></span> Executing control...';
+
+            try {
+                const response = await fetch(TOWER_BASE + '/control', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action, service })
+                });
+
+                const data = await response.json();
+                responseArea.innerHTML = JSON.stringify(data, null, 2);
+            } catch (error) {
+                responseArea.innerHTML = `Error: ${error.message}`;
+            }
+        }
+
+        // Memory stats helper
+        async function getMemoryStats() {
+            alert(`Memory Database Stats:
+- 54,000+ conversation vectors
+- 1024 dimensional embeddings
+- Semantic search enabled
+- Auto-ingestion every 6 hours`);
+        }
+    </script>
+</body>
+</html>

@@ -13,6 +13,7 @@ from datetime import datetime
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 import uvicorn
 
 # Add src to path
@@ -133,6 +134,22 @@ if routers_loaded:
         system_router,
         tags=["System"]
     )
+
+# ============= Static Files =============
+
+# Mount static files for the dashboard
+static_dir = Path(__file__).parent.parent / "static"
+if static_dir.exists():
+    app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+    logger.info(f"✅ Static files mounted from {static_dir}")
+else:
+    logger.warning(f"⚠️ Static directory not found: {static_dir}")
+
+# Add root dashboard endpoint
+@app.get("/dashboard")
+async def dashboard():
+    """Redirect to dashboard"""
+    return {"message": "Dashboard available at /static/dist/index.html"}
 
 # ============= Error Handlers =============
 
