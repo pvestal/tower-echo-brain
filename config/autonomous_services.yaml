@@ -44,7 +44,7 @@ services:
 
   tower-anime-production:
     enabled: true
-    port: 8305
+    port: 8328
     health_endpoint: "/health"
     restart_command: "sudo systemctl restart tower-anime-production"
     max_retries: 3
@@ -61,14 +61,15 @@ services:
     critical: false
 
   comfyui:
-    enabled: false  # DISABLED - not installed on this system
+    enabled: true   # ACTIVE - ComfyUI running on RTX 3060
     port: 8188
     health_endpoint: "/system_stats"
-    restart_command: "cd /mnt/1TB-storage/ComfyUI && python main.py"
-    max_retries: 1
-    backoff_base: 60
-    critical: false
-    note: "ComfyUI not installed on primary Tower system"
+    restart_command: "cd /mnt/1TB-storage/ComfyUI && python main.py --listen --port 8188"
+    max_retries: 3
+    backoff_base: 30
+    critical: true  # Critical for anime generation pipeline
+    gpu_device: "NVIDIA GeForce RTX 3060"
+    vram_total: "12GB"
 
   qdrant:
     enabled: true
