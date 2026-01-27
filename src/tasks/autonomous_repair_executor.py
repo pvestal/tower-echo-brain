@@ -13,6 +13,12 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import json
+import sys
+import time
+
+# Import outcome learning system
+sys.path.insert(0, '/opt/tower-echo-brain')
+from scripts.tower_outcome_learning import TowerOutcomeLearning
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +38,10 @@ class RepairExecutor:
         # Load Gmail app password from vault or environment
         self.app_password = self._load_smtp_credentials()
 
+        # Initialize outcome learning system
+        self.learner = TowerOutcomeLearning()
+        logger.info("✅ Outcome learning system connected to repair executor")
+
     def _load_smtp_credentials(self) -> Optional[str]:
         """Load SMTP credentials from Vault"""
         try:
@@ -46,9 +56,16 @@ class RepairExecutor:
             return None
 
     async def execute_repair(self, repair_type: str, target: str, issue: str, **kwargs) -> Dict[str, Any]:
-        """Execute a repair action"""
+        """Execute a repair action with outcome learning"""
 
         logger.info(f"🔧 Starting repair: {repair_type} for {target}")
+
+        # Check if learner has a better action based on past outcomes
+        best_action = self.learner.get_best_action(target, issue)
+        if best_action and best_action['confidence'] > 0.8:
+            logger.info(f"📊 Using learned action: {best_action['action']} (confidence: {best_action['confidence']*100:.0f}%)")
+
+        start_time = time.time()
 
         result = {
             'success': False,
@@ -86,6 +103,24 @@ class RepairExecutor:
 
             # Send email notification
 # DISABLED by Patrick -             await self._send_repair_notification(result)
+
+            # Record outcome for learning
+            time_taken = time.time() - start_time
+            action_description = f"{repair_type}: {', '.join(result.get('actions_taken', []))}"
+
+            self.learner.record_repair_attempt(
+                service=target,
+                issue=issue,
+                action=action_description[:100],  # Limit action description length
+                success=result.get('success', False),
+                time_taken=time_taken,
+                error=result.get('error')
+            )
+
+            if result.get('success'):
+                logger.info(f"✅ Repair successful! Learned outcome recorded (time: {time_taken:.1f}s)")
+            else:
+                logger.info(f"❌ Repair failed. Learning from failure...")
 
             # Store in history
             self.repair_history.append(result)
