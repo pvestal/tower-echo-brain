@@ -1,0 +1,73 @@
+{
+  "extraction_date": "2026-01-27T20:44:21.904177",
+  "patterns": {
+    "service_fixes": {},
+    "error_patterns": {},
+    "command_sequences": [],
+    "dependencies": {}
+  },
+  "dependency_graph": {
+    "tower-echo-brain": {
+      "port": 8309,
+      "depends_on": [
+        "postgresql",
+        "qdrant",
+        "ollama"
+      ],
+      "critical": true
+    },
+    "tower-anime-production": {
+      "port": 8328,
+      "depends_on": [
+        "postgresql",
+        "comfyui",
+        "echo-brain"
+      ],
+      "critical": false
+    },
+    "tower-kb": {
+      "port": 8307,
+      "depends_on": [
+        "postgresql"
+      ],
+      "critical": true
+    },
+    "tower-auth": {
+      "port": 8088,
+      "depends_on": [
+        "postgresql",
+        "vault"
+      ],
+      "critical": true
+    },
+    "tower-apple-music": {
+      "port": 8306,
+      "depends_on": [
+        "vault"
+      ],
+      "critical": false
+    }
+  },
+  "training_dataset": [
+    {
+      "input": "port already in use",
+      "output": "lsof -i :{port} | grep LISTEN and kill the process",
+      "explanation": "Standard solution for port already in use"
+    },
+    {
+      "input": "module not found",
+      "output": "pip install missing_module or check PYTHONPATH",
+      "explanation": "Standard solution for module not found"
+    },
+    {
+      "input": "connection refused",
+      "output": "check if service is running with systemctl status",
+      "explanation": "Standard solution for connection refused"
+    },
+    {
+      "input": "permission denied",
+      "output": "check file permissions or use sudo",
+      "explanation": "Standard solution for permission denied"
+    }
+  ]
+}
