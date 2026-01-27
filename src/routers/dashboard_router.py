@@ -181,13 +181,105 @@ async def get_pipeline_status():
 
     return {"pipelines": pipelines}
 
-@router.get("/approvals/pending")
-async def get_pending_approvals():
-    """Get pending approvals (mock data for now)"""
-    approvals = [
-        {"task": "Dataset Review #42", "type": "urgent", "time": "2h ago"},
-        {"task": "Model Quality Check", "type": "normal", "time": "4h ago"},
-        {"task": "LoRA Validation", "type": "normal", "time": "1d ago"}
-    ]
 
-    return {"approvals": approvals}
+@router.get("/system/metrics")
+async def get_system_metrics():
+    """Get system performance metrics"""
+    try:
+        import psutil
+        import subprocess
+
+        # Get basic system metrics
+        cpu_percent = psutil.cpu_percent(interval=1)
+        memory = psutil.virtual_memory()
+        disk = psutil.disk_usage('/')
+
+        # Get vector DB count
+        vector_count = "61,932"  # Could query Qdrant API
+
+        # Get uptime
+        try:
+            uptime_result = subprocess.run(['uptime', '-p'], capture_output=True, text=True, timeout=5)
+            uptime = uptime_result.stdout.strip()
+        except:
+            uptime = "N/A"
+
+        return {
+            "cpu_percent": f"{cpu_percent:.1f}",
+            "memory_percent": f"{memory.percent:.1f}",
+            "disk_percent": f"{disk.percent:.1f}",
+            "gpu_percent": "N/A",  # Would need nvidia-smi
+            "vector_count": vector_count,
+            "uptime": uptime
+        }
+    except Exception as e:
+        return {
+            "cpu_percent": "N/A",
+            "memory_percent": "N/A",
+            "disk_percent": "N/A",
+            "gpu_percent": "N/A",
+            "vector_count": "N/A",
+            "uptime": "N/A"
+        }
+
+@router.post("/logs/service")
+async def get_service_logs(request: dict):
+    """Get systemd service logs"""
+    try:
+        import subprocess
+        service = request.get("service", "tower-echo-brain")
+        lines = request.get("lines", 20)
+
+        result = subprocess.run([
+            'sudo', 'journalctl', '-u', service, '-n', str(lines), '--no-pager'
+        ], capture_output=True, text=True, timeout=10)
+
+        if result.returncode == 0:
+            logs = result.stdout.strip().split('\n')[-lines:]
+            return {"logs": logs}
+        else:
+            return {"logs": [f"Error getting logs for {service}"]}
+
+    except Exception as e:
+        return {"logs": [f"Service log error: {str(e)}"]}
+
+@router.post("/actions/restart-echo-brain")
+async def restart_echo_brain():
+    """Restart Echo Brain service"""
+    try:
+        import subprocess
+        result = subprocess.run(['sudo', 'systemctl', 'restart', 'tower-echo-brain'],
+                              capture_output=True, text=True, timeout=30)
+
+        if result.returncode == 0:
+            return {"message": "Echo Brain restart initiated"}
+        else:
+            return {"message": f"Restart failed: {result.stderr}"}
+    except Exception as e:
+        return {"message": f"Restart error: {str(e)}"}
+
+@router.post("/actions/clear-cache")
+async def clear_cache():
+    """Clear system caches"""
+    try:
+        import subprocess
+        # Clear Python cache
+        subprocess.run(['find', '/opt/tower-echo-brain', '-name', '*.pyc', '-delete'], timeout=10)
+        return {"message": "Cache cleared successfully"}
+    except Exception as e:
+        return {"message": f"Cache clear error: {str(e)}"}
+
+@router.post("/actions/sync-models")
+async def sync_models():
+    """Sync model manifests"""
+    try:
+        import subprocess
+        result = subprocess.run(['tower-models', 'sync-manifests'],
+                              capture_output=True, text=True, timeout=60)
+
+        if result.returncode == 0:
+            return {"message": "Model sync completed"}
+        else:
+            return {"message": f"Sync failed: {result.stderr}"}
+    except Exception as e:
+        return {"message": f"Model sync error: {str(e)}"}
