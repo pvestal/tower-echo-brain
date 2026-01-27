@@ -185,8 +185,8 @@ except Exception as e:
 
 # Import Qdrant client
 try:
-    from .qdrant_client_resilient import ResilientQdrantMemory
-    qdrant_client = ResilientQdrantMemory()
+    from .qdrant_memory import QdrantMemory
+    qdrant_client = QdrantMemory(collection_name="echo_memory")
     logger.info("✅ Qdrant client loaded")
 except Exception as e:
     logger.warning(f"Could not load Qdrant client: {e}")
@@ -209,10 +209,12 @@ routers_to_mount = [
     ("echo", ""),
     ("git_operations", ""),  # Has own prefix
     ("google_calendar_api", ""),  # Has own prefix
+    ("google_data", ""),  # Has own prefix
     ("health", ""),  # Has own prefix
     ("home_assistant_api", ""),  # Has own prefix
     ("integrations", ""),  # Has own prefix
     ("knowledge", ""),  # Has own prefix
+    ("lora_training", ""),  # Has own prefix
     ("models", ""),
     ("models_manager", ""),  # Has own prefix
     ("notifications_api", ""),  # Has own prefix
