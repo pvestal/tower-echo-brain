@@ -1,0 +1,43 @@
+{
+  "projects": [
+    {
+      "id": 1,
+      "name": "Tokyo Debt Desire",
+      "style": "photorealistic",
+      "status": "active",
+      "description": "Adult-themed photorealistic visual novel",
+      "characters": [
+        {"id": 1, "name": "Yuki_Tanaka", "gender": "male", "description": "Nervous young man in debt"},
+        {"id": 2, "name": "Mei_Kobayashi", "gender": "female", "description": "Gentle housewife, soft features"},
+        {"id": 3, "name": "Rina_Suzuki", "gender": "female", "description": "Professional businesswoman, sharp features"},
+        {"id": 4, "name": "Takeshi_Sato", "gender": "male", "description": "Intimidating yakuza boss"}
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Cyberpunk Goblin Slayer: Neon Shadows",
+      "style": "cyberpunk_anime",
+      "status": "active",
+      "description": "Futuristic anime adaptation",
+      "characters": [
+        {"id": 5, "name": "Kai", "gender": "male", "description": "Young cyber fighter"},
+        {"id": 6, "name": "Goblin_Slayer", "gender": "male", "description": "Armored warrior"},
+        {"id": 7, "name": "Ryuu", "gender": "female", "description": "Elf archer"}
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Super Mario Galaxy Anime Adventure",
+      "style": "anime",
+      "status": "active",
+      "description": "Nintendo character anime adaptation",
+      "characters": [
+        {"id": 8, "name": "Mario", "gender": "male", "description": "Italian plumber hero"},
+        {"id": 9, "name": "Luigi", "gender": "male", "description": "Mario's brother"},
+        {"id": 10, "name": "Princess_Peach", "gender": "female", "description": "Mushroom Kingdom princess"},
+        {"id": 11, "name": "Bowser_Jr", "gender": "male", "description": "Bowser's son"},
+        {"id": 12, "name": "Rosalina", "gender": "female", "description": "Guardian of the cosmos"}
+      ]
+    }
+  ]
+}
