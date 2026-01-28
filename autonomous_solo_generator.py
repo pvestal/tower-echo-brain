@@ -2,6 +2,7 @@
 """
 Autonomous SOLO Image Generator for LoRA Training
 Generates ONLY solo images which actually work properly
+Using SSOT configuration for model selection
 """
 import asyncio
 import requests
@@ -11,6 +12,7 @@ import time
 import logging
 from pathlib import Path
 from typing import Dict, List
+from project_config_ssot import config_manager
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -27,8 +29,8 @@ class AutonomousSoloGenerator:
         # Character configurations - SOLO ONLY
         self.characters = {
             "tokyo_debt_desire": {
-                "model": "dreamshaper_8.safetensors",  # Works for both genders
-                "style": "photorealistic, detailed face, high quality",
+                "model": config_manager.models["primary"].file,  # Use SSOT primary model
+                "style": config_manager.projects["tokyo_debt_desire"]["style_prompt"],
                 "characters": {
                     "Yuki_Tanaka": {
                         "gender": "male",
@@ -77,8 +79,8 @@ class AutonomousSoloGenerator:
                 }
             },
             "cyberpunk_goblin_slayer": {
-                "model": "counterfeit_v3.safetensors",  # Anime style
-                "style": "anime style, detailed, high quality",
+                "model": config_manager.models["fallback"].file,  # Use fallback for anime style
+                "style": config_manager.projects["cyberpunk_goblin_slayer"]["style_prompt"],
                 "characters": {
                     "Goblin_Slayer": {
                         "gender": "male",
@@ -127,10 +129,13 @@ class AutonomousSoloGenerator:
         # Random seed for variety
         seed = random.randint(1, 1000000000)
 
+        # Get optimal settings from SSOT
+        model_config = config_manager.get_model_for_character(project, char_name)
+
         workflow = {
             "prompt": {
                 "1": {
-                    "inputs": {"ckpt_name": project_config["model"]},
+                    "inputs": {"ckpt_name": model_config.file},
                     "class_type": "CheckpointLoaderSimple"
                 },
                 "2": {
@@ -150,10 +155,10 @@ class AutonomousSoloGenerator:
                 "4": {
                     "inputs": {
                         "seed": seed,
-                        "steps": 25,
-                        "cfg": 7.5,
-                        "sampler_name": "euler",
-                        "scheduler": "normal",
+                        "steps": model_config.settings["steps"],
+                        "cfg": model_config.settings["cfg"],
+                        "sampler_name": model_config.settings["sampler"],
+                        "scheduler": model_config.settings["scheduler"],
                         "denoise": 1.0,
                         "model": ["1", 0],
                         "positive": ["2", 0],
