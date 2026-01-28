@@ -19,6 +19,8 @@ load_dotenv()
 from src.middleware.security_middleware import SecurityMiddleware, get_security_status
 from src.middleware.auth_middleware import get_auth_status, create_emergency_token
 from src.middleware.rate_limiting import get_rate_limit_status, get_user_rate_limit_status
+from src.middleware.validation_middleware import validate_request_middleware
+from src.middleware.api_key_auth import get_api_key_status, create_emergency_api_key
 
 # Import API routers with security applied
 from src.api.secured_routes import create_secured_routes
@@ -103,6 +105,9 @@ def create_secure_app() -> FastAPI:
         audit_all_requests=False  # Set to True for full audit logging
     )
 
+    # Add request validation middleware
+    app.middleware("http")(validate_request_middleware)
+
     # Add CORS middleware with security restrictions
     app.add_middleware(
         CORSMiddleware,
@@ -139,12 +144,24 @@ def create_secure_app() -> FastAPI:
         """Get current user's rate limit status"""
         return await get_user_rate_limit_status(request)
 
+    @app.get("/api-key/status")
+    async def api_key_status():
+        """Get API key system status"""
+        return await get_api_key_status()
+
     @app.post("/auth/emergency-token")
     async def generate_emergency_token():
         """Generate emergency admin token (for emergencies only)"""
         token = create_emergency_token()
         logger.warning("🚨 Emergency admin token generated")
         return {"token": token, "expires_in": 1800}  # 30 minutes
+
+    @app.post("/api-key/emergency")
+    async def generate_emergency_api_key():
+        """Generate emergency API key (for system recovery)"""
+        api_key = create_emergency_api_key("Emergency System Key")
+        logger.warning("🚨 Emergency API key generated")
+        return {"api_key": api_key, "expires_in": "90 days"}
 
     # Health check (exempt from most security)
     @app.get("/health")
@@ -219,8 +236,10 @@ def create_secure_app() -> FastAPI:
     logger.info("🔒 Secure Echo Brain application created successfully")
     logger.info(f"📊 Security features enabled:")
     logger.info(f"   - JWT Authentication: ✅")
+    logger.info(f"   - API Key Authentication: ✅")
     logger.info(f"   - Rate Limiting: ✅")
     logger.info(f"   - Input Validation: ✅")
+    logger.info(f"   - Request Sanitization: ✅")
     logger.info(f"   - Security Headers: ✅")
     logger.info(f"   - Audit Logging: ✅")
     logger.info(f"   - HTTPS Enforcement: ✅")

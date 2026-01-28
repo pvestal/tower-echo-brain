@@ -6,18 +6,30 @@ Health and status API routes for Echo Brain
 import psycopg2
 import logging
 from datetime import datetime
-from fastapi import APIRouter, HTTPException
+from typing import Dict, Any
+from fastapi import APIRouter, HTTPException, Depends
 
 from src.db.database import database
+from src.middleware.auth_middleware import get_current_user, get_current_user_optional
 
 logger = logging.getLogger(__name__)
 
 # Create router
 router = APIRouter()
 
+@router.get("/health")
+async def basic_health():
+    """Basic public health check endpoint - no authentication required"""
+    return {
+        "status": "healthy",
+        "service": "echo-brain",
+        "timestamp": datetime.now().isoformat(),
+        "public_endpoint": True
+    }
+
 @router.get("/api/echo/health")
-async def health_check():
-    """Health check endpoint with module information"""
+async def health_check(user: Dict[str, Any] = Depends(get_current_user)):
+    """Health check endpoint with module information - requires authentication"""
     try:
         # Test database connection
         conn = psycopg2.connect(**database.db_config)
@@ -30,22 +42,25 @@ async def health_check():
     return {
         "status": "healthy",
         "service": "echo-brain",
-        "version": "1.0.0",
+        "version": "4.0.0",
         "architecture": "modular",
         "database": db_status,
+        "authenticated_user": user.get('user', 'unknown'),
+        "user_role": user.get('role', 'user'),
         "timestamp": datetime.now().isoformat(),
         "modules": {
             "intelligence_router": True,
             "conversation_manager": True,
             "testing_framework": True,
             "database": True,
-            "safe_executor": True
+            "safe_executor": True,
+            "authentication": True
         }
     }
 
 @router.get("/api/echo/stats")
-async def get_echo_stats():
-    """Get Echo Brain statistics and performance metrics"""
+async def get_echo_stats(user: Dict[str, Any] = Depends(get_current_user)):
+    """Get Echo Brain statistics and performance metrics - requires authentication"""
     try:
         conn = psycopg2.connect(**database.db_config)
         cursor = conn.cursor()
@@ -68,6 +83,7 @@ async def get_echo_stats():
                 "avg_processing_time": float(stats[1]) if stats[1] else 0.0,
                 "unique_conversations_24h": stats[2] if stats[2] else 0
             },
+            "requested_by": user.get('user', 'unknown'),
             "timestamp": datetime.now().isoformat()
         }
 
@@ -76,8 +92,8 @@ async def get_echo_stats():
         raise HTTPException(status_code=500, detail=f"Stats error: {str(e)}")
 
 @router.get("/api/echo/tower/status")
-async def tower_status():
-    """Check status of Tower services"""
+async def tower_status(user: Dict[str, Any] = Depends(get_current_user)):
+    """Check status of Tower services - requires authentication"""
     try:
         from src.utils.helpers import tower_orchestrator
 
@@ -99,8 +115,8 @@ async def tower_status():
         }
 
 @router.get("/api/echo/tower/health")
-async def tower_health():
-    """Detailed health check of Tower ecosystem"""
+async def tower_health(user: Dict[str, Any] = Depends(get_current_user)):
+    """Detailed health check of Tower ecosystem - requires authentication"""
     try:
         from src.utils.helpers import tower_orchestrator
 

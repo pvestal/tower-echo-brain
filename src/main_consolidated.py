@@ -35,13 +35,27 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# Add CORS middleware
+# Import and add security middleware
+try:
+    from src.middleware.validation_middleware import validate_request_middleware
+    app.middleware("http")(validate_request_middleware)
+    logger.info("✅ Request validation middleware enabled")
+except ImportError:
+    logger.warning("⚠️ Request validation middleware not available")
+
+# Add CORS middleware with security restrictions
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://192.168.50.135",
+        "https://tower.local",
+        "http://localhost:3000",
+        "http://localhost:8080"
+    ],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
+    expose_headers=["X-RateLimit-*", "X-Security-*"]
 )
 
 # ============= Import Routers =============
