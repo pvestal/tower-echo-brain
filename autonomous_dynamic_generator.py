@@ -56,7 +56,7 @@ class AutonomousDynamicGenerator:
             'steps': 25
         }
 
-    async def generate_character_image(self, project: Dict, character: Dict) -> bool:
+    async def generate_character_image(self, project: Dict, character: Dict, character_name: str) -> bool:
         """Generate a single image for a character"""
 
         # Get model settings
@@ -76,7 +76,7 @@ class AutonomousDynamicGenerator:
             negative = "blurry, low quality"
 
         # Add character details
-        char_prompt = f"{character.get('description', character['name'])}, {base_prompt}"
+        char_prompt = f"{character.get('description', character_name)}, {base_prompt}"
 
         # Add gender-specific negatives
         if character.get('gender') == 'male':
@@ -85,7 +85,7 @@ class AutonomousDynamicGenerator:
             negative += ", man, male, masculine, beard"
 
         # Add distinguishing features if available
-        distinct = get_distinguishing_features(character['name'])
+        distinct = get_distinguishing_features(character_name)
         if distinct:
             char_prompt += f", {distinct}"
 
@@ -141,7 +141,7 @@ class AutonomousDynamicGenerator:
                 },
                 "7": {
                     "inputs": {
-                        "filename_prefix": f"AUTO_{project['name'].replace(' ', '_')}_{character['name']}",
+                        "filename_prefix": f"AUTO_{project['name'].replace(' ', '_')}_{character_name}",
                         "images": ["6", 0]
                     },
                     "class_type": "SaveImage"
@@ -157,10 +157,10 @@ class AutonomousDynamicGenerator:
             )
 
             if response.status_code == 200:
-                char_key = f"{project['id']}_{character['name']}"
+                char_key = f"{project['id']}_{character_name}"
                 self.generation_count[char_key] = self.generation_count.get(char_key, 0) + 1
 
-                logger.info(f"✅ [{project['name']}] {character['name']} - Image {self.generation_count[char_key]}/{self.images_per_character}")
+                logger.info(f"✅ [{project['name']}] {character_name} - Image {self.generation_count[char_key]}/{self.images_per_character}")
                 return True
             else:
                 logger.error(f"❌ Failed: {response.status_code}")
@@ -181,7 +181,7 @@ class AutonomousDynamicGenerator:
             char_key = f"{project['id']}_{char_name}"
 
             for i in range(self.images_per_character):
-                success = await self.generate_character_image(project, char_data)
+                success = await self.generate_character_image(project, char_data, char_name)
                 if success:
                     await asyncio.sleep(10)  # Wait between generations
                 else:
