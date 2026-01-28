@@ -620,11 +620,12 @@
                 const data = await response.json();
 
                 metricsDiv.innerHTML = `
-                    <div class="metric-item">CPU: ${data.cpu_percent || 'N/A'}%</div>
-                    <div class="metric-item">Memory: ${data.memory_percent || 'N/A'}%</div>
-                    <div class="metric-item">Disk: ${data.disk_percent || 'N/A'}%</div>
-                    <div class="metric-item">GPU: ${data.gpu_percent || 'N/A'}%</div>
-                    <div class="metric-item">Vector DB: ${data.vector_count || 'N/A'} docs</div>
+                    <div class="metric-item">CPU: ${data.cpu_percent || 'N/A'}</div>
+                    <div class="metric-item">Memory: ${data.memory_percent || 'N/A'}</div>
+                    <div class="metric-item">Disk: ${data.disk_percent || 'N/A'}</div>
+                    <div class="metric-item">GPU: ${data.gpu_info || 'N/A'}</div>
+                    <div class="metric-item">Vector DB: ${data.vector_count || 'N/A'} vectors</div>
+                    <div class="metric-item" style="background: #1e2329; border-color: ${data.ingestion_status?.includes('RUNNING') ? '#3fb950' : '#30363d'};">Ingestion: ${data.ingestion_status || 'Idle'}</div>
                     <div class="metric-item">Uptime: ${data.uptime || 'N/A'}</div>
                 `;
 

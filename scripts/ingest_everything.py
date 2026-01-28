@@ -316,7 +316,7 @@ def main():
         client.delete(f"{QDRANT_URL}/collections/{COLLECTION_NAME}")
         client.put(
             f"{QDRANT_URL}/collections/{COLLECTION_NAME}",
-            json={"vectors": {"size": 1024, "distance": "Cosine", "on_disk": true}}
+            json={"vectors": {"size": 1024, "distance": "Cosine", "on_disk": True}}
         )
 
     all_points = []

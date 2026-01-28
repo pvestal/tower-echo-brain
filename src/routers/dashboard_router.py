@@ -194,6 +194,8 @@ async def get_system_metrics():
     try:
         import psutil
         import subprocess
+        import json
+        from pathlib import Path
 
         # Get basic system metrics
         cpu_percent = psutil.cpu_percent(interval=1)
@@ -214,6 +216,25 @@ async def get_system_metrics():
                         vector_count = "N/A"
         except:
             vector_count = "N/A"
+
+        # Check ingestion status
+        ingestion_status = "Idle"
+        try:
+            # Check if ingestion process is running
+            result = subprocess.run(['pgrep', '-f', 'ingest_everything|fast_ingest'],
+                                  capture_output=True, text=True, timeout=2)
+            if result.stdout.strip():
+                ingestion_status = f"RUNNING (PID: {result.stdout.strip().split()[0]})"
+
+            # Also check status file if exists
+            status_file = Path("/tmp/echo_ingestion_status.json")
+            if status_file.exists():
+                with open(status_file) as f:
+                    status_data = json.load(f)
+                    if 'total' in status_data:
+                        ingestion_status = f"Last run: {status_data.get('total', 0)} vectors"
+        except:
+            pass
 
         # Get uptime
         try:
@@ -244,6 +265,7 @@ async def get_system_metrics():
             "disk_free_gb": f"{disk.free / (1024**3):.1f}GB",
             "gpu_info": gpu_info,
             "vector_count": vector_count,
+            "ingestion_status": ingestion_status,
             "uptime": uptime,
             "timestamp": datetime.now().isoformat()
         }
