@@ -199,14 +199,8 @@ async def get_recent_thoughts(limit: int = 10):
             for t in thoughts
         ]
     except ImportError:
-        # Return mock data if thoughts module unavailable
-        return [
-            ThoughtResponse(
-                id=str(uuid.uuid4()),
-                content="Echo Brain thoughts system initializing...",
-                timestamp=datetime.now()
-            )
-        ]
+        # Return empty list if thoughts module unavailable
+        return []
     except Exception as e:
         logger.error(f"Failed to get thoughts: {e}")
         raise HTTPException(status_code=500, detail=str(e))
