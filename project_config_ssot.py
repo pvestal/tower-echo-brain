@@ -104,6 +104,16 @@ PROJECTS = {
         "resolution": {"width": 512, "height": 768},
         "negative_prompt": "realistic, photograph, blurry",
         "style_prompt": "anime style, cyberpunk aesthetic, neon lighting, detailed"
+    },
+    "super_mario_galaxy": {
+        "name": "Super Mario Galaxy Anime Adventure",
+        "style": "anime",
+        "content_rating": "family",
+        "default_model": "fallback",  # Anime style
+        "fallback_model": "asian_specialized",
+        "resolution": {"width": 512, "height": 768},
+        "negative_prompt": "realistic, photograph, blurry, scary, violent",
+        "style_prompt": "anime style, vibrant colors, nintendo character, expressive, cheerful"
     }
 }
 
