@@ -60,30 +60,31 @@ class AutonomousImageGenerator:
         # Define NSFW character scenarios with enhanced sex appeal
         characters = {
             "Mei_Kobayashi": [
-                "beautiful Japanese woman, long dark hair, seductive gentle expression, wearing skimpy apron with visible cleavage and bare legs, cooking in Tokyo apartment kitchen, curvy body, medium natural breasts, photorealistic, natural skin texture, sexy pose, aroused expression",
-                "beautiful curvy Japanese woman, long dark hair, sultry smile, wearing tight low-cut top and short skirt, sitting with legs crossed on couch, visible cleavage, Tokyo apartment, photorealistic, detailed skin, alluring pose, slightly aroused",
-                "beautiful Japanese woman, long dark hair, caring but sexy expression, wearing revealing crop top and short shorts while cleaning, bent over pose showing curves from behind, rear view, Tokyo apartment, natural lighting, photorealistic, attractive body, arousal visible"
+                "beautiful Japanese woman, female anatomy, long dark hair, seductive gentle expression, wearing skimpy apron with visible cleavage and bare legs, cooking in Tokyo apartment kitchen, curvy body, medium natural breasts, vagina, feminine curves, photorealistic, natural skin texture, sexy pose, aroused expression",
+                "beautiful curvy Japanese woman, female anatomy, long dark hair, sultry smile, wearing tight low-cut top and short skirt, sitting with legs crossed on couch, visible cleavage, Tokyo apartment, feminine body, photorealistic, detailed skin, alluring pose, slightly aroused",
+                "beautiful Japanese woman, female anatomy, long dark hair, caring but sexy expression, wearing revealing crop top and short shorts while cleaning, bent over pose showing curves from behind, rear view, Tokyo apartment, natural lighting, feminine curves, photorealistic, attractive body, arousal visible"
             ],
             "Rina_Suzuki": [
-                "attractive confident Japanese woman, short brown hair, assertive seductive expression, hands on hips emphasizing curves, wearing tight mini dress with deep neckline, medium natural breasts, curvy hips, Tokyo apartment, photorealistic, sexy stance, aroused",
-                "attractive Japanese woman, short brown hair, seductive confident expression, wearing lingerie or bikini, bedroom setting, curvy body with medium natural breasts, provocative pose from behind, rear view, photorealistic, sensual lighting, arousal state",
-                "attractive Japanese woman, short brown hair, arguing but sexy pose, aggressive stance with chest pushed out, wearing revealing tight clothing, medium natural breasts visible, Tokyo apartment living room, photorealistic, alluring, sexually excited"
+                "attractive confident Japanese woman, female anatomy, short brown hair, assertive seductive expression, hands on hips emphasizing curves, wearing tight mini dress with deep neckline, medium natural breasts, curvy hips, vagina, feminine curves, Tokyo apartment, photorealistic, sexy stance, aroused",
+                "attractive Japanese woman, female anatomy, short brown hair, seductive confident expression, wearing lingerie or bikini, bedroom setting, curvy body with medium natural breasts, feminine body, provocative pose from behind, rear view, photorealistic, sensual lighting, arousal state",
+                "attractive Japanese woman, female anatomy, short brown hair, arguing but sexy pose, aggressive stance with chest pushed out, wearing revealing tight clothing, medium natural breasts visible, feminine curves, Tokyo apartment living room, photorealistic, alluring, sexually excited"
             ],
             "Yuki_Tanaka": [
-                "young nervous Japanese man, average build, worried anxious expression, counting money bills, wearing casual t-shirt, surrounded by two sexy women in revealing clothing, Tokyo apartment, photorealistic, harem protagonist, visible arousal, NSFW situation",
-                "young Japanese man, nervous worried expression, sitting shirtless on couch between two curvy women touching him, casual clothes partially removed, caught in compromising situation, visible physical attraction and arousal, photorealistic, awkward but sexually excited, NSFW scene",
-                "young Japanese man, stressed but sexually aroused expression, holding bills while attractive woman in lingerie seductively distracts him from behind, rear view of woman, Tokyo apartment setting, photorealistic, conflicted between money and desire, visible arousal, NSFW content"
+                "young nervous Japanese man, male anatomy, average build, worried anxious expression, counting money bills, wearing casual t-shirt, surrounded by two sexy women in revealing clothing, Tokyo apartment, photorealistic, harem protagonist, visible male arousal, penis, masculine body, NSFW situation",
+                "young Japanese man, male anatomy, nervous worried expression, sitting shirtless on couch between two curvy women touching him, casual clothes partially removed, masculine chest, penis visible, caught in compromising situation, visible physical attraction and arousal, photorealistic, awkward but sexually excited, NSFW scene",
+                "young Japanese man, male anatomy, stressed but sexually aroused expression, holding bills while attractive woman in lingerie seductively distracts him from behind, rear view of woman, Tokyo apartment setting, masculine features, penis, photorealistic, conflicted between money and desire, visible male arousal, NSFW content"
             ],
             "Takeshi_Sato": [
-                "intimidating middle-aged Japanese man, short black hair, cold menacing expression, expensive dark business suit, standing in dark Tokyo alley, photorealistic, dangerous aura",
-                "intimidating Japanese man in business suit, menacing expression, standing at apartment door while sexy women in background, threatening pose, urban setting, photorealistic, power dynamic",
-                "intimidating yakuza man, dark suit, cold calculating expression, office setting with city view and attractive secretary, photorealistic detailed features, authority figure"
+                "intimidating middle-aged Japanese man, male anatomy, short black hair, cold menacing expression, expensive dark business suit, standing in dark Tokyo alley, masculine features, photorealistic, dangerous aura",
+                "intimidating Japanese man in business suit, male anatomy, menacing expression, standing at apartment door while sexy women in background, threatening pose, masculine build, urban setting, photorealistic, power dynamic",
+                "intimidating yakuza man, male anatomy, dark suit, cold calculating expression, office setting with city view and attractive secretary, masculine presence, photorealistic detailed features, authority figure"
             ]
         }
 
         generation_cycle = 0
+        max_images = 1000  # Stop at 1000 images for user feedback
 
-        while self.is_running:
+        while self.is_running and self.generation_count < max_images:
             try:
                 generation_cycle += 1
                 logger.info(f"🎯 Starting generation cycle {generation_cycle}")
@@ -107,18 +108,23 @@ class AutonomousImageGenerator:
                     else:
                         logger.warning(f"❌ Failed to generate {character_name}")
 
-                    # Generate additional rear view variation every other cycle
-                    if generation_cycle % 2 == 0:
-                        rear_prompt = self._create_rear_view_prompt(character_name, base_prompt)
-                        rear_success = await self._generate_character_image(character_name, rear_prompt, generation_cycle, "_rear")
-                        if rear_success:
-                            self.generation_count += 1
-                            logger.info(f"🍑 Generated {character_name} rear view NSFW #{self.generation_count}")
+                    # Skip rear views for now to focus on main generation
+                    # if generation_cycle % 2 == 0:
+                    #     rear_prompt = self._create_rear_view_prompt(character_name, base_prompt)
+                    #     rear_success = await self._generate_character_image(character_name, rear_prompt, generation_cycle, "_rear")
+                    #     if rear_success:
+                    #         self.generation_count += 1
+                    #         logger.info(f"🍑 Generated {character_name} rear view NSFW #{self.generation_count}")
 
                     # Small delay between characters
                     await asyncio.sleep(3)
 
                 logger.info(f"🔄 Cycle {generation_cycle} complete. Generated {self.generation_count} total images.")
+
+                # Check if we've reached the limit
+                if self.generation_count >= max_images:
+                    logger.info(f"🎯 Reached {max_images} image limit. Stopping for user feedback...")
+                    break
 
                 # Wait before next cycle
                 await asyncio.sleep(30)
