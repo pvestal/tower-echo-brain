@@ -172,6 +172,12 @@ async def dashboard():
     """Redirect to dashboard"""
     return {"message": "Dashboard available at /static/dist/index.html"}
 
+@app.get("/favicon.ico")
+async def favicon():
+    """Simple favicon endpoint to prevent 404s"""
+    from fastapi.responses import Response
+    return Response("", media_type="image/x-icon")
+
 # ============= Error Handlers =============
 
 @app.exception_handler(404)

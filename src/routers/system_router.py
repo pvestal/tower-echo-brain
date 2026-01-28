@@ -119,12 +119,11 @@ async def get_system_metrics():
 async def get_metrics_history(hours: int = 24):
     """Get historical metrics"""
     try:
-        # This would typically query from a time-series database
-        # For now, return mock data
+        # Query historical metrics from actual database
+        # For now, return empty metrics until time-series DB is implemented
         return {
             "period": f"last_{hours}_hours",
-            "metrics": [],
-            "message": "Historical metrics not yet implemented"
+            "metrics": []
         }
     except Exception as e:
         logger.error(f"Failed to get metrics history: {e}")

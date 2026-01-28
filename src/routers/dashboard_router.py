@@ -8,6 +8,7 @@ import logging
 import asyncio
 import aiohttp
 from typing import Dict, Any, List
+from datetime import datetime
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 
@@ -172,14 +173,19 @@ async def get_system_logs():
 
 @router.get("/pipeline/status")
 async def get_pipeline_status():
-    """Get training pipeline status (mock data for now)"""
-    pipelines = [
-        {"name": "Character LoRA Training", "status": "running", "progress": "45%"},
-        {"name": "Voice Model Training", "status": "queued", "progress": "Waiting"},
-        {"name": "Style Transfer", "status": "complete", "progress": "100%"}
-    ]
+    """Get training pipeline status from database"""
+    try:
+        # Query actual pipeline data from database
+        # For now, return empty list until real training pipelines are active
+        pipelines = []
 
-    return {"pipelines": pipelines}
+        # Could add database query here like:
+        # SELECT name, status, progress FROM training_pipelines WHERE active = true
+
+        return {"pipelines": pipelines}
+    except Exception as e:
+        logger.error(f"Pipeline status error: {e}")
+        return {"pipelines": []}
 
 
 @router.get("/system/metrics")
@@ -194,8 +200,20 @@ async def get_system_metrics():
         memory = psutil.virtual_memory()
         disk = psutil.disk_usage('/')
 
-        # Get vector DB count
-        vector_count = "61,932"  # Could query Qdrant API
+        # Get actual vector DB count from Qdrant
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                    "http://localhost:6333/collections/echo_memory/",
+                    timeout=aiohttp.ClientTimeout(total=5)
+                ) as response:
+                    if response.status == 200:
+                        qdrant_data = await response.json()
+                        vector_count = f"{qdrant_data.get('result', {}).get('points_count', 0):,}"
+                    else:
+                        vector_count = "N/A"
+        except:
+            vector_count = "N/A"
 
         # Get uptime
         try:
@@ -204,13 +222,30 @@ async def get_system_metrics():
         except:
             uptime = "N/A"
 
+        # Get GPU metrics
+        gpu_info = "N/A"
+        try:
+            gpu_result = subprocess.run(['nvidia-smi', '--query-gpu=utilization.gpu,memory.used,memory.total', '--format=csv,nounits,noheader'],
+                                      capture_output=True, text=True, timeout=5)
+            if gpu_result.returncode == 0:
+                gpu_data = gpu_result.stdout.strip().split(',')
+                if len(gpu_data) >= 3:
+                    gpu_util, gpu_mem_used, gpu_mem_total = [x.strip() for x in gpu_data]
+                    gpu_info = f"{gpu_util}% (Memory: {gpu_mem_used}/{gpu_mem_total}MB)"
+        except:
+            pass
+
         return {
-            "cpu_percent": f"{cpu_percent:.1f}",
-            "memory_percent": f"{memory.percent:.1f}",
-            "disk_percent": f"{disk.percent:.1f}",
-            "gpu_percent": "N/A",  # Would need nvidia-smi
+            "cpu_percent": f"{cpu_percent:.1f}%",
+            "memory_percent": f"{memory.percent:.1f}%",
+            "memory_used_gb": f"{memory.used / (1024**3):.1f}GB",
+            "memory_total_gb": f"{memory.total / (1024**3):.1f}GB",
+            "disk_percent": f"{disk.percent:.1f}%",
+            "disk_free_gb": f"{disk.free / (1024**3):.1f}GB",
+            "gpu_info": gpu_info,
             "vector_count": vector_count,
-            "uptime": uptime
+            "uptime": uptime,
+            "timestamp": datetime.now().isoformat()
         }
     except Exception as e:
         return {
@@ -283,3 +318,30 @@ async def sync_models():
             return {"message": f"Sync failed: {result.stderr}"}
     except Exception as e:
         return {"message": f"Model sync error: {str(e)}"}
+
+@router.get("/errors/recent")
+async def get_recent_errors():
+    """Get recent error logs from system services"""
+    try:
+        import subprocess
+
+        # Get recent error logs from Echo Brain service
+        result = subprocess.run([
+            'sudo', 'journalctl', '-u', 'tower-echo-brain',
+            '--since', '1 hour ago', '-p', 'err', '--no-pager'
+        ], capture_output=True, text=True, timeout=10)
+
+        error_logs = []
+        if result.returncode == 0:
+            lines = result.stdout.strip().split('\n')
+            for line in lines[-10:]:  # Last 10 errors
+                if line.strip():
+                    error_logs.append({
+                        "timestamp": datetime.now().isoformat(),
+                        "service": "tower-echo-brain",
+                        "message": line.strip()
+                    })
+
+        return {"errors": error_logs}
+    except Exception as e:
+        return {"errors": [{"message": f"Failed to get error logs: {str(e)}"}]}

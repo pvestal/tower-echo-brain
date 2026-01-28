@@ -476,21 +476,23 @@
         }
 
         // Refresh pending approvals
-        async function refreshApprovals() {
-            const approvalsDiv = document.getElementById('pending-approvals');
+        async function refreshSystemLogs() {
+            const logsDiv = document.getElementById('system-logs');
+            if (!logsDiv) return;
 
             try {
-                const response = await fetch('/api/dashboard/approvals/pending');
+                const response = await fetch('/api/dashboard/logs/service', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ service: 'tower-echo-brain', lines: 50 })
+                });
                 const data = await response.json();
 
-                approvalsDiv.innerHTML = data.approvals.map(approval =>
-                    `<div class="approval-item ${approval.type}">
-                        ${approval.task}
-                        <div class="timestamp">${approval.time}</div>
-                    </div>`
+                logsDiv.innerHTML = data.logs.slice(-20).map(log =>
+                    `<div class="log-line">${log}</div>`
                 ).join('');
             } catch (error) {
-                approvalsDiv.innerHTML = `<div class="log-line error">Approvals error: ${error.message}</div>`;
+                logsDiv.innerHTML = `<div class="log-line error">Log error: ${error.message}</div>`;
             }
         }
 
@@ -501,7 +503,7 @@
             loadChatHistory();
             refreshModelActions();
             refreshPipeline();
-            refreshApprovals();
+            refreshSystemLogs();
 
             // Auto-refresh every 30 seconds
             setInterval(() => {
