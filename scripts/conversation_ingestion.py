@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Real conversation ingestion for Echo Brain
-Processes actual Claude conversation files and stores them in Qdrant
+Conversation ingestion for Echo Brain
+Processes Claude conversation files and stores them in Qdrant
 """
 
 import json
@@ -101,7 +101,7 @@ def upload_to_qdrant(points, batch_size=100):
 
 def main():
     """Main ingestion process"""
-    print("🧠 Real Echo Brain Conversation Ingestion")
+    print("🧠 Echo Brain Conversation Ingestion")
     print("=" * 50)
 
     # Find ALL conversation files across all projects
@@ -146,11 +146,11 @@ def main():
         upload_to_qdrant(all_points)
 
         # Log completion
-        log_file = "/opt/tower-echo-brain/logs/real_ingestion.log"
+        log_file = "/opt/tower-echo-brain/logs/conversation_ingestion.log"
         os.makedirs(os.path.dirname(log_file), exist_ok=True)
 
         with open(log_file, "w") as f:
-            f.write(f"Real ingestion completed at {datetime.now()}\n")
+            f.write(f"Conversation ingestion completed at {datetime.now()}\n")
             f.write(f"Processed {len(conversation_files)} files\n")
             f.write(f"Uploaded {len(all_points)} conversation summaries\n")
 
