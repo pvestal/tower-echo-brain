@@ -12,7 +12,7 @@ Usage:
 import argparse
 import asyncio
 import hashlib
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 from uuid import UUID
 
@@ -110,9 +110,9 @@ async def backfill_from_qdrant(
                     try:
                         created_at = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
                     except:
-                        created_at = datetime.utcnow()
+                        created_at = datetime.now(timezone.utc)
                 else:
-                    created_at = datetime.utcnow()
+                    created_at = datetime.now(timezone.utc)
                 
                 # Generate hash from content
                 content_hash = hashlib.sha256(

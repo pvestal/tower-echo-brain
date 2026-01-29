@@ -61,6 +61,8 @@ from src.api.solutions import router as solutions_router
 from src.api.agents import router as agents_router
 from src.api.lora_training import router as lora_router
 
+# Operations monitoring integrated into system_router
+
 # Personal Dashboard APIs
 try:
     from src.api.knowledge import router as knowledge_router
@@ -276,6 +278,8 @@ def create_app() -> FastAPI:
     app.include_router(codebase_router, tags=["codebase"])
     app.include_router(solutions_router, prefix="", tags=["solutions"])  # Solutions already has /api/echo prefix
     app.include_router(agents_router, tags=["agents"])
+
+# Operations monitoring integrated into system_router (no duplicate needed)
 
     # Claude Bridge integration
     try:
