@@ -75,8 +75,18 @@ class AutonomousDynamicGenerator:
             base_prompt = f"high quality, detailed"
             negative = "blurry, low quality"
 
+        # Add ethnicity based on project/character context
+        ethnicity = ""
+        project_name_lower = project['name'].lower()
+        if 'tokyo' in project_name_lower or 'japanese' in project_name_lower:
+            ethnicity = "Japanese, Asian features, "
+            negative += ", caucasian, european, western features"
+        elif 'mario' in project_name_lower:
+            if 'mario' in character_name.lower() or 'luigi' in character_name.lower():
+                ethnicity = "Italian, "
+
         # Add character details
-        char_prompt = f"{character.get('description', character_name)}, {base_prompt}"
+        char_prompt = f"{ethnicity}{character.get('description', character_name)}, {base_prompt}"
 
         # Add gender-specific negatives
         if character.get('gender') == 'male':
