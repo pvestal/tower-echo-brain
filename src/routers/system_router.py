@@ -7,10 +7,13 @@ Handles: health checks, diagnostics, metrics, system status
 import os
 import psutil
 import logging
+import subprocess
+import json
+import asyncio
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
@@ -38,6 +41,25 @@ class DiagnosticsResponse(BaseModel):
     services: Dict
     resources: Dict
     errors: List[str]
+
+# Operations monitoring models
+class BackgroundJobStatus(BaseModel):
+    job_id: str
+    job_type: str
+    status: str  # 'running', 'completed', 'failed'
+    progress_pct: float
+    items_processed: int
+    items_total: int
+    rate_per_minute: float
+    eta_minutes: Optional[int]
+    started_at: Optional[datetime]
+    current_operation: str = ""
+    error_count: int = 0
+
+class OperationsStatus(BaseModel):
+    active_jobs: List[BackgroundJobStatus]
+    system_health: Dict[str, Any]
+    resource_usage: Dict[str, float]
 
 # Track service start time
 SERVICE_START_TIME = datetime.now()
@@ -430,3 +452,177 @@ def _format_uptime(seconds: float) -> str:
         parts.append(f"{minutes}m")
 
     return " ".join(parts) if parts else "< 1m"
+
+# ============= Operations Monitoring Endpoints =============
+
+@router.get("/operations/status", response_model=OperationsStatus)
+async def get_operations_status():
+    """Get current background operations status"""
+    try:
+        active_jobs = await _get_background_jobs()
+        system_health = await _check_critical_services()
+
+        # Get resource usage
+        cpu = psutil.cpu_percent(interval=0.1)
+        memory = psutil.virtual_memory()
+        gpu_usage = await _get_gpu_usage()
+
+        resource_usage = {
+            "cpu_percent": cpu,
+            "memory_percent": memory.percent,
+            "gpu_percent": gpu_usage or 0.0,
+            "disk_percent": psutil.disk_usage('/').percent
+        }
+
+        return OperationsStatus(
+            active_jobs=active_jobs,
+            system_health=system_health,
+            resource_usage=resource_usage
+        )
+    except Exception as e:
+        logger.error(f"Failed to get operations status: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/operations/jobs")
+async def get_background_jobs():
+    """Get list of all background jobs"""
+    try:
+        jobs = await _get_background_jobs()
+        return {"jobs": jobs}
+    except Exception as e:
+        logger.error(f"Failed to get background jobs: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.websocket("/operations/stream")
+async def operations_websocket(websocket: WebSocket):
+    """WebSocket endpoint for real-time operations updates"""
+    await websocket.accept()
+
+    try:
+        while True:
+            # Get current status
+            status = await get_operations_status()
+
+            # Send to client
+            await websocket.send_text(status.json())
+
+            # Wait before next update
+            await asyncio.sleep(5)
+
+    except WebSocketDisconnect:
+        logger.info("Operations WebSocket client disconnected")
+    except Exception as e:
+        logger.error(f"Operations WebSocket error: {e}")
+        try:
+            await websocket.close()
+        except:
+            pass
+
+async def _get_background_jobs() -> List[BackgroundJobStatus]:
+    """Get status of background jobs from tmux sessions"""
+    jobs = []
+
+    try:
+        # List tmux sessions
+        result = subprocess.run(['tmux', 'list-sessions', '-F', '#{session_name}'],
+                              capture_output=True, text=True)
+
+        if result.returncode == 0:
+            sessions = result.stdout.strip().split('\n')
+
+            for session_name in sessions:
+                if session_name in ['backfill', 'extraction']:
+                    # Get session output
+                    capture_result = subprocess.run(
+                        ['tmux', 'capture-pane', '-t', session_name, '-p'],
+                        capture_output=True, text=True
+                    )
+
+                    if capture_result.returncode == 0:
+                        output = capture_result.stdout
+
+                        # Parse job status from output
+                        if session_name == 'backfill':
+                            job = await _parse_backfill_progress(output)
+                            if job:
+                                jobs.append(job)
+
+                        elif session_name == 'extraction':
+                            job = await _parse_extraction_progress(output)
+                            if job:
+                                jobs.append(job)
+
+    except Exception as e:
+        logger.error(f"Error getting background jobs: {e}")
+
+    return jobs
+
+async def _parse_backfill_progress(output: str) -> Optional[BackgroundJobStatus]:
+    """Parse backfill progress from tmux output"""
+    lines = output.strip().split('\n')
+
+    for line in reversed(lines):
+        # Look for: [146200/303532] (48.2%) - Inserted: 79157, Skipped: 66953, Errors: 90
+        if '] (' in line and '%) -' in line and 'Inserted:' in line:
+            try:
+                # Extract progress
+                progress_part = line.split('] (')[1].split('%) -')[0]
+                progress_pct = float(progress_part)
+
+                # Extract counts
+                bracket_part = line.split('[')[1].split(']')[0]
+                current, total = map(int, bracket_part.split('/'))
+
+                # Extract stats
+                stats_part = line.split('- ')[1]
+                inserted = int(stats_part.split('Inserted: ')[1].split(',')[0])
+                errors = int(stats_part.split('Errors: ')[1])
+
+                # Calculate rate (rough estimate)
+                rate_per_minute = 1800.0  # TODO: Calculate from timestamps
+
+                # Calculate ETA
+                remaining = total - current
+                eta_minutes = int(remaining / rate_per_minute) if rate_per_minute > 0 else None
+
+                return BackgroundJobStatus(
+                    job_id="backfill_vectors",
+                    job_type="Vector Backfill",
+                    status="running",
+                    progress_pct=progress_pct,
+                    items_processed=current,
+                    items_total=total,
+                    rate_per_minute=rate_per_minute,
+                    eta_minutes=eta_minutes,
+                    started_at=datetime.now(),  # TODO: Get real start time
+                    error_count=errors,
+                    current_operation=f"Processing vectors {current}-{current+100}"
+                )
+            except Exception as e:
+                logger.error(f"Error parsing backfill progress: {e}")
+                continue
+
+    return None
+
+async def _parse_extraction_progress(output: str) -> Optional[BackgroundJobStatus]:
+    """Parse extraction progress from tmux output"""
+    lines = output.strip().split('\n')
+
+    # Look for extraction-specific patterns
+    for line in reversed(lines):
+        if 'Extracting facts' in line or 'Processing batch' in line:
+            # TODO: Parse extraction progress
+            return BackgroundJobStatus(
+                job_id="fact_extraction",
+                job_type="Fact Extraction",
+                status="running",
+                progress_pct=0.0,
+                items_processed=0,
+                items_total=1000,
+                rate_per_minute=60.0,
+                eta_minutes=None,
+                started_at=datetime.now(),
+                current_operation="Extracting facts..."
+            )
+
+    return None
