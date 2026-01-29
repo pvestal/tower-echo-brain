@@ -81,8 +81,8 @@ class FactExtractor:
         self,
         ollama_client,
         postgres_dsn: str,
-        extraction_model: str = "qwen2.5:14b",  # Good extraction, fits in 12GB Q4
-        classification_model: str = "qwen2.5:7b",  # Fast classification
+        extraction_model: str = "qwen2.5:3b",  # Using available 3b model
+        classification_model: str = "qwen2.5:3b",  # Using same model for both
         batch_size: int = 10,
         max_retries: int = 3
     ):
