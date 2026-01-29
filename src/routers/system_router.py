@@ -328,7 +328,7 @@ async def _check_critical_services() -> Dict[str, bool]:
             host="localhost",
             database="echo_brain",
             user="patrick",
-            password=os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE"),
+            password="tower_echo_brain_secret_key_2025",
             timeout=2
         )
         await conn.close()
@@ -349,7 +349,7 @@ async def _check_critical_services() -> Dict[str, bool]:
     try:
         import httpx
         async with httpx.AsyncClient() as client:
-            response = await client.get("http://localhost:6333/health", timeout=2)
+            response = await client.get("http://localhost:6333/", timeout=2)
             services["qdrant"] = response.status_code == 200
     except:
         services["qdrant"] = False
@@ -504,7 +504,7 @@ async def operations_websocket(websocket: WebSocket):
             status = await get_operations_status()
 
             # Send to client
-            await websocket.send_text(status.json())
+            await websocket.send_text(status.model_dump_json())
 
             # Wait before next update
             await asyncio.sleep(5)
@@ -523,8 +523,8 @@ async def _get_background_jobs() -> List[BackgroundJobStatus]:
     jobs = []
 
     try:
-        # List tmux sessions
-        result = subprocess.run(['tmux', 'list-sessions', '-F', '#{session_name}'],
+        # List tmux sessions (need to run as patrick user since sessions are owned by patrick)
+        result = subprocess.run(['sudo', '-u', 'patrick', 'tmux', 'list-sessions', '-F', '#{session_name}'],
                               capture_output=True, text=True)
 
         if result.returncode == 0:
@@ -532,9 +532,9 @@ async def _get_background_jobs() -> List[BackgroundJobStatus]:
 
             for session_name in sessions:
                 if session_name in ['backfill', 'extraction']:
-                    # Get session output
+                    # Get session output (need sudo for patrick's sessions)
                     capture_result = subprocess.run(
-                        ['tmux', 'capture-pane', '-t', session_name, '-p'],
+                        ['sudo', '-u', 'patrick', 'tmux', 'capture-pane', '-t', session_name, '-p'],
                         capture_output=True, text=True
                     )
 
@@ -543,6 +543,10 @@ async def _get_background_jobs() -> List[BackgroundJobStatus]:
 
                         # Parse job status from output
                         if session_name == 'backfill':
+                            # Check if backfill is complete
+                            if 'BACKFILL COMPLETE' in output:
+                                # Backfill is done, don't report as active job
+                                continue
                             job = await _parse_backfill_progress(output)
                             if job:
                                 jobs.append(job)
@@ -608,21 +612,44 @@ async def _parse_extraction_progress(output: str) -> Optional[BackgroundJobStatu
     """Parse extraction progress from tmux output"""
     lines = output.strip().split('\n')
 
-    # Look for extraction-specific patterns
-    for line in reversed(lines):
-        if 'Extracting facts' in line or 'Processing batch' in line:
-            # TODO: Parse extraction progress
-            return BackgroundJobStatus(
-                job_id="fact_extraction",
-                job_type="Fact Extraction",
-                status="running",
-                progress_pct=0.0,
-                items_processed=0,
-                items_total=1000,
-                rate_per_minute=60.0,
-                eta_minutes=None,
-                started_at=datetime.now(),
-                current_operation="Extracting facts..."
-            )
+    # Look for startup patterns indicating active job
+    total_vectors = None
+    tracking_records = None
+
+    for line in lines:
+        if '📊 Total vectors:' in line:
+            try:
+                total_vectors = int(line.split('Total vectors: ')[1].replace(',', ''))
+            except:
+                pass
+        elif '✅ Tracking table has' in line:
+            try:
+                tracking_records = int(line.split('has ')[1].split(' records')[0].replace(',', ''))
+            except:
+                pass
+
+    # Check if extraction is actively running
+    if any('SCALABLE FACT EXTRACTION ENGINE' in line for line in lines):
+        estimated_hours = None
+        for line in lines:
+            if 'Estimated time:' in line and 'hours' in line:
+                try:
+                    estimated_hours = float(line.split('Estimated time: ')[1].split(' hours')[0])
+                except:
+                    pass
+
+        return BackgroundJobStatus(
+            job_id="fact_extraction",
+            job_type="Fact Extraction",
+            status="running",
+            progress_pct=0.0,
+            items_processed=0,
+            items_total=tracking_records or total_vectors or 304394,
+            rate_per_minute=30.0,  # Rough estimate
+            eta_minutes=int(estimated_hours * 60) if estimated_hours else None,
+            started_at=datetime.now(),
+            error_count=0,
+            current_operation="Initializing fact extraction..."
+        )
 
     return None

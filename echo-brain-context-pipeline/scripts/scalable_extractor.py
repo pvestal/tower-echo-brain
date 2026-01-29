@@ -507,20 +507,17 @@ class ScalableExtractor:
         async with self.pool.acquire() as conn:
             await conn.execute("""
                 INSERT INTO facts (
-                    id, source_id, fact_text, fact_type, confidence,
-                    domain, subject, predicate, object, embedding_1024
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                    id, source_embedding_id, subject, predicate, object, confidence,
+                    qdrant_point_id, created_at, updated_at
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
             """,
                 uuid4(),
                 source_id,
-                fact_text,
-                fact_data.get("fact_type", "entity"),
-                float(fact_data.get("confidence", 0.8)),
-                domain,
                 fact_data.get("subject"),
                 fact_data.get("predicate"),
                 fact_data.get("object"),
-                embedding
+                float(fact_data.get("confidence", 0.8)),
+                f"point_{uuid4().hex[:8]}"
             )
         
         return True
