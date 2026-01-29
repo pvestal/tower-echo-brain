@@ -229,6 +229,11 @@ CREATE TABLE context_assembly_log (
 - **Metrics**: PostgreSQL views + custom dashboards
 - **Logging**: Structured JSON logs
 - **Coverage Tracking**: Database views for extraction coverage
+- **Real-time Operations**: Live dashboard at localhost:8311/interface
+  - Background job monitoring via tmux session parsing
+  - WebSocket streaming for real-time updates
+  - System health checks (database, Qdrant, Ollama, ComfyUI)
+  - Resource usage monitoring (CPU, RAM, GPU, disk)
 
 ## API Structure
 
@@ -239,6 +244,18 @@ CREATE TABLE context_assembly_log (
 - `POST /api/echo/chat` - Main chat inference
 - `GET /api/echo/status` - System status
 - `POST /api/echo/search` - Memory search
+
+#### Operations Monitoring (Port 8309)
+- `GET /operations/status` - Real-time operations status
+  - Returns: active jobs, system health, resource usage
+- `GET /operations/jobs` - Background jobs list
+- `WebSocket /operations/stream` - Live streaming updates (5s interval)
+
+#### Echo Frontend (Port 8311)
+- `GET /interface` - Live operations console
+  - WebSocket-powered dashboard showing real-time job progress
+  - System health monitoring for database, Qdrant, Ollama, ComfyUI
+  - Resource usage visualization (CPU, RAM, GPU, disk)
 
 #### MCP Server API (Port 8312)
 - `POST /mcp` - Memory Component Protocol interface
@@ -321,18 +338,22 @@ MAX_HISTORY_TOKENS=2000
 
 ## Current State & Next Steps
 
-### Current Status
+### Current Status (Updated January 29, 2026)
 ✅ **Completed**
 - Core Echo Brain service running
-- Qdrant vector storage with 61k+ vectors
+- Qdrant vector storage with 308k+ vectors (up from 61k)
 - MCP interface for memory search
-- Basic fact extraction (6% coverage)
-- Ollama integration with qwen models
+- Real-time operations monitoring with WebSocket streaming
+- Database schema migration completed
+- Fact extraction backfill completed (304,394 vectors tracked)
+- Live operations dashboard at localhost:8311/interface
+- System health monitoring (database, Qdrant, Ollama, ComfyUI)
+- Background job monitoring via tmux session parsing
 
 ⚠️ **In Progress**
-- Context Assembly Pipeline implementation
-- Database schema migration
-- Fact extraction backfill
+- Large-scale fact extraction (2,384 facts extracted, 304,394 remaining)
+- Context Assembly Pipeline optimization
+- Resource usage monitoring during intensive operations
 
 🔄 **Planned**
 - Domain isolation implementation
