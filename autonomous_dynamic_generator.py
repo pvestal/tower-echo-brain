@@ -187,11 +187,12 @@ class AutonomousDynamicGenerator:
         logger.info(f"Style: {project['style']} | Model: {project['model']}")
         logger.info(f"Characters: {len(project['characters'])}")
 
-        for char_name, char_data in project['characters'].items():
+        for character in project['characters']:
+            char_name = character['name']
             char_key = f"{project['id']}_{char_name}"
 
             for i in range(self.images_per_character):
-                success = await self.generate_character_image(project, char_data, char_name)
+                success = await self.generate_character_image(project, character, char_name)
                 if success:
                     await asyncio.sleep(10)  # Wait between generations
                 else:
