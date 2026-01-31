@@ -27,7 +27,7 @@ class LLMService:
     async def generate(
         self,
         prompt: str,
-        model: str = "llama3.1:8b",
+        model: str = "qwen2.5:14b",
         system: Optional[str] = None,
         temperature: float = 0.7,
         max_tokens: int = 2048
@@ -64,7 +64,7 @@ class LLMService:
     async def generate_stream(
         self,
         prompt: str,
-        model: str = "llama3.1:8b",
+        model: str = "qwen2.5:14b",
         system: Optional[str] = None,
         temperature: float = 0.7
     ) -> AsyncGenerator[str, None]:
@@ -92,7 +92,8 @@ class LLMService:
     async def chat(
         self,
         messages: list,
-        model: str = "llama3.1:8b",
+        # model: str = "qwen2.5:14b",
+        model: str = "mistral:7b",
         temperature: float = 0.7
     ) -> LLMResponse:
         """Chat completion with message history"""

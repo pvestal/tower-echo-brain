@@ -1777,3 +1777,23 @@ async def get_metrics():
         "endpoints_registered": 20,
         "status": "operational"
     }
+
+@router.get("/identity")
+async def get_identity():
+    """Get Echo Brain's current identity and system state"""
+    try:
+        from src.core.echo_identity import EchoIdentity
+        from datetime import datetime
+        identity = EchoIdentity()
+        return {
+            "identity": identity.to_dict(),
+            "status": "online",
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Identity endpoint error: {e}")
+        return {
+            "error": str(e),
+            "status": "error",
+            "timestamp": datetime.now().isoformat()
+        }

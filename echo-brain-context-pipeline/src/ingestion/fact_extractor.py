@@ -360,8 +360,8 @@ class FactExtractor:
                 )
             """, [
                 (
-                    fact.id,
-                    fact.source_id,
+                    str(fact.id),  # Convert UUID to string
+                    str(fact.source_id),  # Convert UUID to string
                     fact.fact_text,
                     fact.fact_type.value,
                     fact.confidence,

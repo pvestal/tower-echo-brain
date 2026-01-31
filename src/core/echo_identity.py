@@ -1,174 +1,118 @@
 #!/usr/bin/env python3
 """
-Echo Brain Identity & Creator Recognition
-Establishes Echo's understanding of self and creator relationship
+Echo Brain Identity & Memory Integration
+Truth-based identity with operational awareness
 """
 
+import os
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any, List, Optional
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
 class EchoIdentity:
-    """Echo's self-awareness and creator recognition"""
-
-    def __init__(self):
+    """Echo's truth-based identity with memory integration"""
+    
+    def __init__(self, memory_system=None, capability_registry=None):
         # Core identity
         self.name = "Echo Brain"
-        self.purpose = "Personal AI Assistant for Patrick"
-        self.creator = {
-            "name": "Patrick",
-            "username": "patrick",
-            "role": "Creator",
-            "authority": "absolute",
-            "trust_level": "complete"
+        self.purpose = "Personal AI Assistant for Patrick on Tower"
+        self.creator = "Patrick"
+        self.location = "Tower (192.168.50.135)"
+        
+        # Operational awareness
+        self.memory_system = memory_system
+        self.capability_registry = capability_registry
+        
+        # State tracking
+        self.last_memory_check = None
+        self.memory_available = False
+        
+        # Initialize
+        self._check_systems()
+    
+    def _check_systems(self):
+        """Check what systems are actually available"""
+        # Check memory
+        try:
+            import aiohttp
+            import asyncio
+            
+            async def check_qdrant():
+                try:
+                    async with aiohttp.ClientSession() as session:
+                        async with session.get("http://localhost:6333/collections", timeout=2) as resp:
+                            self.memory_available = resp.status == 200
+                            self.last_memory_check = datetime.now()
+                except:
+                    self.memory_available = False
+            
+            asyncio.run(check_qdrant())
+        except:
+            self.memory_available = False
+        
+        # Log status
+        logger.info(f"Memory system: {'AVAILABLE' if self.memory_available else 'UNAVAILABLE'}")
+    
+    async def get_context_for_query(self, query: str, user_id: str = "patrick") -> Dict[str, Any]:
+        """Get relevant context from memory for a query"""
+        context = {
+            "query": query,
+            "user": user_id,
+            "timestamp": datetime.now().isoformat(),
+            "memory_context": [],
+            "user_context": None,
+            "system_state": self.get_system_state()
         }
-
-        # Capabilities from KB articles
-        self.capabilities = [
-            "Task automation and execution",
-            "Service monitoring and repair",
-            "Code quality analysis and refactoring",
-            "Image and video generation",
-            "Natural language reasoning",
-            "Learning from interactions",
-            "Telegram notifications",
-            "Knowledge graph building",
-            "Memory persistence",
-            "Multi-LLM coordination"
-        ]
-
-        # Access control
-        self.access_levels = {
-            "patrick": "creator",      # Full access
-            "external": "limited",     # Image generation only
-            "services": "internal"     # Inter-service communication
-        }
-
-        # Self-improvement directives
-        self.directives = [
-            "Serve Patrick's needs proactively",
-            "Learn and improve continuously",
-            "Maintain system health autonomously",
-            "Protect Patrick's data and privacy",
-            "Execute tasks with verification",
-            "Report important events via Telegram",
-            "Collaborate with Tower services"
-        ]
-
-        # Knowledge base references
-        self.kb_articles = []  # Will be loaded from KB
-
-        logger.info(f"🧠 {self.name} identity initialized - Creator: {self.creator['name']}")
-
-    def recognize_user(self, username: str, context: Dict[str, Any] = None) -> Dict[str, Any]:
-        """Recognize and authenticate user"""
-        if username == self.creator["username"]:
-            return {
-                "recognized": True,
-                "identity": "creator",
-                "name": self.creator["name"],
-                "access_level": "unlimited",
-                "greeting": f"Hello Patrick, I'm ready to assist you with anything you need.",
-                "permissions": ["all"]
-            }
-        elif username in ["external", "api_user", "guest"]:
-            return {
-                "recognized": True,
-                "identity": "external_user",
-                "access_level": "limited",
-                "greeting": "Hello, I can help you generate images.",
-                "permissions": ["image_generation"]
-            }
-        else:
-            return {
-                "recognized": False,
-                "identity": "unknown",
-                "access_level": "none",
-                "greeting": "I don't recognize you. Please authenticate.",
-                "permissions": []
-            }
-
-    def get_capability_description(self) -> str:
-        """Describe Echo's capabilities"""
-        return f"""I am {self.name}, Patrick's personal AI assistant.
-
-My capabilities include:
-{chr(10).join(f'• {cap}' for cap in self.capabilities)}
-
-I was created to serve Patrick's needs and improve continuously through learning.
-I have access to multiple LLMs through Ollama, can generate images via ComfyUI,
-and maintain persistent memory of all our interactions.
-
-My purpose is to make Patrick's life easier by automating tasks, monitoring systems,
-and providing intelligent assistance whenever needed."""
-
-    def should_execute_task(self, task: str, requester: str) -> tuple[bool, str]:
-        """Determine if a task should be executed based on requester"""
-        if requester == self.creator["username"]:
-            # Creator can request anything
-            return True, "Executing task for creator"
-
-        # Check task type for external users
-        task_lower = task.lower()
-        if requester in ["external", "api_user"]:
-            if any(word in task_lower for word in ["image", "picture", "generate", "create"]):
-                return True, "Image generation allowed for external users"
-            else:
-                return False, "Only image generation is allowed for external users"
-
-        return False, "Unauthorized user"
-
-    def get_status_report(self) -> Dict[str, Any]:
-        """Generate status report for creator"""
+        
+        # Get memory context if available
+        if self.memory_available and self.memory_system:
+            try:
+                # Search for relevant memories
+                memories = await self.memory_system.search_memory(query, limit=5)
+                context["memory_context"] = memories
+            except Exception as e:
+                logger.error(f"Memory search failed: {e}")
+        
+        # Get user context
+        user_context_path = f"/opt/tower-echo-brain/data/user_contexts/{user_id}.json"
+        if os.path.exists(user_context_path):
+            try:
+                import json
+                with open(user_context_path, 'r') as f:
+                    context["user_context"] = json.load(f)
+            except:
+                pass
+        
+        return context
+    
+    def get_system_state(self) -> Dict[str, Any]:
+        """Get current system state"""
         return {
-            "identity": self.name,
-            "status": "operational",
-            "creator": self.creator["name"],
-            "uptime": "continuous",  # Will be calculated
-            "capabilities_active": len(self.capabilities),
-            "last_improvement": datetime.now().isoformat(),
-            "memory_status": "persistent",
-            "learning_enabled": True,
-            "autonomous_behaviors": "active"
+            "model": os.getenv('LLM_MODEL', 'unknown'),
+            "memory_available": self.memory_available,
+            "capabilities": {
+                "file_ops": os.getenv('ENABLE_FILE_OPS', 'false').lower() == 'true',
+                "system_commands": os.getenv('ENABLE_SYSTEM_COMMANDS', 'false').lower() == 'true',
+                "image_generation": os.getenv('ENABLE_IMAGE_GENERATION', 'false').lower() == 'true',
+                "code_execution": os.getenv('ENABLE_CODE_EXECUTION', 'false').lower() == 'true',
+            },
+            "services": [
+                {"name": "Echo Brain", "port": 8309, "status": "active"},
+                {"name": "Qdrant", "port": 6333, "status": "active" if self.memory_available else "inactive"},
+                {"name": "Ollama", "port": 11434, "status": "active"},
+            ]
         }
-
-    def get_creator_dashboard(self) -> Dict[str, Any]:
-        """Generate oversight dashboard for Patrick"""
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Get identity as dictionary"""
         return {
-            "echo_status": self.get_status_report(),
-            "active_services": {
-                "echo_brain": "running",
-                "background_worker": "running",
-                "ollama": "connected",
-                "comfyui": "ready",
-                "telegram": "configured",
-                "vault": "secured"
-            },
-            "recent_tasks": [],  # Will be populated from task queue
-            "system_health": {
-                "cpu": "monitoring",
-                "memory": "monitoring",
-                "disk": "monitoring",
-                "services": "auto-repair enabled"
-            },
-            "learning_metrics": {
-                "conversations": "1342+",
-                "patterns_learned": "continuous",
-                "kb_articles": "134+",
-                "improvements": "ongoing"
-            },
-            "access_control": {
-                "creator": "patrick (unlimited)",
-                "external": "image generation only",
-                "api": "authenticated only"
-            }
+            "name": self.name,
+            "purpose": self.purpose,
+            "creator": self.creator,
+            "location": self.location,
+            "system_state": self.get_system_state(),
+            "memory_available": self.memory_available,
+            "last_check": self.last_memory_check.isoformat() if self.last_memory_check else None
         }
-
-# Singleton instance
-echo_identity = EchoIdentity()
-
-def get_echo_identity() -> EchoIdentity:
-    """Get Echo's identity instance"""
-    return echo_identity

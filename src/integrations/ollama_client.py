@@ -50,7 +50,7 @@ class OllamaClient:
             logger.error(f"❌ Failed to connect to Ollama: {e}")
             return False
 
-    async def generate(self, prompt: str, model: str = "llama3.1:8b",
+    async def generate(self, prompt: str, model: str = "qwen2.5:14b",
                       temperature: float = 0.7, max_tokens: int = 2048) -> Optional[str]:
         """Generate text using Ollama model"""
         try:
@@ -84,7 +84,7 @@ class OllamaClient:
             logger.error(f"Ollama generation error: {e}")
             return None
 
-    async def chat(self, messages: List[Dict[str, str]], model: str = "llama3.1:8b",
+    async def chat(self, messages: List[Dict[str, str]], model: str = "qwen2.5:14b",
                    temperature: float = 0.7, max_tokens: int = 2048) -> Optional[str]:
         """Chat with Ollama model using conversation history"""
         try:
