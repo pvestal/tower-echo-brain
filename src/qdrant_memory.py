@@ -133,85 +133,11 @@ class QdrantMemory:
             embedding = await self.generate_embedding(text)
             if not embedding:
                 return False
-            
-            # Create unique ID
-            memory_id = str(uuid.uuid4())
-            
-            # Prepare metadata
-            if metadata is None:
-                metadata = {}
-            metadata["text"] = text[:500]  # Store first 500 chars for reference
-            metadata["timestamp"] = str(datetime.now())
-            
-            # Store in Qdrant
-            self.client.upsert(
-                collection_name=self.collection_name,
-                points=[
-                    PointStruct(
-                        id=memory_id,
-                        vector=embedding,
-                        payload=metadata
-                    )
-                ]
-            )
-            
-            logger.info(f"Stored memory {memory_id} in Qdrant")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Failed to store memory: {e}")
-            return False
 
-    async def search_memories(self, query: str, limit: int = 5) -> List[Dict]:
-        """Search for relevant memories"""
-        try:
-            # Generate query embedding
-            embedding = await self.generate_embedding(query)
-            if not embedding:
-                return []
-            
-            # Search in Qdrant using query method
-            results = self.client.query_points(
-                collection_name=self.collection_name,
-                query=embedding,
-                limit=limit
-            ).points
-            
-            # Format results
-            memories = []
-            for result in results:
-                memory = {
-                    "id": str(result.id),
-                    "score": result.score,
-                    "text": result.payload.get("text", ""),
-                    "metadata": result.payload
-                }
-                memories.append(memory)
-            
-            return memories
-            
         except Exception as e:
-            logger.error(f"Failed to search memories: {e}")
+            self.logger.error(f"Error in search_memory: {e}")
             return []
-
-    def get_collection_info(self) -> Dict:
-        """Get collection statistics"""
-        try:
-            info = self.client.get_collection(self.collection_name)
-            return {
-                "name": info.name,
-                "vectors_count": info.vectors_count,
-                "indexed_vectors_count": info.indexed_vectors_count,
-                "status": info.status,
-                "vector_size": info.config.params.vectors.size,
-                "distance": info.config.params.vectors.distance
-            }
-        except Exception as e:
-            logger.error(f"Failed to get collection info: {e}")
-            return {}
-
-
-# Test function
+    # Test function
 async def test_qdrant_connection():
     """Test Qdrant is working properly"""
     import asyncio
@@ -244,3 +170,11 @@ async def test_qdrant_connection():
 if __name__ == "__main__":
     import asyncio
     asyncio.run(test_qdrant_connection())
+
+    async def search_memory(self, query: str, limit: int = 10, **kwargs):
+        """Search for similar memories (alias for search_memories)"""
+        try:
+            return await self.search_memories(query, limit)
+        except Exception as e:
+            self.logger.error(f"Search memory failed: {e}")
+            return []

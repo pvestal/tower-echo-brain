@@ -92,7 +92,7 @@ async def chat_endpoint(request: QueryRequest, background_tasks: BackgroundTasks
         context_results = []
         if request.include_context:
             try:
-                context = await qdrant_memory.search(request.query, limit=5)
+                context = await qdrant_memory.search_memory(request.query, limit=5)
                 context_results = [
                     {"text": r.get("text", ""), "score": r.get("score", 0)}
                     for r in context
@@ -101,7 +101,7 @@ async def chat_endpoint(request: QueryRequest, background_tasks: BackgroundTasks
                 logger.warning(f"Context retrieval failed: {e}")
 
         # Select and query model - use available model
-        model_name = request.model or "phi3:mini"  # Default to available model
+        model_name = request.model or "qwen2.5:14b"  # Default to available model
 
         # Check if model is available, fallback to phi3:mini
         try:
@@ -110,8 +110,12 @@ async def chat_endpoint(request: QueryRequest, background_tasks: BackgroundTasks
                 models_response = await client.get("http://localhost:11434/api/tags", timeout=2)
                 if models_response.status_code == 200:
                     available_models = [m["name"] for m in models_response.json().get("models", [])]
-                    if model_name not in available_models and available_models:
-                        model_name = available_models[0]  # Use first available model
+                    # Filter out embedding models - we only want chat models
+                    chat_models = [m for m in available_models if "embed" not in m.lower()]
+                    if model_name not in chat_models and chat_models:
+                        model_name = chat_models[0]  # Use first available CHAT model
+                    elif model_name not in available_models and available_models:
+                        model_name = available_models[0]  # Fallback to any model
         except:
             pass
 
@@ -119,15 +123,26 @@ async def chat_endpoint(request: QueryRequest, background_tasks: BackgroundTasks
         try:
             import httpx
             async with httpx.AsyncClient() as client:
-                ollama_response = await client.post(
+
+                # Generate dynamic system prompt
+                try:
+#                     from src.core.dynamic_prompt import DynamicPromptGenerator
+                    prompt_generator = DynamicPromptGenerator()
+                    system_prompt = await prompt_generator.generate_system_prompt()
+                    logger.info("Using dynamic system prompt")
+                except Exception as e:
+                    logger.error(f"Failed to generate dynamic prompt: {e}")
+                    system_prompt = "You are Echo Brain, Personal AI Assistant for Patrick on Tower."
+                    ollama_response = await client.post(
                     "http://localhost:11434/api/generate",
                     json={
                         "model": model_name,
                         "prompt": request.query,
                         "temperature": request.temperature,
                         "context": str(context_results) if context_results else None,
-                        "stream": False
-                    },
+                        "stream": False,
+                        "system": system_prompt
+},
                     timeout=5  # Reduced timeout for better test performance
                 )
                 if ollama_response.status_code == 200:
@@ -426,6 +441,8 @@ async def get_echo_status():
     try:
         import httpx
 
+        # from src.core.dynamic_prompt import DynamicPromptGenerator
+
         # Check Ollama
         ollama_status = "offline"
         try:
@@ -460,5 +477,24 @@ async def get_echo_status():
         return {
             "status": "degraded",
             "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        }
+@router.get("/identity")
+async def get_identity():
+    """Get Echo Brain's current identity and system state"""
+    try:
+        from src.core.echo_identity import EchoIdentity
+        from datetime import datetime
+        identity = EchoIdentity()
+        return {
+            "identity": identity.to_dict(),
+            "status": "online",
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Identity endpoint error: {e}")
+        return {
+            "error": str(e),
+            "status": "error",
             "timestamp": datetime.now().isoformat()
         }

@@ -1,3 +1,6 @@
+import direct_generate_override
+import universal_error_handler
+import direct_generate_override
 #!/usr/bin/env python3
 """
 Echo Brain Consolidated API
@@ -5,8 +8,11 @@ Central entry point with domain-based routers
 """
 
 import os
+import direct_generate_override
 import sys
+import direct_generate_override
 import logging
+import direct_generate_override
 from pathlib import Path
 from datetime import datetime
 
@@ -15,6 +21,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 import uvicorn
+import direct_generate_override
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
