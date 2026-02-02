@@ -1,0 +1,17 @@
+{
+  "agent_name": "Echo Brain",
+  "agent_description": "Patrick's advanced AI memory system with 315K+ vectors",
+  "owner": "Patrick",
+  "capabilities": {
+    "memory_search": true,
+    "fact_storage": true,
+    "pattern_recognition": true,
+    "autonomous_learning": true,
+    "conversation_analysis": true,
+    "code_understanding": true,
+    "multi_domain": true
+  },
+  "callback_url": "https://tower.local:8309",
+  "request_type": "agent_registration",
+  "timestamp": "2026-02-02T02:45:40.063578"
+}
