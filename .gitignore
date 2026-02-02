@@ -13,7 +13,7 @@ token.json
 vault_data/
 
 # Database/Vector storage
-data/qdrant/
+data/
 *.db
 *.sqlite
 *.mmap
