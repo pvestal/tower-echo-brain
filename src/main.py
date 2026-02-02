@@ -3,7 +3,7 @@ Echo Brain - MINIMAL WORKING VERSION
 Only essential features, no duplicate systems
 """
 from fastapi import FastAPI
-from src.routers.echo_frontend_router import router as echo_frontend_router
+from src.api.endpoints.echo_frontend_router import router as echo_frontend_router
 from datetime import datetime
 import logging
 import os
@@ -47,14 +47,14 @@ except Exception as e:
     logger.error(f"❌ Echo frontend router failed: {e}")
 
 try:
-    from src.routers.system_router import router as system_router
+    from src.api.endpoints.system_router import router as system_router
     app.include_router(system_router, prefix="/api/system")
     logger.info("✅ System router mounted")
 except Exception as e:
     logger.error(f"❌ System router failed: {e}")
 
 try:
-    from src.routers.conversation_minimal_router import router as conv_router
+    from src.api.endpoints.conversation_minimal_router import router as conv_router
     app.include_router(conv_router, prefix="/api/conversations")
     logger.info("✅ Conversation router mounted")
 except Exception as e:
@@ -62,7 +62,7 @@ except Exception as e:
 
 # Mount Moltbook router with proper error handling
 try:
-    from src.routers.moltbook_router import router as moltbook_router
+    from src.api.endpoints.moltbook_router import router as moltbook_router
     app.include_router(moltbook_router, prefix="/api/echo/moltbook")
     logger.info("✅ Moltbook router mounted")
 except ImportError as e:
