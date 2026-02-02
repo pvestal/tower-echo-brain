@@ -99,9 +99,12 @@ class NarrationTaskResponse(BaseModel):
     model: str
 
 class ExecuteRequest(BaseModel):
-    code: str
+    code: Optional[str] = None  # For code execution
+    task: Optional[str] = None  # For agent task
+    agent_type: Optional[str] = None  # Type of agent (coding, reasoning, narration)
     language: str = "python"
     timeout: int = 30
+    parameters: Optional[Dict[str, Any]] = None  # Additional parameters
 
 @router.post("/reasoning", response_model=ReasoningTaskResponse)
 async def run_reasoning_task(request: ReasoningTaskRequest):
@@ -164,7 +167,25 @@ async def get_narration_history():
 
 @router.post("/execute")
 async def execute_code(request: ExecuteRequest):
-    """Execute code in sandbox"""
+    """Execute code in sandbox or agent task"""
+    # If agent_type is specified, route to agent execution
+    if hasattr(request, 'agent_type') and request.agent_type:
+        from src.services.agent_execution_service import agent_execution_service
+
+        # Handle agent task execution
+        task = getattr(request, 'task', request.code)  # Support both 'task' and 'code' fields
+        parameters = getattr(request, 'parameters', {})
+        if hasattr(request, 'code') and not parameters.get('code'):
+            parameters['code'] = request.code
+
+        result = await agent_execution_service.execute_task(
+            agent_type=request.agent_type,
+            task=task,
+            parameters=parameters
+        )
+        return result
+
+    # Otherwise do direct code execution
     if request.language.lower() not in ["python", "py"]:
         raise HTTPException(status_code=400, detail="Only Python execution supported currently")
     

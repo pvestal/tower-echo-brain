@@ -93,7 +93,9 @@ except Exception as e:
 # Create minimal MCP endpoints inline for now
 @app.post("/mcp")
 async def mcp_handler(request: dict):
-    """Handle MCP requests - minimal implementation"""
+    """Handle MCP requests with Qdrant integration"""
+    from src.integrations.mcp_service import mcp_service
+
     method = request.get("method", "")
 
     if method == "tools/list":
@@ -106,19 +108,35 @@ async def mcp_handler(request: dict):
         }
     elif method == "tools/call":
         tool_name = request.get("params", {}).get("name")
-        if tool_name == "search_memory":
-            # Delegate to conversation service
-            from src.services.conversation_service import ConversationService
-            service = ConversationService()
-            query = request.get("params", {}).get("arguments", {}).get("query", "")
-            limit = request.get("params", {}).get("arguments", {}).get("limit", 5)
-            results = await service.search_conversations(query=query, limit=limit)
-            return results
-        elif tool_name == "get_facts":
-            # Return mock facts for now
-            return [
-                {"subject": "Echo Brain", "predicate": "status", "object": "active", "confidence": 1.0}
-            ]
+        arguments = request.get("params", {}).get("arguments", {})
+
+        try:
+            if tool_name == "search_memory":
+                query = arguments.get("query", "")
+                limit = arguments.get("limit", 10)
+                results = await mcp_service.search_memory(query, limit)
+                return results
+
+            elif tool_name == "get_facts":
+                topic = arguments.get("topic")
+                limit = arguments.get("limit", 100)
+                facts = await mcp_service.get_facts(topic, limit)
+                return facts
+
+            elif tool_name == "store_fact":
+                subject = arguments.get("subject", "")
+                predicate = arguments.get("predicate", "")
+                object_ = arguments.get("object", "")
+                confidence = arguments.get("confidence", 1.0)
+                fact_id = await mcp_service.store_fact(subject, predicate, object_, confidence)
+                return {"fact_id": fact_id, "stored": True}
+
+            else:
+                return {"error": f"Unknown tool: {tool_name}"}
+
+        except Exception as e:
+            logger.error(f"MCP handler error: {e}")
+            return {"error": str(e)}
 
     return {"error": f"Unknown method: {method}"}
 
