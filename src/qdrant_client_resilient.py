@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 class ResilientQdrantMemory:
     """Circuit breaker protected Qdrant memory system"""
 
-    def __init__(self, collection_name: str = "echo_memories"):
+    def __init__(self, collection_name: str = "echo_memory"):
         self.collection_name = collection_name
         self.vector_size = 768  # nomic-embed-text dimension
         self.ollama_url = "http://localhost:11434"

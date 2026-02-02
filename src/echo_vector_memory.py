@@ -35,7 +35,7 @@ class VectorMemory(VectorMemoryInterface):
         self.ollama_url = "http://127.0.0.1:11434"
 
         # Use 1024D collection with mxbai-embed-large
-        base_collection = "echo_memories"  # Using the new collection
+        base_collection = "echo_memory"  # Using the new collection
         self.collection_name = base_collection
         self.vector_dimensions = 1024  # Using 1024D for better quality
         self.embedding_model = "mxbai-embed-large:latest"  # Superior embedding model
@@ -521,7 +521,7 @@ if __name__ == "__main__":
         # Test storing a memory
         success = await memory.remember(
             "Patrick prefers concise answers without unnecessary explanations",
-            metadata={"type": "preference", "user": "patrick"}
+            metadata={"type": "preference", "user": os.getenv("DB_USER", "echo_brain_service")}
         )
         print(f"Stored preference: {success}")
 

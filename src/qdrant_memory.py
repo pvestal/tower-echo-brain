@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 class QdrantMemory:
     """Properly integrated Qdrant memory system"""
 
-    def __init__(self, collection_name: str = "echo_memories"):
+    def __init__(self, collection_name: str = "echo_memory"):
         # Initialize Qdrant client - CORRECT PORT
         self.client = QdrantClient(
             host="localhost",

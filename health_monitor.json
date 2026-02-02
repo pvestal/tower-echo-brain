@@ -1,114 +1,39 @@
 {
-  "last_scan": "2026-01-31T01:01:21.855780",
-  "current_health_score": 0.0,
-  "endpoints": {
-    "GET /": {
-      "status": 0,
-      "response_time": 0,
-      "healthy": false,
-      "timestamp": "2026-01-31T01:01:21.697036"
-    },
-    "GET /health": {
-      "status": 0,
-      "response_time": 0,
-      "healthy": false,
-      "timestamp": "2026-01-31T01:01:21.712441"
-    },
-    "GET /api/status": {
-      "status": 0,
-      "response_time": 0,
-      "healthy": false,
-      "timestamp": "2026-01-31T01:01:21.726234"
-    },
-    "POST /api/echo/query": {
-      "status": 0,
-      "response_time": 0,
-      "healthy": false,
-      "timestamp": "2026-01-31T01:01:21.737138"
-    },
-    "POST /api/echo/chat": {
-      "status": 0,
-      "response_time": 0,
-      "healthy": false,
-      "timestamp": "2026-01-31T01:01:21.750971"
-    },
-    "GET /api/agents/status": {
-      "status": 0,
-      "response_time": 0,
-      "healthy": false,
-      "timestamp": "2026-01-31T01:01:21.762193"
-    },
-    "GET /api/models/list": {
-      "status": 0,
-      "response_time": 0,
-      "healthy": false,
-      "timestamp": "2026-01-31T01:01:21.773653"
-    },
-    "GET /api/autonomous/status": {
-      "status": 0,
-      "response_time": 0,
-      "healthy": false,
-      "timestamp": "2026-01-31T01:01:21.784083"
-    },
-    "GET /api/echo/codebase/stats": {
-      "status": 0,
-      "response_time": 0,
-      "healthy": false,
-      "timestamp": "2026-01-31T01:01:21.794213"
-    },
-    "GET /api/diagnostics/health": {
-      "status": 0,
-      "response_time": 0,
-      "healthy": false,
-      "timestamp": "2026-01-31T01:01:21.804932"
-    },
-    "POST /api/context": {
-      "status": 0,
-      "response_time": 0,
-      "healthy": false,
-      "timestamp": "2026-01-31T01:01:21.819289"
-    },
-    "GET /api/collections": {
-      "status": 404,
-      "response_time": 0.012363910675048828,
-      "healthy": false,
-      "timestamp": "2026-01-31T01:01:21.831752"
-    },
-    "GET /api/coordination/services": {
-      "status": 404,
-      "response_time": 0.011942863464355469,
-      "healthy": false,
-      "timestamp": "2026-01-31T01:01:21.843813"
-    },
-    "GET /git/status": {
-      "status": 404,
-      "response_time": 0.011852502822875977,
-      "healthy": false,
-      "timestamp": "2026-01-31T01:01:21.855750"
-    }
-  },
-  "recent_history": [
+  "timestamp": "2026-01-31T22:51:35.907880",
+  "endpoints": [
     {
-      "timestamp": "2026-01-31T01:01:21.855767",
-      "health_score": 0.0,
-      "total_endpoints": 14,
-      "healthy_endpoints": 0,
-      "problems": [
-        "GET /: 0",
-        "GET /health: 0",
-        "GET /api/status: 0",
-        "POST /api/echo/query: 0",
-        "POST /api/echo/chat: 0",
-        "GET /api/agents/status: 0",
-        "GET /api/models/list: 0",
-        "GET /api/autonomous/status: 0",
-        "GET /api/echo/codebase/stats: 0",
-        "GET /api/diagnostics/health: 0",
-        "POST /api/context: 0",
-        "GET /api/collections: 404",
-        "GET /api/coordination/services: 404",
-        "GET /git/status: 404"
-      ]
+      "name": "Echo Brain API",
+      "status": "healthy",
+      "status_code": 200,
+      "response_time": 0.040185,
+      "timestamp": "2026-01-31T22:51:35.948148"
+    },
+    {
+      "name": "Echo Brain Docs",
+      "status": "healthy",
+      "status_code": 200,
+      "response_time": 0.012106,
+      "timestamp": "2026-01-31T22:51:35.960330"
+    },
+    {
+      "name": "MCP Server",
+      "status": "healthy",
+      "status_code": 200,
+      "response_time": 0.012355,
+      "timestamp": "2026-01-31T22:51:35.972741"
     }
-  ]
+  ],
+  "databases": [
+    {
+      "name": "PostgreSQL",
+      "status": "healthy",
+      "timestamp": "2026-01-31T22:51:35.972746"
+    },
+    {
+      "name": "Qdrant",
+      "status": "healthy",
+      "timestamp": "2026-01-31T22:51:35.972748"
+    }
+  ],
+  "overall_status": "healthy"
 }

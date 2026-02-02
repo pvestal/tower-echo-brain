@@ -107,7 +107,7 @@ class OmniscientPipeline:
             },
             "database": {
                 "host": "192.168.50.135",
-                "user": "patrick",
+                "user": os.getenv("DB_USER", "echo_brain_service"),
                 "password": os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE"),
                 "database": "echo_brain"
             }

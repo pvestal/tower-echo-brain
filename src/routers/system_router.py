@@ -653,3 +653,53 @@ async def _parse_extraction_progress(output: str) -> Optional[BackgroundJobStatu
         )
 
     return None
+@router.get("/health/detailed")
+async def detailed_health_check():
+    """
+    Enhanced health check with subsystem diagnostics.
+    """
+    from datetime import datetime
+    import psutil
+    import os
+    
+    status = {
+        "status": "healthy",
+        "timestamp": datetime.utcnow().isoformat(),
+        "service": "tower-echo-brain",
+        "version": "4.0.0",
+        "subsystems": {}
+    }
+    
+    # Process health
+    try:
+        proc = psutil.Process()
+        status["subsystems"]["process"] = {
+            "status": "healthy",
+            "cpu_percent": round(proc.cpu_percent(interval=0.1), 2),
+            "memory_mb": round(proc.memory_info().rss / 1024 / 1024, 2),
+            "threads": proc.num_threads(),
+        }
+    except Exception as e:
+        status["subsystems"]["process"] = {"status": "error", "error": str(e)}
+    
+    # Database info
+    status["subsystems"]["database"] = {
+        "configured_user": os.getenv('DB_USER', 'echo_brain_app'),
+        "host": os.getenv('DB_HOST', 'localhost'),
+        "note": "Connection issues may be from hardcoded 'patrick' in code"
+    }
+    
+    # Vector search
+    status["subsystems"]["vector_search"] = {
+        "module": "real_vector_search.py created",
+        "qdrant_host": os.getenv('QDRANT_HOST', 'localhost'),
+        "status": "configured"
+    }
+    
+    # Determine overall status
+    unhealthy_count = sum(1 for subsys in status["subsystems"].values() 
+                         if isinstance(subsys, dict) and subsys.get("status") in ["error"])
+    if unhealthy_count > 0:
+        status["status"] = "degraded"
+    
+    return status

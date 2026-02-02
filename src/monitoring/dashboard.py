@@ -20,7 +20,7 @@ import numpy as np
 DB_CONFIG = {
     'host': 'localhost',
     'database': 'echo_brain',
-    'user': 'patrick',
+    'user': os.getenv('DB_USER', 'echo_brain_app'),
     'password': os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE")
 }
 

@@ -66,7 +66,7 @@ async def get_session_context(
         # Get memory stats from Qdrant
         async with httpx.AsyncClient(timeout=30) as client:
             try:
-                qdrant_resp = await client.get(f"{QDRANT_URL}/collections/echo_memories")
+                qdrant_resp = await client.get(f"{QDRANT_URL}/collections/echo_memory")
                 if qdrant_resp.status_code == 200:
                     qdrant_data = qdrant_resp.json()
                     result = qdrant_data.get("result", {})

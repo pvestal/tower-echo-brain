@@ -116,3 +116,7 @@ class EchoIdentity:
             "memory_available": self.memory_available,
             "last_check": self.last_memory_check.isoformat() if self.last_memory_check else None
         }
+
+def get_echo_identity():
+    """Get the Echo Identity instance."""
+    return EchoIdentity()
