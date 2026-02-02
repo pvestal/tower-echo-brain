@@ -86,7 +86,7 @@ class DynamicPromptGenerator:
         prompt_parts.append("=== MEMORY CONTEXT ===")
         if memory_available:
             prompt_parts.append("Qdrant vector database: ONLINE")
-            prompt_parts.append("Collections: echo_memory, echo_memories")
+            prompt_parts.append("Collections: echo_memory")
             prompt_parts.append("Fact extraction: ACTIVE (continuous learning)")
         else:
             prompt_parts.append("Memory systems: OFFLINE or limited")
