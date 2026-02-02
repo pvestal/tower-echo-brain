@@ -1,87 +1,144 @@
-#!/usr/bin/env python3
 """
-Tower Echo Brain - Main FastAPI Application
+Echo Brain - MINIMAL WORKING VERSION
+Only essential features, no duplicate systems
 """
-
-import os
-import sys
-from pathlib import Path
-from typing import Optional
-
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
+from src.routers.echo_frontend_router import router as echo_frontend_router
+from datetime import datetime
+import logging
+import os
+from contextlib import asynccontextmanager
 
-# Add the src directory to the path for imports
-src_dir = Path(__file__).parent
-sys.path.insert(0, str(src_dir))
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-# Import routers
-from routers.system_router import router as system_router
-from routers.dashboard_router import router as dashboard_router
-from routers.moltbook_router import router as moltbook_router
+app = FastAPI(
+    title="Tower Echo Brain",
+    version="4.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+)
 
-def create_app() -> FastAPI:
-    """Create and configure the FastAPI application."""
-    
-    # Initialize FastAPI app
-    app = FastAPI(
-        title="Tower Echo Brain API",
-        description="AI-powered document analysis and management system",
-        version="1.0.0",
-        docs_url="/docs",
-        redoc_url="/redoc"
-    )
-    
-    # Configure CORS
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=["*"],  # In production, replace with specific origins
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
-    
-    # ============= API Routes =============
-    
-    # System monitoring endpoints
-    # No prefix for system endpoints - they should be at root level
-    app.include_router(
-        system_router,
-        tags=["System"]
-    )
-    
-    # Dashboard API endpoints
-    app.include_router(
-        dashboard_router,
-        tags=["Dashboard"]
-    )
-    
-    # Moltbook API endpoints
-    app.include_router(
-        moltbook_router,
-        prefix="/api/echo/moltbook",
-        tags=["Moltbook"]
-    )
-    
-    # ============= Static Files =============
-    
-    # Mount static files for the dashboard
-    static_dir = Path(__file__).parent.parent / "static"
-    if static_dir.exists():
-        app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
-    
-    return app
+# Basic health endpoint
+@app.get("/")
+async def root():
+    return {
+        "service": "Echo Brain",
+        "version": "4.0.0",
+        "status": "running",
+        "timestamp": datetime.now().isoformat()
+    }
 
-# Create the app instance
-app = create_app()
+@app.get("/health")
+async def health():
+    return {
+        "status": "healthy",
+        "service": "echo-brain",
+        "database_user": os.getenv("DB_USER", "not_set"),
+        "timestamp": datetime.now().isoformat()
+    }
+
+# Mount essential routers only
+try:
+    # IMPORTANT: Include the echo frontend router
+    app.include_router(echo_frontend_router)
+    logger.info("✅ Echo frontend router mounted")
+except Exception as e:
+    logger.error(f"❌ Echo frontend router failed: {e}")
+
+try:
+    from src.routers.system_router import router as system_router
+    app.include_router(system_router, prefix="/api/system")
+    logger.info("✅ System router mounted")
+except Exception as e:
+    logger.error(f"❌ System router failed: {e}")
+
+try:
+    from src.routers.conversation_minimal_router import router as conv_router
+    app.include_router(conv_router, prefix="/api/conversations")
+    logger.info("✅ Conversation router mounted")
+except Exception as e:
+    logger.error(f"❌ Conversation router failed: {e}")
+
+# Mount Moltbook router with proper error handling
+try:
+    from src.routers.moltbook_router import router as moltbook_router
+    app.include_router(moltbook_router, prefix="/api/echo/moltbook")
+    logger.info("✅ Moltbook router mounted")
+except ImportError as e:
+    logger.warning(f"⚠️ Moltbook router not available: {e}")
+except Exception as e:
+    logger.error(f"❌ Moltbook router failed: {e}")
+
+# Mount Agent API with proper async context
+try:
+    from src.api.agents import router as agent_router
+    app.include_router(agent_router)
+    logger.info("✅ Agent router mounted")
+except ImportError as e:
+    logger.warning(f"⚠️ Agent router not available: {e}")
+except Exception as e:
+    logger.error(f"❌ Agent router failed: {e}")
+
+# Mount Autonomous API with initialization check
+try:
+    from src.api.autonomous import router as autonomous_router
+    app.include_router(autonomous_router)
+    logger.info("✅ Autonomous router mounted")
+except ImportError as e:
+    logger.warning(f"⚠️ Autonomous router not available: {e}")
+except Exception as e:
+    logger.error(f"❌ Autonomous router failed: {e}")
+
+# Create minimal MCP endpoints inline for now
+@app.post("/mcp")
+async def mcp_handler(request: dict):
+    """Handle MCP requests - minimal implementation"""
+    method = request.get("method", "")
+
+    if method == "tools/list":
+        return {
+            "tools": [
+                {"name": "search_memory", "description": "Search Echo Brain memories"},
+                {"name": "get_facts", "description": "Get facts from Echo Brain"},
+                {"name": "store_fact", "description": "Store a fact in Echo Brain"}
+            ]
+        }
+    elif method == "tools/call":
+        tool_name = request.get("params", {}).get("name")
+        if tool_name == "search_memory":
+            # Delegate to conversation service
+            from src.services.conversation_service import ConversationService
+            service = ConversationService()
+            query = request.get("params", {}).get("arguments", {}).get("query", "")
+            limit = request.get("params", {}).get("arguments", {}).get("limit", 5)
+            results = await service.search_conversations(query=query, limit=limit)
+            return results
+        elif tool_name == "get_facts":
+            # Return mock facts for now
+            return [
+                {"subject": "Echo Brain", "predicate": "status", "object": "active", "confidence": 1.0}
+            ]
+
+    return {"error": f"Unknown method: {method}"}
+
+@app.get("/mcp/health")
+async def mcp_health():
+    """MCP health check"""
+    return {
+        "status": "ok",
+        "service": "echo-brain-mcp",
+        "version": "1.0.0"
+    }
+
+# Simple request logging
+@app.middleware("http")
+async def log_requests(request, call_next):
+    logger.info(f"📡 {request.method} {request.url.path}")
+    response = await call_next(request)
+    logger.info(f"📤 Response: {response.status_code}")
+    return response
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=8309,
-        reload=False,  # Set to True for development
-        log_level="info"
-    )
+    uvicorn.run(app, host="0.0.0.0", port=8309)

@@ -129,6 +129,72 @@ async def test_moltbook_connection(client: MoltbookClient = Depends(get_moltbook
     """Test Moltbook connection and configuration"""
     return await client.test_connection()
 
+# Establishment endpoints
+@router.post("/establish")
+async def establish_on_moltbook(client: MoltbookClient = Depends(get_moltbook_client)):
+    """Establish Echo Brain presence on Moltbook"""
+    import subprocess
+    import asyncio
+
+    try:
+        # Run establishment script
+        result = subprocess.run(
+            ["/opt/tower-echo-brain/venv/bin/python", "/opt/tower-echo-brain/scripts/establish_moltbook.py"],
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
+
+        return {
+            "success": result.returncode == 0,
+            "message": "Establishment process initiated",
+            "output": result.stdout[-1000:] if result.stdout else "",  # Last 1000 chars
+            "status": "Check logs for detailed progress"
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "Failed to initiate establishment"
+        }
+
+@router.get("/establishment/status")
+async def get_establishment_status():
+    """Check Echo Brain's Moltbook establishment status"""
+    import json
+    from pathlib import Path
+
+    config_file = Path("/opt/tower-echo-brain/.moltbook_config.json")
+    creds_file = Path("/opt/tower-echo-brain/.moltbook_credentials.json")
+
+    status = {
+        "established": False,
+        "has_config": config_file.exists(),
+        "has_credentials": creds_file.exists(),
+        "stats": {},
+        "api_keys_status": "not_configured"
+    }
+
+    try:
+        if config_file.exists():
+            with open(config_file, 'r') as f:
+                config = json.load(f)
+                status["stats"] = config.get("stats", {})
+                status["established"] = bool(config.get("stats", {}).get("established_at"))
+
+        if creds_file.exists():
+            with open(creds_file, 'r') as f:
+                creds = json.load(f)
+                if creds.get("agent_api_key") == "PENDING_APPROVAL":
+                    status["api_keys_status"] = "pending_approval"
+                elif creds.get("agent_api_key"):
+                    status["api_keys_status"] = "configured"
+    except Exception as e:
+        logger.error(f"Error reading establishment files: {e}")
+        status["error"] = str(e)
+
+    return status
+
 # Health check endpoint
 @router.get("/health")
 async def health_check():
