@@ -1,0 +1,286 @@
+#!/usr/bin/env python3
+"""
+Memory integration for Echo - connects 134k+ existing memories
+"""
+
+import psycopg2
+import os
+import logging
+from typing import Dict, List, Any, Optional
+from fastapi import APIRouter
+from pydantic import BaseModel
+
+logger = logging.getLogger(__name__)
+router = APIRouter(prefix="/api/echo/resilient", tags=["resilient-models"])
+
+
+class MemorySearch:
+    """Search Echo's existing memory tables"""
+
+    def __init__(self):
+        self.db_config = {
+            'host': 'localhost',
+            'database': 'echo_brain',
+            'user': 'patrick',
+            'password': os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE")
+        }
+        self.conn = None
+        self.cur = None
+
+        # Import Qdrant client for vector search
+        try:
+            from qdrant_client import QdrantClient
+            self.qdrant_client = QdrantClient(host="localhost", port=6333)
+            self.qdrant_enabled = True
+            logger.info("✅ Qdrant client initialized for memory search")
+        except Exception as e:
+            logger.warning(f"⚠️ Qdrant unavailable: {e}")
+            self.qdrant_client = None
+            self.qdrant_enabled = False
+
+    def _ensure_connection(self):
+        """Ensure database connection is established"""
+        if not self.conn or self.conn.closed:
+            self.conn = psycopg2.connect(**self.db_config)
+            self.cur = self.conn.cursor()
+
+    def close(self):
+        """Close database connection"""
+        if self.cur:
+            self.cur.close()
+        if self.conn:
+            self.conn.close()
+
+    def search_all(self, query: str) -> Dict[str, List]:
+        """Search all memory sources"""
+        memories = {}
+
+        # Search Qdrant vectors using MCP API (proven to work)
+        if query:
+            try:
+                import requests
+                response = requests.post(
+                    'http://localhost:8312/mcp',
+                    json={
+                        'method': 'tools/call',
+                        'params': {
+                            'name': 'search_memory',
+                            'arguments': {'query': query, 'limit': 5}
+                        }
+                    },
+                    timeout=5
+                )
+
+                if response.status_code == 200:
+                    result = response.json()
+                    if 'content' in result and len(result['content']) > 0:
+                        # Parse the text response
+                        memories['qdrant'] = []
+                        for item in result.get('content', []):
+                            if isinstance(item, dict) and 'text' in item:
+                                # Parse the formatted text into structured data
+                                for line in item['text'].split('\n'):
+                                    if '•' in line and 'Score:' in line:
+                                        parts = line.split('Score:')
+                                        content = parts[0].replace('•', '').strip()
+                                        score = float(parts[1].split('|')[0].strip()) if len(parts) > 1 else 1.0
+                                        memories['qdrant'].append({
+                                            'content': content[:500],
+                                            'score': score
+                                        })
+                        logger.info(f"📚 Found {len(memories['qdrant'])} MCP memories for '{query}'")
+            except Exception as e:
+                logger.error(f"MCP memory search error: {e}")
+                memories['qdrant'] = []
+
+        # Use single connection for all database queries
+        self._ensure_connection()
+
+        # Search conversations
+        try:
+            self.cur.execute("""
+                SELECT user_query, response, timestamp
+                FROM echo_unified_interactions
+                WHERE user_query ILIKE %s OR response ILIKE %s
+                ORDER BY timestamp DESC
+                LIMIT 5
+            """, (f'%{query}%', f'%{query}%'))
+
+            memories['conversations'] = []
+            for row in self.cur.fetchall():
+                memories['conversations'].append({
+                    'query': row[0][:200] if row[0] else '',
+                    'response': row[1][:200] if row[1] else '',
+                    'date': row[2]
+                })
+        except Exception as e:
+            logger.error(f"Conversation search error: {e}")
+            memories['conversations'] = []
+
+        # Search learned patterns (Work documents)
+        try:
+            self.cur.execute("""
+                SELECT pattern_text, confidence
+                FROM echo_learned_patterns
+                WHERE pattern_text ILIKE %s
+                ORDER BY confidence DESC
+                LIMIT 5
+            """, (f'%{query}%',))
+
+            memories['learned_patterns'] = []
+            for row in self.cur.fetchall():
+                memories['learned_patterns'].append({
+                    'text': row[0][:500] if row[0] else '',
+                    'confidence': row[1] if row[1] else 0.0
+                })
+        except Exception as e:
+            logger.error(f"Pattern search error: {e}")
+            memories['learned_patterns'] = []
+
+        # Search photos
+        try:
+            self.cur.execute("""
+                SELECT filename, file_path, metadata
+                FROM photo_index
+                WHERE filename ILIKE %s OR metadata::text ILIKE %s
+                LIMIT 5
+            """, (f'%{query}%', f'%{query}%'))
+
+            memories['photos'] = []
+            for row in self.cur.fetchall():
+                memories['photos'].append({
+                    'name': row[0],
+                    'path': row[1],
+                    'metadata': row[2]
+                })
+        except Exception as e:
+            logger.error(f"Photo search error: {e}")
+            memories['photos'] = []
+
+        # Search takeout insights
+        try:
+            conn = psycopg2.connect(**self.db_config)
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT context, insight_type, file_id
+                FROM takeout_insights
+                WHERE context::text ILIKE %s
+                LIMIT 5
+            """, (f'%{query}%',))
+
+            memories['takeout'] = []
+            for row in cur.fetchall():
+                memories['takeout'].append({
+                    'content': str(row[0])[:300] if row[0] else '',
+                    'type': row[1],
+                    'source': str(row[2]) if row[2] else ''
+                })
+            cur.close()
+            conn.close()
+        except Exception as e:
+            logger.error(f"Takeout search error: {e}")
+            memories['takeout'] = []
+
+        return memories
+
+
+class EchoMemoryIntegration:
+    """Echo with memory integration"""
+
+    def __init__(self):
+        self.memory_search = MemorySearch()
+        self.manager = None
+        logger.info("✅ Echo initialized with memory search")
+
+    async def initialize(self):
+        """Initialize model manager"""
+        from src.managers.resilient_model_manager import get_resilient_manager
+        self.manager = await get_resilient_manager()
+
+    async def process_with_memory(self, query: str, conversation_id: str = None) -> Dict[str, Any]:
+        """Process query with memory search first"""
+        print(f"[MEMORY] process_with_memory called for: {query}")
+
+        if not self.manager:
+            await self.initialize()
+
+        # SEARCH MEMORIES FIRST
+        print(f"[MEMORY] Searching memories for: {query}")
+        memories = self.memory_search.search_all(query)
+        print(f"[MEMORY] Raw memories found: {memories.keys()}")
+
+        # Count total memories found
+        total_memories = sum(len(v) for v in memories.values())
+        logger.info(f"📚 Found {total_memories} memories for query")
+
+        # Build augmented query with memory context
+        augmented_query = query
+        if total_memories > 0:
+            context_parts = ["\nRelevant memories:"]
+
+            # Add learned patterns (Work docs)
+            if memories.get('learned_patterns'):
+                context_parts.append("\n📄 From documents:")
+                for pattern in memories['learned_patterns'][:2]:
+                    context_parts.append(f"- {pattern['text'][:200]}...")
+
+            # Add previous conversations
+            if memories.get('conversations'):
+                context_parts.append("\n💬 Previous conversations:")
+                for conv in memories['conversations'][:2]:
+                    context_parts.append(f"- Q: {conv['query'][:100]}")
+                    context_parts.append(f"  A: {conv['response'][:100]}")
+
+            # Add photos if relevant
+            if memories.get('photos'):
+                context_parts.append(f"\n📸 Found {len(memories['photos'])} related photos")
+
+            # Add takeout insights
+            if memories.get('takeout'):
+                context_parts.append("\n📧 From personal data:")
+                for item in memories['takeout'][:2]:
+                    context_parts.append(f"- {item['content'][:150]}...")
+
+            augmented_query = query + "\n".join(context_parts) + f"\n\nNow answering: {query}"
+
+        # Process with model
+        from src.managers.resilient_model_manager import TaskUrgency
+        result = await self.manager.complete_with_fallback(
+            task_type="general",
+            prompt=augmented_query,
+            system="You are Echo Brain with access to stored memories. Use the provided context when relevant.",
+            urgency=TaskUrgency.BACKGROUND
+        )
+
+        if result.success:
+            return {
+                "success": True,
+                "response": result.value,
+                "model_used": result.model_used,
+                "memories_retrieved": total_memories,
+                "memory_breakdown": {
+                    "patterns": len(memories.get('learned_patterns', [])),
+                    "conversations": len(memories.get('conversations', [])),
+                    "photos": len(memories.get('photos', [])),
+                    "takeout": len(memories.get('takeout', []))
+                },
+                "conversation_id": conversation_id
+            }
+        else:
+            return {
+                "success": False,
+                "error": result.error,
+                "memories_retrieved": total_memories
+            }
+
+
+# Initialize
+echo_memory = EchoMemoryIntegration()
+
+@router.post("/query")
+async def query_with_memory(request: Dict[str, Any]):
+    """Query endpoint with memory search"""
+    return await echo_memory.process_with_memory(
+        query=request.get("query", ""),
+        conversation_id=request.get("conversation_id")
+    )
