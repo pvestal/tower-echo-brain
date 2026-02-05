@@ -100,7 +100,7 @@ async def analyze_with_progress(request: Dict[str, Any]):
                 host='localhost',
                 database='echo_brain',
                 user='patrick',
-                password='RP78eIrW7cI2jYvL5akt1yurE',
+                password='',
                 timeout=5
             )
 

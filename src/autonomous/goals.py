@@ -33,7 +33,7 @@ class GoalManager:
             'port': 5432,
             'database': 'echo_brain',
             'user': 'patrick',
-            'password': os.environ.get('ECHO_BRAIN_DB_PASSWORD', os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE"))
+            'password': os.environ.get('ECHO_BRAIN_DB_PASSWORD', os.getenv("TOWER_DB_PASSWORD", ""))
         }
         self._pool = None
 

@@ -270,7 +270,7 @@ class AutonomousLoopV2:
                         config_file = "/opt/tower-kb/bin/kb_postgresql.py"
                         subprocess.run([
                             "sed", "-i",
-                            "s/'password': '.*'/'password': os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE")/",
+                            "s/'password': '.*'/'password': os.getenv("TOWER_DB_PASSWORD", "")/",
                             config_file
                         ], timeout=5)
                         return True

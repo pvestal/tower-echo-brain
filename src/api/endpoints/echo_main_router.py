@@ -307,7 +307,7 @@ async def search_conversations(request: Dict[str, Any]):
             host='localhost',
             database='echo_brain',
             user='patrick',
-            password='RP78eIrW7cI2jYvL5akt1yurE',
+            password='',
             timeout=5
         )
 
@@ -469,7 +469,7 @@ async def _check_database():
             host='localhost',
             database='echo_brain',
             user='patrick',
-            password='RP78eIrW7cI2jYvL5akt1yurE',
+            password='',
             timeout=2
         )
         await conn.fetchval("SELECT 1")

@@ -37,7 +37,7 @@ class DatabaseTask(Task):
                     host='localhost',
                     port=5432,
                     user='patrick',
-                    password=os.getenv("TOWER_DB_PASSWORD", os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE")),
+                    password=os.getenv("TOWER_DB_PASSWORD", os.getenv("TOWER_DB_PASSWORD", "")),
                     database='echo_brain',
                     min_size=2,
                     max_size=10
@@ -264,7 +264,7 @@ async def _update_task_status(pool, task_id: int, status: str,
             host='localhost',
             port=5432,
             user='patrick',
-            password=os.getenv("TOWER_DB_PASSWORD", os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE")),
+            password=os.getenv("TOWER_DB_PASSWORD", os.getenv("TOWER_DB_PASSWORD", "")),
             database='echo_brain'
         )
 

@@ -24,7 +24,7 @@ class MemoryConfig:
     db_host: str = "localhost"
     db_name: str = "echo_brain"
     db_user: str = "patrick"
-    db_password: str = os.getenv("DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE")
+    db_password: str = os.getenv("DB_PASSWORD", "")
 
     qdrant_url: str = "http://localhost:6333"
     collection_name: str = "echo_memory"

@@ -34,7 +34,7 @@ class ProcedureLibrary:
             "host": "localhost",
             "database": "echo_brain",
             "user": "patrick",
-            "password": "RP78eIrW7cI2jYvL5akt1yurE"
+            "password": ""
         }
         self._pool = None
         self._executor = None
@@ -355,7 +355,7 @@ class ProcedureLibrary:
                 Step(
                     action=ActionType.SHELL,
                     target="database",
-                    command="PGPASSWORD=RP78eIrW7cI2jYvL5akt1yurE timeout 5 psql -h localhost -U patrick -d echo_brain -c 'SELECT 1' > /dev/null 2>&1 && echo 'Database: Connected' || echo 'Database: Connection failed'",
+                    command="PGPASSWORD= timeout 5 psql -h localhost -U patrick -d echo_brain -c 'SELECT 1' > /dev/null 2>&1 && echo 'Database: Connected' || echo 'Database: Connection failed'",
                     description="Check database connectivity",
                     safety_level=SafetyLevel.SAFE,
                     timeout_seconds=10

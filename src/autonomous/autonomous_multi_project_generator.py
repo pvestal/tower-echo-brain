@@ -28,7 +28,7 @@ class AutonomousMultiProjectGenerator:
             'host': 'localhost',
             'database': 'anime_production',
             'user': 'patrick',
-            'password': 'RP78eIrW7cI2jYvL5akt1yurE'
+            'password': ''
         }
 
         # Project-specific configurations

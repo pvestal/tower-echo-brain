@@ -62,7 +62,7 @@ async def quick_health_check():
             host='localhost',
             database='echo_brain',
             user='patrick',
-            password='RP78eIrW7cI2jYvL5akt1yurE',
+            password='',
             timeout=5
         )
         conv_count = await conn.fetchval("SELECT COUNT(*) FROM conversations")

@@ -67,7 +67,7 @@ class EmbeddingService:
     async def initialize(self):
         """Initialize database pool for caching"""
         db_url = os.getenv("DATABASE_URL",
-            f"postgresql://patrick:{os.getenv('DB_PASSWORD', 'RP78eIrW7cI2jYvL5akt1yurE')}@localhost:5432/echo_brain")
+            f"postgresql://patrick:{os.getenv('DB_PASSWORD', '')}@localhost:5432/echo_brain")
         self.db_pool = await asyncpg.create_pool(db_url)
 
     async def close(self):

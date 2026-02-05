@@ -227,7 +227,7 @@ class CodeIntelligence:
             "host": "localhost",
             "database": "echo_brain",
             "user": "patrick",
-            "password": "RP78eIrW7cI2jYvL5akt1yurE"
+            "password": ""
         }
         self._pool = None
         self.analyzer = PythonCodeAnalyzer()
