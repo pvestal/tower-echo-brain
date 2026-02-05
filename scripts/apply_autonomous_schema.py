@@ -67,7 +67,7 @@ class SchemaApplicator:
             'port': int(os.environ.get('ECHO_BRAIN_DB_PORT', '5432')),
             'database': os.environ.get('ECHO_BRAIN_DB_NAME', 'echo_brain'),
             'user': os.environ.get('ECHO_BRAIN_DB_USER', 'patrick'),
-            'password': os.environ.get('ECHO_BRAIN_DB_PASSWORD', 'tower_echo_brain_secret_key_2025')
+            'password': os.environ.get('ECHO_BRAIN_DB_PASSWORD', 'RP78eIrW7cI2jYvL5akt1yurE')
         }
 
         # Schema file path

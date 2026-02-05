@@ -43,17 +43,18 @@ def get_openai_key() -> str:
     except Exception as e:
         print(f"Vault lookup failed: {e}")
 
-    raise ValueError("OPENAI_API_KEY not found in environment or Vault")
+    # OpenAI not required - using Ollama for embeddings
+    return None
 
 class EmbeddingService:
     def __init__(self):
-        try:
-            self.api_key = get_openai_key()
+        self.api_key = get_openai_key()
+        if self.api_key:
             self.use_openai = True
             self.model = "text-embedding-3-small"
             self.dimensions = 1536
             self.base_url = "https://api.openai.com/v1/embeddings"
-        except ValueError:
+        else:
             # Fallback to local Ollama embeddings
             self.use_openai = False
             self.model = "nomic-embed-text"
