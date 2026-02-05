@@ -51,9 +51,9 @@ class TowerServicesMonitor:
                 with open(config_path, 'r') as f:
                     content = f.read()
 
-                if "tower_echo_brain_secret_key_2025" in content:
+                if "RP78eIrW7cI2jYvL5akt1yurE" in content:
                     content = content.replace(
-                        "'password': 'tower_echo_brain_secret_key_2025'",
+                        "'password': 'RP78eIrW7cI2jYvL5akt1yurE'",
                         "'password': os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE")"
                     )
                     with open(config_path, 'w') as f:

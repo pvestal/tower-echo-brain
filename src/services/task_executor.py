@@ -16,9 +16,9 @@ MODEL_MAP = {
     "code_review": "deepseek-coder-v2:16b",
     "refactor": "deepseek-coder-v2:16b",
     "reasoning": "deepseek-r1:8b",
-    "general": "qwen2.5:14b",
+    "general": "mistral:7b",
     "coding": "deepseek-coder-v2:16b",
-    "analysis": "qwen2.5:14b",
+    "analysis": "mistral:7b",
     # Anime tasks
     "scene_description": "gemma2:9b",      # Narration agent's model
     "comfyui_prompt": "gemma2:9b",         # Generate ComfyUI prompts
@@ -29,7 +29,7 @@ MODEL_MAP = {
 async def execute_task(task: Dict[str, Any]) -> Dict[str, Any]:
     """Execute a task using the appropriate local model."""
     task_type = task.get("task_type", "general")
-    model = task.get("model") or MODEL_MAP.get(task_type, "qwen2.5:3b")
+    model = task.get("model") or MODEL_MAP.get(task_type, "mistral:7b")
     
     # Read target file if specified
     file_content = ""

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Echo Brain Test</title>
+</head>
+<body>
+    <h1>Echo Brain API Test</h1>
+
+    <h2>Health Check</h2>
+    <button onclick="testHealth()">Test Health</button>
+    <pre id="health"></pre>
+
+    <h2>Ask Question</h2>
+    <input type="text" id="question" placeholder="Ask a question..." style="width: 300px;">
+    <button onclick="testAsk()">Ask</button>
+    <pre id="ask"></pre>
+
+    <h2>Memory Search</h2>
+    <input type="text" id="query" placeholder="Search query..." style="width: 300px;">
+    <button onclick="testMemory()">Search</button>
+    <pre id="memory"></pre>
+
+    <script>
+    const API_BASE = 'https://localhost/api';
+
+    async function testHealth() {
+        try {
+            const res = await fetch(`${API_BASE}/health/`);
+            const data = await res.json();
+            document.getElementById('health').textContent = JSON.stringify(data, null, 2);
+        } catch (e) {
+            document.getElementById('health').textContent = 'Error: ' + e.message;
+        }
+    }
+
+    async function testAsk() {
+        try {
+            const question = document.getElementById('question').value;
+            const res = await fetch(`${API_BASE}/ask`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({question})
+            });
+            const data = await res.json();
+            document.getElementById('ask').textContent = JSON.stringify(data, null, 2);
+        } catch (e) {
+            document.getElementById('ask').textContent = 'Error: ' + e.message;
+        }
+    }
+
+    async function testMemory() {
+        try {
+            const query = document.getElementById('query').value;
+            const res = await fetch(`${API_BASE}/memory/search`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({query, limit: 5})
+            });
+            const data = await res.json();
+            document.getElementById('memory').textContent = JSON.stringify(data, null, 2);
+        } catch (e) {
+            document.getElementById('memory').textContent = 'Error: ' + e.message;
+        }
+    }
+    </script>
+</body>
+</html>

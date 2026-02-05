@@ -21,15 +21,10 @@ class MCPService:
             self.vector_count = collection_info.points_count
             logger.info(f"✅ MCP Service initialized with {self.vector_count:,} vectors")
 
-            # Try to initialize embedding model
-            try:
-                from sentence_transformers import SentenceTransformer
-                self.embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
-                self.embeddings_available = True
-            except:
-                logger.warning("Sentence transformers not available, using fallback")
-                self.embedding_model = None
-                self.embeddings_available = False
+            # Initialize Ollama for embeddings (matching unified memory system)
+            self.ollama_url = "http://localhost:11434"
+            self.embedding_model = "mxbai-embed-large:latest"
+            self.embeddings_available = True
 
         except Exception as e:
             logger.error(f"Failed to initialize MCP service: {e}")
@@ -54,34 +49,55 @@ class MCPService:
             return []
 
         try:
-            if self.embedding_model:
-                # Generate embedding for query
-                query_embedding = self.embedding_model.encode(query).tolist()
-            else:
+            # Generate embedding using Ollama (matching unified memory system)
+            import httpx
+            try:
+                with httpx.Client(timeout=30) as client:
+                    response = client.post(
+                        f"{self.ollama_url}/api/embeddings",
+                        json={"model": self.embedding_model, "prompt": query}
+                    )
+                    if response.status_code == 200:
+                        query_embedding = response.json().get("embedding", [])
+                    else:
+                        # Fallback: create random embedding for testing
+                        import random
+                        query_embedding = [random.random() for _ in range(1024)]
+                        logger.warning(f"Ollama embedding failed with status {response.status_code}, using random")
+            except Exception as e:
                 # Fallback: create random embedding for testing
                 import random
                 query_embedding = [random.random() for _ in range(1024)]
+                logger.warning(f"Ollama embedding failed: {e}, using random")
 
-            # Search in Qdrant
-            search_result = self.qdrant_client.search(
-                collection_name=self.collection_name,
-                query_vector=query_embedding,
-                limit=limit,
-                with_payload=True,
-                with_vectors=False
-            )
+            # Search in Qdrant using HTTP API directly
+            import httpx
+            with httpx.Client(timeout=10) as client:
+                response = client.post(
+                    f"http://localhost:6333/collections/{self.collection_name}/points/search",
+                    json={
+                        "vector": query_embedding,
+                        "limit": limit,
+                        "with_payload": True
+                    }
+                )
+                if response.status_code == 200:
+                    search_result = response.json().get("result", [])
+                else:
+                    logger.error(f"Qdrant search failed with status {response.status_code}")
+                    search_result = []
 
-            # Format results
+            # Format results (from HTTP API response)
             results = []
             for point in search_result:
-                payload = point.payload or {}
+                payload = point.get("payload", {})
                 results.append({
-                    "id": str(point.id),
-                    "score": float(point.score),
+                    "id": str(point.get("id", "")),
+                    "score": float(point.get("score", 0)),
                     "content": payload.get("content", payload.get("text", "")),
                     "source": payload.get("source", "echo_memory"),
                     "type": payload.get("type", "memory"),
-                    "metadata": payload
+                    "payload": payload
                 })
 
             logger.info(f"Memory search for '{query}' returned {len(results)} results")
