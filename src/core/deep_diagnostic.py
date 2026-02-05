@@ -90,7 +90,7 @@ class DeepDiagnostic:
             "host": "localhost",
             "database": "echo_brain",
             "user": "patrick",
-            "password": os.getenv("DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE")
+            "password": os.getenv("DB_PASSWORD", "")
         }
         self.findings: List[DiagnosticFinding] = []
         self.test_results: List[Dict] = []

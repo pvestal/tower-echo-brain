@@ -11,7 +11,7 @@ import json
 
 router = APIRouter(tags=["integrations"])
 
-DATABASE_URL = f"postgresql://patrick:{os.getenv('DB_PASSWORD', 'RP78eIrW7cI2jYvL5akt1yurE')}@localhost/echo_brain"
+DATABASE_URL = f"postgresql://patrick:{os.getenv('DB_PASSWORD', '')}@localhost/echo_brain"
 
 @router.get("")
 async def list_integrations():

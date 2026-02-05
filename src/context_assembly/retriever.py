@@ -28,7 +28,7 @@ class ParallelRetriever:
         self.qdrant_url = "http://localhost:6333"
         self.ollama_url = "http://localhost:11434"
         self.embedding_model = "mxbai-embed-large"  # 1024D
-        self.pg_dsn = f"postgresql://patrick:{os.getenv('DB_PASSWORD', 'RP78eIrW7cI2jYvL5akt1yurE')}@localhost/echo_brain"
+        self.pg_dsn = f"postgresql://patrick:{os.getenv('DB_PASSWORD', '')}@localhost/echo_brain"
 
     async def initialize(self):
         """Initialize connection pools"""
@@ -261,26 +261,6 @@ class ParallelRetriever:
                         })
                     return results
 
-                elif table == "facts":
-                    # This table case shouldn't be reached anymore
-                    # Facts are handled by _search_facts
-                    return []
-
-                    results = []
-                    for row in rows:
-                        fact_text = f"{row['subject']} {row['predicate']} {row['object']}"
-                        results.append({
-                            "type": "fact",
-                            "source": "pg/facts",
-                            "content": fact_text,
-                            "score": float(row["confidence"]),
-                            "metadata": {
-                                "subject": row["subject"],
-                                "predicate": row["predicate"],
-                                "object": row["object"]
-                            }
-                        })
-                    return results
 
                 else:
                     logger.info(f"Table {table} not implemented yet")

@@ -90,7 +90,7 @@ class SelfDiagnosis:
                 host="localhost",
                 database="echo_brain",
                 user="patrick",
-                password=os.getenv("TOWER_DB_PASSWORD", os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE"))
+                password=os.getenv("TOWER_DB_PASSWORD", os.getenv("TOWER_DB_PASSWORD", ""))
             )
             # Test query
             result = await conn.fetchval("SELECT COUNT(*) FROM task_results")

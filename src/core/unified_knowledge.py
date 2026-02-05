@@ -219,7 +219,7 @@ class UnifiedKnowledgeLayer:
             "host": "localhost",
             "database": "echo_brain",
             "user": "patrick",
-            "password": os.getenv("DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE")
+            "password": os.getenv("DB_PASSWORD", "")
         }
         self.qdrant_client = QdrantClient(url=qdrant_url)
         self.collection_name = collection_name
