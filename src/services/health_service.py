@@ -2,6 +2,7 @@
 Unified Health Service for Echo Brain
 Consolidates all health checks into a single service
 """
+import os
 from dataclasses import dataclass
 from typing import Dict, List, Optional
 from datetime import datetime
@@ -44,7 +45,7 @@ class HealthService:
                 host="localhost",
                 database="echo_brain",
                 user="patrick",
-                password="RP78eIrW7cI2jYvL5akt1yurE"
+                password=os.getenv("DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE")
             )
 
             # Get multiple stats in one query

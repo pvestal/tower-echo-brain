@@ -109,31 +109,33 @@ class DomainClassifier:
 
     def _initialize_sources(self) -> Dict[Domain, Dict]:
         """Map domains to allowed data sources"""
+        # Only echo_memory collection exists in Qdrant
+        # Use different score thresholds per domain to filter results
         return {
             Domain.TECHNICAL: {
-                "qdrant_collections": ["code", "documents"],
+                "qdrant_collections": ["echo_memory"],  # Use echo_memory for all
                 "pg_tables": ["claude_conversations"],  # Tech discussions only
                 "facts_filter": lambda f: "code" in f or "api" in f,
                 "max_sources": 10,
-                "min_score": 0.4
+                "min_score": 0.4  # Higher threshold for technical
             },
             Domain.ANIME: {
-                "qdrant_collections": ["anime_characters", "scene_embeddings"],
-                "pg_tables": ["anime_production.projects", "anime_production.characters"],
+                "qdrant_collections": ["echo_memory"],  # Use echo_memory for all
+                "pg_tables": [],  # anime_production tables don't exist
                 "facts_filter": lambda f: "anime" in f or "character" in f,
                 "max_sources": 15,
                 "min_score": 0.3
             },
             Domain.PERSONAL: {
-                "qdrant_collections": ["echo_memory", "conversations"],
-                "pg_tables": ["claude_conversations", "facts"],
+                "qdrant_collections": ["echo_memory"],
+                "pg_tables": ["claude_conversations"],  # Don't include facts table twice
                 "facts_filter": lambda f: "patrick" in f.lower(),
                 "max_sources": 10,
                 "min_score": 0.35
             },
             Domain.SYSTEM: {
-                "qdrant_collections": ["documents"],
-                "pg_tables": ["service_health", "system_logs"],
+                "qdrant_collections": ["echo_memory"],  # Use echo_memory for all
+                "pg_tables": [],  # service_health, system_logs don't exist
                 "facts_filter": lambda f: "service" in f or "tower" in f,
                 "max_sources": 5,
                 "min_score": 0.4
@@ -146,15 +148,15 @@ class DomainClassifier:
                 "min_score": 0.5
             },
             Domain.CREATIVE: {
-                "qdrant_collections": ["echo_memory", "scene_embeddings"],
+                "qdrant_collections": ["echo_memory"],  # Use echo_memory for all
                 "pg_tables": ["claude_conversations"],
                 "facts_filter": lambda f: "story" in f or "narrative" in f,
                 "max_sources": 8,
                 "min_score": 0.35
             },
             Domain.FINANCIAL: {
-                "qdrant_collections": ["documents"],
-                "pg_tables": ["transactions", "financial_data"],
+                "qdrant_collections": ["echo_memory"],  # Use echo_memory for all
+                "pg_tables": [],  # transactions, financial_data don't exist
                 "facts_filter": lambda f: "financial" in f or "money" in f,
                 "max_sources": 5,
                 "min_score": 0.45
@@ -173,20 +175,22 @@ class DomainClassifier:
         domain_scores = {}
 
         for domain, rules in self.domain_rules.items():
-            score = 0.0
+            matching_signals = 0
+            total_signals = len(rules["signals"])
 
             # Check positive signals
             for signal_pattern in rules["signals"]:
                 if re.search(signal_pattern, query_lower):
-                    score += rules["weight"]
+                    matching_signals += 1
 
-            # Check negative signals (reduce score)
+            # Check negative signals (reduce matches)
             for neg_pattern in rules["negative_signals"]:
                 if re.search(neg_pattern, query_lower):
-                    score -= rules["weight"] * 0.5
+                    matching_signals -= 0.5
 
-            # Normalize score
-            if score > 0:
+            # Normalize score: matching_signals / total_signals * weight
+            if matching_signals > 0 and total_signals > 0:
+                score = (matching_signals / total_signals) * rules["weight"]
                 domain_scores[domain] = min(1.0, score)
 
         # If no domain matched strongly, default to GENERAL

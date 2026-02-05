@@ -4,6 +4,7 @@ Echo Brain Unified Memory System
 Single source of truth for all data ingestion, storage, and retrieval
 """
 
+import os
 import asyncio
 import json
 import hashlib
@@ -23,7 +24,7 @@ class MemoryConfig:
     db_host: str = "localhost"
     db_name: str = "echo_brain"
     db_user: str = "patrick"
-    db_password: str = "RP78eIrW7cI2jYvL5akt1yurE"
+    db_password: str = os.getenv("DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE")
 
     qdrant_url: str = "http://localhost:6333"
     collection_name: str = "echo_memory"

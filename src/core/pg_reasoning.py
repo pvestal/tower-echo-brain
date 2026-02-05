@@ -1,10 +1,11 @@
 """Simple reasoning using PostgreSQL search + Ollama LLM"""
+import os
 import psycopg2
 import requests
 import time
 from typing import List, Dict
 
-DB = {"host": "localhost", "database": "echo_brain", "user": "patrick", "password": "RP78eIrW7cI2jYvL5akt1yurE"}
+DB = {"host": "localhost", "database": "echo_brain", "user": "patrick", "password": os.getenv("DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE")}
 OLLAMA_URL = "http://localhost:11434"
 
 def search_pg(query: str, limit: int = 5) -> List[Dict]:

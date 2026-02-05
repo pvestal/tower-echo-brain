@@ -2,6 +2,7 @@
 Preferences API - User preferences CRUD.
 Categories: music, anime, communication, appearance, etc.
 """
+import os
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional, Any, List
@@ -12,7 +13,7 @@ import json
 
 router = APIRouter(tags=["preferences"])
 
-DATABASE_URL = "postgresql://patrick:RP78eIrW7cI2jYvL5akt1yurE@localhost/echo_brain"
+DATABASE_URL = f"postgresql://patrick:{os.getenv('DB_PASSWORD', 'RP78eIrW7cI2jYvL5akt1yurE')}@localhost/echo_brain"
 
 class PreferenceCreate(BaseModel):
     category: str
