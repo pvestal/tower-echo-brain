@@ -218,37 +218,60 @@ class ReasoningEngine:
                 # Find relevant procedures and system state
                 context['action_context'] = await self._get_action_context(query)
 
-            # Get domain-filtered context using the pipeline's context layer
-            # This prevents contamination by filtering based on query intent
+            # Use the new context_assembly system for STRICT domain isolation
+            # This is the KEY to preventing contamination
             try:
-                from src.pipeline.context_layer import ContextLayer
-                if not hasattr(self, '_context_layer'):
-                    self._context_layer = ContextLayer()
-                    await self._context_layer.initialize()
+                from src.context_assembly import ParallelRetriever, ContextCompiler
 
-                # Get properly filtered context based on intent
-                context_package = await self._context_layer.retrieve(query)
+                # Initialize retriever if needed
+                if not hasattr(self, '_retriever'):
+                    self._retriever = ParallelRetriever()
+                    await self._retriever.initialize()
+                    self._compiler = ContextCompiler()
+                    logger.info("Context Assembly system initialized")
 
-                # Only use knowledge context if we have relevant sources
-                if context_package.total_sources_found > 0:
-                    context['knowledge_context'] = {
-                        'intent': context_package.intent.value,
-                        'sources_found': context_package.total_sources_found,
-                        'prompt_context': context_package.assembled_context,
-                        'confidence': len(context_package.sources) / 10.0  # Simple confidence metric
-                    }
-                else:
-                    # No relevant context found - don't pollute with unrelated data
-                    context['knowledge_context'] = {
-                        'intent': context_package.intent.value,
-                        'sources_found': 0,
-                        'prompt_context': '',
-                        'confidence': 0.0
-                    }
+                # Retrieve domain-appropriate context
+                retrieval_result = await self._retriever.retrieve(query, max_results=15)
+
+                # Compile context for the model
+                model_name = self._get_model_for_query_type(query_type)
+                compiled = self._compiler.compile(
+                    retrieval_result,
+                    model_name=model_name,
+                    format_style="structured"
+                )
+
+                # Store in context for use by synthesis
+                context['knowledge_context'] = {
+                    'domain': retrieval_result['domain'],
+                    'sources_found': retrieval_result['total_returned'],
+                    'prompt_context': compiled['formatted_context'],
+                    'confidence': retrieval_result['domain_confidence'],
+                    'token_usage': f"{compiled['estimated_tokens']}/{compiled['token_limit']}",
+                    'source_breakdown': compiled['source_breakdown']
+                }
+
+                # Also store system prompt for the domain
+                context['domain_system_prompt'] = self._compiler.create_system_prompt(
+                    retrieval_result['domain'],
+                    style="balanced"
+                )
+
+                logger.info(
+                    f"Context assembled: domain={retrieval_result['domain']}, "
+                    f"sources={retrieval_result['total_returned']}, "
+                    f"tokens={compiled['estimated_tokens']}"
+                )
+
             except Exception as e:
-                logger.warning(f"Pipeline context layer not available, falling back to unfiltered: {e}")
-                # Fallback to original unfiltered context (but limit it)
-                context['knowledge_context'] = await self.knowledge.get_context(query, max_facts=3, max_vectors=2, max_conversations=2)
+                logger.error(f"Context assembly failed, using minimal fallback: {e}")
+                # Minimal fallback - NO contaminated context
+                context['knowledge_context'] = {
+                    'domain': 'general',
+                    'sources_found': 0,
+                    'prompt_context': '',
+                    'confidence': 0.0
+                }
 
         except Exception as e:
             logger.error(f"Error gathering context: {e}")
@@ -446,6 +469,17 @@ class ReasoningEngine:
         except Exception as e:
             logger.error(f"Error getting action context: {e}")
             return {'error': str(e)}
+
+    def _get_model_for_query_type(self, query_type: QueryType) -> str:
+        """Map query type to appropriate model"""
+        model_map = {
+            QueryType.CODE_QUERY: "qwen2.5-coder:7b",
+            QueryType.ACTION_REQUEST: "mistral:7b",
+            QueryType.GENERAL_KNOWLEDGE: "llama3.1:8b",
+            QueryType.SELF_INTROSPECTION: "llama3.1:8b",
+            QueryType.SYSTEM_QUERY: "mistral:7b"
+        }
+        return model_map.get(query_type, "llama3.1:8b")
 
     def _extract_service_name(self, query: str) -> Optional[str]:
         """Extract service name from query"""
