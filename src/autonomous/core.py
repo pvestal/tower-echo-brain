@@ -21,9 +21,9 @@ import time
 # Import autonomous components
 from .goals import GoalManager
 from .scheduler import Scheduler, ScheduleConfig
-from .executor import Executor, TaskResult
+# from .executor import Executor, TaskResult  # Placeholder in __init__.py
 from .celery_executor import CeleryExecutor
-from .events import EventWatcher
+# from .events import EventWatcher  # Not implemented yet
 from .safety import SafetyController
 from .audit import AuditLogger
 
@@ -95,8 +95,10 @@ class AutonomousCore:
             logger.info("Using CeleryExecutor for distributed task execution")
         except Exception as e:
             logger.warning(f"Failed to initialize CeleryExecutor: {e}, falling back to regular Executor")
+            from . import Executor  # Get placeholder from __init__.py
             self.executor = Executor()
-        self.event_watcher = EventWatcher()
+        # self.event_watcher = EventWatcher()  # Not implemented yet
+        self.event_watcher = None
         self.safety_controller = SafetyController()
         self.audit_logger = AuditLogger()
 
@@ -328,7 +330,8 @@ class AutonomousCore:
     async def process_events(self, cycle_results: Dict[str, Any]):
         """Process pending events from the event watcher."""
         try:
-            events = await self.event_watcher.check_events()
+            # events = await self.event_watcher.check_events()  # Not implemented
+            events = []
 
             for event in events:
                 # Let the event watcher handle the event
@@ -522,7 +525,7 @@ class AutonomousCore:
         """Start all autonomous components."""
         try:
             # Start event watcher
-            await self.event_watcher.start_watching()
+            # await self.event_watcher.start_watching()  # Not implemented
             logger.info("Event watcher started")
 
             # Initialize executor agents
@@ -539,13 +542,13 @@ class AutonomousCore:
         """Stop all autonomous components."""
         try:
             # Stop event watcher
-            await self.event_watcher.stop_watching()
+            # await self.event_watcher.stop_watching()  # Not implemented
 
             # Cleanup components
             await asyncio.gather(
                 self.executor.cleanup(),
                 self.scheduler.cleanup(),
-                self.event_watcher.cleanup(),
+                # self.event_watcher.cleanup(),  # Not implemented
                 self.safety_controller.cleanup(),
                 self.audit_logger.cleanup(),
                 return_exceptions=True
@@ -588,7 +591,7 @@ class AutonomousCore:
             'goal_manager': True,  # Always available
             'scheduler': True,     # Always available
             'executor': True,      # Always available
-            'event_watcher': self.event_watcher.running,
+            'event_watcher': False,  # Not implemented
             'safety_controller': True,  # Always available
             'audit_logger': True        # Always available
         }
