@@ -209,8 +209,8 @@ async def think(request: Dict[str, Any]):
     # Get memory context
     memory_results = await mcp_service.search_memory(query, limit=5)
     memory_context = []
-    if memory_results and "results" in memory_results:
-        for mem in memory_results["results"][:5]:
+    if memory_results:  # memory_results is already a list
+        for mem in memory_results[:5]:
             memory_context.append(mem.get("content", "")[:300])
 
     # Get facts if available
@@ -247,9 +247,9 @@ Provide a structured analysis:
         )
         analysis = analysis_response.json().get("response", "")
 
-    # Stage 3: Deep reasoning if depth > 1
-    if depth > 1:
-        reasoning_prompt = f"""Based on this analysis:
+        # Stage 3: Deep reasoning if depth > 1
+        if depth > 1:
+            reasoning_prompt = f"""Based on this analysis:
 {analysis}
 
 Original Query: {query}
@@ -260,13 +260,13 @@ Now provide deep reasoning:
 3. Generate insights beyond the obvious
 4. Provide a comprehensive answer"""
 
-        final_response = await client.post(
-            "http://localhost:11434/api/generate",
-            json={"model": "mistral:7b", "prompt": reasoning_prompt, "stream": False}
-        )
-        final_answer = final_response.json().get("response", "")
-    else:
-        final_answer = analysis
+            final_response = await client.post(
+                "http://localhost:11434/api/generate",
+                json={"model": "mistral:7b", "prompt": reasoning_prompt, "stream": False}
+            )
+            final_answer = final_response.json().get("response", "")
+        else:
+            final_answer = analysis
 
     return {
         "response": final_answer,
@@ -325,99 +325,104 @@ async def search_conversations(request: Dict[str, Any]):
 # ============= Q&A =============
 @router.post("/ask")
 async def ask(request: Dict[str, Any]):
-    """Main Q&A endpoint - WITH CONTEXT FROM MEMORY"""
+    """Main Q&A endpoint - WITH UNIFIED KNOWLEDGE LAYER"""
     question = request.get("question", "")
     use_context = request.get("use_context", True)
-    verbose = request.get("verbose", True)  # Default to verbose for transparency
+    verbose = request.get("verbose", True)
 
-    # Build context from memory and conversations
-    context_parts = []
-    sources = []
-    debug_info = []
+    # Use unified knowledge layer
+    from src.core.unified_knowledge import get_unified_knowledge
+    knowledge = get_unified_knowledge()
 
-    if use_context:
-        try:
-            # 1. Search memory vectors for relevant context
-            from src.integrations.mcp_service import mcp_service
-            memory_results = await mcp_service.search_memory(question, limit=3)
+    debug_info = {"question": question, "steps": [], "search_terms": []}
 
-            if memory_results and "results" in memory_results:
-                context_parts.append("=== Relevant Memory Context ===")
-                for mem in memory_results["results"][:3]:
-                    context_parts.append(f"- {mem.get('content', '')[:200]}")
-                    sources.append({"type": "memory", "score": mem.get("score", 0)})
-
-            # 2. Search conversations for relevant history
-            import asyncpg
-            conn = await asyncpg.connect(
-                host='localhost',
-                database='echo_brain',
-                user='patrick',
-                password='RP78eIrW7cI2jYvL5akt1yurE',
-                timeout=5
+    try:
+        if use_context:
+            # Get unified context from all sources
+            context = await knowledge.get_context(
+                query=question,
+                max_facts=5,
+                max_vectors=3,
+                max_conversations=3
             )
 
-            conv_rows = await conn.fetch("""
-                SELECT content, role
-                FROM claude_conversations
-                WHERE content ILIKE $1
-                ORDER BY created_at DESC
-                LIMIT 3
-            """, f'%{question.split()[0] if question else ""}%')
+            # Track what was found
+            debug_info["search_terms"] = knowledge.extract_search_terms(question)
+            debug_info["steps"].append(
+                f"Found {len(context['facts'])} facts, "
+                f"{len(context['vectors'])} vectors, "
+                f"{len(context['conversations'])} conversations"
+            )
 
-            if conv_rows:
-                context_parts.append("=== Recent Related Conversations ===")
-                for row in conv_rows:
-                    context_parts.append(f"- [{row['role']}]: {row['content'][:200]}")
-                    sources.append({"type": "conversation", "role": row["role"]})
+            # Build enhanced prompt with unified context
+            enhanced_prompt = knowledge.format_for_llm(context, question)
 
-            await conn.close()
+            # Track sources for transparency
+            sources = []
+            for fact in context['facts']:
+                sources.append({
+                    "type": "fact",
+                    "content": fact.content[:100],
+                    "confidence": fact.confidence
+                })
+            for vec in context['vectors']:
+                sources.append({
+                    "type": "vector",
+                    "content": vec.content[:100],
+                    "confidence": vec.confidence
+                })
+            for conv in context['conversations']:
+                sources.append({
+                    "type": "conversation",
+                    "content": conv.content[:100],
+                    "role": conv.metadata.get('role', 'unknown')
+                })
 
-        except Exception as e:
-            logger.warning(f"Context building failed: {e}")
+        else:
+            # No context requested
+            enhanced_prompt = question
+            sources = []
+            context = None
 
-    # Build the enhanced prompt with context
-    if context_parts:
-        enhanced_prompt = f"""Based on the following context from your memory and history:
+        # Send to Ollama
+        async with httpx.AsyncClient(timeout=60) as client:
+            response = await client.post(
+                "http://localhost:11434/api/generate",
+                json={
+                    "model": "mistral:7b",
+                    "prompt": enhanced_prompt,
+                    "stream": False
+                }
+            )
 
-{chr(10).join(context_parts)}
+            answer = response.json().get("response", "")
 
-Question: {question}
-
-Provide a comprehensive answer that incorporates the relevant context above."""
-    else:
-        enhanced_prompt = question
-
-    # Send to Ollama with context
-    async with httpx.AsyncClient(timeout=30) as client:
-        response = await client.post(
-            "http://localhost:11434/api/generate",
-            json={
-                "model": "mistral:7b",
-                "prompt": enhanced_prompt,
-                "stream": False
-            }
-        )
-
+        # Build response
         result = {
-            "answer": response.json().get("response", ""),
+            "answer": answer,
             "model": "mistral:7b",
-            "context_used": len(context_parts) > 0,
+            "context_used": use_context and context is not None,
             "sources": sources,
             "timestamp": datetime.now().isoformat()
         }
 
-        # Add verbose debug info if requested
-        if verbose:
+        # Add debug info if verbose
+        if verbose and context:
             result["debug"] = {
-                "question": question,
-                "context_parts_count": len(context_parts),
-                "sources_detail": sources,
-                "prompt_length": len(enhanced_prompt),
-                "context_preview": context_parts[:2] if context_parts else None
+                **debug_info,
+                "total_sources": context.get('total_sources', 0),
+                "prompt_length": len(enhanced_prompt) if use_context else 0
             }
 
         return result
+
+    except Exception as e:
+        logger.error(f"Error in ask endpoint: {e}")
+        return {
+            "answer": f"Error processing request: {str(e)}",
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        }
 
 @router.get("/search")
 async def search(q: str, limit: int = 10):

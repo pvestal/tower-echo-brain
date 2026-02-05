@@ -154,34 +154,31 @@ class MCPService:
             return ""
 
     async def get_facts(self, topic: Optional[str] = None, limit: int = 100) -> List[Dict[str, Any]]:
-        """Get actual facts from vector database"""
-        if not self.qdrant_client:
-            return []
+        """Get facts from PostgreSQL facts table via unified knowledge layer"""
+        from src.core.unified_knowledge import get_unified_knowledge
+
+        knowledge = get_unified_knowledge()
 
         try:
-            # If topic provided, search for it
+            # Get facts from the unified layer
             if topic:
-                return await self.search_memory(topic, limit)
+                facts = await knowledge.search_facts(topic, limit)
+            else:
+                # Get all recent facts
+                facts = await knowledge.search_facts("", limit)
 
-            # Otherwise return recent facts
-            from qdrant_client.models import Filter, FieldCondition, MatchValue
+            # Convert to expected format
+            result = []
+            for fact in facts:
+                result.append({
+                    "content": fact.content,
+                    "confidence": fact.confidence,
+                    "type": fact.source_type,
+                    "metadata": fact.metadata
+                })
 
-            filter_condition = Filter(
-                must=[
-                    FieldCondition(
-                        key="type",
-                        match=MatchValue(value="fact")
-                    )
-                ]
-            )
-
-            # Use scroll to get facts
-            results, _ = self.qdrant_client.scroll(
-                collection_name=self.collection_name,
-                scroll_filter=filter_condition,
-                limit=min(limit, 100),
-                with_payload=True
-            )
+            logger.info(f"Retrieved {len(result)} facts from unified knowledge layer")
+            return result
 
             # Format facts
             facts = []
