@@ -128,10 +128,10 @@ const refreshLogs = async () => {
     const response = await systemApi.logs();
     logs.value = response.data.logs || [];
 
-    // Get activity history
-    const metricsResponse = await systemApi.metricsHistory();
-    recentCalls.value = metricsResponse.data.api_calls?.slice(0, 10) || [];
-    recentQuestions.value = metricsResponse.data.questions?.slice(0, 10) || [];
+    // Get activity history - endpoint not implemented yet
+    // const metricsResponse = await systemApi.metricsHistory();
+    recentCalls.value = [];
+    recentQuestions.value = [];
   } catch (error) {
     console.error('Failed to fetch logs:', error);
   } finally {

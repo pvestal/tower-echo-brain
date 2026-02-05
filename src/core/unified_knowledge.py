@@ -130,6 +130,30 @@ class UnifiedKnowledgeLayer:
             "object": "Personal AI assistant using 13k+ conversations and 24k+ memory vectors for contextual responses",
             "confidence": 1.0
         },
+        "echo_brain_llm_models": {
+            "subject": "Echo Brain",
+            "predicate": "uses LLM models",
+            "object": "Ollama models including mistral:7b for general queries, deepseek-r1:8b for code/reasoning, gemma2:9b for analysis",
+            "confidence": 1.0
+        },
+        "echo_brain_vector_count": {
+            "subject": "Echo Brain",
+            "predicate": "vector count",
+            "object": "24,657 vectors in Qdrant collection echo_memory (as of Feb 2026)",
+            "confidence": 1.0
+        },
+        "echo_brain_fact_count": {
+            "subject": "Echo Brain",
+            "predicate": "fact count", 
+            "object": "6,129 facts in PostgreSQL facts table",
+            "confidence": 1.0
+        },
+        "echo_brain_conversation_count": {
+            "subject": "Echo Brain",
+            "predicate": "conversation count",
+            "object": "13,630 conversation messages indexed from Claude chat history",
+            "confidence": 1.0
+        },
         "echo_brain_architecture": {
             "subject": "Echo Brain",
             "predicate": "architecture",

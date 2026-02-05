@@ -8,12 +8,6 @@ const healthStore = useHealthStore();
 
 onMounted(() => healthStore.startAutoRefresh(5000));
 onUnmounted(() => healthStore.stopAutoRefresh());
-
-const formatUptime = (seconds: number) => {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  return `${hours}h ${minutes}m`;
-};
 </script>
 
 <template>
@@ -39,34 +33,23 @@ const formatUptime = (seconds: number) => {
       <div class="grid grid-2">
         <ResourceBar
           label="cpu"
-          :value="healthStore.resources.cpu_percent || 0"
+          :value="healthStore.resources?.cpu_percent || 0"
           unit="%"
         />
         <ResourceBar
           label="memory"
-          :value="healthStore.resources.memory_used_gb || 0"
-          :max="healthStore.resources.memory_total_gb || 0"
+          :value="(healthStore.resources?.memory_mb || 0) / 1024"
+          :max="8"
           unit="gb"
         />
         <ResourceBar
-          label="disk"
-          :value="healthStore.resources.disk_used_gb || 0"
-          :max="healthStore.resources.disk_total_gb || 0"
-          unit="gb"
-        />
-        <ResourceBar
-          v-if="healthStore.resources.gpu"
-          label="gpu"
-          :value="healthStore.resources.gpu.memory_used_mb || 0"
-          :max="healthStore.resources.gpu.memory_total_mb || 0"
-          unit="mb"
+          label="vectors"
+          :value="healthStore.resources?.vectors || 0"
+          :max="100000"
+          unit=""
         />
       </div>
 
-      <div v-if="healthStore.resources.gpu" class="mt-2 text-xs text-dim text-mono">
-        gpu: {{ healthStore.resources.gpu.name }} |
-        temp: {{ healthStore.resources.gpu.temperature_c }}°c
-      </div>
     </div>
 
     <!-- Services -->
@@ -86,16 +69,15 @@ const formatUptime = (seconds: number) => {
       <h3>ISSUES</h3>
       <div class="text-xs text-mono text-dim space-y-2">
         <div v-for="svc in healthStore.unhealthyServices" :key="svc.name">
-          {{ svc.name }}: {{ svc.error || svc.status }}
+          {{ svc.name }}: {{ svc.status }}
         </div>
       </div>
     </div>
 
     <!-- Footer Stats -->
     <div class="text-xs text-dim text-mono mt-2" style="padding-top: 1rem; border-top: 1px solid #222;">
-      <div v-if="healthStore.health && healthStore.health.uptime_seconds">
-        uptime: {{ formatUptime(healthStore.health.uptime_seconds) }}
-        <span v-if="healthStore.health.endpoints"> | endpoints: {{ healthStore.health.endpoints.total }}</span>
+      <div v-if="healthStore.health">
+        status: {{ healthStore.health.status }}
         | services: {{ healthStore.services.length }}
       </div>
     </div>

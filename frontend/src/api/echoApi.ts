@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { SystemHealth } from '@/types/echo';
+import type { EchoHealthResponse } from '@/types/echo';
 
 // Always use /api/echo for all endpoints
 const api = axios.create({
@@ -9,11 +9,11 @@ const api = axios.create({
 
 // Health (existing)
 export const healthApi = {
-  getFull: () => api.get<SystemHealth>('/health/'),
-  getQuick: () => api.get<{ status: string; services: Record<string, string> }>('/health/quick'),
-  getResources: () => api.get('/health/resources'),
-  getService: (name: string) => api.get(`/health/services/${name}`),
-  getMetrics: () => api.get('/health/metrics'),
+  getFull: () => api.get<EchoHealthResponse>('/health'),
+  getQuick: () => api.get<{ status: string; services: Record<string, string> }>('/health'),
+  getResources: () => api.get('/system/resources'),
+  getService: (name: string) => api.get(`/intelligence/service/${name}`),
+  getMetrics: () => api.get('/health'),
 };
 
 // Memory
@@ -68,7 +68,7 @@ export const systemApi = {
   diagnostics: () => api.get('/system/diagnostics'),
   diagnosticsDatabase: () => api.get('/system/diagnostics/database'),
   diagnosticsServices: () => api.get('/system/diagnostics/services'),
-  logs: () => api.get('/system/status/logs'),
+  logs: () => api.get('/system/logs'),
   operationsStatus: () => api.get('/system/operations/status'),
   operationsJobs: () => api.get('/system/operations/jobs'),
   healthDetailed: () => api.get('/system/health/detailed'),

@@ -73,6 +73,16 @@ except ImportError as e:
 except Exception as e:
     logger.error(f"❌ Echo main router failed: {e}")
 
+# Mount Pipeline API - Three-Layer Architecture
+try:
+    from src.api.endpoints.pipeline_router import router as pipeline_router
+    app.include_router(pipeline_router)
+    logger.info("✅ Pipeline router mounted at /api/pipeline - Context→Reasoning→Narrative pipeline")
+except ImportError as e:
+    logger.error(f"❌ Pipeline router not available: {e}")
+except Exception as e:
+    logger.error(f"❌ Pipeline router failed: {e}")
+
 # Mount Agent API with proper async context
 try:
     from src.api.agents import router as agent_router

@@ -104,3 +104,9 @@ generate_working_oauth.py
 oauth_oob.py
 refresh_and_test.py
 show_calendar_events.py
+.encryption_key
+
+# Security - Files with hardcoded credentials
+config/omniscient.json
+config/auth/
+fix_*.py

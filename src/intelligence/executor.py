@@ -195,6 +195,20 @@ class ActionExecutor:
                 execution_time_ms=execution_time_ms
             )
 
+            # Trigger learning loop
+            try:
+                from .learner import get_learning_loop
+                learner = get_learning_loop()
+                await learner.on_action_complete(
+                    action_type="shell",
+                    command=command,
+                    success=result.success,
+                    result=result.stdout if result.success else result.stderr,
+                    context={"execution_time_ms": execution_time_ms}
+                )
+            except Exception as e:
+                logger.debug(f"Learning loop error: {e}")
+
             return result
 
         except Exception as e:
@@ -494,22 +508,38 @@ class ActionExecutor:
                 return result
 
         try:
-            # Create connection to specified database
-            pool = await asyncpg.create_pool(
-                host=self.db_config['host'],
-                database=db,
-                user=self.db_config['user'],
-                password=self.db_config['password'],
-                min_size=1,
-                max_size=2,
-                timeout=10
-            )
+            # Use the shared connection pool instead of creating a new one each time
+            pool = await self.get_db_pool()
 
             async with pool.acquire() as conn:
-                if params:
-                    rows = await conn.fetch(query, *params)
+                # Switch to the target database if needed
+                if db != 'echo_brain':
+                    # For queries to other databases, we need to use a direct connection
+                    # since the pool is configured for 'echo_brain'
+                    conn = await asyncio.wait_for(
+                        asyncpg.connect(
+                            host=self.db_config['host'],
+                            database=db,
+                            user=self.db_config['user'],
+                            password=self.db_config['password'],
+                            timeout=10
+                        ),
+                        timeout=15
+                    )
+
+                    try:
+                        if params:
+                            rows = await asyncio.wait_for(conn.fetch(query, *params), timeout=10)
+                        else:
+                            rows = await asyncio.wait_for(conn.fetch(query), timeout=10)
+                    finally:
+                        await conn.close()
                 else:
-                    rows = await conn.fetch(query)
+                    # Use the pooled connection for echo_brain database
+                    if params:
+                        rows = await asyncio.wait_for(conn.fetch(query, *params), timeout=10)
+                    else:
+                        rows = await asyncio.wait_for(conn.fetch(query), timeout=10)
 
                 # Convert to list of dicts
                 data = [dict(row) for row in rows]
@@ -530,7 +560,20 @@ class ActionExecutor:
                     execution_time_ms=execution_time_ms
                 )
 
-                await pool.close()
+                # Trigger learning loop
+                try:
+                    from .learner import get_learning_loop
+                    learner = get_learning_loop()
+                    await learner.on_action_complete(
+                        action_type="db_query",
+                        command=query,
+                        success=result.success,
+                        result=f"Retrieved {len(rows)} rows",
+                        context={"database": db, "execution_time_ms": execution_time_ms}
+                    )
+                except Exception as e:
+                    logger.debug(f"Learning loop error: {e}")
+
                 return result
 
         except Exception as e:
