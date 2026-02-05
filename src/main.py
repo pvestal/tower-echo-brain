@@ -232,6 +232,49 @@ if frontend_path.exists():
 else:
     logger.warning(f"⚠️ Frontend not found at {frontend_path}")
 
+# Initialize Worker Scheduler on startup
+@app.on_event("startup")
+async def startup_event():
+    """Initialize worker scheduler and register workers."""
+    try:
+        # Add project root to path if needed
+        import sys
+        import os
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        if project_root not in sys.path:
+            sys.path.insert(0, project_root)
+
+        from src.autonomous.worker_scheduler import worker_scheduler
+        from src.autonomous.workers.fact_extraction_worker import FactExtractionWorker
+        from src.autonomous.workers.conversation_watcher import ConversationWatcher
+        from src.autonomous.workers.knowledge_graph_builder import KnowledgeGraphBuilder
+
+        # Create worker instances
+        fact_worker = FactExtractionWorker()
+        conv_watcher = ConversationWatcher()
+        graph_builder = KnowledgeGraphBuilder()
+
+        # Register workers with their intervals
+        worker_scheduler.register_worker("fact_extraction", fact_worker.run_cycle, interval_minutes=30)
+        worker_scheduler.register_worker("conversation_watcher", conv_watcher.run_cycle, interval_minutes=10)
+        worker_scheduler.register_worker("knowledge_graph", graph_builder.run_cycle, interval_minutes=1440)  # daily
+
+        # Start the scheduler
+        await worker_scheduler.start()
+        logger.info("✅ Worker scheduler started with 3 workers")
+    except Exception as e:
+        logger.error(f"❌ Failed to start worker scheduler: {e}")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Stop worker scheduler on shutdown."""
+    try:
+        from src.autonomous.worker_scheduler import worker_scheduler
+        await worker_scheduler.stop()
+        logger.info("✅ Worker scheduler stopped")
+    except Exception as e:
+        logger.error(f"❌ Error stopping worker scheduler: {e}")
+
 # Enhanced request logging with metrics
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
@@ -313,6 +356,15 @@ async def log_requests(request: Request, call_next):
             status_code=500,
             content={"error": "Internal server error", "request_id": request_id}
         )
+
+@app.get("/api/workers/status")
+async def get_worker_status():
+    """Get status of all scheduled workers."""
+    try:
+        from src.autonomous.worker_scheduler import worker_scheduler
+        return worker_scheduler.get_status()
+    except Exception as e:
+        return {"error": str(e), "running": False, "workers": {}}
 
 if __name__ == "__main__":
     import uvicorn
