@@ -167,7 +167,7 @@ try:
     conn = psycopg2.connect(
         host='192.168.50.135',
         user='patrick',
-        password='RP78eIrW7cI2jYvL5akt1yurE',
+        password=os.getenv('DB_PASSWORD', ''),
         database='echo_brain',
         port=5432
     )

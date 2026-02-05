@@ -17,7 +17,7 @@ import asyncpg
 from src.services.embedding_service import create_embedding_service
 from src.services.vector_search import get_vector_search
 
-DATABASE_URL = "postgresql://patrick:RP78eIrW7cI2jYvL5akt1yurE@localhost/echo_brain"
+DATABASE_URL = "postgresql://patrick:" + os.getenv('DB_PASSWORD', '') + "@localhost/echo_brain"
 BATCH_SIZE = 50  # Larger batches for efficiency
 
 async def import_codebase():

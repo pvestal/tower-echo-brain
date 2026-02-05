@@ -18,7 +18,7 @@ DB_CONFIG = {
     'host': os.getenv('TOWER_DB_HOST', '192.168.50.135'),
     'database': 'anime_production',
     'user': 'patrick',
-    'password': os.getenv('TOWER_DB_PASSWORD', 'RP78eIrW7cI2jYvL5akt1yurE')
+    'password': os.getenv('TOWER_DB_PASSWORD', os.getenv('DB_PASSWORD', ''))
 }
 
 @dataclass
