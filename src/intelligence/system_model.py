@@ -214,14 +214,16 @@ class SystemModel:
                     process_name = None
                     pid = None
 
-                    for proc in psutil.process_iter(['pid', 'name', 'connections']):
+                    for proc in psutil.process_iter(['pid', 'name']):
                         try:
-                            for conn in proc.info['connections'] or []:
+                            # Get connections for this specific process
+                            proc_conns = proc.connections(kind='inet')
+                            for conn in proc_conns:
                                 if conn.laddr.port == port and conn.status == 'LISTEN':
                                     process_name = proc.info['name']
                                     pid = proc.info['pid']
                                     break
-                        except (psutil.NoSuchProcess, psutil.AccessDenied):
+                        except (psutil.NoSuchProcess, psutil.AccessDenied, AttributeError):
                             continue
 
                     services.append(Service(

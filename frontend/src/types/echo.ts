@@ -7,6 +7,22 @@ export interface ServiceHealth {
   error?: string;
 }
 
+// Actual API response format
+export interface EchoHealthResponse {
+  status: string;
+  version: string;
+  timestamp: string;
+  services: Record<string, boolean> | ServiceHealth[];
+  metrics: {
+    requests: number;
+    memory_mb: number;
+    cpu_percent: number;
+    vectors: number;
+    avg_response_ms: number;
+    error_rate: string;
+  };
+}
+
 export interface SystemHealth {
   overall_status: 'healthy' | 'degraded' | 'critical';
   uptime_seconds: number;

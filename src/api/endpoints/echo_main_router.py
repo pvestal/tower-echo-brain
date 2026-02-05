@@ -70,6 +70,11 @@ async def echo_health():
         }
     }
 
+@router.get("/status")
+async def echo_status():
+    """Echo Brain status endpoint - alias for health for frontend compatibility"""
+    return await echo_health()
+
 # ============= SYSTEM INFO (Only unique system endpoints) =============
 @router.get("/system/resources")
 async def system_resources():
@@ -111,10 +116,18 @@ async def system_logs(lines: int = 100, level: Optional[str] = None):
             if line:
                 try:
                     log_entry = json.loads(line)
+                    priority = log_entry.get("PRIORITY", "6")
+                    level_map = {"0": "EMERG", "1": "ALERT", "2": "CRIT", "3": "ERROR", "4": "WARNING", "5": "NOTICE", "6": "INFO", "7": "DEBUG"}
+
+                    # Parse timestamp from microseconds to ISO format
+                    timestamp_us = int(log_entry.get("__REALTIME_TIMESTAMP", 0))
+                    timestamp = datetime.fromtimestamp(timestamp_us / 1000000).isoformat() if timestamp_us else datetime.now().isoformat()
+
                     logs.append({
-                        "time": log_entry.get("__REALTIME_TIMESTAMP", ""),
-                        "msg": log_entry.get("MESSAGE", ""),
-                        "level": log_entry.get("PRIORITY", "")
+                        "timestamp": timestamp,
+                        "message": log_entry.get("MESSAGE", ""),
+                        "level": level_map.get(str(priority), "INFO"),
+                        "service": "echo-brain"
                     })
                 except:
                     continue
@@ -325,102 +338,42 @@ async def search_conversations(request: Dict[str, Any]):
 # ============= Q&A =============
 @router.post("/ask")
 async def ask(request: Dict[str, Any]):
-    """Main Q&A endpoint - WITH UNIFIED KNOWLEDGE LAYER"""
+    """Main Q&A endpoint - NOW USES INTELLIGENCE LAYER"""
     question = request.get("question", "")
-    use_context = request.get("use_context", True)
-    verbose = request.get("verbose", True)
+    allow_actions = request.get("allow_actions", False)
 
-    # Use unified knowledge layer
-    from src.core.unified_knowledge import get_unified_knowledge
-    knowledge = get_unified_knowledge()
-
-    debug_info = {"question": question, "steps": [], "search_terms": []}
+    # Route through the new intelligence layer
+    from src.intelligence.reasoner import get_reasoning_engine
+    reasoner = get_reasoning_engine()
 
     try:
-        if use_context:
-            # Get unified context from all sources
-            context = await knowledge.get_context(
-                query=question,
-                max_facts=5,
-                max_vectors=3,
-                max_conversations=3
-            )
+        result = await reasoner.process(
+            query=question,
+            allow_actions=allow_actions
+        )
 
-            # Track what was found
-            debug_info["search_terms"] = knowledge.extract_search_terms(question)
-            debug_info["steps"].append(
-                f"Found {len(context['facts'])} facts, "
-                f"{len(context['vectors'])} vectors, "
-                f"{len(context['conversations'])} conversations"
-            )
-
-            # Build enhanced prompt with unified context
-            enhanced_prompt = knowledge.format_for_llm(context, question)
-
-            # Track sources for transparency
-            sources = []
-            for fact in context['facts']:
-                sources.append({
-                    "type": "fact",
-                    "content": fact.content[:100],
-                    "confidence": fact.confidence
-                })
-            for vec in context['vectors']:
-                sources.append({
-                    "type": "vector",
-                    "content": vec.content[:100],
-                    "confidence": vec.confidence
-                })
-            for conv in context['conversations']:
-                sources.append({
-                    "type": "conversation",
-                    "content": conv.content[:100],
-                    "role": conv.metadata.get('role', 'unknown')
-                })
-
-        else:
-            # No context requested
-            enhanced_prompt = question
-            sources = []
-            context = None
-
-        # Send to Ollama
-        async with httpx.AsyncClient(timeout=60) as client:
-            response = await client.post(
-                "http://localhost:11434/api/generate",
-                json={
-                    "model": "mistral:7b",
-                    "prompt": enhanced_prompt,
-                    "stream": False
-                }
-            )
-
-            answer = response.json().get("response", "")
-
-        # Build response
-        result = {
-            "answer": answer,
-            "model": "mistral:7b",
-            "context_used": use_context and context is not None,
-            "sources": sources,
+        return {
+            "answer": result.response,
+            "model": "intelligence-layer",
+            "query_type": result.query_type.value,
+            "confidence": result.confidence,
+            "sources": result.sources,
+            "actions_taken": result.actions_taken,
+            "execution_time_ms": result.execution_time_ms,
             "timestamp": datetime.now().isoformat()
         }
 
-        # Add debug info if verbose
-        if verbose and context:
-            result["debug"] = {
-                **debug_info,
-                "total_sources": context.get('total_sources', 0),
-                "prompt_length": len(enhanced_prompt) if use_context else 0
-            }
-
-        return result
-
     except Exception as e:
-        logger.error(f"Error in ask endpoint: {e}")
+        logger.error(f"Intelligence layer failed: {e}")
+        # Fallback to basic response
         return {
-            "answer": f"Error processing request: {str(e)}",
-            "error": str(e),
+            "answer": f"I encountered an error processing your question: {str(e)}",
+            "model": "error-fallback",
+            "query_type": "error",
+            "confidence": 0.0,
+            "sources": [],
+            "actions_taken": [],
+            "execution_time_ms": 0,
             "timestamp": datetime.now().isoformat()
         }
 
@@ -556,3 +509,43 @@ async def _get_gpu_info():
     except:
         pass
     return None
+# ============= SELF-DIAGNOSTIC =============
+@router.get("/diagnostic")
+async def run_self_diagnostic():
+    """
+    Run comprehensive self-diagnostic.
+    Tests knowledge sources, integrations, codebase, and provides recommendations.
+    """
+    from src.core.self_diagnostic import run_diagnostic
+    return await run_diagnostic()
+
+@router.get("/diagnostic/quick")
+async def quick_diagnostic():
+    """Quick health check with key metrics"""
+    from src.core.self_diagnostic import get_diagnostic
+    diagnostic = get_diagnostic()
+
+    # Run subset of checks
+    await diagnostic._diagnose_knowledge_sources()
+    await diagnostic._diagnose_unified_layer()
+
+    return {
+        "health_score": diagnostic._calculate_health_score(),
+        "summary": diagnostic._generate_summary(),
+        "quick_stats": await diagnostic._get_quick_stats()
+    }
+
+
+@router.get("/diagnostic/deep")
+async def deep_diagnostic():
+    """
+    Deep self-diagnostic that:
+    - Tests if Echo Brain can answer questions about itself
+    - Verifies context actually improves answers
+    - Identifies knowledge gaps
+    - Analyzes fact quality and contradictions
+    - Checks code quality
+    - Provides actionable fixes
+    """
+    from src.core.deep_diagnostic import run_deep_diagnostic
+    return await run_deep_diagnostic()

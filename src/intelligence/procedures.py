@@ -353,11 +353,12 @@ class ProcedureLibrary:
                     safety_level=SafetyLevel.SAFE
                 ),
                 Step(
-                    action=ActionType.DB_QUERY,
-                    target="echo_brain",
-                    command="SELECT COUNT(*) as vector_count FROM (SELECT 1) as dummy",
+                    action=ActionType.SHELL,
+                    target="database",
+                    command="PGPASSWORD=RP78eIrW7cI2jYvL5akt1yurE timeout 5 psql -h localhost -U patrick -d echo_brain -c 'SELECT 1' > /dev/null 2>&1 && echo 'Database: Connected' || echo 'Database: Connection failed'",
                     description="Check database connectivity",
-                    safety_level=SafetyLevel.SAFE
+                    safety_level=SafetyLevel.SAFE,
+                    timeout_seconds=10
                 )
             ]
         )
@@ -521,12 +522,28 @@ class ProcedureLibrary:
 
             logger.info(f"Starting procedure execution: {procedure.name} (ID: {execution_id})")
 
+            # Auto-extract common variables from context if not provided
+            self._auto_extract_context_variables(context)
+
             # Execute each step
             for i, step in enumerate(procedure.steps):
                 try:
-                    # Format command with context variables
-                    formatted_command = step.command.format(**context)
-                    formatted_target = step.target.format(**context) if step.target else step.target
+                    # Format command with context variables - handle missing variables gracefully
+                    formatted_command = self._safe_format_string(step.command, context)
+                    formatted_target = self._safe_format_string(step.target, context) if step.target else step.target
+
+                    # Check for unresolved variables
+                    if '{' in formatted_command and '}' in formatted_command:
+                        results.append({
+                            'step': i + 1,
+                            'action': step.action.value,
+                            'command': step.command,
+                            'success': False,
+                            'message': f'Skipped: unresolved variables in command: {step.command}',
+                            'skipped': True
+                        })
+                        logger.warning(f"Step {i+1} skipped: unresolved variables in command: {step.command}")
+                        continue
 
                     logger.info(f"Step {i+1}: {step.description}")
 
@@ -542,55 +559,94 @@ class ProcedureLibrary:
                         success = False
                         break
 
-                    # Execute based on action type
+                    # Execute based on action type with per-step timeout
                     step_result = None
+                    step_timeout = getattr(step, 'timeout_seconds', 30)  # Default 30 seconds
 
-                    if step.action == ActionType.SHELL:
-                        safe_execution = allow_dangerous or step.safety_level == SafetyLevel.SAFE
-                        shell_result = await executor.execute_shell(
-                            formatted_command, safe=safe_execution, timeout=step.timeout_seconds
-                        )
-                        step_result = {
-                            'success': shell_result.success,
-                            'stdout': shell_result.stdout,
-                            'stderr': shell_result.stderr,
-                            'exit_code': shell_result.exit_code
-                        }
-
-                    elif step.action == ActionType.SERVICE_MANAGE:
-                        parts = formatted_command.split()
-                        if len(parts) >= 2:
-                            action, service_name = parts[0], parts[1]
-                            service_result = await executor.manage_service(
-                                service_name, action, confirm_dangerous=allow_dangerous
+                    try:
+                        if step.action == ActionType.SHELL:
+                            safe_execution = allow_dangerous or step.safety_level == SafetyLevel.SAFE
+                            shell_result = await asyncio.wait_for(
+                                executor.execute_shell(
+                                    formatted_command, safe=safe_execution, timeout=step_timeout
+                                ),
+                                timeout=step_timeout + 5  # Extra 5 seconds for cleanup
                             )
                             step_result = {
-                                'success': service_result.success,
-                                'new_status': service_result.new_status,
-                                'message': service_result.message
+                                'success': shell_result.success,
+                                'stdout': shell_result.stdout,
+                                'stderr': shell_result.stderr,
+                                'exit_code': shell_result.exit_code
                             }
 
-                    elif step.action == ActionType.API_CALL:
-                        parts = formatted_command.split(' ', 1)
-                        method = parts[0]
-                        url = parts[1] if len(parts) > 1 else formatted_target
+                        elif step.action == ActionType.SERVICE_MANAGE:
+                            parts = formatted_command.split()
+                            if len(parts) >= 2:
+                                action, service_name = parts[0], parts[1]
+                                service_result = await asyncio.wait_for(
+                                    executor.manage_service(
+                                        service_name, action, confirm_dangerous=allow_dangerous
+                                    ),
+                                    timeout=step_timeout
+                                )
+                                step_result = {
+                                    'success': service_result.success,
+                                    'new_status': service_result.new_status,
+                                    'message': service_result.message
+                                }
+                            else:
+                                step_result = {
+                                    'success': False,
+                                    'message': 'Invalid service command format'
+                                }
 
-                        api_result = await executor.call_api(url, method, timeout=step.timeout_seconds)
-                        step_result = {
-                            'success': api_result.success,
-                            'status_code': api_result.status_code,
-                            'response_data': api_result.response_data
-                        }
+                        elif step.action == ActionType.API_CALL:
+                            parts = formatted_command.split(' ', 1)
+                            method = parts[0]
+                            url = parts[1] if len(parts) > 1 else formatted_target
 
-                    elif step.action == ActionType.DB_QUERY:
-                        query_result = await executor.query_database(
-                            formatted_target, formatted_command
-                        )
+                            api_result = await asyncio.wait_for(
+                                executor.call_api(url, method, timeout=step_timeout),
+                                timeout=step_timeout + 5  # Extra 5 seconds for cleanup
+                            )
+                            step_result = {
+                                'success': api_result.success,
+                                'status_code': api_result.status_code,
+                                'response_data': api_result.response_data
+                            }
+
+                        elif step.action == ActionType.DB_QUERY:
+                            query_result = await asyncio.wait_for(
+                                executor.query_database(formatted_target, formatted_command),
+                                timeout=step_timeout
+                            )
+                            step_result = {
+                                'success': query_result.success,
+                                'rows_affected': query_result.rows_affected,
+                                'data': query_result.data
+                            }
+
+                        else:
+                            step_result = {
+                                'success': False,
+                                'message': f'Unknown action type: {step.action}'
+                            }
+
+                    except asyncio.TimeoutError:
                         step_result = {
-                            'success': query_result.success,
-                            'rows_affected': query_result.rows_affected,
-                            'data': query_result.data
+                            'success': False,
+                            'message': f'Step timed out after {step_timeout} seconds',
+                            'timeout': True
                         }
+                        logger.warning(f"Step {i+1} ({step.description}) timed out after {step_timeout}s")
+
+                    except Exception as step_exception:
+                        step_result = {
+                            'success': False,
+                            'message': f'Step failed: {str(step_exception)}',
+                            'error': str(step_exception)
+                        }
+                        logger.error(f"Step {i+1} failed: {step_exception}")
 
                     # Record step result
                     results.append({
@@ -666,6 +722,83 @@ class ProcedureLibrary:
             'results': results,
             'error_message': error_message
         }
+
+    def _auto_extract_context_variables(self, context: Dict[str, Any]):
+        """Auto-extract common variables from context if not provided"""
+        # Extract service_name if not provided
+        if 'service_name' not in context:
+            issue_text = str(context.get('issue', ''))
+
+            # Look for tower service names
+            tower_services = [
+                'tower-echo-brain', 'tower-auth', 'tower-kb', 'tower-dashboard',
+                'tower-apple-music', 'tower-anime-production', 'tower-control-api'
+            ]
+
+            for service in tower_services:
+                if service in issue_text.lower():
+                    context['service_name'] = service
+                    break
+
+            # If no tower service found, try to extract generic service names
+            if 'service_name' not in context:
+                import re
+                # Look for patterns like "echo brain", "auth service", etc.
+                service_patterns = [
+                    (r'echo.?brain', 'tower-echo-brain'),
+                    (r'auth.*service', 'tower-auth'),
+                    (r'kb.*service', 'tower-kb'),
+                    (r'dashboard', 'tower-dashboard'),
+                    (r'apple.?music', 'tower-apple-music'),
+                    (r'anime.*production', 'tower-anime-production')
+                ]
+
+                for pattern, service_name in service_patterns:
+                    if re.search(pattern, issue_text.lower()):
+                        context['service_name'] = service_name
+                        break
+
+        # Extract port if service is known but port not provided
+        if 'port' not in context and 'service_name' in context:
+            port_mapping = {
+                'tower-echo-brain': '8309',
+                'tower-auth': '8088',
+                'tower-kb': '8307',
+                'comfyui': '8188',
+                'ollama': '11434',
+                'qdrant': '6333'
+            }
+            service_name = context['service_name']
+            if service_name in port_mapping:
+                context['port'] = port_mapping[service_name]
+
+        # Add default repo_path if needed for git operations
+        if 'repo_path' not in context and 'service_name' in context:
+            service_name = context['service_name']
+            if service_name.startswith('tower-'):
+                context['repo_path'] = f"/opt/{service_name}"
+
+        logger.debug(f"Auto-extracted context: {context}")
+
+    def _safe_format_string(self, template: str, context: Dict[str, Any]) -> str:
+        """Safely format a string template, leaving unresolved variables as-is"""
+        try:
+            # First try to format with existing context
+            return template.format(**context)
+        except KeyError:
+            # If some variables are missing, do partial substitution
+            import string
+
+            # Use a custom formatter that leaves missing variables unchanged
+            class SafeFormatter(string.Formatter):
+                def get_value(self, key, args, kwargs):
+                    try:
+                        return kwargs[key]
+                    except KeyError:
+                        return '{' + str(key) + '}'
+
+            formatter = SafeFormatter()
+            return formatter.format(template, **context)
 
     async def learn_procedure(self, task: str, steps: List[Dict[str, Any]], outcome: str):
         """Record a new procedure from observed actions"""

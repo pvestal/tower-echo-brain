@@ -385,3 +385,26 @@ async def get_intelligence_status():
             "error": str(e),
             "timestamp": datetime.now().isoformat()
         }
+
+@router.post("/maintenance")
+async def run_maintenance():
+    """Run learning loop maintenance"""
+    try:
+        from src.intelligence.learner import get_learning_loop
+        learner = get_learning_loop()
+
+        await learner.run_maintenance()
+
+        return {
+            "status": "success",
+            "message": "Maintenance completed successfully",
+            "timestamp": datetime.now().isoformat()
+        }
+
+    except Exception as e:
+        logger.error(f"Maintenance failed: {e}")
+        return {
+            "status": "error",
+            "message": f"Maintenance failed: {str(e)}",
+            "timestamp": datetime.now().isoformat()
+        }

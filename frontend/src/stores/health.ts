@@ -1,19 +1,31 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { healthApi } from '@/api/echoApi';
-import type { SystemHealth } from '@/types/echo';
+import type { EchoHealthResponse } from '@/types/echo';
 
 export const useHealthStore = defineStore('health', () => {
-  const health = ref<SystemHealth | null>(null);
+  const health = ref<EchoHealthResponse | null>(null);
   const loading = ref(false);
   const error = ref<string | null>(null);
   const lastFetch = ref<Date | null>(null);
 
   let refreshInterval: number | null = null;
 
-  const overallStatus = computed(() => health.value?.overall_status ?? 'unknown');
-  const services = computed(() => health.value?.services ?? []);
-  const resources = computed(() => health.value?.resources);
+  const overallStatus = computed(() => health.value?.status ?? 'unknown');
+  const services = computed(() => {
+    // Convert services object to array format
+    if (!health.value?.services) return [];
+    if (Array.isArray(health.value.services)) return health.value.services;
+    // Convert object format to array with minimal ServiceHealth interface
+    return Object.entries(health.value.services).map(([name, healthy]) => ({
+      name,
+      status: (healthy ? 'healthy' : 'down') as 'healthy' | 'degraded' | 'down',
+      latency_ms: 0,
+      last_check: new Date().toISOString(),
+      details: {}
+    }));
+  });
+  const resources = computed(() => health.value?.metrics);
   const isHealthy = computed(() => overallStatus.value === 'healthy');
 
   const unhealthyServices = computed(() =>
