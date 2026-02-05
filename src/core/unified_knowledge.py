@@ -35,6 +35,7 @@ class UnifiedKnowledgeLayer:
 
     # Core facts that Echo Brain should ALWAYS know
     CORE_FACTS = {
+        # Service Configuration
         "echo_brain_port": {
             "subject": "Echo Brain",
             "predicate": "runs on port",
@@ -47,34 +48,138 @@ class UnifiedKnowledgeLayer:
             "object": "http://localhost:8309/api/echo",
             "confidence": 1.0
         },
+        "echo_brain_health": {
+            "subject": "Echo Brain",
+            "predicate": "health endpoint",
+            "object": "/health returns service status",
+            "confidence": 1.0
+        },
+        "echo_brain_mcp": {
+            "subject": "Echo Brain MCP",
+            "predicate": "endpoint",
+            "object": "/mcp for Model Context Protocol integration",
+            "confidence": 1.0
+        },
+
+        # Database Configuration
         "echo_brain_database": {
             "subject": "Echo Brain",
             "predicate": "uses database",
             "object": "PostgreSQL database 'echo_brain' with user 'patrick'",
             "confidence": 1.0
         },
+        "echo_brain_facts_count": {
+            "subject": "Echo Brain facts table",
+            "predicate": "contains",
+            "object": "6,129 facts stored in PostgreSQL",
+            "confidence": 1.0
+        },
+        "echo_brain_conversations": {
+            "subject": "Echo Brain conversations",
+            "predicate": "contains",
+            "object": "13,630 messages from Claude conversations",
+            "confidence": 1.0
+        },
+
+        # Vector Storage
         "echo_brain_vectors": {
             "subject": "Echo Brain",
             "predicate": "vector storage",
             "object": "Qdrant on port 6333 with collection 'echo_memory' (24,657+ vectors)",
             "confidence": 1.0
         },
+        "echo_brain_embeddings": {
+            "subject": "Echo Brain",
+            "predicate": "embedding model",
+            "object": "mxbai-embed-large:latest (1024 dimensions)",
+            "confidence": 1.0
+        },
+
+        # LLM Models
         "echo_brain_models": {
             "subject": "Echo Brain",
             "predicate": "LLM models",
             "object": "Ollama models: mistral:7b, deepseek-r1:8b, gemma2:9b",
             "confidence": 1.0
         },
+        "echo_brain_ollama_port": {
+            "subject": "Ollama",
+            "predicate": "runs on port",
+            "object": "11434",
+            "confidence": 1.0
+        },
+
+        # Frontend & Access
         "echo_brain_frontend": {
             "subject": "Echo Brain Console",
             "predicate": "served at",
             "object": "/echo-brain/ via nginx proxy",
             "confidence": 1.0
         },
+        "echo_brain_frontend_build": {
+            "subject": "Echo Brain frontend",
+            "predicate": "built with",
+            "object": "Vue 3 + TypeScript + Vite",
+            "confidence": 1.0
+        },
+
+        # Purpose & Architecture
         "echo_brain_purpose": {
             "subject": "Echo Brain",
             "predicate": "purpose",
             "object": "Personal AI assistant using 13k+ conversations and 24k+ memory vectors for contextual responses",
+            "confidence": 1.0
+        },
+        "echo_brain_architecture": {
+            "subject": "Echo Brain",
+            "predicate": "architecture",
+            "object": "FastAPI backend, Vue3 frontend, PostgreSQL + Qdrant storage, Ollama LLMs",
+            "confidence": 1.0
+        },
+        "echo_brain_unified_layer": {
+            "subject": "Echo Brain",
+            "predicate": "knowledge layer",
+            "object": "UnifiedKnowledgeLayer combines facts, vectors, and conversations for intelligent responses",
+            "confidence": 1.0
+        },
+
+        # Key Endpoints
+        "echo_brain_ask_endpoint": {
+            "subject": "Echo Brain /ask",
+            "predicate": "function",
+            "object": "Main Q&A endpoint using unified knowledge layer",
+            "confidence": 1.0
+        },
+        "echo_brain_intelligence_endpoint": {
+            "subject": "Echo Brain /intelligence/think",
+            "predicate": "function",
+            "object": "Multi-stage reasoning with memory and facts",
+            "confidence": 1.0
+        },
+        "echo_brain_memory_search": {
+            "subject": "Echo Brain /memory/search",
+            "predicate": "function",
+            "object": "Search Qdrant vectors using semantic similarity",
+            "confidence": 1.0
+        },
+
+        # System Information
+        "echo_brain_systemd": {
+            "subject": "Echo Brain",
+            "predicate": "service name",
+            "object": "tower-echo-brain.service",
+            "confidence": 1.0
+        },
+        "echo_brain_location": {
+            "subject": "Echo Brain",
+            "predicate": "installation path",
+            "object": "/opt/tower-echo-brain",
+            "confidence": 1.0
+        },
+        "echo_brain_github": {
+            "subject": "Echo Brain",
+            "predicate": "GitHub repository",
+            "object": "github.com/pvestal/tower-echo-brain",
             "confidence": 1.0
         }
     }

@@ -36,6 +36,47 @@
           <div v-if="item.answer" class="response">
             <strong>A:</strong>
             <pre>{{ item.answer }}</pre>
+
+            <!-- Debug Information -->
+            <div v-if="item.debug" class="debug-info mt-3">
+              <details>
+                <summary class="cursor-pointer text-xs text-muted">Debug Info</summary>
+                <div class="mt-2 text-xs">
+                  <div v-if="item.debug.search_terms?.length">
+                    <strong>Search Terms:</strong> {{ item.debug.search_terms.join(', ') }}
+                  </div>
+                  <div v-if="item.debug.steps?.length" class="mt-1">
+                    <strong>Steps:</strong>
+                    <ul class="ml-4">
+                      <li v-for="(step, si) in item.debug.steps" :key="si">{{ step }}</li>
+                    </ul>
+                  </div>
+                  <div v-if="item.debug.total_sources" class="mt-1">
+                    <strong>Total Sources:</strong> {{ item.debug.total_sources }}
+                  </div>
+                </div>
+              </details>
+            </div>
+
+            <!-- Source Information -->
+            <div v-if="item.sources?.length" class="sources-info mt-3">
+              <details>
+                <summary class="cursor-pointer text-xs text-muted">
+                  Sources ({{ item.sources.length }})
+                </summary>
+                <div class="mt-2 space-y-1">
+                  <div v-for="(source, si) in item.sources" :key="si" class="source-item">
+                    <span class="source-type" :class="`source-${source.type}`">
+                      {{ source.type }}
+                    </span>
+                    <span class="text-xs">{{ source.content }}</span>
+                    <span v-if="source.confidence" class="text-xs text-muted ml-1">
+                      ({{ (source.confidence * 100).toFixed(0) }}%)
+                    </span>
+                  </div>
+                </div>
+              </details>
+            </div>
           </div>
           <div v-else-if="item.error" class="text-error">
             Error: {{ item.error }}
@@ -89,6 +130,8 @@ const submitQuestion = async () => {
     } else {
       const response = await askApi.ask(q);
       entry.answer = response.data.answer || response.data.response || JSON.stringify(response.data);
+      entry.debug = response.data.debug;
+      entry.sources = response.data.sources;
     }
 
     // Search for related memories
@@ -149,5 +192,54 @@ const formatTime = (timestamp: Date) => {
 
 .text-error {
   color: #f85149;
+}
+
+.debug-info, .sources-info {
+  border-top: 1px solid #21262d;
+  padding-top: 0.5rem;
+}
+
+.source-item {
+  padding: 0.25rem 0;
+  font-size: 0.75rem;
+}
+
+.source-type {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.65rem;
+  font-weight: bold;
+  margin-right: 0.5rem;
+  text-transform: uppercase;
+}
+
+.source-fact {
+  background: #2ea043;
+  color: white;
+}
+
+.source-memory, .source-vector {
+  background: #1f6feb;
+  color: white;
+}
+
+.source-conversation {
+  background: #8957e5;
+  color: white;
+}
+
+.source-core {
+  background: #da3633;
+  color: white;
+}
+
+details summary {
+  cursor: pointer;
+  user-select: none;
+}
+
+details summary:hover {
+  color: #58a6ff;
 }
 </style>
