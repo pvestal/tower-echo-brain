@@ -2,6 +2,7 @@
 Unified Knowledge Layer for Echo Brain
 Connects all knowledge sources into a single coherent interface
 """
+import os
 import asyncpg
 import asyncio
 from typing import List, Dict, Any, Optional, Tuple
@@ -218,7 +219,7 @@ class UnifiedKnowledgeLayer:
             "host": "localhost",
             "database": "echo_brain",
             "user": "patrick",
-            "password": "RP78eIrW7cI2jYvL5akt1yurE"
+            "password": os.getenv("DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE")
         }
         self.qdrant_client = QdrantClient(url=qdrant_url)
         self.collection_name = collection_name

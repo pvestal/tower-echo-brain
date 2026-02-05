@@ -10,6 +10,7 @@ It searches THREE sources:
 
 Results are ranked, deduplicated, and assembled into a context package.
 """
+import os
 import time
 import logging
 import httpx
@@ -24,7 +25,7 @@ logger = logging.getLogger("echo.pipeline.context")
 QDRANT_URL = "http://localhost:6333"
 QDRANT_THRESHOLD = 0.3              # LOWERED from 0.7 - was missing relevant content
 QDRANT_LIMIT = 10
-PG_DSN = "postgresql://patrick:RP78eIrW7cI2jYvL5akt1yurE@localhost/echo_brain"
+PG_DSN = f"postgresql://patrick:{os.getenv('DB_PASSWORD', 'RP78eIrW7cI2jYvL5akt1yurE')}@localhost/echo_brain"
 OLLAMA_URL = "http://localhost:11434"
 EMBEDDING_MODEL = "mxbai-embed-large"  # 1024D model that matches echo_memory collection
 MAX_CONTEXT_TOKENS = 4000            # Don't overwhelm the reasoning model

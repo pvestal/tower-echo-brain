@@ -1,6 +1,7 @@
 """
 Knowledge API - CRUD for facts Echo Brain knows about the user.
 """
+import os
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 from typing import Optional, List
@@ -15,7 +16,7 @@ from src.services.embedding_service import create_embedding_service
 
 router = APIRouter(prefix="/api/knowledge", tags=["knowledge"])
 
-DATABASE_URL = "postgresql://patrick:RP78eIrW7cI2jYvL5akt1yurE@localhost/echo_brain"
+DATABASE_URL = f"postgresql://patrick:{os.getenv('DB_PASSWORD', 'RP78eIrW7cI2jYvL5akt1yurE')}@localhost/echo_brain"
 QDRANT_URL = "http://localhost:6333"
 
 # Models

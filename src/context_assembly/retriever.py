@@ -2,6 +2,7 @@
 Parallel Context Retriever - Fetches from multiple sources based on domain
 Uses domain classification to prevent cross-contamination
 """
+import os
 import asyncio
 import logging
 import httpx
@@ -27,7 +28,7 @@ class ParallelRetriever:
         self.qdrant_url = "http://localhost:6333"
         self.ollama_url = "http://localhost:11434"
         self.embedding_model = "mxbai-embed-large"  # 1024D
-        self.pg_dsn = "postgresql://patrick:RP78eIrW7cI2jYvL5akt1yurE@localhost/echo_brain"
+        self.pg_dsn = f"postgresql://patrick:{os.getenv('DB_PASSWORD', 'RP78eIrW7cI2jYvL5akt1yurE')}@localhost/echo_brain"
 
     async def initialize(self):
         """Initialize connection pools"""
@@ -261,15 +262,9 @@ class ParallelRetriever:
                     return results
 
                 elif table == "facts":
-                    rows = await conn.fetch("""
-                        SELECT subject, predicate, object, confidence
-                        FROM facts
-                        WHERE subject ILIKE '%' || $1 || '%'
-                           OR predicate ILIKE '%' || $1 || '%'
-                           OR object ILIKE '%' || $1 || '%'
-                        ORDER BY confidence DESC
-                        LIMIT 10
-                    """, query)
+                    # This table case shouldn't be reached anymore
+                    # Facts are handled by _search_facts
+                    return []
 
                     results = []
                     for row in rows:
@@ -306,14 +301,33 @@ class ParallelRetriever:
                 if not exists:
                     return []
 
-                rows = await conn.fetch("""
+                # Extract meaningful words from query (tokenization)
+                stop_words = {'what', 'does', 'how', 'the', 'are', 'is', 'for', 'with', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'from'}
+                words = [w.lower() for w in query.split()
+                        if len(w) > 2 and w.lower() not in stop_words]
+
+                if not words:
+                    # Fallback to original query if no meaningful words
+                    words = [query]
+
+                # Build query with individual word matching
+                conditions = []
+                params = []
+                for i, word in enumerate(words):
+                    conditions.append(
+                        f"(subject ILIKE '%' || ${i+1} || '%' OR object ILIKE '%' || ${i+1} || '%')"
+                    )
+                    params.append(word)
+
+                where_clause = " OR ".join(conditions)
+
+                rows = await conn.fetch(f"""
                     SELECT subject, predicate, object, confidence
                     FROM facts
-                    WHERE subject ILIKE '%' || $1 || '%'
-                       OR object ILIKE '%' || $1 || '%'
+                    WHERE {where_clause}
                     ORDER BY confidence DESC
                     LIMIT 20
-                """, query)
+                """, *params)
 
                 # Apply domain filter
                 sources = self.classifier.get_allowed_sources(domain)
