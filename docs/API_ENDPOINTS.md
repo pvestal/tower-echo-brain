@@ -1,181 +1,267 @@
-# Echo Brain API Endpoints
+# Echo Brain API Documentation
 
 ## Overview
-All Echo Brain endpoints are served under the `/api/echo/` prefix.
-The service runs on port 8309.
+Echo Brain provides a unified AI knowledge system combining vectors, facts, and conversations.
 
-Base URL: `http://localhost:8309/api/echo`
+- **Base URL**: `http://localhost:8309`
+- **API Prefix**: `/api/echo/` (all endpoints)
+- **Port**: 8309
+- **Frontend**: `/echo-brain/` (via nginx proxy)
 
-## Health & Status
+## Core Endpoints
 
-### GET /api/echo/health
-Main health and status endpoint for Echo Brain.
-- Returns service health, subsystem status, and key metrics
-- Response includes database, vector_db, and LLM status
-- Metrics: requests, memory, CPU, vectors, response times
+### GET /health
+Service health check (outside `/api/echo/` for monitoring compatibility).
+```json
+{
+  "status": "healthy",
+  "service": "echo-brain",
+  "database_user": "patrick",
+  "timestamp": "2026-02-05T02:34:06.848655"
+}
+```
 
-## System Information
+### GET /docs
+Interactive OpenAPI documentation (Swagger UI).
 
-### GET /api/echo/system/resources
-System resource usage information.
-- CPU usage and core count
-- Memory usage (percent, used, total)
-- Disk usage (percent, used, total)
-- GPU information (if available)
+### POST /mcp
+Model Context Protocol integration for Claude.
+- Methods: `search_memory`, `get_facts`, `store_fact`
 
-### GET /api/echo/system/logs
-Retrieve system logs from journalctl.
-- Query params: `lines` (default: 100), `level` (DEBUG/INFO/WARNING/ERROR)
-- Returns parsed journal entries with timestamp, message, and level
+## Knowledge & Q&A
 
-### GET /api/echo/system/dashboard
-Dashboard metrics summary.
-- Health score calculation
-- Request statistics
-- Top endpoints by usage
-- Recent errors
+### POST /api/echo/ask
+Main Q&A endpoint using unified knowledge layer.
+```json
+Request:
+{
+  "question": "What port does Echo Brain run on?",
+  "use_context": true,
+  "verbose": true
+}
+
+Response:
+{
+  "answer": "Echo Brain runs on port 8309",
+  "model": "mistral:7b",
+  "context_used": true,
+  "sources": [
+    {
+      "type": "fact",
+      "content": "Echo Brain runs on port 8309",
+      "confidence": 1.0
+    }
+  ],
+  "debug": {
+    "search_terms": ["port", "echo", "brain"],
+    "steps": ["Found 5 facts, 3 vectors, 3 conversations"],
+    "total_sources": 11,
+    "prompt_length": 2245
+  },
+  "timestamp": "2026-02-05T02:34:11"
+}
+```
+
+### POST /api/echo/intelligence/think
+Multi-stage reasoning with memory and facts.
+```json
+Request:
+{
+  "query": "Explain Echo Brain architecture",
+  "depth": 2  // Number of reasoning stages
+}
+
+Response:
+{
+  "response": "Detailed analysis...",
+  "model": "mistral:7b",
+  "reasoning_stages": 2,
+  "context_sources": {
+    "memory_items": 5,
+    "facts": 2
+  },
+  "analysis": "Initial analysis..."
+}
+```
 
 ## Memory Operations
 
-### GET /api/echo/memory/status
-Memory system configuration and status.
-- Collection name and embedding model
-- Ingestion status
-
 ### POST /api/echo/memory/search
-Search memory vectors.
+Search Qdrant vector memory (24,657 vectors).
 ```json
+Request:
 {
   "query": "search term",
   "limit": 10
 }
+
+Response:
+{
+  "results": [
+    {
+      "id": "uuid",
+      "score": 0.85,
+      "content": "memory content",
+      "source": "echo_memory",
+      "type": "memory"
+    }
+  ],
+  "count": 10,
+  "collection": "echo_memory"
+}
 ```
 
-### POST /api/echo/memory/ingest
-Ingest new memory (currently disabled).
-
-## Intelligence
-
-### GET /api/echo/intelligence/map
-Knowledge domain mapping.
-- Domain statistics with vector counts
-- Confidence scores per domain
-- Total vector count
-
-### POST /api/echo/intelligence/think
-Process query through intelligence layer.
+### GET /api/echo/memory/stats
+Memory system statistics.
 ```json
 {
-  "query": "your question"
+  "vector_count": 24657,
+  "collection": "echo_memory",
+  "embedding_model": "mxbai-embed-large:latest",
+  "dimensions": 1024
+}
+```
+
+## Facts & Knowledge
+
+### GET /api/echo/facts
+Retrieve facts from PostgreSQL (6,129 facts).
+```json
+Query params: ?topic=echo%20brain&limit=10
+
+Response:
+[
+  {
+    "subject": "Echo Brain",
+    "predicate": "runs on port",
+    "object": "8309",
+    "confidence": 1.0,
+    "timestamp": "2026-02-05T02:34:11"
+  }
+]
+```
+
+### POST /api/echo/facts/add
+Add a new fact to the knowledge base.
+```json
+Request:
+{
+  "subject": "Echo Brain",
+  "predicate": "version",
+  "object": "0.4.0",
+  "confidence": 1.0
 }
 ```
 
 ## Conversations
 
 ### POST /api/echo/conversations/search
-Search conversation history.
+Search conversation history (13,630 messages).
 ```json
+Request:
 {
-  "query": "search term",
+  "query": "search terms",
   "limit": 10
 }
-```
 
-## Q&A
-
-### POST /api/echo/ask
-Main question-answering endpoint.
-```json
+Response:
 {
-  "question": "your question"
+  "results": [
+    {
+      "conversation_id": "uuid",
+      "role": "user",
+      "content": "message content",
+      "created_at": "2026-02-05T02:34:11"
+    }
+  ],
+  "total_found": 10
 }
 ```
 
-### GET /api/echo/search
-General search across all data.
-- Query param: `q` (search query), `limit` (max results)
-- Returns combined memory and conversation results
+## System & Monitoring
 
-## Brain Visualization
-
-### GET /api/echo/brain
-Brain activity visualization data.
-- Current activity state
-- Vector count and memory usage
-- CPU usage and intensity
-- Active brain regions with neuron counts
-
-## Models
-
-### GET /api/echo/models
-List available Ollama models.
-- Model names and sizes
-- Total count
-
-## MCP Protocol
-
-### POST /api/echo/mcp
-MCP protocol handler for Claude integration.
+### GET /api/echo/metrics
+System metrics and request statistics.
 ```json
 {
-  "method": "tools/call",
-  "params": {
-    "name": "search_memory",
-    "arguments": {
-      "query": "search term",
-      "limit": 10
+  "total_requests": 1234,
+  "errors_4xx": 5,
+  "errors_5xx": 2,
+  "average_response_time_ms": 45.2,
+  "requests_per_minute": 12.5,
+  "uptime_seconds": 3600,
+  "active_requests": 2
+}
+```
+
+### GET /api/echo/logs
+Service logs with filtering.
+```json
+Query params: ?lines=100&level=ERROR
+
+Response:
+{
+  "logs": [
+    {
+      "timestamp": "2026-02-05T02:34:11",
+      "level": "ERROR",
+      "message": "Error details",
+      "request_id": "abc123"
     }
+  ],
+  "count": 100
+}
+```
+
+### GET /api/echo/status
+Comprehensive status of all subsystems.
+```json
+{
+  "database": {
+    "connected": true,
+    "facts": 6129,
+    "conversations": 13630
+  },
+  "vectors": {
+    "connected": true,
+    "count": 24657,
+    "collection": "echo_memory"
+  },
+  "llm": {
+    "available": true,
+    "models": ["mistral:7b", "deepseek-r1:8b"],
+    "embedding_model": "mxbai-embed-large:latest"
+  },
+  "unified_knowledge": {
+    "core_facts": 22,
+    "total_sources": 44408
   }
 }
 ```
 
-Available tools:
-- `search_memory`: Search Echo Brain memories
-- `get_facts`: Get structured facts
-- `store_fact`: Store new fact
+## Unified Knowledge Layer
 
-## Additional Services
+The UnifiedKnowledgeLayer is the core innovation in Echo Brain 0.4.0, combining:
 
-The following specialized routers may be available:
-- `/api/echo/self-test`: Self-test diagnostics
-- `/api/echo/memory`: Extended memory operations
-- `/api/echo/intelligence`: Deep intelligence operations
-- `/api/echo/reasoning`: LLM reasoning endpoints
-- `/api/echo/search`: Direct PostgreSQL search
+1. **PostgreSQL Facts** (6,129): Structured subject-predicate-object facts
+2. **Qdrant Vectors** (24,657): Semantic embeddings from conversations/code
+3. **Conversations** (13,630): Historical Claude conversation messages
+4. **Core Facts** (22): Hardcoded essential facts always available
 
-## Frontend
-
-The Vue3 frontend is served at `/echo-brain/` and connects to these API endpoints.
+All `/ask` and `/intelligence/think` endpoints use this unified layer to provide comprehensive, contextual responses with transparent source attribution.
 
 ## Authentication
-
-Currently no authentication required (local service only).
-
-## Response Format
-
-All endpoints return JSON responses with appropriate HTTP status codes:
-- 200: Success
-- 400: Bad request
-- 500: Internal server error
-
-Error responses include:
-```json
-{
-  "error": "error message",
-  "request_id": "unique-id"
-}
-```
+Currently no authentication required (localhost only).
 
 ## Rate Limiting
+No rate limits currently enforced.
 
-No rate limiting currently implemented (local service).
+## WebSocket Support
+Not currently implemented.
 
-## Monitoring
-
-All requests are logged with:
-- Unique request IDs
-- Response times
-- Error tracking
-- Endpoint metrics
-
-Access logs via systemd: `journalctl -u tower-echo-brain`
+## Frontend Access
+Vue3 dashboard available at: `http://localhost/echo-brain/`
+- Real-time monitoring
+- Interactive Q&A interface
+- Source visualization
+- Debug information display
