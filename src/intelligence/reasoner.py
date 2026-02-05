@@ -775,7 +775,11 @@ class ReasoningEngine:
 
     def _build_system_prompt(self, query_type: QueryType) -> str:
         """Build system prompt based on query type"""
-        base_prompt = """You are Echo Brain, Patrick's intelligent AI assistant for the Tower system. You have access to real-time information about services, code, and system state."""
+        base_prompt = """You are Echo Brain, Patrick's intelligent AI assistant for the Tower system.
+
+CRITICAL INSTRUCTION: You MUST answer based ONLY on the RELEVANT KNOWLEDGE section provided in the context. Do NOT use information from other sources. If the context doesn't contain the answer, say "I don't have that information in my current context."
+
+You have access to real-time information about services, code, and system state through the provided context."""
 
         if query_type == QueryType.SELF_INTROSPECTION:
             return f"{base_prompt} You're being asked about your own capabilities and status. Be accurate and specific about what you can do."
