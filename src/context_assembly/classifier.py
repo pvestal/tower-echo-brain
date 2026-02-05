@@ -41,11 +41,12 @@ class DomainClassifier:
                 "signals": [
                     r"\b(code|function|class|def|async|api|endpoint|bug|error|debug)\b",
                     r"\b(python|javascript|typescript|sql|git|docker|kubernetes)\b",
-                    r"\b(implement|refactor|optimize|test|deploy)\b",
-                    r"\b(pipeline|context|layer|module|import|package)\b"
+                    r"\b(implement|refactor|optimize|test|deploy|how|work|works)\b",
+                    r"\b(pipeline|context|assembly|classifier|layer|module|import|package)\b",
+                    r"\b(domain|enum|regex|signals|retriever)\b"
                 ],
                 "negative_signals": [r"\b(anime|character|scene|mei|goblin)\b"],
-                "weight": 1.0
+                "weight": 1.5  # Increase weight for technical queries
             },
             Domain.ANIME: {
                 "signals": [
@@ -69,13 +70,13 @@ class DomainClassifier:
             },
             Domain.SYSTEM: {
                 "signals": [
-                    r"\b(service|health|status|monitor|running)\b",
-                    r"\b(systemctl|restart|logs|nginx|port)\b",
+                    r"\b(service|services|health|status|monitor|running|run|runs)\b",
+                    r"\b(systemctl|restart|logs|nginx|port|ports)\b",
                     r"\b(ollama|qdrant|postgresql|comfyui)\b",
-                    r"\b(tower-.*|localhost:\d+)\b"
+                    r"\b(tower-.*|localhost:\d+|Tower)\b"
                 ],
                 "negative_signals": [r"\b(anime|character)\b"],
-                "weight": 0.85
+                "weight": 1.2  # Increase weight to prioritize SYSTEM over GENERAL
             },
             Domain.GENERAL: {
                 "signals": [
