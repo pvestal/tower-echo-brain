@@ -48,7 +48,7 @@ class FactExtractor:
         self.pg_port = 5432
         self.pg_db = "echo_brain"
         self.pg_user = "patrick"
-        self.pg_password = os.environ.get("ECHO_BRAIN_DB_PASSWORD", os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE"))
+        self.pg_password = os.environ.get("ECHO_BRAIN_DB_PASSWORD", os.getenv("TOWER_DB_PASSWORD", os.getenv("DB_PASSWORD", "")))
 
         # Qdrant settings
         self.qdrant_client = QdrantClient(host="localhost", port=6333, timeout=30)

@@ -15,7 +15,7 @@ import asyncpg
 import httpx
 from src.services.embedding_service import create_embedding_service
 
-DATABASE_URL = "postgresql://patrick:RP78eIrW7cI2jYvL5akt1yurE@localhost/echo_brain"
+DATABASE_URL = "postgresql://patrick:" + os.getenv('DB_PASSWORD', '') + "@localhost/echo_brain"
 QDRANT_URL = "http://localhost:6333"
 
 async def add_fact(subject: str, predicate: str, obj: str):

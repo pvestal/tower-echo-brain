@@ -20,7 +20,7 @@ DB_CONFIG = {
     "host": "localhost",
     "database": "echo_brain",
     "user": "patrick",
-    "password": "RP78eIrW7cI2jYvL5akt1yurE"
+    "password": os.getenv("DB_PASSWORD", "")
 }
 
 async def extract_facts_from_vector(vector_data: dict) -> list:

@@ -65,7 +65,7 @@ async def test_database():
     import asyncpg
     conn = await asyncpg.connect(
         host="localhost", database="echo_brain",
-        user="patrick", password=os.getenv("TOWER_DB_PASSWORD", os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE"))
+        user="patrick", password=os.getenv("TOWER_DB_PASSWORD", os.getenv("TOWER_DB_PASSWORD", os.getenv("DB_PASSWORD", "")))
     )
     count = await conn.fetchval("SELECT COUNT(*) FROM task_results")
     await conn.close()

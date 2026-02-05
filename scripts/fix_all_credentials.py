@@ -17,10 +17,10 @@ def fix_file(filepath):
 
         # Replace hardcoded password patterns
         patterns = [
-            (r'password=[\'"]RP78eIrW7cI2jYvL5akt1yurE[\'"]', 'password=os.getenv("TOWER_DB_PASSWORD", os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE"))'),
-            (r'PGPASSWORD=${TOWER_DB_PASSWORD:-RP78eIrW7cI2jYvL5akt1yurE}', 'PGPASSWORD=${TOWER_DB_PASSWORD:-RP78eIrW7cI2jYvL5akt1yurE}'),
-            (r'os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE")', 'os.getenv("TOWER_DB_PASSWORD", os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE"))'),
-            (r"os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE")", 'os.getenv("TOWER_DB_PASSWORD", os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE"))'),
+            (r'password=[\'"][\'"]', 'password=os.getenv("TOWER_DB_PASSWORD", os.getenv("TOWER_DB_PASSWORD", os.getenv("DB_PASSWORD", "")))'),
+            (r'PGPASSWORD=${TOWER_DB_PASSWORD:-}', 'PGPASSWORD=${TOWER_DB_PASSWORD:-}'),
+            (r'os.getenv("TOWER_DB_PASSWORD", os.getenv("DB_PASSWORD", ""))', 'os.getenv("TOWER_DB_PASSWORD", os.getenv("TOWER_DB_PASSWORD", os.getenv("DB_PASSWORD", "")))'),
+            (r"os.getenv("TOWER_DB_PASSWORD", os.getenv("DB_PASSWORD", ""))", 'os.getenv("TOWER_DB_PASSWORD", os.getenv("TOWER_DB_PASSWORD", os.getenv("DB_PASSWORD", "")))'),
         ]
 
         for pattern, replacement in patterns:
@@ -77,7 +77,7 @@ def main():
                 try:
                     with open(filepath, 'r') as f:
                         content = f.read()
-                    if os.getenv("TOWER_DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE") in content:
+                    if os.getenv("TOWER_DB_PASSWORD", os.getenv("DB_PASSWORD", "")) in content:
                         files_to_fix.append(filepath)
                 except:
                     continue

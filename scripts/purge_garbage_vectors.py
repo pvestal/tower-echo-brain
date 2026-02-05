@@ -18,7 +18,7 @@ DB_CONFIG = {
     "host": "localhost",
     "database": "echo_brain",
     "user": "patrick",
-    "password": "RP78eIrW7cI2jYvL5akt1yurE"
+    "password": os.getenv("DB_PASSWORD", "")
 }
 
 # Keep these types
