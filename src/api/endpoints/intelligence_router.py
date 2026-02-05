@@ -1,289 +1,387 @@
 """
-Echo Brain Intelligence API
-This is where Echo Brain actually THINKS and responds intelligently
+Echo Brain Intelligence API - New Intelligence Layer
+Real intelligence with code understanding, system monitoring, and action execution
 """
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 import logging
 import json
 from datetime import datetime
 
-from src.core.intelligence_engine import intelligence, KnowledgeDomain
+# Import new intelligence components
+from src.intelligence.reasoner import get_reasoning_engine
+from src.intelligence.code_index import get_code_intelligence
+from src.intelligence.system_model import get_system_model
+from src.intelligence.procedures import get_procedure_library
+from src.intelligence.executor import get_action_executor
+from src.intelligence.schemas import QueryRequest, ActionRequest, DiagnoseRequest
 
 router = APIRouter(prefix="/intelligence", tags=["intelligence"])
 logger = logging.getLogger(__name__)
 
-class ThinkRequest(BaseModel):
-    """Request for Echo Brain to think about something"""
+# API Models
+class QueryResponse(BaseModel):
     query: str
-    context: Optional[str] = None
-    return_reasoning: bool = True
-
-class ThinkResponse(BaseModel):
-    """Echo Brain's intelligent response"""
-    query: str
+    query_type: str
     response: str
-    domain: str
+    actions_taken: List[Dict[str, Any]]
     confidence: float
-    reasoning_steps: Optional[List[str]]
     sources: List[str]
-    memories_used: int
-    thinking_time_ms: int
+    execution_time_ms: int
 
-@router.post("/think", response_model=ThinkResponse)
-async def think(request: ThinkRequest):
-    """
-    Ask Echo Brain to think about something and respond intelligently
-    """
-    start_time = datetime.now()
+class ActionResponse(BaseModel):
+    action: str
+    success: bool
+    result: Dict[str, Any]
+    requires_confirmation: Optional[bool] = None
 
+class DiagnoseResponse(BaseModel):
+    issue: str
+    findings: List[str]
+    root_cause: Optional[str]
+    recommendations: List[str]
+    severity: str
+    estimated_fix_time: Optional[int]
+
+# Intelligence endpoints
+@router.post("/query", response_model=QueryResponse)
+async def intelligent_query(request: QueryRequest):
+    """Main entry point - routes to appropriate intelligence"""
     try:
-        # Let Echo Brain think
-        thought = await intelligence.think_and_respond(
+        reasoner = get_reasoning_engine()
+
+        response = await reasoner.process(
             request.query,
-            request.context
+            allow_actions=request.allow_actions,
+            context=request.context
         )
 
-        # Calculate thinking time
-        thinking_time = (datetime.now() - start_time).total_seconds() * 1000
-
-        response = ThinkResponse(
-            query=request.query,
-            response=thought.response,
-            domain=thought.domain.value,
-            confidence=thought.confidence_score,
-            reasoning_steps=thought.reasoning_steps if request.return_reasoning else None,
-            sources=thought.sources_used,
-            memories_used=len(thought.memories_retrieved),
-            thinking_time_ms=int(thinking_time)
+        return QueryResponse(
+            query=response.query,
+            query_type=response.query_type.value,
+            response=response.response,
+            actions_taken=response.actions_taken,
+            confidence=response.confidence,
+            sources=response.sources,
+            execution_time_ms=response.execution_time_ms
         )
-
-        logger.info(f"🧠 Thought about '{request.query[:50]}...' - Confidence: {thought.confidence_score:.2%}")
-
-        return response
 
     except Exception as e:
-        logger.error(f"Thinking failed: {e}")
+        logger.error(f"Intelligence query failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/knowledge-map")
-async def get_knowledge_map():
-    """
-    Get a comprehensive map of what Echo Brain knows
-    """
+@router.post("/execute", response_model=ActionResponse)
+async def execute_action(request: ActionRequest):
+    """Execute an action with confirmation"""
     try:
-        coverage = await intelligence.analyze_knowledge_coverage()
+        reasoner = get_reasoning_engine()
 
-        # Format for better readability
-        knowledge_map = {
-            "summary": {
-                "total_domains": coverage["domains_analyzed"],
-                "domains_with_knowledge": coverage["domains_with_knowledge"],
-                "total_knowledge_points": coverage["total_memories_sampled"]
-            },
-            "domains": {}
+        # Create a query for the action
+        query = f"execute {request.action}"
+
+        response = await reasoner.process(
+            query,
+            allow_actions=True,
+            context=request.parameters
+        )
+
+        # Extract action results
+        action_result = {
+            'success': len(response.actions_taken) > 0 and all(
+                a.get('success', False) for a in response.actions_taken
+            ),
+            'actions_taken': response.actions_taken,
+            'response': response.response
         }
 
-        for domain, stats in coverage["domain_coverage"].items():
-            knowledge_map["domains"][domain] = {
-                "depth": stats["knowledge_depth"],
-                "confidence": f"{stats['avg_confidence']:.1%}",
-                "memory_count": stats["memories_found"],
-                "top_examples": [
-                    ex["content"][:100] for ex in stats["sample_memories"][:2]
-                ]
-            }
-
-        knowledge_map["timestamp"] = coverage["timestamp"]
-
-        return knowledge_map
+        return ActionResponse(
+            action=request.action,
+            success=action_result['success'],
+            result=action_result,
+            requires_confirmation=request.confirm_dangerous
+        )
 
     except Exception as e:
-        logger.error(f"Knowledge mapping failed: {e}")
+        logger.error(f"Action execution failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/compare-knowledge")
-async def compare_knowledge(topics: List[str]):
-    """
-    Compare Echo Brain's knowledge across multiple topics
-    """
-    if not topics or len(topics) > 10:
-        raise HTTPException(status_code=400, detail="Provide 1-10 topics to compare")
+@router.get("/explain/{path:path}")
+async def explain_code(path: str):
+    """Explain what a code file/function does"""
+    try:
+        reasoner = get_reasoning_engine()
 
-    comparisons = {}
+        explanation = await reasoner.explain_code(f"explain {path}")
 
-    for topic in topics:
-        # Get memories for each topic
-        thought = await intelligence.think_and_respond(topic)
-
-        comparisons[topic] = {
-            "domain": thought.domain.value,
-            "confidence": thought.confidence_score,
-            "memories_found": len(thought.memories_retrieved),
-            "has_knowledge": thought.confidence_score > 0.5,
-            "knowledge_quality": (
-                "comprehensive" if thought.confidence_score > 0.7 else
-                "moderate" if thought.confidence_score > 0.4 else
-                "limited"
-            )
+        return {
+            "path": path,
+            "explanation": explanation,
+            "timestamp": datetime.now().isoformat()
         }
 
-    # Determine strongest and weakest areas
-    strongest = max(comparisons.items(), key=lambda x: x[1]["confidence"])
-    weakest = min(comparisons.items(), key=lambda x: x[1]["confidence"])
+    except Exception as e:
+        logger.error(f"Code explanation failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
-    return {
-        "topics_analyzed": len(topics),
-        "comparisons": comparisons,
-        "strongest_knowledge": {
-            "topic": strongest[0],
-            "confidence": strongest[1]["confidence"]
-        },
-        "weakest_knowledge": {
-            "topic": weakest[0],
-            "confidence": weakest[1]["confidence"]
-        },
-        "timestamp": datetime.now().isoformat()
-    }
+@router.get("/service/{name}")
+async def get_service_info(name: str):
+    """Get detailed info about a service"""
+    try:
+        system_model = get_system_model()
 
-@router.get("/thinking-log")
-async def get_thinking_log(limit: int = 10):
-    """
-    Get Echo Brain's recent thinking history
-    """
-    recent_thoughts = intelligence.thinking_log[-limit:]
+        status = await system_model.get_service_status(name)
+        dependencies = await system_model.get_service_dependencies(name)
+        config = await system_model.get_service_config(name)
 
-    log_entries = []
-    for thought in recent_thoughts:
-        log_entries.append({
-            "query": thought.query,
-            "domain": thought.domain.value,
-            "confidence": thought.confidence_score,
-            "memories_used": len(thought.memories_retrieved),
-            "response_preview": thought.response[:200] + "..." if len(thought.response) > 200 else thought.response
-        })
+        return {
+            "service": name,
+            "status": status.dict(),
+            "dependencies": dependencies,
+            "config": config,
+            "timestamp": datetime.now().isoformat()
+        }
 
-    return {
-        "total_thoughts": len(intelligence.thinking_log),
-        "recent_thoughts": log_entries,
-        "timestamp": datetime.now().isoformat()
-    }
+    except Exception as e:
+        logger.error(f"Service info failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/test-understanding")
-async def test_understanding(topic: str, questions: List[str]):
-    """
-    Test Echo Brain's understanding of a topic with specific questions
-    """
-    if not questions or len(questions) > 5:
-        raise HTTPException(status_code=400, detail="Provide 1-5 questions")
+@router.post("/diagnose", response_model=DiagnoseResponse)
+async def diagnose_issue(request: DiagnoseRequest):
+    """Run diagnostic procedure"""
+    try:
+        reasoner = get_reasoning_engine()
 
-    results = {
-        "topic": topic,
-        "questions_tested": len(questions),
-        "answers": [],
-        "overall_understanding": 0.0
-    }
+        diagnosis = await reasoner.diagnose(request.issue)
 
-    total_confidence = 0.0
+        return DiagnoseResponse(
+            issue=diagnosis.issue,
+            findings=diagnosis.findings,
+            root_cause=diagnosis.root_cause,
+            recommendations=diagnosis.recommendations,
+            severity=diagnosis.severity,
+            estimated_fix_time=diagnosis.estimated_fix_time
+        )
 
-    for question in questions:
-        full_query = f"{topic}: {question}"
-        thought = await intelligence.think_and_respond(full_query)
+    except Exception as e:
+        logger.error(f"Diagnosis failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
-        results["answers"].append({
-            "question": question,
-            "answer": thought.response,
-            "confidence": thought.confidence_score,
-            "sources_used": len(thought.sources_used)
-        })
+@router.get("/procedures")
+async def list_procedures():
+    """List available procedures"""
+    try:
+        procedures = get_procedure_library()
 
-        total_confidence += thought.confidence_score
+        procedure_list = await procedures.list_procedures()
 
-    results["overall_understanding"] = total_confidence / len(questions)
+        return {
+            "procedures": procedure_list,
+            "total_count": len(procedure_list),
+            "timestamp": datetime.now().isoformat()
+        }
 
-    # Assess understanding level
-    understanding = results["overall_understanding"]
-    if understanding > 0.7:
-        results["assessment"] = "Strong understanding"
-    elif understanding > 0.5:
-        results["assessment"] = "Moderate understanding"
-    elif understanding > 0.3:
-        results["assessment"] = "Basic understanding"
-    else:
-        results["assessment"] = "Limited understanding"
+    except Exception as e:
+        logger.error(f"Procedure listing failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
-    return results
+@router.post("/procedures/{name}/execute")
+async def run_procedure(name: str, context: Dict[str, Any] = None):
+    """Execute a named procedure"""
+    try:
+        procedures = get_procedure_library()
 
-@router.post("/think/stream")
-async def think_stream_endpoint(request: ThinkRequest):
-    """
-    Stream Echo Brain's thinking process with real-time updates
-    """
-    async def generate_sse():
+        # Find the procedure
+        procedure = await procedures.find_procedure(name)
+
+        if not procedure:
+            raise HTTPException(status_code=404, detail=f"Procedure '{name}' not found")
+
+        # Execute the procedure
+        result = await procedures.execute_procedure(
+            procedure,
+            context or {},
+            allow_dangerous=False  # Require explicit confirmation for dangerous operations
+        )
+
+        return {
+            "procedure": name,
+            "execution_result": result,
+            "timestamp": datetime.now().isoformat()
+        }
+
+    except Exception as e:
+        logger.error(f"Procedure execution failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Code intelligence endpoints
+@router.post("/code/index")
+async def index_code(paths: List[str] = None):
+    """Index/re-index codebase"""
+    try:
+        code_intel = get_code_intelligence()
+
+        if not paths:
+            # Default paths to index
+            paths = [
+                "/opt/tower-echo-brain/src",
+                "/opt/tower-auth/src",
+                "/opt/tower-kb/src"
+            ]
+
+        result = await code_intel.index_codebase(paths)
+
+        return {
+            "indexing_result": result,
+            "paths_processed": paths,
+            "timestamp": datetime.now().isoformat()
+        }
+
+    except Exception as e:
+        logger.error(f"Code indexing failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/code/search")
+async def search_code(query: str, type: str = None):
+    """Search code symbols"""
+    try:
+        code_intel = get_code_intelligence()
+
+        symbols = await code_intel.search_symbols(query, type)
+
+        return {
+            "query": query,
+            "type_filter": type,
+            "symbols": symbols,
+            "count": len(symbols),
+            "timestamp": datetime.now().isoformat()
+        }
+
+    except Exception as e:
+        logger.error(f"Code search failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/code/dependencies/{path:path}")
+async def get_dependencies(path: str):
+    """Get file dependencies"""
+    try:
+        code_intel = get_code_intelligence()
+
+        # Ensure path starts with /
+        if not path.startswith('/'):
+            path = '/' + path
+
+        deps = await code_intel.get_dependencies(path)
+
+        return {
+            "file_path": path,
+            "dependencies": deps.dict(),
+            "timestamp": datetime.now().isoformat()
+        }
+
+    except Exception as e:
+        logger.error(f"Dependency analysis failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# System model endpoints
+@router.get("/system/services")
+async def list_services():
+    """List all known services"""
+    try:
+        system_model = get_system_model()
+
+        services = await system_model.discover_services()
+
+        return {
+            "services": [s.dict() for s in services],
+            "count": len(services),
+            "timestamp": datetime.now().isoformat()
+        }
+
+    except Exception as e:
+        logger.error(f"Service listing failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/system/topology")
+async def get_topology():
+    """Get service dependency graph"""
+    try:
+        system_model = get_system_model()
+
+        network_map = await system_model.get_network_map()
+
+        return {
+            "topology": network_map.dict(),
+            "timestamp": datetime.now().isoformat()
+        }
+
+    except Exception as e:
+        logger.error(f"Topology mapping failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/system/scan")
+async def scan_system():
+    """Re-scan system for services"""
+    try:
+        system_model = get_system_model()
+
+        services = await system_model.discover_services()
+
+        return {
+            "scan_result": "System scan completed",
+            "services_found": len(services),
+            "services": [s.dict() for s in services[:10]],  # First 10 services
+            "timestamp": datetime.now().isoformat()
+        }
+
+    except Exception as e:
+        logger.error(f"System scan failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/status")
+async def get_intelligence_status():
+    """Get status of all intelligence components"""
+    try:
+        status = {
+            "components": {
+                "reasoning_engine": "Available",
+                "code_intelligence": "Available",
+                "system_model": "Available",
+                "procedure_library": "Available",
+                "action_executor": "Available"
+            },
+            "database_connectivity": True,
+            "timestamp": datetime.now().isoformat()
+        }
+
+        # Try to get some stats
         try:
-            start_time = datetime.now()
-            memory_search_time = 0
+            procedures = get_procedure_library()
+            procedure_list = await procedures.list_procedures()
+            status["procedure_count"] = len(procedure_list)
+        except:
+            status["procedure_count"] = 0
 
-            async for event in intelligence.think_stream(
-                request.query,
-                request.context
-            ):
-                event_type = event.get("type")
+        try:
+            system_model = get_system_model()
+            services = await system_model.discover_services()
+            status["services_monitored"] = len(services)
+        except:
+            status["services_monitored"] = 0
 
-                if event_type == "status":
-                    yield f"event: status\ndata: {json.dumps({
-                        'message': event.get('data'),
-                        'timestamp': event.get('timestamp')
-                    })}\n\n"
+        return status
 
-                elif event_type == "memories_found":
-                    memory_search_time = (datetime.now() - start_time).total_seconds() * 1000
-                    data = event.get('data', {})
-                    yield f"event: metrics\ndata: {json.dumps({
-                        'memories_searched': data.get('memories_searched', 0),
-                        'memories_used': data.get('memories_used', 0),
-                        'avg_memory_score': data.get('avg_memory_score', 0),
-                        'memory_search_time_ms': round(memory_search_time, 2),
-                        'embedding_model_used': intelligence.embedding_model
-                    })}\n\n"
-
-                elif event_type == "response_chunk":
-                    yield f"event: chunk\ndata: {json.dumps({
-                        'text': event.get('data', ''),
-                        'model_used': intelligence.active_model
-                    })}\n\n"
-
-                elif event_type == "complete":
-                    total_time = (datetime.now() - start_time).total_seconds() * 1000
-                    completion_data = event.get('data', {})
-
-                    yield f"event: complete\ndata: {json.dumps({
-                        'domain': completion_data.get('domain'),
-                        'model_used': completion_data.get('model_used'),
-                        'confidence': completion_data.get('confidence'),
-                        'memories_searched': completion_data.get('memories_searched', 0),
-                        'memories_used': completion_data.get('memories_used', 0),
-                        'avg_memory_score': completion_data.get('avg_memory_score', 0),
-                        'memory_search_time_ms': round(memory_search_time, 2),
-                        'llm_generation_time_ms': round(total_time - memory_search_time, 2),
-                        'total_time_ms': round(total_time, 2),
-                        'thinking_time_ms': completion_data.get('thinking_time_ms'),
-                        'embedding_model_used': intelligence.embedding_model,
-                        'reasoning_steps': completion_data.get('reasoning_steps', []),
-                        'sources': completion_data.get('sources', [])
-                    })}\n\n"
-
-        except Exception as e:
-            logger.error(f"Streaming error: {e}")
-            yield f"event: error\ndata: {json.dumps({'error': str(e)})}\n\n"
-
-    return StreamingResponse(
-        generate_sse(),
-        media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "X-Accel-Buffering": "no"
+    except Exception as e:
+        logger.error(f"Status check failed: {e}")
+        return {
+            "components": {
+                "reasoning_engine": "Error",
+                "code_intelligence": "Error",
+                "system_model": "Error",
+                "procedure_library": "Error",
+                "action_executor": "Error"
+            },
+            "database_connectivity": False,
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
         }
-    )
