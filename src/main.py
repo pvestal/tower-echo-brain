@@ -6,7 +6,8 @@ from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
+from pydantic import BaseModel
 import logging
 import os
 import time
@@ -623,6 +624,237 @@ async def reject_proposal(proposal_id: str, reason: Optional[str] = None):
         logger.error(f"Failed to reject proposal: {e}")
         return {"error": str(e)}
 
+class DomainSearchRequest(BaseModel):
+    query: str
+    categories: Optional[List[str]] = None
+    top_k: int = 10
+
+@app.post("/api/echo/search/domain")
+async def domain_search(request: DomainSearchRequest):
+    """Search domain knowledge with optional category filter."""
+    import httpx
+    async with httpx.AsyncClient(timeout=60) as client:
+        resp = await client.post(
+            f"{os.getenv('OLLAMA_URL', 'http://localhost:11434')}/api/embeddings",
+            json={"model": "nomic-embed-text:latest", "prompt": request.query}
+        )
+        emb = resp.json().get("embedding")
+    if not emb:
+        return {"error": "Embedding failed", "results": []}
+
+    body = {"vector": emb, "limit": request.top_k, "with_payload": True}
+    if request.categories:
+        body["filter"] = {"should": [
+            {"key": "category", "match": {"value": c}} for c in request.categories
+        ]}
+
+    async with httpx.AsyncClient(timeout=30) as client:
+        resp = await client.post(
+            f"{os.getenv('QDRANT_URL', 'http://localhost:6333')}/collections/echo_memory/points/search",
+            json=body
+        )
+        results = resp.json().get("result", [])
+
+    return {
+        "query": request.query,
+        "categories": request.categories,
+        "results": [
+            {
+                "score": r["score"],
+                "category": r["payload"].get("category"),
+                "source": r["payload"].get("source"),
+                "text": r["payload"].get("text", "")[:500],
+            }
+            for r in results
+        ]
+    }
+
+@app.get("/api/echo/ingestion/status")
+async def ingestion_status():
+    """Domain ingestion statistics dashboard."""
+    import asyncpg
+    conn = await asyncpg.connect(os.getenv("DATABASE_URL", "postgresql://echo:echo_secure_password_123@localhost/echo_brain"))
+    try:
+        stats = await conn.fetch("""
+            SELECT category, total_documents, total_vectors,
+                   pg_size_pretty(total_bytes::bigint) as size, last_ingested_at
+            FROM domain_category_stats ORDER BY total_vectors DESC""")
+        total = await conn.fetchval("SELECT SUM(total_vectors) FROM domain_category_stats")
+        recent = await conn.fetch("""
+            SELECT source_path, category, chunk_count, ingested_at
+            FROM domain_ingestion_log ORDER BY ingested_at DESC LIMIT 20""")
+        return {
+            "total_domain_vectors": total or 0,
+            "categories": [{"category": s["category"], "documents": s["total_documents"],
+                           "vectors": s["total_vectors"], "size": s["size"],
+                           "last": s["last_ingested_at"].isoformat() if s["last_ingested_at"] else None}
+                          for s in stats],
+            "recent": [{"source": r["source_path"], "category": r["category"],
+                       "chunks": r["chunk_count"], "when": r["ingested_at"].isoformat()}
+                      for r in recent],
+        }
+    finally:
+        await conn.close()
+
+@app.get("/api/echo/knowledge/facts")
+async def list_facts(category: Optional[str] = None, fact_type: Optional[str] = None, limit: int = 50):
+    """List extracted knowledge facts."""
+    import asyncpg
+    conn = await asyncpg.connect(os.getenv("DATABASE_URL", "postgresql://echo:echo_secure_password_123@localhost/echo_brain"))
+    try:
+        conditions = ["valid_until IS NULL"]
+        params = []
+        param_idx = 1
+
+        if category:
+            conditions.append(f"category = ${param_idx}")
+            params.append(category)
+            param_idx += 1
+        if fact_type:
+            conditions.append(f"fact_type = ${param_idx}")
+            params.append(fact_type)
+            param_idx += 1
+
+        where = " AND ".join(conditions)
+        params.append(limit)
+
+        rows = await conn.fetch(f"""
+            SELECT id, fact_text, fact_type, category, confidence, entities, source_path, created_at
+            FROM knowledge_facts
+            WHERE {where}
+            ORDER BY created_at DESC
+            LIMIT ${param_idx}
+        """, *params)
+
+        total = await conn.fetchval(f"SELECT COUNT(*) FROM knowledge_facts WHERE {where}",
+                                     *params[:-1])  # exclude limit
+
+        return {
+            "total": total,
+            "facts": [
+                {
+                    "id": str(r["id"]),
+                    "text": r["fact_text"],
+                    "type": r["fact_type"],
+                    "category": r["category"],
+                    "confidence": r["confidence"],
+                    "entities": json.loads(r["entities"]) if isinstance(r["entities"], str) else r["entities"],
+                    "source": r["source_path"],
+                    "created": r["created_at"].isoformat(),
+                }
+                for r in rows
+            ],
+        }
+    finally:
+        await conn.close()
+
+
+@app.get("/api/echo/knowledge/stats")
+async def knowledge_stats():
+    """Knowledge graph statistics."""
+    import asyncpg
+    conn = await asyncpg.connect(os.getenv("DATABASE_URL", "postgresql://echo:echo_secure_password_123@localhost/echo_brain"))
+    try:
+        fact_count = await conn.fetchval("SELECT COUNT(*) FROM knowledge_facts WHERE valid_until IS NULL")
+        connection_count = await conn.fetchval("SELECT COUNT(*) FROM knowledge_connections")
+
+        by_type = await conn.fetch("""
+            SELECT fact_type, COUNT(*) as count
+            FROM knowledge_facts WHERE valid_until IS NULL
+            GROUP BY fact_type ORDER BY count DESC
+        """)
+
+        by_category = await conn.fetch("""
+            SELECT category, COUNT(*) as count
+            FROM knowledge_facts WHERE valid_until IS NULL
+            GROUP BY category ORDER BY count DESC
+        """)
+
+        recent_reasoning = await conn.fetch("""
+            SELECT trigger_source, facts_extracted, connections_found,
+                   conflicts_detected, duration_ms, created_at
+            FROM reasoning_log ORDER BY created_at DESC LIMIT 10
+        """)
+
+        return {
+            "total_facts": fact_count,
+            "total_connections": connection_count,
+            "facts_by_type": {r["fact_type"]: r["count"] for r in by_type},
+            "facts_by_category": {r["category"]: r["count"] for r in by_category},
+            "recent_reasoning": [
+                {
+                    "trigger": r["trigger_source"],
+                    "facts": r["facts_extracted"],
+                    "connections": r["connections_found"],
+                    "conflicts": r["conflicts_detected"],
+                    "duration_ms": r["duration_ms"],
+                    "when": r["created_at"].isoformat(),
+                }
+                for r in recent_reasoning
+            ],
+        }
+    finally:
+        await conn.close()
+
+
+@app.get("/api/echo/notifications")
+async def list_notifications(status: str = "pending", limit: int = 20):
+    """List notifications."""
+    import asyncpg
+    conn = await asyncpg.connect(os.getenv("DATABASE_URL", "postgresql://echo:echo_secure_password_123@localhost/echo_brain"))
+    try:
+        rows = await conn.fetch("""
+            SELECT id, title, body, priority, source, category, status, created_at
+            FROM notifications
+            WHERE status = $1
+            ORDER BY
+                CASE priority
+                    WHEN 'urgent' THEN 0
+                    WHEN 'high' THEN 1
+                    WHEN 'normal' THEN 2
+                    WHEN 'low' THEN 3
+                END,
+                created_at DESC
+            LIMIT $2
+        """, status, limit)
+
+        return {
+            "notifications": [
+                {
+                    "id": str(r["id"]),
+                    "title": r["title"],
+                    "body": r["body"],
+                    "priority": r["priority"],
+                    "source": r["source"],
+                    "category": r["category"],
+                    "status": r["status"],
+                    "created": r["created_at"].isoformat(),
+                }
+                for r in rows
+            ]
+        }
+    finally:
+        await conn.close()
+
+
+@app.post("/api/echo/notifications/{notification_id}/read")
+async def mark_notification_read(notification_id: str):
+    """Mark a notification as read."""
+    import asyncpg
+    from uuid import UUID
+    try:
+        UUID(notification_id)
+        conn = await asyncpg.connect(os.getenv("DATABASE_URL", "postgresql://echo:echo_secure_password_123@localhost/echo_brain"))
+        try:
+            await conn.execute(
+                "UPDATE notifications SET status = 'read', read_at = NOW() WHERE id = $1",
+                UUID(notification_id))
+            return {"status": "read", "id": notification_id}
+        finally:
+            await conn.close()
+    except ValueError:
+        return {"error": "Invalid notification ID"}
+
 # Mount static files for Vue frontend - MUST be last to serve as catch-all
 frontend_path = Path("/opt/tower-echo-brain/frontend/dist")
 if frontend_path.exists():
@@ -721,6 +953,33 @@ async def startup_event():
             logger.info("✅ Registered improvement_engine worker (2 hours)")
         except Exception as e:
             logger.error(f"❌ Failed to register improvement_engine: {e}")
+
+        try:
+            from src.autonomous.workers.domain_ingestor import DomainIngestor
+            worker = DomainIngestor()
+            worker_scheduler.register_worker("domain_ingestor", worker.run_cycle, interval_minutes=60)
+            workers_registered += 1
+            logger.info("✅ Registered domain_ingestor worker (60 min)")
+        except Exception as e:
+            logger.error(f"❌ Failed to register domain_ingestor: {e}")
+
+        try:
+            from src.autonomous.workers.reasoning_worker import ReasoningWorker
+            worker = ReasoningWorker()
+            worker_scheduler.register_worker("reasoning_worker", worker.run_cycle, interval_minutes=30)
+            workers_registered += 1
+            logger.info("✅ Registered reasoning_worker worker (30 min)")
+        except Exception as e:
+            logger.error(f"❌ Failed to register reasoning_worker: {e}")
+
+        try:
+            from src.autonomous.workers.file_watcher import FileWatcher
+            worker = FileWatcher()
+            worker_scheduler.register_worker("file_watcher", worker.run_cycle, interval_minutes=10)
+            workers_registered += 1
+            logger.info("✅ Registered file_watcher worker (10 min)")
+        except Exception as e:
+            logger.error(f"❌ Failed to register file_watcher: {e}")
 
         # Start the scheduler
         await worker_scheduler.start()

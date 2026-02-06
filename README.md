@@ -2,7 +2,7 @@
 
 **Personal AI Assistant System — Self-Hosted Knowledge Layer & Agent Orchestrator**
 
-Version: **0.3.0** (Phase 2a: Self-Awareness & Self-Improvement)
+Version: **0.3.0** (Phase 2c: Reasoning Pipeline & Knowledge Integration)
 Last Updated: 2026-02-06
 
 ---
@@ -21,14 +21,16 @@ The long-term vision is a system that:
 
 | Capability | Status | Details |
 |-----------|--------|---------|
-| Vector search over personal data | ✅ Working | 2,473 vectors in Qdrant (1024D mxbai-embed-large) |
-| Fact extraction from vectors | ✅ Running | 6,389+ facts, worker runs every 30 min |
-| Conversation ingestion | ✅ Running | Watches Claude conversation exports, 10 min cycles |
-| Knowledge graph building | ✅ Running | Daily cycle, links facts by subject/object |
-| Autonomous goal system | ✅ Working | Safety levels (AUTO/NOTIFY/REVIEW/FORBIDDEN) |
-| Self-awareness (own code) | 🔨 Phase 2a | Codebase indexing, log monitoring, self-testing |
-| Self-improvement proposals | 🔨 Phase 2a | Detect issues → reason about cause → propose fix |
-| Anime pipeline awareness | 🔨 Phase 2a | Secondary scope — index anime production code |
+| Vector search over personal data | ✅ Working | 20,000+ vectors in Qdrant (1024D nomic-embed-text) |
+| Fact extraction from vectors | ✅ Running | 40+ structured facts, worker runs every 30 min |
+| Conversation ingestion | ✅ Running | Watches Claude conversation exports, 60 min cycles |
+| Knowledge graph building | ✅ Running | Connections between facts, conflict detection |
+| Domain knowledge ingestion | ✅ Phase 2c | Anime production, ComfyUI workflows, models |
+| Reasoning pipeline | ✅ Phase 2c | CLASSIFY→EXTRACT→CONNECT→REASON→ACT |
+| File system monitoring | ✅ Phase 2c | Watches models, workflows, outputs (10 min) |
+| Self-awareness (own code) | ✅ Phase 2c | Codebase indexing, log monitoring, self-testing |
+| Self-improvement proposals | ✅ Phase 2c | Detect issues → reason about cause → propose fix |
+| Notification system | ✅ Phase 2c | Conflicts, new files, important changes |
 | Intelligence layer (ask/query) | ⚠️ Partial | Works but context assembly has quality gaps |
 | Voice interface | ❌ Planned | Wyoming/ESP32 satellite architecture designed |
 | Home Assistant integration | ❌ Planned | Phase 3+ |
@@ -46,22 +48,28 @@ The long-term vision is a system that:
 │  │              ECHO BRAIN (port 8309)                      │    │
 │  │                                                          │    │
 │  │  FastAPI Application                                     │    │
-│  │  ├── /api/echo/ask          (intelligence queries)       │    │
-│  │  ├── /api/echo/memory       (memory management)          │    │
-│  │  ├── /api/autonomous/*      (goal/task management)       │    │
-│  │  ├── /api/workers/status    (worker monitoring)          │    │
-│  │  ├── /api/echo/health/detailed  (self-awareness dash)    │    │
-│  │  └── /health                (basic health check)         │    │
+│  │  ├── /api/echo/ask             (intelligence queries)    │    │
+│  │  ├── /api/echo/memory          (memory management)       │    │
+│  │  ├── /api/echo/search/domain   (domain knowledge)        │    │
+│  │  ├── /api/echo/knowledge/facts (extracted facts)         │    │
+│  │  ├── /api/echo/knowledge/stats (knowledge graph stats)   │    │
+│  │  ├── /api/echo/notifications   (notification queue)      │    │
+│  │  ├── /api/autonomous/*         (goal/task management)    │    │
+│  │  ├── /api/workers/status       (worker monitoring)       │    │
+│  │  └── /health                   (basic health check)      │    │
 │  │                                                          │    │
-│  │  Worker Scheduler (8 workers)                            │    │
-│  │  ├── conversation_watcher   (10 min)                     │    │
-│  │  ├── log_monitor            (15 min)    ← Phase 2a      │    │
+│  │  Worker Scheduler (11 workers)                           │    │
+│  │  ├── file_watcher           (10 min)    ← Phase 2c      │    │
+│  │  ├── log_monitor            (15 min)                     │    │
 │  │  ├── fact_extraction        (30 min)                     │    │
-│  │  ├── self_test_runner       (60 min)    ← Phase 2a      │    │
-│  │  ├── codebase_indexer       (6 hours)   ← Phase 2a      │    │
-│  │  ├── improvement_engine     (2 hours)   ← Phase 2a      │    │
-│  │  ├── knowledge_graph        (daily)                      │    │
-│  │  └── schema_indexer         (daily)     ← Phase 2a      │    │
+│  │  ├── reasoning_worker       (30 min)    ← Phase 2c      │    │
+│  │  ├── conversation_watcher   (60 min)                     │    │
+│  │  ├── domain_ingestor        (60 min)    ← Phase 2c      │    │
+│  │  ├── codebase_indexer       (60 min)                     │    │
+│  │  ├── schema_indexer         (60 min)                     │    │
+│  │  ├── self_test_runner       (60 min)                     │    │
+│  │  ├── improvement_engine     (2 hours)                    │    │
+│  │  └── knowledge_graph        (daily)                      │    │
 │  │                                                          │    │
 │  │  Intelligence Layer                                      │    │
 │  │  ├── Query Classification                                │    │
@@ -73,9 +81,9 @@ The long-term vision is a system that:
 │  ┌──────────────┐  ┌──────────────┐  ┌───────────────────┐     │
 │  │  PostgreSQL   │  │   Qdrant     │  │     Ollama        │     │
 │  │  (echo_brain) │  │  (6333)      │  │    (11434)        │     │
-│  │  30+ tables   │  │  echo_memory │  │  gemma2:9b        │     │
-│  │               │  │  1024D vecs  │  │  mistral:7b       │     │
-│  │               │  │  2,473 pts   │  │  mxbai-embed-lg   │     │
+│  │  35+ tables   │  │  echo_memory │  │  mistral:7b       │     │
+│  │  - knowledge  │  │  1024D vecs  │  │  nomic-embed-text │     │
+│  │    facts      │  │  20,000+ pts │  │  gemma2:9b        │     │
 │  └──────────────┘  └──────────────┘  └───────────────────┘     │
 │                                                                  │
 │  ┌──────────────────────────────────────────────────────────┐   │
@@ -109,20 +117,28 @@ curl -s -X POST http://localhost:8309/api/echo/ask \
   -H "Content-Type: application/json" \
   -d '{"question": "What hardware does Tower have?"}'
 
+# Search domain knowledge (Phase 2c)
+curl -s -X POST http://localhost:8309/api/echo/search/domain \
+  -H "Content-Type: application/json" \
+  -d '{"query": "LoRA training settings", "categories": ["anime:pipeline"]}'
+
+# Check knowledge facts (Phase 2c)
+curl -s http://localhost:8309/api/echo/knowledge/facts?limit=10 | python3 -m json.tool
+
+# Get knowledge graph statistics (Phase 2c)
+curl -s http://localhost:8309/api/echo/knowledge/stats | python3 -m json.tool
+
+# Check notifications (Phase 2c)
+curl -s http://localhost:8309/api/echo/notifications | python3 -m json.tool
+
 # Check autonomous goals
 sudo -u postgres psql echo_brain -c "SELECT name, status, priority FROM autonomous_goals ORDER BY priority DESC;"
 
-# Check detected issues
-sudo -u postgres psql echo_brain -c "SELECT title, severity, status FROM self_detected_issues WHERE status = 'open' ORDER BY severity;"
+# Check extracted facts (Phase 2c)
+sudo -u postgres psql echo_brain -c "SELECT fact_text, fact_type, confidence FROM knowledge_facts LIMIT 5;"
 
 # Check improvement proposals
 sudo -u postgres psql echo_brain -c "SELECT title, status, risk_assessment FROM self_improvement_proposals WHERE status = 'pending';"
-
-# View proposals via API
-curl -s http://localhost:8309/api/echo/proposals?status=pending | python3 -m json.tool
-
-# Approve a proposal (replace UUID)
-curl -s -X POST http://localhost:8309/api/echo/proposals/{id}/approve
 ```
 
 ## Directory Structure
@@ -136,7 +152,8 @@ curl -s -X POST http://localhost:8309/api/echo/proposals/{id}/approve
 │       ├── PHASE1_AUTONOMOUS_CORE.md
 │       ├── PHASE2_LEARNING_AUTONOMY.md
 │       ├── PHASE2_FIX_AND_VERIFY.md
-│       └── PHASE2A_SELF_AWARENESS.md   ← current
+│       ├── PHASE2A_SELF_AWARENESS.md
+│       └── PHASE2C_REASONING_PIPELINE.md   ← current
 ├── src/
 │   ├── main.py                  # FastAPI app entry point
 │   ├── api/
