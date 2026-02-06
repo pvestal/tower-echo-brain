@@ -28,7 +28,9 @@ class ParallelRetriever:
         self.qdrant_url = "http://localhost:6333"
         self.ollama_url = "http://localhost:11434"
         self.embedding_model = "mxbai-embed-large"  # 1024D
-        self.pg_dsn = f"postgresql://patrick:{os.getenv('DB_PASSWORD', '')}@localhost/echo_brain"
+        # Use DATABASE_URL if available, otherwise use DB_PASSWORD with fallback
+        self.pg_dsn = os.getenv('DATABASE_URL',
+            f"postgresql://patrick:{os.getenv('DB_PASSWORD', 'WL12Ow4cuhEAWcO3Iaw7d2J7JEV8Hklr')}@localhost/echo_brain")
 
     async def initialize(self):
         """Initialize connection pools"""
@@ -295,7 +297,7 @@ class ParallelRetriever:
                 params = []
                 for i, word in enumerate(words):
                     conditions.append(
-                        f"(subject ILIKE '%' || ${i+1} || '%' OR object ILIKE '%' || ${i+1} || '%')"
+                        f"(subject ILIKE '%' || ${i+1} || '%' OR predicate ILIKE '%' || ${i+1} || '%' OR object ILIKE '%' || ${i+1} || '%')"
                     )
                     params.append(word)
 
