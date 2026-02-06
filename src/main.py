@@ -6,6 +6,7 @@ from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
 from datetime import datetime
+from typing import Optional
 import logging
 import os
 import time
@@ -409,6 +410,219 @@ async def get_detailed_health():
             "timestamp": datetime.now().isoformat()
         }
 
+# Proposal review endpoints - MUST be before frontend mount
+@app.get("/api/echo/proposals")
+async def list_proposals(status: Optional[str] = None):
+    """List improvement proposals with optional status filter."""
+    import asyncpg
+
+    try:
+        db_url = os.getenv("DATABASE_URL", "postgresql://echo:echo_secure_password_123@localhost/echo_brain")
+        conn = await asyncpg.connect(db_url)
+
+        try:
+            # Build query based on status filter
+            if status:
+                proposals = await conn.fetch("""
+                    SELECT
+                        p.id, p.title, p.target_file, p.risk_assessment,
+                        p.status, p.created_at,
+                        i.title as issue_title
+                    FROM self_improvement_proposals p
+                    LEFT JOIN self_detected_issues i ON p.issue_id = i.id
+                    WHERE p.status = $1
+                    ORDER BY p.created_at DESC
+                """, status)
+            else:
+                proposals = await conn.fetch("""
+                    SELECT
+                        p.id, p.title, p.target_file, p.risk_assessment,
+                        p.status, p.created_at,
+                        i.title as issue_title
+                    FROM self_improvement_proposals p
+                    LEFT JOIN self_detected_issues i ON p.issue_id = i.id
+                    ORDER BY p.created_at DESC
+                """)
+
+            # Get counts by status
+            counts = await conn.fetch("""
+                SELECT status, COUNT(*) as count
+                FROM self_improvement_proposals
+                GROUP BY status
+            """)
+
+            count_dict = {row['status']: row['count'] for row in counts}
+
+            await conn.close()
+
+            return {
+                "proposals": [
+                    {
+                        "id": str(p['id']),
+                        "title": p['title'],
+                        "issue_title": p['issue_title'],
+                        "target_file": p['target_file'],
+                        "risk_assessment": p['risk_assessment'],
+                        "status": p['status'],
+                        "created_at": p['created_at'].isoformat()
+                    }
+                    for p in proposals
+                ],
+                "counts": {
+                    "pending": count_dict.get('pending', 0),
+                    "approved": count_dict.get('approved', 0),
+                    "rejected": count_dict.get('rejected', 0),
+                    "applied": count_dict.get('applied', 0)
+                }
+            }
+        finally:
+            await conn.close()
+
+    except Exception as e:
+        logger.error(f"Failed to list proposals: {e}")
+        return {"error": str(e), "proposals": [], "counts": {}}
+
+@app.get("/api/echo/proposals/{proposal_id}")
+async def get_proposal(proposal_id: str):
+    """Get full details of a specific proposal."""
+    import asyncpg
+    from uuid import UUID
+
+    try:
+        # Validate UUID
+        UUID(proposal_id)
+
+        db_url = os.getenv("DATABASE_URL", "postgresql://echo:echo_secure_password_123@localhost/echo_brain")
+        conn = await asyncpg.connect(db_url)
+
+        try:
+            proposal = await conn.fetchrow("""
+                SELECT
+                    p.*,
+                    i.title as issue_title,
+                    i.description as issue_description
+                FROM self_improvement_proposals p
+                LEFT JOIN self_detected_issues i ON p.issue_id = i.id
+                WHERE p.id = $1
+            """, UUID(proposal_id))
+
+            if not proposal:
+                return {"error": "Proposal not found"}
+
+            await conn.close()
+
+            return {
+                "id": str(proposal['id']),
+                "title": proposal['title'],
+                "description": proposal['description'],
+                "target_file": proposal['target_file'],
+                "current_code": proposal['current_code'],
+                "proposed_code": proposal['proposed_code'],
+                "reasoning": proposal['reasoning'],
+                "risk_assessment": proposal['risk_assessment'],
+                "status": proposal['status'],
+                "reviewed_by": proposal['reviewed_by'],
+                "reviewed_at": proposal['reviewed_at'].isoformat() if proposal['reviewed_at'] else None,
+                "created_at": proposal['created_at'].isoformat(),
+                "issue_title": proposal['issue_title'],
+                "issue_description": proposal['issue_description']
+            }
+        finally:
+            await conn.close()
+
+    except ValueError:
+        return {"error": "Invalid proposal ID"}
+    except Exception as e:
+        logger.error(f"Failed to get proposal: {e}")
+        return {"error": str(e)}
+
+@app.post("/api/echo/proposals/{proposal_id}/approve")
+async def approve_proposal(proposal_id: str):
+    """Approve a proposal for implementation."""
+    import asyncpg
+    from uuid import UUID
+    from datetime import datetime
+
+    try:
+        UUID(proposal_id)
+
+        db_url = os.getenv("DATABASE_URL", "postgresql://echo:echo_secure_password_123@localhost/echo_brain")
+        conn = await asyncpg.connect(db_url)
+
+        try:
+            # Update proposal status
+            updated = await conn.execute("""
+                UPDATE self_improvement_proposals
+                SET status = 'approved',
+                    reviewed_by = 'patrick',
+                    reviewed_at = NOW()
+                WHERE id = $1 AND status = 'pending'
+            """, UUID(proposal_id))
+
+            if updated == "UPDATE 0":
+                return {"error": "Proposal not found or already reviewed"}
+
+            # Create audit log entry
+            await conn.execute("""
+                INSERT INTO autonomous_audit_log (action, entity_type, entity_id, details)
+                VALUES ('proposal_approved', 'improvement_proposal', $1, $2)
+            """, proposal_id, {"reviewed_by": "patrick", "action": "approved"})
+
+            await conn.close()
+
+            return {"status": "approved", "id": proposal_id}
+        finally:
+            await conn.close()
+
+    except ValueError:
+        return {"error": "Invalid proposal ID"}
+    except Exception as e:
+        logger.error(f"Failed to approve proposal: {e}")
+        return {"error": str(e)}
+
+@app.post("/api/echo/proposals/{proposal_id}/reject")
+async def reject_proposal(proposal_id: str, reason: Optional[str] = None):
+    """Reject a proposal."""
+    import asyncpg
+    from uuid import UUID
+
+    try:
+        UUID(proposal_id)
+
+        db_url = os.getenv("DATABASE_URL", "postgresql://echo:echo_secure_password_123@localhost/echo_brain")
+        conn = await asyncpg.connect(db_url)
+
+        try:
+            # Update proposal status
+            updated = await conn.execute("""
+                UPDATE self_improvement_proposals
+                SET status = 'rejected',
+                    reviewed_by = 'patrick',
+                    reviewed_at = NOW()
+                WHERE id = $1 AND status = 'pending'
+            """, UUID(proposal_id))
+
+            if updated == "UPDATE 0":
+                return {"error": "Proposal not found or already reviewed"}
+
+            # Create audit log entry
+            await conn.execute("""
+                INSERT INTO autonomous_audit_log (action, entity_type, entity_id, details)
+                VALUES ('proposal_rejected', 'improvement_proposal', $1, $2)
+            """, proposal_id, {"reviewed_by": "patrick", "action": "rejected", "reason": reason})
+
+            await conn.close()
+
+            return {"status": "rejected", "id": proposal_id}
+        finally:
+            await conn.close()
+
+    except ValueError:
+        return {"error": "Invalid proposal ID"}
+    except Exception as e:
+        logger.error(f"Failed to reject proposal: {e}")
+        return {"error": str(e)}
+
 # Mount static files for Vue frontend - MUST be last to serve as catch-all
 frontend_path = Path("/opt/tower-echo-brain/frontend/dist")
 if frontend_path.exists():
@@ -498,6 +712,15 @@ async def startup_event():
             logger.info("✅ Registered self_test_runner worker (hourly)")
         except Exception as e:
             logger.error(f"❌ Failed to register self_test_runner: {e}")
+
+        try:
+            from src.autonomous.workers.improvement_engine import ImprovementEngine
+            worker = ImprovementEngine()
+            worker_scheduler.register_worker("improvement_engine", worker.run_cycle, interval_minutes=120)  # Every 2 hours
+            workers_registered += 1
+            logger.info("✅ Registered improvement_engine worker (2 hours)")
+        except Exception as e:
+            logger.error(f"❌ Failed to register improvement_engine: {e}")
 
         # Start the scheduler
         await worker_scheduler.start()

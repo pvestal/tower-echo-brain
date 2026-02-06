@@ -1,115 +1,192 @@
-# Echo Brain - Unified AI Knowledge System
+# Echo Brain
 
-## Overview
-Echo Brain is a personal AI assistant with a unified knowledge layer that combines:
-- **24,657** vector embeddings in Qdrant
-- **6,129** structured facts in PostgreSQL
-- **13,630** conversation messages
-- **22** hardcoded core facts for reliability
+**Personal AI Assistant System — Self-Hosted Knowledge Layer & Agent Orchestrator**
 
-## Status
-- **Version**: 0.4.0 (Unified Knowledge Layer)
-- **Service**: Active on port 8309
-- **Frontend**: Vue3 dashboard at `/echo-brain/`
-- **API**: All endpoints under `/api/echo/*`
-- **Database**: PostgreSQL `echo_brain`
+Version: **0.3.0** (Phase 2a: Self-Awareness & Self-Improvement)
+Last Updated: 2026-02-06
 
-## Quick Start
+---
+
+## What Is Echo Brain?
+
+Echo Brain is Patrick's self-hosted personal AI system running on the Tower server. It's not a chatbot — it's a knowledge layer that ingests personal data from multiple sources, builds a structured understanding through fact extraction and knowledge graphs, and provides intelligent responses grounded in that personal context.
+
+The long-term vision is a system that:
+- **Knows** Patrick's projects, preferences, history, and context across all data sources
+- **Thinks** about what it knows — detects patterns, contradictions, and gaps
+- **Improves** itself — finds its own bugs, proposes fixes, validates its own output
+- **Acts** autonomously within safety boundaries — orchestrating content pipelines, monitoring systems, and proactive assistance
+
+## Current Capabilities
+
+| Capability | Status | Details |
+|-----------|--------|---------|
+| Vector search over personal data | ✅ Working | 2,473 vectors in Qdrant (1024D mxbai-embed-large) |
+| Fact extraction from vectors | ✅ Running | 6,389+ facts, worker runs every 30 min |
+| Conversation ingestion | ✅ Running | Watches Claude conversation exports, 10 min cycles |
+| Knowledge graph building | ✅ Running | Daily cycle, links facts by subject/object |
+| Autonomous goal system | ✅ Working | Safety levels (AUTO/NOTIFY/REVIEW/FORBIDDEN) |
+| Self-awareness (own code) | 🔨 Phase 2a | Codebase indexing, log monitoring, self-testing |
+| Self-improvement proposals | 🔨 Phase 2a | Detect issues → reason about cause → propose fix |
+| Anime pipeline awareness | 🔨 Phase 2a | Secondary scope — index anime production code |
+| Intelligence layer (ask/query) | ⚠️ Partial | Works but context assembly has quality gaps |
+| Voice interface | ❌ Planned | Wyoming/ESP32 satellite architecture designed |
+| Home Assistant integration | ❌ Planned | Phase 3+ |
+| Web dashboard (Vue3) | ❌ Planned | Frontend exists but limited |
+
+## Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     TOWER SERVER                                 │
+│  AMD Ryzen 9 24-core │ 96GB DDR6 │ RTX 3060 12GB │ RX 9070 XT  │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │              ECHO BRAIN (port 8309)                      │    │
+│  │                                                          │    │
+│  │  FastAPI Application                                     │    │
+│  │  ├── /api/echo/ask          (intelligence queries)       │    │
+│  │  ├── /api/echo/memory       (memory management)          │    │
+│  │  ├── /api/autonomous/*      (goal/task management)       │    │
+│  │  ├── /api/workers/status    (worker monitoring)          │    │
+│  │  ├── /api/echo/health/detailed  (self-awareness dash)    │    │
+│  │  └── /health                (basic health check)         │    │
+│  │                                                          │    │
+│  │  Worker Scheduler (8 workers)                            │    │
+│  │  ├── conversation_watcher   (10 min)                     │    │
+│  │  ├── log_monitor            (15 min)    ← Phase 2a      │    │
+│  │  ├── fact_extraction        (30 min)                     │    │
+│  │  ├── self_test_runner       (60 min)    ← Phase 2a      │    │
+│  │  ├── codebase_indexer       (6 hours)   ← Phase 2a      │    │
+│  │  ├── improvement_engine     (2 hours)   ← Phase 2a      │    │
+│  │  ├── knowledge_graph        (daily)                      │    │
+│  │  └── schema_indexer         (daily)     ← Phase 2a      │    │
+│  │                                                          │    │
+│  │  Intelligence Layer                                      │    │
+│  │  ├── Query Classification                                │    │
+│  │  ├── Context Assembly (ParallelRetriever)                │    │
+│  │  ├── LLM Reasoning (Ollama)                              │    │
+│  │  └── Response Synthesis                                  │    │
+│  └─────────────────────────────────────────────────────────┘    │
+│                                                                  │
+│  ┌──────────────┐  ┌──────────────┐  ┌───────────────────┐     │
+│  │  PostgreSQL   │  │   Qdrant     │  │     Ollama        │     │
+│  │  (echo_brain) │  │  (6333)      │  │    (11434)        │     │
+│  │  30+ tables   │  │  echo_memory │  │  gemma2:9b        │     │
+│  │               │  │  1024D vecs  │  │  mistral:7b       │     │
+│  │               │  │  2,473 pts   │  │  mxbai-embed-lg   │     │
+│  └──────────────┘  └──────────────┘  └───────────────────┘     │
+│                                                                  │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │  ANIME PRODUCTION SYSTEM (secondary)                      │   │
+│  │  ├── ComfyUI (port 8188)                                 │   │
+│  │  ├── tower_anime database                                 │   │
+│  │  └── LoRA training pipeline                               │   │
+│  └──────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+See [ARCHITECTURE.md](./docs/ARCHITECTURE.md) for detailed component documentation.
+See [ROADMAP.md](./docs/ROADMAP.md) for the full development plan.
+See [CHANGELOG.md](./CHANGELOG.md) for version history.
+
+## Quick Reference
 
 ```bash
-# Check service status
+# Service management
 sudo systemctl status tower-echo-brain
-
-# View logs
+sudo systemctl restart tower-echo-brain
 sudo journalctl -u tower-echo-brain -f
 
-# Test API
-curl http://localhost:8309/health
+# Health checks
+curl -s http://localhost:8309/health | python3 -m json.tool
+curl -s http://localhost:8309/api/workers/status | python3 -m json.tool
+curl -s http://localhost:8309/api/echo/health/detailed | python3 -m json.tool
+
+# Ask Echo Brain a question
+curl -s -X POST http://localhost:8309/api/echo/ask \
+  -H "Content-Type: application/json" \
+  -d '{"question": "What hardware does Tower have?"}'
+
+# Check autonomous goals
+sudo -u postgres psql echo_brain -c "SELECT name, status, priority FROM autonomous_goals ORDER BY priority DESC;"
+
+# Check detected issues
+sudo -u postgres psql echo_brain -c "SELECT title, severity, status FROM self_detected_issues WHERE status = 'open' ORDER BY severity;"
+
+# Check improvement proposals
+sudo -u postgres psql echo_brain -c "SELECT title, status, risk_assessment FROM self_improvement_proposals WHERE status = 'pending';"
+
+# View proposals via API
+curl -s http://localhost:8309/api/echo/proposals?status=pending | python3 -m json.tool
+
+# Approve a proposal (replace UUID)
+curl -s -X POST http://localhost:8309/api/echo/proposals/{id}/approve
 ```
 
-## Architecture
+## Directory Structure
 
-### Core Components
-- **FastAPI**: Backend API framework
-- **Vue3 + TypeScript**: Frontend dashboard
-- **UnifiedKnowledgeLayer**: Combines all knowledge sources
-- **Qdrant**: Vector database (24,657 embeddings, 1024 dims)
-- **PostgreSQL**: Facts (6,129) and conversations (13,630)
-- **Ollama**: LLM inference (mistral:7b, deepseek-r1:8b)
-- **mxbai-embed-large**: Embedding model (1024 dimensions)
-
-## Project Structure
 ```
 /opt/tower-echo-brain/
-├── src/                          # Source code
-│   ├── main.py                   # FastAPI entry (port 8309)
-│   ├── api/endpoints/            # API routers
-│   │   └── echo_main_router.py   # Consolidated endpoints
-│   ├── core/                     # Core components
-│   │   └── unified_knowledge.py  # Knowledge layer
-│   └── integrations/             # External services
-│       └── mcp_service.py        # MCP integration
-├── frontend/                     # Vue3 dashboard
-│   ├── src/views/                # Dashboard views
-│   └── dist/                     # Built static files
-├── scripts/                      # Utility scripts
-└── venv/                         # Virtual environment
+├── docs/
+│   ├── ARCHITECTURE.md          # System architecture deep dive
+│   ├── ROADMAP.md               # Development phases and milestones
+│   └── prompts/
+│       ├── PHASE1_AUTONOMOUS_CORE.md
+│       ├── PHASE2_LEARNING_AUTONOMY.md
+│       ├── PHASE2_FIX_AND_VERIFY.md
+│       └── PHASE2A_SELF_AWARENESS.md   ← current
+├── src/
+│   ├── main.py                  # FastAPI app entry point
+│   ├── api/
+│   │   ├── endpoints/           # Route handlers
+│   │   └── autonomous.py        # Autonomous system API
+│   ├── intelligence/
+│   │   └── reasoner.py          # Query processing pipeline
+│   ├── context_assembly/
+│   │   └── retriever.py         # Vector search + context building
+│   ├── autonomous/
+│   │   ├── core.py              # Autonomous orchestration
+│   │   ├── goals.py             # Goal management
+│   │   ├── safety.py            # Safety level enforcement
+│   │   ├── audit.py             # Audit logging
+│   │   ├── scheduler.py         # Task scheduling
+│   │   ├── worker_scheduler.py  # Worker lifecycle management
+│   │   └── workers/
+│   │       ├── fact_extraction_worker.py
+│   │       ├── conversation_watcher.py
+│   │       ├── knowledge_graph_builder.py
+│   │       ├── codebase_indexer.py      ← Phase 2a
+│   │       ├── schema_indexer.py        ← Phase 2a
+│   │       ├── log_monitor.py           ← Phase 2a
+│   │       ├── self_test_runner.py      ← Phase 2a
+│   │       └── improvement_engine.py    ← Phase 2a
+│   ├── services/
+│   │   └── embedding_service.py
+│   └── pipeline/
+│       └── context_layer.py
+├── config/
+│   └── self_tests.json          # Extensible self-test definitions
+├── frontend/                    # Vue3 web dashboard
+├── venv/                        # Python virtual environment
+├── CHANGELOG.md
+└── README.md                    # This file
 ```
 
-## API Endpoints
+## Configuration
 
-### API Endpoints (ALL under `/api/echo/`)
-- `GET /health` - Service health check
-- `GET /docs` - OpenAPI documentation
-- `POST /api/echo/ask` - Main Q&A with unified knowledge
-- `POST /api/echo/intelligence/think` - Multi-stage reasoning
-- `POST /api/echo/memory/search` - Vector similarity search
-- `POST /api/echo/conversations/search` - Search conversations
-- `GET /api/echo/facts` - Retrieve structured facts
-- `GET /api/echo/metrics` - System metrics
-- `GET /api/echo/logs` - Service logs
-- `POST /mcp` - Model Context Protocol integration
+| Variable | Value | Location |
+|----------|-------|----------|
+| DATABASE_URL | `postgresql://patrick:...@localhost/echo_brain` | systemd service env |
+| QDRANT_URL | `http://localhost:6333` | Hardcoded in workers |
+| OLLAMA_URL | `http://localhost:11434` | Hardcoded in workers |
+| EMBEDDING_MODEL | `mxbai-embed-large` (1024D) | workers + retriever |
+| REASONING_MODEL | `mistral:7b` | intelligence/reasoner.py |
+| EXTRACTION_MODEL | `gemma2:9b` | fact_extraction_worker.py |
+| SERVICE_USER | `echo` | systemd service |
+| SERVICE_PORT | `8309` | systemd service |
 
-## Features
+## Contributing
 
-### Unified Knowledge Layer
-- Combines facts, vectors, and conversations in single responses
-- Core facts hardcoded (port 8309, endpoints, architecture)
-- Parallel retrieval from all sources
-- Transparent source attribution
-
-### Knowledge Sources
-- **Vectors**: 24,657 embeddings from conversations/code
-- **Facts**: 6,129 structured subject-predicate-object facts
-- **Conversations**: 13,630 Claude conversation messages
-- **Core Facts**: 22 essential system facts always available
-
-### Frontend Dashboard
-- Real-time system monitoring
-- Interactive Q&A interface with debug info
-- Source visualization (color-coded by type)
-- Conversation history tracking
-
-## Deployment
-
-```bash
-# Restart service
-sudo systemctl restart tower-echo-brain
-
-# Check health
-curl http://localhost:8309/health
-
-# View documentation
-open http://localhost:8309/docs
-```
-
-## Recent Updates (Feb 2026)
-- ✅ Unified Knowledge Layer implemented
-- ✅ All endpoints consolidated under `/api/echo/`
-- ✅ Frontend shows debug info and sources
-- ✅ Fixed `/intelligence/think` memory retrieval
-- ✅ Expanded core facts from 7 to 22
-- ✅ Vector search using HTTP API directly
-
-## Repository
-GitHub: [pvestal/tower-echo-brain](https://github.com/pvestal/tower-echo-brain)
+Echo Brain is a personal project. Development happens through Claude Code prompts stored in `docs/prompts/`. Each prompt is versioned and gated — see [ROADMAP.md](./docs/ROADMAP.md) for the current development plan.
