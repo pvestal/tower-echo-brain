@@ -4,17 +4,6 @@ on:
   push:
     tags:
       - 'v*'
-  workflow_dispatch:
-    inputs:
-      version_type:
-        description: 'Version bump type'
-        required: true
-        default: 'patch'
-        type: choice
-        options:
-        - patch
-        - minor
-        - major
 
 permissions:
   contents: write
@@ -30,37 +19,17 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
-
     - name: Generate changelog
       run: |
-        echo "## Changelog" > CHANGELOG.md
-        git log --pretty=format:"- %s (%h)" --since="$(git describe --tags --abbrev=0 2>/dev/null || echo '1 month ago')" >> CHANGELOG.md
+        echo "## Echo Brain Release" > release_notes.md
+        echo "" >> release_notes.md
+        echo "### Recent Changes:" >> release_notes.md
+        git log --pretty=format:"- %s" -10 >> release_notes.md
 
     - name: Create GitHub Release
-      uses: actions/github-script@v6
+      uses: softprops/action-gh-release@v1
       with:
-        script: |
-          const fs = require('fs');
-          const changelog = fs.readFileSync('CHANGELOG.md', 'utf8');
-          
-          const tagName = context.ref.replace('refs/tags/', '');
-          
-          github.rest.repos.createRelease({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            tag_name: tagName,
-            name: `Echo Brain ${tagName}`,
-            body: changelog,
-            draft: false,
-            prerelease: false
-          });
-
-    - name: Deployment notification
-      run: |
-        echo "Release created successfully"
-        echo "Manual deployment to production required"
-        echo "Run deployment workflow or deploy manually on Tower"
+        body_path: release_notes.md
+        draft: false
+        prerelease: false
+        generate_release_notes: true
