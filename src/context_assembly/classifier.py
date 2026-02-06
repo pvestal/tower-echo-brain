@@ -137,16 +137,16 @@ class DomainClassifier:
             Domain.SYSTEM: {
                 "qdrant_collections": ["echo_memory"],  # Use echo_memory for all
                 "pg_tables": [],  # service_health, system_logs don't exist
-                "facts_filter": lambda f: "service" in f or "tower" in f,
-                "max_sources": 5,
-                "min_score": 0.4
+                "facts_filter": lambda f: "service" in f or "tower" in f or "gpu" in f or "ram" in f or "cpu" in f,
+                "max_sources": 15,
+                "min_score": 0.3
             },
             Domain.GENERAL: {
                 "qdrant_collections": [],  # No vector search for general
                 "pg_tables": [],  # No conversation search
                 "facts_filter": lambda f: True,  # Allow all facts
-                "max_sources": 3,
-                "min_score": 0.5
+                "max_sources": 20,  # Increased to allow more facts
+                "min_score": 0.3  # Lower threshold for better recall
             },
             Domain.CREATIVE: {
                 "qdrant_collections": ["echo_memory"],  # Use echo_memory for all
