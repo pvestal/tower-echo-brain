@@ -224,6 +224,191 @@ async def mcp_health():
         "version": "1.0.0"
     }
 
+# Worker status endpoint - MUST be before frontend mount
+@app.get("/api/workers/status")
+async def get_worker_status():
+    """Get status of all scheduled workers."""
+    try:
+        from src.autonomous.worker_scheduler import worker_scheduler
+        return worker_scheduler.get_status()
+    except Exception as e:
+        return {"error": str(e), "running": False, "workers": {}}
+
+# Detailed health endpoint for self-awareness - MUST be before frontend mount
+@app.get("/api/echo/health/detailed")
+async def get_detailed_health():
+    """Get comprehensive health status including self-awareness metrics."""
+    import asyncpg
+    from datetime import datetime, timedelta
+
+    try:
+        # Connect to database
+        db_url = os.getenv("DATABASE_URL", "postgresql://echo:echo_secure_password_123@localhost/echo_brain")
+        conn = await asyncpg.connect(db_url)
+
+        # Get worker status
+        from src.autonomous.worker_scheduler import worker_scheduler
+        worker_status = worker_scheduler.get_status()
+
+        # Get vector count
+        vector_count = await conn.fetchval("SELECT COUNT(*) FROM vector_content")
+
+        # Get facts count
+        facts_count = await conn.fetchval("SELECT COUNT(*) FROM facts")
+
+        # Get codebase indexing status
+        codebase_files = await conn.fetchval("SELECT COUNT(*) FROM self_codebase_index")
+
+        # Get schema indexing status
+        schema_tables = await conn.fetchval("SELECT COUNT(*) FROM self_schema_index")
+
+        # Get extraction coverage (handle missing table)
+        total_vectors = await conn.fetchval("SELECT COUNT(*) FROM vector_content")
+        try:
+            extracted_vectors = await conn.fetchval(
+                "SELECT COUNT(DISTINCT vector_id) FROM fact_extraction_tracking WHERE status = 'completed'"
+            ) or 0
+        except Exception:
+            extracted_vectors = 0
+        coverage_pct = (extracted_vectors / total_vectors * 100) if total_vectors > 0 else 0
+
+        # Get graph edges count (handle missing table)
+        try:
+            graph_edges = await conn.fetchval("SELECT COUNT(*) FROM knowledge_graph")
+        except Exception:
+            graph_edges = 0
+
+        # Get recent test results
+        test_results = await conn.fetch("""
+            SELECT
+                COUNT(*) as total,
+                COUNT(*) FILTER (WHERE passed = true) as passed
+            FROM self_test_results
+            WHERE run_at > NOW() - INTERVAL '2 hours'
+        """)
+
+        test_total = test_results[0]['total'] if test_results else 0
+        test_passed = test_results[0]['passed'] if test_results else 0
+        pass_rate = (test_passed / test_total) if test_total > 0 else 0
+
+        # Get last test run time
+        last_test_run = await conn.fetchval(
+            "SELECT MAX(run_at) FROM self_test_results"
+        )
+
+        # Count regressions
+        regressions = await conn.fetchval("""
+            SELECT COUNT(*) FROM self_detected_issues
+            WHERE issue_type = 'query_regression'
+            AND status = 'open'
+            AND created_at > NOW() - INTERVAL '24 hours'
+        """) or 0
+
+        # Get open issues by severity
+        issues = await conn.fetch("""
+            SELECT
+                severity,
+                COUNT(*) as count
+            FROM self_detected_issues
+            WHERE status = 'open'
+            GROUP BY severity
+        """)
+
+        issue_counts = {
+            'critical': 0,
+            'warning': 0,
+            'info': 0
+        }
+        for row in issues:
+            issue_counts[row['severity']] = row['count']
+
+        # Get recent critical issues
+        recent_issues = await conn.fetch("""
+            SELECT title, severity, created_at
+            FROM self_detected_issues
+            WHERE status = 'open'
+            ORDER BY
+                CASE severity
+                    WHEN 'critical' THEN 1
+                    WHEN 'warning' THEN 2
+                    ELSE 3
+                END,
+                created_at DESC
+            LIMIT 5
+        """)
+
+        # Get resolved issues in last 24h
+        resolved_24h = await conn.fetchval("""
+            SELECT COUNT(*) FROM self_detected_issues
+            WHERE status = 'resolved'
+            AND resolved_at > NOW() - INTERVAL '24 hours'
+        """) or 0
+
+        await conn.close()
+
+        # Determine overall status
+        if issue_counts['critical'] >= 3 or pass_rate < 0.6:
+            status = "unhealthy"
+        elif issue_counts['critical'] > 0 or pass_rate < 0.9:
+            status = "degraded"
+        else:
+            status = "healthy"
+
+        # Check self-awareness status
+        knows_own_code = codebase_files > 0
+        knows_own_schema = schema_tables > 0
+        monitors_own_logs = 'log_monitor' in worker_status.get('workers', {})
+        validates_own_output = test_total > 0
+
+        return {
+            "status": status,
+            "timestamp": datetime.now().isoformat(),
+            "workers": worker_status.get('workers', {}),
+            "knowledge": {
+                "total_vectors": vector_count,
+                "total_facts": facts_count,
+                "extraction_coverage_pct": round(coverage_pct, 1),
+                "graph_edges": graph_edges,
+                "codebase_files_indexed": codebase_files,
+                "schema_tables_indexed": schema_tables
+            },
+            "quality": {
+                "last_test_pass_rate": round(pass_rate, 2),
+                "tests_run": test_total,
+                "tests_passed": test_passed,
+                "last_test_run": last_test_run.isoformat() if last_test_run else None,
+                "regressions_detected": regressions
+            },
+            "issues": {
+                "open_critical": issue_counts['critical'],
+                "open_warning": issue_counts['warning'],
+                "open_info": issue_counts['info'],
+                "resolved_last_24h": resolved_24h,
+                "recent": [
+                    {
+                        "title": issue['title'][:100],
+                        "severity": issue['severity'],
+                        "created_at": issue['created_at'].isoformat()
+                    }
+                    for issue in recent_issues
+                ]
+            },
+            "self_awareness": {
+                "knows_own_code": knows_own_code,
+                "knows_own_schema": knows_own_schema,
+                "monitors_own_logs": monitors_own_logs,
+                "validates_own_output": validates_own_output
+            }
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to get detailed health: {e}")
+        return {
+            "status": "error",
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        }
+
 # Mount static files for Vue frontend - MUST be last to serve as catch-all
 frontend_path = Path("/opt/tower-echo-brain/frontend/dist")
 if frontend_path.exists():
@@ -245,23 +430,78 @@ async def startup_event():
             sys.path.insert(0, project_root)
 
         from src.autonomous.worker_scheduler import worker_scheduler
-        from src.autonomous.workers.fact_extraction_worker import FactExtractionWorker
-        from src.autonomous.workers.conversation_watcher import ConversationWatcher
-        from src.autonomous.workers.knowledge_graph_builder import KnowledgeGraphBuilder
 
-        # Create worker instances
-        fact_worker = FactExtractionWorker()
-        conv_watcher = ConversationWatcher()
-        graph_builder = KnowledgeGraphBuilder()
+        # Track registered workers
+        workers_registered = 0
 
-        # Register workers with their intervals
-        worker_scheduler.register_worker("fact_extraction", fact_worker.run_cycle, interval_minutes=30)
-        worker_scheduler.register_worker("conversation_watcher", conv_watcher.run_cycle, interval_minutes=10)
-        worker_scheduler.register_worker("knowledge_graph", graph_builder.run_cycle, interval_minutes=1440)  # daily
+        # Register existing workers
+        try:
+            from src.autonomous.workers.fact_extraction_worker import FactExtractionWorker
+            worker = FactExtractionWorker()
+            worker_scheduler.register_worker("fact_extraction", worker.run_cycle, interval_minutes=30)
+            workers_registered += 1
+            logger.info("✅ Registered fact_extraction worker (30 min)")
+        except Exception as e:
+            logger.error(f"❌ Failed to register fact_extraction: {e}")
+
+        try:
+            from src.autonomous.workers.conversation_watcher import ConversationWatcher
+            worker = ConversationWatcher()
+            worker_scheduler.register_worker("conversation_watcher", worker.run_cycle, interval_minutes=10)
+            workers_registered += 1
+            logger.info("✅ Registered conversation_watcher worker (10 min)")
+        except Exception as e:
+            logger.error(f"❌ Failed to register conversation_watcher: {e}")
+
+        try:
+            from src.autonomous.workers.knowledge_graph_builder import KnowledgeGraphBuilder
+            worker = KnowledgeGraphBuilder()
+            worker_scheduler.register_worker("knowledge_graph", worker.run_cycle, interval_minutes=1440)  # daily
+            workers_registered += 1
+            logger.info("✅ Registered knowledge_graph worker (daily)")
+        except Exception as e:
+            logger.error(f"❌ Failed to register knowledge_graph: {e}")
+
+        # Register new Phase 2a self-awareness workers
+        try:
+            from src.autonomous.workers.codebase_indexer import CodebaseIndexer
+            worker = CodebaseIndexer()
+            worker_scheduler.register_worker("codebase_indexer", worker.run_cycle, interval_minutes=360)  # Every 6 hours
+            workers_registered += 1
+            logger.info("✅ Registered codebase_indexer worker (6 hours)")
+        except Exception as e:
+            logger.error(f"❌ Failed to register codebase_indexer: {e}")
+
+        try:
+            from src.autonomous.workers.schema_indexer import SchemaIndexer
+            worker = SchemaIndexer()
+            worker_scheduler.register_worker("schema_indexer", worker.run_cycle, interval_minutes=1440)  # Daily
+            workers_registered += 1
+            logger.info("✅ Registered schema_indexer worker (daily)")
+        except Exception as e:
+            logger.error(f"❌ Failed to register schema_indexer: {e}")
+
+        try:
+            from src.autonomous.workers.log_monitor import LogMonitor
+            worker = LogMonitor()
+            worker_scheduler.register_worker("log_monitor", worker.run_cycle, interval_minutes=15)  # Every 15 min
+            workers_registered += 1
+            logger.info("✅ Registered log_monitor worker (15 min)")
+        except Exception as e:
+            logger.error(f"❌ Failed to register log_monitor: {e}")
+
+        try:
+            from src.autonomous.workers.self_test_runner import SelfTestRunner
+            worker = SelfTestRunner()
+            worker_scheduler.register_worker("self_test_runner", worker.run_cycle, interval_minutes=60)  # Hourly
+            workers_registered += 1
+            logger.info("✅ Registered self_test_runner worker (hourly)")
+        except Exception as e:
+            logger.error(f"❌ Failed to register self_test_runner: {e}")
 
         # Start the scheduler
         await worker_scheduler.start()
-        logger.info("✅ Worker scheduler started with 3 workers")
+        logger.info(f"✅ Worker scheduler started with {workers_registered} workers")
     except Exception as e:
         logger.error(f"❌ Failed to start worker scheduler: {e}")
 
@@ -356,15 +596,6 @@ async def log_requests(request: Request, call_next):
             status_code=500,
             content={"error": "Internal server error", "request_id": request_id}
         )
-
-@app.get("/api/workers/status")
-async def get_worker_status():
-    """Get status of all scheduled workers."""
-    try:
-        from src.autonomous.worker_scheduler import worker_scheduler
-        return worker_scheduler.get_status()
-    except Exception as e:
-        return {"error": str(e), "running": False, "workers": {}}
 
 if __name__ == "__main__":
     import uvicorn
