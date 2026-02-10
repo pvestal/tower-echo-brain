@@ -21,7 +21,7 @@ The long-term vision is a system that:
 
 | Capability | Status | Details |
 |-----------|--------|---------|
-| Vector search over personal data | ✅ Working | 20,000+ vectors in Qdrant (1024D nomic-embed-text) |
+| Vector search over personal data | ✅ Working | 20,000+ vectors in Qdrant (1024D mxbai-embed-large) |
 | Fact extraction from vectors | ✅ Running | 40+ structured facts, worker runs every 30 min |
 | Conversation ingestion | ✅ Running | Watches Claude conversation exports, 60 min cycles |
 | Knowledge graph building | ✅ Running | Connections between facts, conflict detection |
@@ -82,7 +82,7 @@ The long-term vision is a system that:
 │  │  PostgreSQL   │  │   Qdrant     │  │     Ollama        │     │
 │  │  (echo_brain) │  │  (6333)      │  │    (11434)        │     │
 │  │  35+ tables   │  │  echo_memory │  │  mistral:7b       │     │
-│  │  - knowledge  │  │  1024D vecs  │  │  nomic-embed-text │     │
+│  │  - knowledge  │  │  1024D vecs  │  │  mxbai-embed-large │     │
 │  │    facts      │  │  20,000+ pts │  │  gemma2:9b        │     │
 │  └──────────────┘  └──────────────┘  └───────────────────┘     │
 │                                                                  │
@@ -207,3 +207,25 @@ sudo -u postgres psql echo_brain -c "SELECT title, status, risk_assessment FROM 
 ## Contributing
 
 Echo Brain is a personal project. Development happens through Claude Code prompts stored in `docs/prompts/`. Each prompt is versioned and gated — see [ROADMAP.md](./docs/ROADMAP.md) for the current development plan.
+
+## Database Architecture (Updated Feb 2026)
+
+Echo Brain now uses a **microservices database architecture** with dedicated databases for each service:
+
+### Service Databases
+- **echo_brain**: Main Echo Brain data (conversations, facts, learning items)
+- **tower_auth**: Authentication and service registry
+- **tower_kb**: Knowledge base (documents, articles)
+- **tower_autonomous**: Autonomous agent data
+- **anime_production**: Animation production data
+- **Qdrant**: Vector embeddings (67k+ vectors)
+
+### Migration Status
+✅ **Database separation complete** - tower_consolidated has been fully migrated and emptied.
+See `MIGRATION_COMPLETE.md` for details.
+
+### Configuration
+Database connections are configured in:
+- `/etc/systemd/system/tower-echo-brain.service.d/database.conf`
+- Environment requires: `PGPASSWORD`, `TOWER_DB_PASSWORD`
+
