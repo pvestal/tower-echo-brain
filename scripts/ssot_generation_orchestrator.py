@@ -489,32 +489,54 @@ class ResourceSelector:
             sel.checkpoint = sorted(available)[0]
             sel.reasoning.append(f"Model: {sel.checkpoint} (fallback)")
 
-        # --- LoRAs ---
-        available_loras = set()
-        if os.path.isdir(Config.LORA_DIR):
-            available_loras = set(os.listdir(Config.LORA_DIR))
+        # --- LoRAs from Database (FIXED) ---
+        # Check what LoRA files actually exist
+        lora_paths = []
+        for base_dir in [Config.LORA_DIR, "/opt/ComfyUI/models/loras"]:
+            if os.path.isdir(base_dir):
+                for f in os.listdir(base_dir):
+                    if f.endswith(".safetensors"):
+                        lora_paths.append(f)
 
-        # Character-specific LoRAs
-        for char_name in analysis.characters:
-            char_lower = char_name.lower()
-            for pattern, lora_list in self.CHARACTER_LORAS.items():
-                if pattern in char_lower:
-                    for lora_file, strength in lora_list:
-                        if lora_file in available_loras:
-                            sel.loras.append({
-                                "name": lora_file,
-                                "strength": strength,
-                            })
-                            sel.reasoning.append(
-                                f"LoRA: {lora_file} @ {strength} "
-                                f"(character: {char_name})"
-                            )
-                            break  # One per character
+        # Get LoRAs directly from fresh character data (from database)
+        used_loras = set()  # Prevent duplicates
+        for record in fresh_data:
+            if record.content_type == "character" and record.table == "characters":
+                char_data = record.data
+                lora_path = char_data.get("lora_path")
+                lora_trigger = char_data.get("lora_trigger")
+                char_name = char_data.get("name", "unknown")
 
-        # Style LoRAs
+                if lora_path and lora_path in lora_paths and lora_path not in used_loras:
+                    # Use database lora_path, not hard-coded mappings
+                    strength = 0.85  # Standard strength
+                    sel.loras.append({
+                        "name": lora_path,
+                        "strength": strength,
+                        "trigger": lora_trigger,  # Include trigger word
+                    })
+                    used_loras.add(lora_path)
+                    sel.reasoning.append(
+                        f"LoRA: {lora_path} @ {strength} (character: {char_name}, "
+                        f"trigger: {lora_trigger}, from database)"
+                    )
+                elif lora_path and lora_path in used_loras:
+                    # Already added this LoRA
+                    sel.reasoning.append(f"LoRA {lora_path} already added (character: {char_name})")
+                elif lora_path:
+                    # LoRA specified in DB but file not found
+                    sel.reasoning.append(
+                        f"WARNING: {char_name} has LoRA '{lora_path}' in database "
+                        f"but file not found in {[Config.LORA_DIR, '/opt/ComfyUI/models/loras']}"
+                    )
+                else:
+                    # No LoRA specified for this character
+                    sel.reasoning.append(f"No LoRA specified for character {char_name}")
+
+        # Style LoRAs (keep this as fallback for non-character LoRAs)
         style_candidates = self.STYLE_LORAS.get(analysis.style, [])
         for lora_file, strength in style_candidates:
-            if lora_file in available_loras:
+            if lora_file in lora_paths:
                 already_added = any(l["name"] == lora_file for l in sel.loras)
                 if not already_added:
                     sel.loras.append({"name": lora_file, "strength": strength})
@@ -529,6 +551,15 @@ class ResourceSelector:
             "extra digit, fewer digits, cropped, worst quality, low quality, "
             "jpeg artifacts, signature, watermark"
         ]
+
+        # Add LoRA trigger words first (CRITICAL for LoRA activation)
+        trigger_words = []
+        for lora in sel.loras:
+            if lora.get("trigger"):
+                trigger_words.append(lora["trigger"])
+        if trigger_words:
+            prompt_parts.extend(trigger_words)
+            sel.reasoning.append(f"Added LoRA triggers: {', '.join(trigger_words)}")
 
         # Build character description from FRESH PostgreSQL data
         for record in fresh_data:
@@ -610,9 +641,10 @@ class SSOTOrchestrator:
         Build a complete generation plan using SSOT architecture.
 
         1. Analyze the user prompt
-        2. Search Qdrant for REFERENCES (not data)
-        3. Fetch FRESH data from PostgreSQL SSOT
-        4. Select optimal resources
+        2. Query PostgreSQL directly for characters (no Qdrant for character lookup)
+        3. Search Qdrant for scene/style references only
+        4. Fetch FRESH data from PostgreSQL SSOT
+        5. Select optimal resources
         """
         plan = GenerationPlan()
 
@@ -623,17 +655,66 @@ class SSOTOrchestrator:
             f"scene={plan.analysis.scene_type}, style={plan.analysis.style}"
         )
 
-        # Step 2: Search Qdrant for REFERENCES
-        # Search for characters
-        for char_name in plan.analysis.characters:
-            refs = self.fetcher.search_references(
-                f"{char_name} character",
-                limit=3,
-                type_filter="character",
-            )
-            plan.references.extend(refs)
+        # Step 2: Query PostgreSQL directly for characters (FIXED)
+        # This bypasses the Qdrant semantic search bug that returns wrong characters
+        try:
+            conn = get_pg_connection()
+            cur = conn.cursor()
 
-        # Search for relevant scenes
+            for char_name in plan.analysis.characters:
+                # Query characters table directly by name
+                cur.execute("""
+                    SELECT id, name, lora_path, lora_trigger, description,
+                           appearance_data, personality, project_id
+                    FROM characters
+                    WHERE name ILIKE %s OR name ILIKE %s
+                    ORDER BY
+                        CASE WHEN name ILIKE %s THEN 1 ELSE 2 END,
+                        name
+                    LIMIT 3
+                """, (f"%{char_name}%", char_name, char_name))
+
+                rows = cur.fetchall()
+                col_names = [desc[0] for desc in cur.description]
+
+                for row in rows:
+                    row_dict = dict(zip(col_names, row))
+                    # Convert non-serializable types
+                    for key, val in row_dict.items():
+                        if hasattr(val, "isoformat"):
+                            row_dict[key] = val.isoformat()
+                        elif isinstance(val, (dict, list)):
+                            row_dict[key] = val
+                        elif val is not None:
+                            row_dict[key] = str(val) if not isinstance(val, (int, float, bool)) else val
+                        else:
+                            row_dict[key] = None
+
+                    # Add as both reference and fresh data
+                    ref = SSOTReference(
+                        source_table="characters",
+                        source_id=row_dict["id"],
+                        content_type="character",
+                        display_name=row_dict.get("name", ""),
+                        search_score=1.0  # Perfect match from direct query
+                    )
+                    plan.references.append(ref)
+
+                    fresh = FreshRecord(
+                        table="characters",
+                        id=row_dict["id"],
+                        data=row_dict,
+                        content_type="character"
+                    )
+                    plan.fresh_data.append(fresh)
+
+                    logger.info(f"Direct character match: {row_dict['name']} with LoRA: {row_dict.get('lora_path', 'none')}")
+
+            conn.close()
+        except Exception as e:
+            logger.error(f"Direct character query failed: {e}")
+
+        # Step 3: Search Qdrant for scene/style references only (not characters)
         scene_query = " ".join(plan.analysis.keywords[:5])
         if scene_query:
             scene_refs = self.fetcher.search_references(
@@ -641,35 +722,38 @@ class SSOTOrchestrator:
             )
             plan.references.extend(scene_refs)
 
-        # Search for LoRA/model info
+        # Search for style/model info (but NOT characters)
         if plan.analysis.style:
             model_refs = self.fetcher.search_references(
-                f"{plan.analysis.style} model lora",
-                limit=3, type_filter="lora",
+                f"{plan.analysis.style} style visual",
+                limit=2, type_filter="scene",  # Use scene for style context
             )
             plan.references.extend(model_refs)
 
-        logger.info(f"Found {len(plan.references)} SSOT references from Qdrant")
+        logger.info(f"Found {len(plan.references)} total references")
         for ref in plan.references:
             logger.info(
                 f"  → {ref.content_type}: {ref.source_table}.{ref.source_id} "
                 f"({ref.display_name}) score={ref.search_score:.3f}"
             )
 
-        # Step 3: SSOT FETCH — get fresh data from PostgreSQL
-        plan.fresh_data = self.fetcher.fetch_fresh(plan.references)
-        logger.info(f"Fetched {len(plan.fresh_data)} fresh records from SSOT")
+        # Step 4: Fetch additional fresh data from remaining references (scenes, etc)
+        remaining_refs = [ref for ref in plan.references if ref.source_table != "characters"]
+        additional_fresh = self.fetcher.fetch_fresh(remaining_refs)
+        plan.fresh_data.extend(additional_fresh)
+
+        logger.info(f"Total fresh records: {len(plan.fresh_data)}")
         for record in plan.fresh_data:
             name = record.data.get("name", record.data.get("title", f"id={record.id}"))
             logger.info(f"  → {record.table}.{record.id}: {name}")
 
-        # Step 4: Select resources using FRESH data
+        # Step 5: Select resources using FRESH data
         plan.resources = self.selector.select(plan.analysis, plan.fresh_data)
 
         # Warnings
-        if not plan.fresh_data:
+        if not any(rec.table == "characters" for rec in plan.fresh_data):
             plan.warnings.append(
-                "No fresh data fetched from SSOT — generation will use "
+                "No characters found in database - generation will use "
                 "generic prompts without character-specific details"
             )
         if not plan.resources.loras:
@@ -716,18 +800,29 @@ class SSOTOrchestrator:
                 elif "negative" in title:
                     inputs["text"] = plan.resources.negative_prompt
 
-            # Set LoRAs
+            # Set LoRAs (FIXED - handle multiple LoRAs)
             if ct == "LoraLoader" and plan.resources.loras:
+                # Find which LoRA this node should use
+                # For now, use first available LoRA, but in future could match by node title/id
                 lora = plan.resources.loras[0]
                 inputs["lora_name"] = lora["name"]
                 inputs["strength_model"] = lora["strength"]
                 inputs["strength_clip"] = lora["strength"]
+                logger.info(f"Applied LoRA {lora['name']} to node {node_id}")
 
-            # Set image dimensions
+            # Set image dimensions (FIXED - AnimateDiff batch size)
             if ct == "EmptyLatentImage":
                 inputs["width"] = plan.resources.width
                 inputs["height"] = plan.resources.height
-                inputs["batch_size"] = 1
+                # CRITICAL FIX: AnimateDiff requires batch_size >= 16 for temporal coherence
+                # Never override to 1 for video generation
+                if "batch_size" in inputs:
+                    current_batch = inputs.get("batch_size", 24)
+                    if current_batch < 16:
+                        inputs["batch_size"] = 24  # Good for 1-second @ 24fps
+                        logger.info(f"Corrected batch_size from {current_batch} to 24 for AnimateDiff")
+                else:
+                    inputs["batch_size"] = 24
 
         # Submit to ComfyUI
         try:
