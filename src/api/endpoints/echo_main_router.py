@@ -5,13 +5,24 @@ All endpoints under /api/echo/*
 """
 from fastapi import APIRouter, HTTPException, Query
 from typing import Dict, Any, List, Optional
+from pydantic import BaseModel
 import logging
 from datetime import datetime
 import psutil
 import os
 import httpx
+from src.model_config import get_model, get_context_window, get_ollama_url
 
 logger = logging.getLogger(__name__)
+
+# Pydantic models for request validation
+class AskRequest(BaseModel):
+    question: str
+    allow_actions: bool = False
+
+class QueryRequest(BaseModel):
+    query: str
+    allow_actions: bool = False
 
 # Main router - will be mounted at /api/echo
 router = APIRouter(tags=["echo-brain"])
@@ -159,16 +170,70 @@ async def dashboard_metrics():
     }
 
 # ============= MEMORY OPERATIONS =============
+@router.get("/memory")
+async def memory_info():
+    """Basic memory endpoint for compatibility"""
+    return {
+        "status": "operational",
+        "endpoints": [
+            "/api/echo/memory/status",
+            "/api/echo/memory/search",
+            "/api/echo/memory/ingest"
+        ],
+        "description": "Echo Brain memory system"
+    }
+
 @router.get("/memory/status")
 async def memory_status():
-    """Memory system status"""
+    """Memory system status with real statistics"""
+    import asyncpg
+    from pathlib import Path
+
+    # Count conversation files
+    conv_files = len(list(Path("/home/patrick/.claude/projects").rglob("*.jsonl")))
+
+    # Get database stats
+    conversations_count = 0
+    embeddings_count = 0
+    try:
+        import os
+        password = os.environ.get('PGPASSWORD')
+        if not password:
+            raise HTTPException(status_code=500, detail="Database password not configured")
+
+        conn = await asyncpg.connect(
+            host="localhost",
+            port=5432,
+            user="patrick",
+            password=password,
+            database="echo_brain"
+        )
+
+        # Count conversations
+        conv_result = await conn.fetchval("SELECT COUNT(*) FROM conversations")
+        conversations_count = conv_result if conv_result else 0
+
+        # Count embeddings in Qdrant
+        async with httpx.AsyncClient(timeout=5) as client:
+            qdrant_response = await client.get("http://localhost:6333/collections/echo_memory")
+            if qdrant_response.status_code == 200:
+                qdrant_data = qdrant_response.json()
+                embeddings_count = qdrant_data.get("result", {}).get("points_count", 0)
+
+        await conn.close()
+    except Exception as e:
+        logger.warning(f"Failed to get database stats: {e}")
+
     return {
         "config": {
             "collection": "echo_memory",
-            "embedding_model": "mxbai-embed-large:latest"
+            "embedding_model": "nomic-embed-text"
         },
         "is_running": False,  # Ingestion not currently running
-        "last_ingestion": None
+        "last_ingestion": None,
+        "conversation_files": conv_files,
+        "conversations_processed": conversations_count,
+        "embeddings_created": embeddings_count
     }
 
 @router.post("/memory/search")
@@ -256,7 +321,7 @@ Provide a structured analysis:
     async with httpx.AsyncClient(timeout=30) as client:
         analysis_response = await client.post(
             "http://localhost:11434/api/generate",
-            json={"model": "mistral:7b", "prompt": analysis_prompt, "stream": False}
+            json={"model": get_model("analysis"), "prompt": analysis_prompt, "stream": False}
         )
         analysis = analysis_response.json().get("response", "")
 
@@ -275,7 +340,7 @@ Now provide deep reasoning:
 
             final_response = await client.post(
                 "http://localhost:11434/api/generate",
-                json={"model": "mistral:7b", "prompt": reasoning_prompt, "stream": False}
+                json={"model": get_model("reasoning"), "prompt": reasoning_prompt, "stream": False}
             )
             final_answer = final_response.json().get("response", "")
         else:
@@ -283,7 +348,7 @@ Now provide deep reasoning:
 
     return {
         "response": final_answer,
-        "model": "mistral:7b",
+        "model": get_model("general"),
         "reasoning_stages": depth,
         "context_sources": {
             "memory_items": len(memory_context),
@@ -337,10 +402,10 @@ async def search_conversations(request: Dict[str, Any]):
 
 # ============= Q&A =============
 @router.post("/ask")
-async def ask(request: Dict[str, Any]):
+async def ask(request: AskRequest):
     """Main Q&A endpoint - NOW USES INTELLIGENCE LAYER"""
-    question = request.get("question", "")
-    allow_actions = request.get("allow_actions", False)
+    question = request.question
+    allow_actions = request.allow_actions
 
     # Route through the new intelligence layer
     from src.intelligence.reasoner import get_reasoning_engine
@@ -373,6 +438,42 @@ async def ask(request: Dict[str, Any]):
             "confidence": 0.0,
             "sources": [],
             "actions_taken": [],
+            "execution_time_ms": 0,
+            "timestamp": datetime.now().isoformat()
+        }
+
+@router.post("/query")
+async def query(request: QueryRequest):
+    """Query endpoint - compatible with ask but uses 'query' field"""
+    from src.intelligence.reasoner import get_reasoning_engine
+    reasoner = get_reasoning_engine()
+
+    try:
+        result = await reasoner.process(
+            query=request.query,
+            allow_actions=request.allow_actions
+        )
+
+        return {
+            "response": result.response,
+            "answer": result.response,  # Include both for compatibility
+            "model_used": "intelligence-layer",
+            "query_type": result.query_type.value,
+            "confidence": result.confidence,
+            "sources": result.sources,
+            "execution_time_ms": result.execution_time_ms,
+            "timestamp": datetime.now().isoformat()
+        }
+
+    except Exception as e:
+        logger.error(f"Query processing failed: {e}")
+        return {
+            "response": f"I encountered an error processing your query: {str(e)}",
+            "answer": f"I encountered an error processing your query: {str(e)}",
+            "model_used": "error-fallback",
+            "query_type": "error",
+            "confidence": 0.0,
+            "sources": [],
             "execution_time_ms": 0,
             "timestamp": datetime.now().isoformat()
         }
@@ -465,11 +566,16 @@ async def mcp_protocol(request: dict):
 async def _check_database():
     try:
         import asyncpg
+        import os
+        password = os.environ.get('PGPASSWORD')
+        if not password:
+            return False
+
         conn = await asyncpg.connect(
             host='localhost',
             database='echo_brain',
             user='patrick',
-            password='',
+            password=password,
             timeout=2
         )
         await conn.fetchval("SELECT 1")
