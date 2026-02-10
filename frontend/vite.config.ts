@@ -14,10 +14,9 @@ export default defineConfig({
     port: 5173,
     host: '0.0.0.0',
     proxy: {
-      '/echo-brain/api': {
+      '/api/echo': {
         target: 'http://localhost:8309',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/echo-brain/, '')
+        changeOrigin: true
       }
     }
   },

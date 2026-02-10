@@ -71,7 +71,7 @@ INGESTION_SOURCES = {
 }
 
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
-EMBED_MODEL = os.getenv("EMBED_MODEL", "mxbai-embed-large:latest")  # Must match collection dimension (1024)
+EMBED_MODEL = os.getenv("EMBED_MODEL", "nomic-embed-text")  # Must match collection dimension (1024)
 QDRANT_URL = os.getenv("QDRANT_URL", "http://localhost:6333")
 COLLECTION = os.getenv("QDRANT_COLLECTION", "echo_memory")
 DB_URL = os.getenv("DATABASE_URL", "postgresql://echo:echo_secure_password_123@localhost/echo_brain")
@@ -188,10 +188,14 @@ class DomainIngestor:
 
     async def _ingest_database_records(self, conn):
         """Ingest generation profiles, characters, models, scenes from anime DB."""
+        # Get DB password from environment (set by service/Vault)
+        db_password = os.getenv("PGPASSWORD", os.getenv("DB_PASSWORD", ""))
+        if not db_password:
+            print("[DomainIngestor] Warning: No database password in environment")
+            return {}
+
         anime_urls = [
-            "postgresql://patrick:tower_echo_brain_secret_key_2025@localhost/anime_production",
-            "postgresql://patrick:RP78eIrW7cI2jYvL5akt1yurE@localhost/anime_production",
-            "postgresql://patrick:tower_echo_brain_secret_key_2025@localhost/tower_anime",
+            f"postgresql://patrick:{db_password}@localhost/anime_production",
         ]
 
         anime_conn = None
@@ -445,8 +449,8 @@ class DomainIngestor:
         metadata = chunk.get("metadata", {})
         try:
             async with httpx.AsyncClient(timeout=60.0) as client:
-                resp = await client.post(f"{OLLAMA_URL}/api/embeddings",
-                                        json={"model": EMBED_MODEL, "prompt": text})
+                resp = await client.post(f"{OLLAMA_URL}/api/embed",
+                                        json={"model": EMBED_MODEL, "input": text})
                 if resp.status_code != 200:
                     return None
                 embedding = resp.json().get("embedding")

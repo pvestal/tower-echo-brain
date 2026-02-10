@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 from datetime import datetime
 from typing import Optional, List
 from pydantic import BaseModel
+import json
 import logging
 import os
 import time
@@ -16,6 +17,7 @@ import traceback
 from pathlib import Path
 from contextlib import asynccontextmanager
 from collections import defaultdict, deque
+import asyncpg  # For database pool
 
 # Enhanced logging configuration
 logging.basicConfig(
@@ -165,6 +167,16 @@ except ImportError as e:
 except Exception as e:
     logger.error(f"❌ Reasoning router failed: {e}")
 
+# Mount Contract Monitor Router
+try:
+    from src.monitoring.contract_monitor import contract_router
+    app.include_router(contract_router)
+    logger.info("✅ Contract monitor router mounted at /api/echo/diagnostics")
+except ImportError as e:
+    logger.warning(f"⚠️ Contract monitor router not available: {e}")
+except Exception as e:
+    logger.error(f"❌ Contract monitor router failed: {e}")
+
 # Health endpoints are now in the consolidated echo_main_router
 
 # Create minimal MCP endpoints inline for now
@@ -241,6 +253,7 @@ async def get_worker_status():
 async def get_detailed_health():
     """Get comprehensive health status including self-awareness metrics."""
     import asyncpg
+    import httpx
     from datetime import datetime, timedelta
 
     try:
@@ -252,8 +265,13 @@ async def get_detailed_health():
         from src.autonomous.worker_scheduler import worker_scheduler
         worker_status = worker_scheduler.get_status()
 
-        # Get vector count
-        vector_count = await conn.fetchval("SELECT COUNT(*) FROM vector_content")
+        # Get vector count from Qdrant instead of PostgreSQL
+        async with httpx.AsyncClient(timeout=10) as client:
+            qdrant_resp = await client.get(
+                f"{os.getenv('QDRANT_URL', 'http://localhost:6333')}/collections/echo_memory"
+            )
+            qdrant_data = qdrant_resp.json()
+            vector_count = qdrant_data.get('result', {}).get('points_count', 0)
 
         # Get facts count
         facts_count = await conn.fetchval("SELECT COUNT(*) FROM facts")
@@ -264,8 +282,8 @@ async def get_detailed_health():
         # Get schema indexing status
         schema_tables = await conn.fetchval("SELECT COUNT(*) FROM self_schema_index")
 
-        # Get extraction coverage (handle missing table)
-        total_vectors = await conn.fetchval("SELECT COUNT(*) FROM vector_content")
+        # Get extraction coverage from Qdrant
+        total_vectors = vector_count  # Already retrieved from Qdrant
         try:
             extracted_vectors = await conn.fetchval(
                 "SELECT COUNT(DISTINCT vector_id) FROM fact_extraction_tracking WHERE status = 'completed'"
@@ -362,6 +380,32 @@ async def get_detailed_health():
         monitors_own_logs = 'log_monitor' in worker_status.get('workers', {})
         validates_own_output = test_total > 0
 
+        # Get contract monitor health
+        contract_health_data = {"verdict": "unknown", "open_issues": 0}
+        try:
+            if contract_monitor:
+                contract_snapshot = await contract_monitor.get_latest_snapshot()
+                contract_issues = await contract_monitor.get_open_issues()
+                contract_health_data = {
+                    "verdict": contract_snapshot["verdict"] if contract_snapshot else "unknown",
+                    "last_run": contract_snapshot["timestamp"] if contract_snapshot else None,
+                    "passed": contract_snapshot["passed"] if contract_snapshot else 0,
+                    "warned": contract_snapshot["warned"] if contract_snapshot else 0,
+                    "failed": contract_snapshot["failed"] if contract_snapshot else 0,
+                    "errored": contract_snapshot["errored"] if contract_snapshot else 0,
+                    "total": contract_snapshot["total_contracts"] if contract_snapshot else 0,
+                    "open_issues": len(contract_issues),
+                    "critical_issues": len([i for i in contract_issues if i["severity"] in ("FAIL", "ERROR")]),
+                    "response_time_ms": contract_snapshot["total_response_time_ms"] if contract_snapshot else 0,
+                }
+
+                # Adjust overall status based on contract health
+                if contract_health_data.get("verdict") == "broken" and status == "healthy":
+                    status = "degraded"
+        except Exception as e:
+            logger.error(f"Failed to get contract health: {e}")
+            contract_health_data = {"verdict": "error", "error": str(e)}
+
         return {
             "status": status,
             "timestamp": datetime.now().isoformat(),
@@ -399,8 +443,11 @@ async def get_detailed_health():
                 "knows_own_code": knows_own_code,
                 "knows_own_schema": knows_own_schema,
                 "monitors_own_logs": monitors_own_logs,
-                "validates_own_output": validates_own_output
-            }
+                "validates_own_output": validates_own_output,
+                "vector_count": vector_count,
+                "facts_count": facts_count
+            },
+            "contract_health": contract_health_data
         }
 
     except Exception as e:
@@ -738,7 +785,7 @@ async def list_facts(category: Optional[str] = None, fact_type: Optional[str] = 
                     "type": r["fact_type"],
                     "category": r["category"],
                     "confidence": r["confidence"],
-                    "entities": json.loads(r["entities"]) if isinstance(r["entities"], str) else r["entities"],
+                    "entities": r["entities"] if r["entities"] else [],
                     "source": r["source_path"],
                     "created": r["created_at"].isoformat(),
                 }
@@ -855,6 +902,79 @@ async def mark_notification_read(notification_id: str):
     except ValueError:
         return {"error": "Invalid notification ID"}
 
+
+@app.get("/api/echo/system/logs")
+async def get_system_logs(limit: int = 100, level: Optional[str] = None, service: Optional[str] = None):
+    """Get system logs from journalctl."""
+    import subprocess
+    import json
+
+    # Build journalctl command
+    cmd = ["sudo", "journalctl", "-u", "tower-echo-brain", "-n", str(limit), "--no-pager", "-o", "json"]
+
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
+        if result.returncode != 0:
+            return {"error": "Failed to fetch logs", "detail": result.stderr}
+
+        logs = []
+        for line in result.stdout.strip().split('\n'):
+            if line:
+                try:
+                    entry = json.loads(line)
+                    message = entry.get('MESSAGE', '')
+
+                    # Parse log level from message
+                    log_level = 'INFO'
+                    if '[ERROR]' in message or 'ERROR' in message:
+                        log_level = 'ERROR'
+                    elif '[WARNING]' in message or 'WARNING' in message:
+                        log_level = 'WARNING'
+                    elif '[DEBUG]' in message:
+                        log_level = 'DEBUG'
+
+                    # Apply filters
+                    if level and log_level != level.upper():
+                        continue
+                    if service and service.lower() not in message.lower():
+                        continue
+
+                    logs.append({
+                        'timestamp': datetime.fromtimestamp(int(entry.get('__REALTIME_TIMESTAMP', 0)) / 1000000).isoformat(),
+                        'level': log_level,
+                        'service': 'echo-brain',
+                        'message': message
+                    })
+                except json.JSONDecodeError:
+                    continue
+
+        return {
+            "logs": logs[:limit],
+            "total": len(logs),
+            "filtered": bool(level or service)
+        }
+    except subprocess.TimeoutExpired:
+        return {"error": "Timeout fetching logs"}
+    except Exception as e:
+        return {"error": f"Failed to fetch logs: {str(e)}"}
+
+# Contract monitor test endpoint
+@app.get("/api/echo/diagnostics/test")
+async def test_contract_monitor():
+    """Test endpoint to verify contract monitor is accessible"""
+    if contract_monitor:
+        try:
+            snapshot = await contract_monitor.get_latest_snapshot()
+            return {
+                "status": "ok",
+                "has_monitor": True,
+                "has_snapshot": snapshot is not None,
+                "snapshot_run_id": snapshot.get("run_id") if snapshot else None
+            }
+        except Exception as e:
+            return {"status": "error", "error": str(e)}
+    return {"status": "no_monitor", "has_monitor": False}
+
 # Mount static files for Vue frontend - MUST be last to serve as catch-all
 frontend_path = Path("/opt/tower-echo-brain/frontend/dist")
 if frontend_path.exists():
@@ -863,14 +983,45 @@ if frontend_path.exists():
 else:
     logger.warning(f"⚠️ Frontend not found at {frontend_path}")
 
+# Global database pool for contract monitor
+db_pool = None
+contract_monitor = None
+
 # Initialize Worker Scheduler on startup
 @app.on_event("startup")
 async def startup_event():
     """Initialize worker scheduler and register workers."""
+    global db_pool, contract_monitor
+
+    try:
+        # Initialize database pool for contract monitor
+        db_url = os.getenv("DATABASE_URL", "postgresql://echo:echo_secure_password_123@localhost/echo_brain")
+        try:
+            db_pool = await asyncpg.create_pool(
+                db_url,
+                min_size=2,
+                max_size=10,
+                command_timeout=60
+            )
+            logger.info("✅ Database pool created for contract monitor")
+
+            # Initialize contract monitor
+            from src.monitoring.contract_monitor import ContractMonitor, initialize_contract_monitor
+            contract_monitor = ContractMonitor(db_pool)
+            await contract_monitor.setup_schema()
+            initialize_contract_monitor(contract_monitor)
+            logger.info("✅ Contract monitor initialized and database ready")
+        except Exception as e:
+            logger.error(f"❌ Failed to initialize contract monitor: {e}")
+            db_pool = None
+            contract_monitor = None
+    except Exception as e:
+        logger.error(f"❌ Failed to create database pool: {e}")
+
     try:
         # Add project root to path if needed
         import sys
-        import os
+        # os already imported at module level, don't re-import here
         project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         if project_root not in sys.path:
             sys.path.insert(0, project_root)
@@ -981,6 +1132,26 @@ async def startup_event():
         except Exception as e:
             logger.error(f"❌ Failed to register file_watcher: {e}")
 
+        # Register contract monitor worker if available
+        if contract_monitor:
+            try:
+                async def run_contract_monitor():
+                    """Wrapper to run contract monitor."""
+                    try:
+                        await contract_monitor.run_all(include_external=False)  # Internal only for regular runs
+                    except Exception as e:
+                        logger.error(f"Contract monitor run failed: {e}")
+
+                worker_scheduler.register_worker(
+                    "contract_monitor",
+                    run_contract_monitor,
+                    interval_minutes=5  # Run every 5 minutes
+                )
+                workers_registered += 1
+                logger.info("✅ Registered contract_monitor worker (5 min)")
+            except Exception as e:
+                logger.error(f"❌ Failed to register contract_monitor: {e}")
+
         # Start the scheduler
         await worker_scheduler.start()
         logger.info(f"✅ Worker scheduler started with {workers_registered} workers")
@@ -990,12 +1161,30 @@ async def startup_event():
 @app.on_event("shutdown")
 async def shutdown_event():
     """Stop worker scheduler on shutdown."""
+    global db_pool, contract_monitor
+
     try:
         from src.autonomous.worker_scheduler import worker_scheduler
         await worker_scheduler.stop()
         logger.info("✅ Worker scheduler stopped")
     except Exception as e:
         logger.error(f"❌ Error stopping worker scheduler: {e}")
+
+    # Clean up contract monitor
+    if contract_monitor:
+        try:
+            await contract_monitor.close()
+            logger.info("✅ Contract monitor closed")
+        except Exception as e:
+            logger.error(f"❌ Error closing contract monitor: {e}")
+
+    # Close database pool
+    if db_pool:
+        try:
+            await db_pool.close()
+            logger.info("✅ Database pool closed")
+        except Exception as e:
+            logger.error(f"❌ Error closing database pool: {e}")
 
 # Enhanced request logging with metrics
 @app.middleware("http")

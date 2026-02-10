@@ -128,12 +128,21 @@ const refreshLogs = async () => {
     const response = await systemApi.logs();
     logs.value = response.data.logs || [];
 
-    // Get activity history - endpoint not implemented yet
-    // const metricsResponse = await systemApi.metricsHistory();
-    recentCalls.value = [];
-    recentQuestions.value = [];
+    // Extract recent activity from logs
+    recentCalls.value = logs.value
+      .filter(log => log.message.includes('POST /api/echo'))
+      .slice(0, 5);
+    recentQuestions.value = logs.value
+      .filter(log => log.message.includes('/ask'))
+      .slice(0, 5);
   } catch (error) {
     console.error('Failed to fetch logs:', error);
+    logs.value = [{
+      timestamp: new Date().toISOString(),
+      level: 'ERROR',
+      service: 'echo-brain',
+      message: `Failed to fetch logs: ${error}`
+    }];
   } finally {
     loading.value = false;
   }
