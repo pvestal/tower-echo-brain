@@ -21,8 +21,8 @@ The long-term vision is a system that:
 
 | Capability | Status | Details |
 |-----------|--------|---------|
-| Vector search over personal data | ✅ Working | 20,000+ vectors in Qdrant (1024D mxbai-embed-large) |
-| Fact extraction from vectors | ✅ Running | 40+ structured facts, worker runs every 30 min |
+| Vector search over personal data | ✅ Working | 61,932 vectors in Qdrant (768D nomic-embed-text) |
+| Fact extraction from vectors | ✅ Running | 6,129 structured facts stored in PostgreSQL |
 | Conversation ingestion | ✅ Running | Watches Claude conversation exports, 60 min cycles |
 | Knowledge graph building | ✅ Running | Connections between facts, conflict detection |
 | Domain knowledge ingestion | ✅ Phase 2c | Anime production, ComfyUI workflows, models |
@@ -82,8 +82,8 @@ The long-term vision is a system that:
 │  │  PostgreSQL   │  │   Qdrant     │  │     Ollama        │     │
 │  │  (echo_brain) │  │  (6333)      │  │    (11434)        │     │
 │  │  35+ tables   │  │  echo_memory │  │  mistral:7b       │     │
-│  │  - knowledge  │  │  1024D vecs  │  │  mxbai-embed-large │     │
-│  │    facts      │  │  20,000+ pts │  │  gemma2:9b        │     │
+│  │  - knowledge  │  │  768D vecs  │  │  nomic-embed-text │     │
+│  │    facts      │  │  61,932 pts │  │  gemma2:9b        │     │
 │  └──────────────┘  └──────────────┘  └───────────────────┘     │
 │                                                                  │
 │  ┌──────────────────────────────────────────────────────────┐   │
@@ -98,6 +98,18 @@ The long-term vision is a system that:
 See [ARCHITECTURE.md](./docs/ARCHITECTURE.md) for detailed component documentation.
 See [ROADMAP.md](./docs/ROADMAP.md) for the full development plan.
 See [CHANGELOG.md](./CHANGELOG.md) for version history.
+
+## Agent System
+
+Echo Brain includes three specialized agents with automatic routing:
+
+| Agent | Model | Purpose | Keywords |
+|-------|-------|---------|----------|
+| **CodingAgent** | deepseek-coder-v2:16b | Code generation, debugging, technical implementation | coding, programming, debug, script |
+| **ReasoningAgent** | deepseek-r1:8b | Analysis, decision-making, problem-solving | reasoning, analysis, research, problem |
+| **NarrationAgent** | gemma2:9b | Creative writing, scene descriptions, storytelling | narration, creative, scene, story |
+
+The system automatically routes queries to the appropriate agent based on intent classification, or you can specify an agent directly via the API.
 
 ## Quick Reference
 
@@ -198,7 +210,7 @@ sudo -u postgres psql echo_brain -c "SELECT title, status, risk_assessment FROM 
 | DATABASE_URL | `postgresql://patrick:...@localhost/echo_brain` | systemd service env |
 | QDRANT_URL | `http://localhost:6333` | Hardcoded in workers |
 | OLLAMA_URL | `http://localhost:11434` | Hardcoded in workers |
-| EMBEDDING_MODEL | `mxbai-embed-large` (1024D) | workers + retriever |
+| EMBEDDING_MODEL | `nomic-embed-text` (768D) | workers + retriever |
 | REASONING_MODEL | `mistral:7b` | intelligence/reasoner.py |
 | EXTRACTION_MODEL | `gemma2:9b` | fact_extraction_worker.py |
 | SERVICE_USER | `echo` | systemd service |

@@ -115,10 +115,10 @@ Response:
 Memory system statistics.
 ```json
 {
-  "vector_count": 24657,
+  "vector_count": 61932,
   "collection": "echo_memory",
-  "embedding_model": "mxbai-embed-large:latest",
-  "dimensions": 1024
+  "embedding_model": "nomic-embed-text",
+  "dimensions": 768
 }
 ```
 
@@ -230,7 +230,7 @@ Comprehensive status of all subsystems.
   "llm": {
     "available": true,
     "models": ["mistral:7b", "deepseek-r1:8b"],
-    "embedding_model": "mxbai-embed-large:latest"
+    "embedding_model": "nomic-embed-text"
   },
   "unified_knowledge": {
     "core_facts": 22,
