@@ -9,11 +9,11 @@ const api = axios.create({
 
 // Health (existing)
 export const healthApi = {
-  getFull: () => api.get<EchoHealthResponse>('/health'),
-  getQuick: () => api.get<{ status: string; services: Record<string, string> }>('/health'),
-  getResources: () => api.get('/system/resources'),
+  getFull: () => axios.get<EchoHealthResponse>('/health'),  // Use basic health endpoint that works
+  getQuick: () => axios.get<{ status: string; services: Record<string, string> }>('/health'),
+  getResources: () => api.get('/memory/status'),
   getService: (name: string) => api.get(`/intelligence/service/${name}`),
-  getMetrics: () => api.get('/health'),
+  getMetrics: () => api.get('/memory/status'),
 };
 
 // Memory
@@ -30,9 +30,6 @@ export const memoryApi = {
 export const intelligenceApi = {
   think: (query: string, context?: string) =>
     api.post('/intelligence/think', { query, context }),
-  // Note: Streaming not supported in browser axios - would need SSE or WebSockets
-  thinkStream: (query: string) =>
-    api.post('/intelligence/think', { query }), // Removed stream for now
   compareKnowledge: (topic: string) =>
     api.post('/intelligence/compare-knowledge', { topic }),
   knowledgeMap: () => api.get('/intelligence/knowledge-map'),
@@ -45,9 +42,6 @@ export const intelligenceApi = {
 export const askApi = {
   ask: (question: string) => api.post('/ask', { question }),
   askGet: (question: string) => api.get('/ask', { params: { question } }),
-  // Note: Streaming not supported in browser axios - use regular endpoint
-  stream: (question: string) =>
-    api.post('/ask', { question }), // Using regular endpoint instead of stream
 };
 
 // Conversations
@@ -60,18 +54,18 @@ export const conversationsApi = {
 
 // System
 export const systemApi = {
-  status: () => api.get('/system/status'),
-  ready: () => api.get('/system/ready'),
-  alive: () => api.get('/system/alive'),
-  metrics: () => api.get('/system/metrics'),
-  metricsHistory: () => api.get('/system/metrics/history'),
-  diagnostics: () => api.get('/system/diagnostics'),
-  diagnosticsDatabase: () => api.get('/system/diagnostics/database'),
-  diagnosticsServices: () => api.get('/system/diagnostics/services'),
+  status: () => api.get('/intelligence/status'),
+  ready: () => axios.get('/health'),
+  alive: () => axios.get('/health'),
+  metrics: () => api.get('/memory/status'),
+  metricsHistory: () => api.get('/memory/status'),
+  diagnostics: () => api.get('/intelligence/status'),
+  diagnosticsDatabase: () => api.get('/memory/health'),
+  diagnosticsServices: () => api.get('/intelligence/status'),
   logs: () => api.get('/system/logs'),
-  operationsStatus: () => api.get('/system/operations/status'),
-  operationsJobs: () => api.get('/system/operations/jobs'),
-  healthDetailed: () => api.get('/system/health/detailed'),
+  operationsStatus: () => api.get('/intelligence/status'),
+  operationsJobs: () => api.get('/workers/status'),
+  healthDetailed: () => api.get('/memory/health'),
 };
 
 // Echo

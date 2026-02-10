@@ -21,7 +21,11 @@ class FactExtractionWorker:
     """Extracts facts from vectors and builds knowledge graph"""
 
     def __init__(self):
-        self.db_url = os.getenv("DATABASE_URL", "postgresql://patrick:RP78eIrW7cI2jYvL5akt1yurE@localhost/echo_brain")
+        # Database URL from environment (set by service with Vault)
+        self.db_url = os.getenv("DATABASE_URL")
+        if not self.db_url:
+            logger.error("DATABASE_URL not set in environment")
+            raise ValueError("DATABASE_URL environment variable required")
         self.qdrant_url = "http://localhost:6333"
         self.ollama_url = "http://localhost:11434"
         self.collection = "echo_memory"
@@ -154,8 +158,8 @@ Response (JSON array only):"""
                     async with httpx.AsyncClient() as client:
                         # Get embedding
                         embed_response = await client.post(
-                            f"{self.ollama_url}/api/embeddings",
-                            json={"model": "mxbai-embed-large", "prompt": fact_text}
+                            f"{self.ollama_url}/api/embed",
+                            json={"model": "nomic-embed-text", "prompt": fact_text}
                         )
                         embedding = embed_response.json()["embedding"]
 

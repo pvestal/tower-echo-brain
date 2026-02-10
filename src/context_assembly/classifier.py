@@ -73,10 +73,18 @@ class DomainClassifier:
                     r"\b(service|services|health|status|monitor|running|run|runs)\b",
                     r"\b(systemctl|restart|logs|nginx|port|ports)\b",
                     r"\b(ollama|qdrant|postgresql|comfyui)\b",
-                    r"\b(tower-.*|localhost:\d+|Tower)\b"
+                    r"\b(tower-.*|localhost:\d+|Tower)\b",
+                    # Echo Brain specific keywords
+                    r"\b(echo[\s_]brain|embedding[\s_]model|agent[\s_]types?|frontend[\s_]stack)\b",
+                    r"\b(coding[\s_]agent|reasoning[\s_]agent|narration[\s_]agent)\b",
+                    r"\b(nomic[\s-]embed[\s-]text|deepseek|gemma|mistral)\b",
+                    r"\b(architecture|modules|directories|retriever|ingestion)\b",
+                    r"\b(context[\s_]assembly|model[\s_]routing|authoritative)\b",
+                    r"\b(vue|typescript|tailwind|react)\b",
+                    r"\b(database|databases|postgres|echo_memory)\b"
                 ],
-                "negative_signals": [r"\b(anime|character)\b"],
-                "weight": 1.2  # Increase weight to prioritize SYSTEM over GENERAL
+                "negative_signals": [r"\b(anime|character|scene|mei|goblin)\b"],
+                "weight": 1.5  # Higher weight for Echo Brain self-knowledge
             },
             Domain.GENERAL: {
                 "signals": [
@@ -121,7 +129,7 @@ class DomainClassifier:
                 "min_score": 0.4  # Higher threshold for technical
             },
             Domain.ANIME: {
-                "qdrant_collections": ["echo_memory"],  # Use echo_memory for all
+                "qdrant_collections": ["story_bible", "echo_memory"],  # Use story_bible primarily, echo_memory as fallback
                 "pg_tables": [],  # anime_production tables don't exist
                 "facts_filter": lambda f: "anime" in f or "character" in f,
                 "max_sources": 15,

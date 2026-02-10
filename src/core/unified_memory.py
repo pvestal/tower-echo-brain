@@ -30,8 +30,8 @@ class MemoryConfig:
     collection_name: str = "echo_memory"
 
     ollama_url: str = "http://localhost:11434"
-    embedding_model: str = "mxbai-embed-large:latest"
-    embedding_dim: int = 1024
+    embedding_model: str = "nomic-embed-text:latest"
+    embedding_dim: int = 768
 
     conversation_dir: str = "/home/patrick/.claude/projects"
     max_text_length: int = 3000  # Safe limit for embeddings
@@ -283,8 +283,23 @@ class UnifiedMemorySystem:
 
     def get_stats(self) -> Dict[str, Any]:
         """Get current system statistics"""
+        # Get actual embedding count from Qdrant
+        embeddings_count = self.stats["embeddings_created"]
+        try:
+            import httpx
+            import asyncio
+            # Use synchronous client since this is a sync method
+            with httpx.Client(timeout=5) as client:
+                response = client.get(f"{self.config.qdrant_url}/collections/{self.config.collection_name}")
+                if response.status_code == 200:
+                    data = response.json()
+                    embeddings_count = data.get("result", {}).get("points_count", embeddings_count)
+        except Exception as e:
+            logger.debug(f"Could not get Qdrant count: {e}")
+
         return {
             **self.stats,
+            "embeddings_created": embeddings_count,  # Override with actual count
             "is_running": self._running,
             "config": {
                 "conversation_dir": self.config.conversation_dir,

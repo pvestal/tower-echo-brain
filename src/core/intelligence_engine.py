@@ -55,7 +55,7 @@ class IntelligenceEngine:
         self.mcp_url = "http://localhost:8309/mcp"
         self.ollama_url = os.getenv("OLLAMA_URL", "http://localhost:11434")
         self.ollama_model = os.getenv("OLLAMA_MODEL", "mistral:7b")
-        self.embedding_model = os.getenv("EMBEDDING_MODEL", "mxbai-embed-large:latest")
+        self.embedding_model = os.getenv("EMBEDDING_MODEL", "nomic-embed-text")
         self.thinking_log = []
         self.active_model = self.ollama_model
 

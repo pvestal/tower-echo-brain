@@ -308,7 +308,7 @@ class SchemaIndexer:
                 embed_response = await client.post(
                     f"{self.ollama_url}/api/embed",
                     json={
-                        "model": "mxbai-embed-large:latest",
+                        "model": "nomic-embed-text",
                         "input": description
                     }
                 )

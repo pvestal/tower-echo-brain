@@ -205,7 +205,7 @@ class ImprovementEngine:
                 response = await client.post(
                     f"{self.ollama_url}/api/embed",
                     json={
-                        "model": "mxbai-embed-large",
+                        "model": "nomic-embed-text",
                         "input": text
                     }
                 )

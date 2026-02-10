@@ -2,8 +2,8 @@
 
 **Personal AI Assistant System — Self-Hosted Knowledge Layer & Agent Orchestrator**
 
-Version: **0.3.0** (Phase 2c: Reasoning Pipeline & Knowledge Integration)
-Last Updated: 2026-02-06
+Version: **0.4.0** (Phase 2d: Contract Monitor & Self-Review System)
+Last Updated: 2026-02-10
 
 ---
 
@@ -35,6 +35,21 @@ The long-term vision is a system that:
 | Voice interface | ❌ Planned | Wyoming/ESP32 satellite architecture designed |
 | Home Assistant integration | ❌ Planned | Phase 3+ |
 | Web dashboard (Vue3) | ❌ Planned | Frontend exists but limited |
+
+## Contract Monitor (New in 0.4.0)
+
+Echo Brain now includes a self-review system that continuously validates API contracts between frontend and backend:
+
+- **Runs every 5 minutes** - Tests 15 critical API endpoints
+- **Tracks contract health** - Monitors response times, status codes, and data structure
+- **Self-healing** - Detects breaking changes and API drift
+- **Dashboard integration** - Contract health visible in `/api/echo/health/detailed`
+
+Access contract diagnostics:
+- `GET /api/echo/diagnostics/contracts` - Current status and issues
+- `GET /api/echo/diagnostics/contracts/history` - Trend data
+- `POST /api/echo/diagnostics/contracts/run` - Trigger manual test
+- `GET /api/echo/diagnostics/contracts/issues` - Open issues only
 
 ## Architecture Overview
 
@@ -82,8 +97,8 @@ The long-term vision is a system that:
 │  │  PostgreSQL   │  │   Qdrant     │  │     Ollama        │     │
 │  │  (echo_brain) │  │  (6333)      │  │    (11434)        │     │
 │  │  35+ tables   │  │  echo_memory │  │  mistral:7b       │     │
-│  │  - knowledge  │  │  768D vecs  │  │  nomic-embed-text │     │
-│  │    facts      │  │  61,932 pts │  │  gemma2:9b        │     │
+│  │  - knowledge  │  │  768D vecs   │  │  nomic-embed-text │     │
+│  │    facts      │  │  124,872 pts │  │  gemma2:9b        │     │
 │  └──────────────┘  └──────────────┘  └───────────────────┘     │
 │                                                                  │
 │  ┌──────────────────────────────────────────────────────────┐   │

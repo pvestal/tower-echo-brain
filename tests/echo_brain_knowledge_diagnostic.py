@@ -47,7 +47,7 @@ import requests
 # ─── Configuration ───────────────────────────────────────────────────────────
 
 ECHO_BRAIN_URL = "http://localhost:8309"
-QUERY_ENDPOINT = "/api/echo/query"
+QUERY_ENDPOINT = "/api/echo/ask"
 QUERY_TIMEOUT = 45  # LLM responses can be slow
 
 
@@ -322,7 +322,7 @@ def query_echo_brain(question: str) -> tuple[str, float, dict]:
     Send a question to Echo Brain and return (response_text, time_ms, raw_json).
     """
     url = f"{ECHO_BRAIN_URL}{QUERY_ENDPOINT}"
-    payload = {"query": question}
+    payload = {"question": question}
 
     start = time.monotonic()
     try:

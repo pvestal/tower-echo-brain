@@ -44,68 +44,101 @@ class MCPService:
             return 0
 
     async def search_memory(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
-        """Real memory search using Qdrant vectors"""
-        if not self.qdrant_client:
-            return []
-
+        """Memory search using domain-aware ParallelRetriever"""
         try:
-            # Generate embedding using Ollama (matching unified memory system)
-            import httpx
-            try:
-                with httpx.Client(timeout=30) as client:
-                    response = client.post(
-                        f"{self.ollama_url}/api/embeddings",
-                        json={"model": self.embedding_model, "prompt": query}
-                    )
-                    if response.status_code == 200:
-                        query_embedding = response.json().get("embedding", [])
-                    else:
-                        # Fallback: create random embedding for testing
-                        import random
-                        query_embedding = [random.random() for _ in range(1024)]
-                        logger.warning(f"Ollama embedding failed with status {response.status_code}, using random")
-            except Exception as e:
-                # Fallback: create random embedding for testing
-                import random
-                query_embedding = [random.random() for _ in range(1024)]
-                logger.warning(f"Ollama embedding failed: {e}, using random")
+            from src.context_assembly.retriever import ParallelRetriever
 
-            # Search in Qdrant using HTTP API directly
-            import httpx
-            with httpx.Client(timeout=10) as client:
-                response = client.post(
-                    f"http://localhost:6333/collections/{self.collection_name}/points/search",
-                    json={
-                        "vector": query_embedding,
-                        "limit": limit,
-                        "with_payload": True
-                    }
-                )
-                if response.status_code == 200:
-                    search_result = response.json().get("result", [])
-                else:
-                    logger.error(f"Qdrant search failed with status {response.status_code}")
-                    search_result = []
+            # Use the ParallelRetriever which handles domain classification
+            # and searches appropriate collections (including story_bible for anime)
+            retriever = ParallelRetriever()
+            await retriever.initialize()
 
-            # Format results (from HTTP API response)
+            # Get domain-classified results
+            retrieval_result = await retriever.retrieve(query, max_results=limit)
+
+            # Convert to MCP format expected by calling code
             results = []
-            for point in search_result:
-                payload = point.get("payload", {})
+            for source in retrieval_result.get("sources", []):
                 results.append({
-                    "id": str(point.get("id", "")),
-                    "score": float(point.get("score", 0)),
-                    "content": payload.get("content", payload.get("text", "")),
-                    "source": payload.get("source", "echo_memory"),
-                    "type": payload.get("type", "memory"),
-                    "payload": payload
+                    "id": source.get("metadata", {}).get("source_id", ""),
+                    "score": source.get("score", 0),
+                    "content": source.get("content", ""),
+                    "source": source.get("source", "unknown"),
+                    "type": source.get("type", "memory"),
+                    "payload": source.get("metadata", {})
                 })
 
-            logger.info(f"Memory search for '{query}' returned {len(results)} results")
+            await retriever.shutdown()
+
+            logger.info(f"Domain-aware search for '{query}' classified as {retrieval_result.get('domain')} "
+                       f"returned {len(results)} results from collections {retrieval_result.get('allowed_collections')}")
             return results
 
         except Exception as e:
-            logger.error(f"Memory search failed: {e}")
-            return []
+            logger.error(f"ParallelRetriever search failed: {e}")
+
+            # Fallback to old direct search
+            if not self.qdrant_client:
+                return []
+
+            try:
+                # Generate embedding using Ollama (matching unified memory system)
+                import httpx
+                try:
+                    with httpx.Client(timeout=30) as client:
+                        response = client.post(
+                            f"{self.ollama_url}/api/embeddings",
+                            json={"model": self.embedding_model, "prompt": query}
+                        )
+                        if response.status_code == 200:
+                            query_embedding = response.json().get("embedding", [])
+                        else:
+                            # Fallback: create random embedding for testing
+                            import random
+                            query_embedding = [random.random() for _ in range(1024)]
+                            logger.warning(f"Ollama embedding failed with status {response.status_code}, using random")
+                except Exception as e:
+                    # Fallback: create random embedding for testing
+                    import random
+                    query_embedding = [random.random() for _ in range(1024)]
+                    logger.warning(f"Ollama embedding failed: {e}, using random")
+
+                # Search in Qdrant using HTTP API directly
+                import httpx
+                with httpx.Client(timeout=10) as client:
+                    response = client.post(
+                        f"http://localhost:6333/collections/{self.collection_name}/points/search",
+                        json={
+                            "vector": query_embedding,
+                            "limit": limit,
+                            "with_payload": True
+                        }
+                    )
+                    if response.status_code == 200:
+                        search_result = response.json().get("result", [])
+                    else:
+                        logger.error(f"Qdrant search failed with status {response.status_code}")
+                        search_result = []
+
+                # Format results (from HTTP API response)
+                results = []
+                for point in search_result:
+                    payload = point.get("payload", {})
+                    results.append({
+                        "id": str(point.get("id", "")),
+                        "score": float(point.get("score", 0)),
+                        "content": payload.get("content", payload.get("text", "")),
+                        "source": payload.get("source", "echo_memory"),
+                        "type": payload.get("type", "memory"),
+                        "payload": payload
+                    })
+
+                logger.info(f"Fallback search for '{query}' returned {len(results)} results")
+                return results
+
+            except Exception as e2:
+                logger.error(f"Fallback search failed: {e2}")
+                return []
 
     async def store_fact(self, subject: str, predicate: str, object_: str, confidence: float = 1.0) -> str:
         """Store a fact in vector database"""

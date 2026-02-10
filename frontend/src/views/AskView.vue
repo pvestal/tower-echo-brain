@@ -17,9 +17,6 @@
           <button @click="submitQuestion" class="btn btn-primary" :disabled="loading || !question.trim()">
             {{ loading ? 'Thinking...' : 'Ask' }}
           </button>
-          <button @click="toggleStream" class="btn">
-            Stream: {{ streamMode ? 'ON' : 'OFF' }}
-          </button>
           <button @click="clearHistory" class="btn">Clear</button>
         </div>
       </div>
@@ -103,7 +100,6 @@ import { askApi, memoryApi } from '@/api/echoApi';
 
 const question = ref('');
 const loading = ref(false);
-const streamMode = ref(false);
 const history = ref<any[]>([]);
 const recentMemories = ref<any[]>([]);
 
@@ -123,16 +119,13 @@ const submitQuestion = async () => {
   question.value = '';
 
   try {
-    if (streamMode.value) {
-      await askApi.stream(q);
-      // Handle streaming response
-      entry.answer = 'Streaming not yet implemented in UI';
-    } else {
-      const response = await askApi.ask(q);
-      entry.answer = response.data.answer || response.data.response || JSON.stringify(response.data);
-      entry.debug = response.data.debug;
-      entry.sources = response.data.sources;
-    }
+    // Always use async - streaming doesn't exist and isn't needed
+    const response = await askApi.ask(q);
+    entry.answer = response.data.answer || response.data.response || JSON.stringify(response.data);
+    entry.confidence = response.data.confidence;
+    entry.sources = response.data.sources;
+    entry.model = response.data.model_used;
+    entry.responseTime = response.data.reasoning_time_ms;
 
     // Search for related memories
     try {
@@ -148,9 +141,6 @@ const submitQuestion = async () => {
   }
 };
 
-const toggleStream = () => {
-  streamMode.value = !streamMode.value;
-};
 
 const clearHistory = () => {
   history.value = [];

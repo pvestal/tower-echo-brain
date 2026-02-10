@@ -18,7 +18,11 @@ class KnowledgeGraphBuilder:
     """Builds a knowledge graph from extracted facts"""
 
     def __init__(self):
-        self.db_url = os.getenv("DATABASE_URL", "postgresql://patrick:RP78eIrW7cI2jYvL5akt1yurE@localhost/echo_brain")
+        # Database URL from environment (set by service with Vault)
+        self.db_url = os.getenv("DATABASE_URL")
+        if not self.db_url:
+            logger.error("DATABASE_URL not set in environment")
+            raise ValueError("DATABASE_URL environment variable required")
 
     async def register_with_autonomous_core(self):
         """Register as an autonomous goal"""
