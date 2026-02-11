@@ -7,17 +7,16 @@ on:
     branches: [main]
 
 jobs:
-  test:
-    name: Test Suite
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
           cache: 'pip'
 
       - name: Install dependencies
@@ -26,14 +25,67 @@ jobs:
           pip install -r requirements-ci.txt
 
       - name: Lint with ruff
-        run: ruff check src/ --exit-zero
+        run: ruff check src/ --output-format=github
 
-      - name: Run tests
-        run: |
-          python tests/test_echo_brain.py || true
-          echo "Test suite completed"
+  test-python:
+    name: Python Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-      - name: Check service health
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
         run: |
-          echo "All tests passed"
-          echo "TODO: Re-enable database and Qdrant tests after fixing"
+          python -m pip install --upgrade pip
+          pip install -r requirements-ci.txt
+
+      - name: Run syntax check on all Python files
+        run: python -m py_compile src/main.py
+
+      - name: Check test files compile
+        run: |
+          python -m py_compile tests/echo_brain_smoke_test.py
+          python -m py_compile tests/test_auth_integration.py
+
+  test-frontend:
+    name: Frontend Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Type check and build
+        working-directory: frontend
+        run: npm run build
+
+  test-contracts:
+    name: Contract Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install contract test dependencies
+        working-directory: contract-tests/consumer
+        run: npm ci
+
+      - name: Run Pact consumer tests
+        working-directory: contract-tests/consumer
+        run: npx vitest run --reporter=verbose
