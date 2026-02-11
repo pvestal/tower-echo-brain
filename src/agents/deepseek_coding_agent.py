@@ -1,8 +1,7 @@
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from pydantic import BaseModel
-from typing import Optional, Dict, List, Any
-from pathlib import Path
+from typing import Optional, Dict, Any
 import logging
 
 logger = logging.getLogger(__name__)

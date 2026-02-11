@@ -6,12 +6,9 @@ Using SSOT configuration for model selection
 """
 import asyncio
 import requests
-import json
 import random
-import time
 import logging
 from pathlib import Path
-from typing import Dict, List
 from project_config_ssot import config_manager
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -279,7 +276,7 @@ async def main():
         await generator.start_generation()
     except KeyboardInterrupt:
         logger.info("\n⛔ Stopped by user")
-        logger.info(f"Generated images so far:")
+        logger.info("Generated images so far:")
         for name, count in generator.generation_count.items():
             logger.info(f"  {name}: {count}")
     except Exception as e:

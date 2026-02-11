@@ -4,16 +4,13 @@ Authentication Manager for Echo Brain
 Handles Apple Music, Google Calendar, and other OAuth integrations
 """
 
-import os
 import json
 import jwt
 import time
-import asyncio
 import logging
 import aiohttp
 from pathlib import Path
 from typing import Dict, Optional, Any
-from datetime import datetime, timedelta
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow

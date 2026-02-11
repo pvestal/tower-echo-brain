@@ -4,8 +4,7 @@ Replaces blocking requests.post() calls
 """
 import os
 import aiohttp
-import asyncio
-from typing import Optional, Dict, Any, AsyncGenerator
+from typing import Optional, AsyncGenerator
 from dataclasses import dataclass
 from functools import lru_cache
 import json

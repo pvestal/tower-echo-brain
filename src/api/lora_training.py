@@ -5,10 +5,8 @@ Echo Brain - LoRA Training Integration API
 Orchestrates LoRA training requests to the Tower LoRA Studio service.
 Provides intelligent recommendations and monitors training progress.
 """
-import os
 import httpx
-import asyncio
-from typing import Dict, List, Optional
+from typing import List, Optional
 from fastapi import APIRouter, HTTPException, BackgroundTasks
 from pydantic import BaseModel
 import logging

@@ -8,9 +8,8 @@ import json
 import logging
 import websockets
 import aiohttp
-from typing import Dict, List, Optional, Any
+from typing import Dict, Optional, Any
 from dataclasses import dataclass
-from datetime import datetime
 
 logger = logging.getLogger(__name__)
 

@@ -8,9 +8,7 @@ import os
 import json
 import logging
 from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional
-from pathlib import Path
-import subprocess
+from typing import Dict, Any, List
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -355,7 +353,7 @@ class QualityReporter:
                 f.write("=" * 50 + "\n\n")
 
                 summary = report.get("summary", {})
-                f.write(f"📊 OVERALL STATISTICS\n")
+                f.write("📊 OVERALL STATISTICS\n")
                 f.write(f"   Total Videos: {summary.get('total_videos', 0)}\n")
                 f.write(f"   Average Score: {summary.get('average_score', 0)}/100\n")
                 f.write(f"   Pass Rate: {summary.get('pass_rate', 0)}%\n")
@@ -363,14 +361,14 @@ class QualityReporter:
 
                 if "score_distribution" in report:
                     dist = report["score_distribution"]
-                    f.write(f"📈 SCORE DISTRIBUTION\n")
+                    f.write("📈 SCORE DISTRIBUTION\n")
                     f.write(f"   Excellent (90+): {dist.get('excellent', 0)} videos\n")
                     f.write(f"   Good (70-89): {dist.get('good', 0)} videos\n")
                     f.write(f"   Fair (50-69): {dist.get('fair', 0)} videos\n")
                     f.write(f"   Poor (<50): {dist.get('poor', 0)} videos\n\n")
 
                 if "recommendations" in report:
-                    f.write(f"💡 SYSTEM RECOMMENDATIONS\n")
+                    f.write("💡 SYSTEM RECOMMENDATIONS\n")
                     for i, rec in enumerate(report["recommendations"], 1):
                         f.write(f"   {i}. {rec}\n")
 
@@ -420,7 +418,7 @@ def test_quality_reporter():
     print("📊 Generating comprehensive quality report...")
     report = reporter.generate_comprehensive_report()
 
-    print(f"\n📋 QUALITY REPORT SUMMARY:")
+    print("\n📋 QUALITY REPORT SUMMARY:")
     print(f"   Total Videos: {report['summary']['total_videos']}")
     print(f"   Average Score: {report['summary']['average_score']}/100")
     print(f"   Quality Grade: {report['summary']['quality_grade']}")

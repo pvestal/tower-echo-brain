@@ -4,7 +4,6 @@ This REPLACES the broken /api/ask and /api/echo/query endpoints.
 """
 from fastapi import APIRouter, Query
 import sys
-import os
 sys.path.insert(0, '/opt/tower-echo-brain/src')
 
 from pipeline.orchestrator import EchoBrainPipeline

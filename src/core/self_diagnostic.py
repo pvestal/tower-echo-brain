@@ -2,14 +2,13 @@
 Echo Brain Self-Diagnostic System
 Comprehensive introspection of knowledge, codebase, and health.
 """
-import asyncio
 import asyncpg
 import httpx
 import os
 import glob
 import ast
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass, asdict
 

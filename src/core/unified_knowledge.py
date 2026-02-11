@@ -5,7 +5,7 @@ Connects all knowledge sources into a single coherent interface
 import os
 import asyncpg
 import asyncio
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Any, Optional
 from datetime import datetime
 import logging
 from dataclasses import dataclass

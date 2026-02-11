@@ -2,9 +2,7 @@
 OpenAI Embedding Service with HashiCorp Vault integration
 """
 import os
-import asyncio
 from typing import List, Optional
-from functools import lru_cache
 import hashlib
 
 import httpx

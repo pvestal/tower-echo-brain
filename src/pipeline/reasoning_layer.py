@@ -9,7 +9,6 @@ runs inference, and returns structured results.
 import time
 import logging
 import httpx
-import json
 
 from .models import ContextPackage, ReasoningResult, QueryIntent
 

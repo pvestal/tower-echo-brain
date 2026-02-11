@@ -6,7 +6,6 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 import logging
-import json
 from datetime import datetime
 
 # Import new intelligence components
@@ -14,7 +13,6 @@ from src.intelligence.reasoner import get_reasoning_engine
 from src.intelligence.code_index import get_code_intelligence
 from src.intelligence.system_model import get_system_model
 from src.intelligence.procedures import get_procedure_library
-from src.intelligence.executor import get_action_executor
 from src.intelligence.schemas import QueryRequest, ActionRequest, DiagnoseRequest
 
 router = APIRouter(prefix="/intelligence", tags=["intelligence"])

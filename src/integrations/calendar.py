@@ -10,7 +10,6 @@ from typing import Dict, List, Optional, Any
 from datetime import datetime, timedelta
 import httpx
 from dataclasses import dataclass
-import json
 
 logger = logging.getLogger(__name__)
 

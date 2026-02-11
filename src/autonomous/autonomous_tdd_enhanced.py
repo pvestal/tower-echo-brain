@@ -6,11 +6,10 @@ Continuously generates photorealistic images with quality feedback and prompt op
 
 import asyncio
 import requests
-import json
 import time
 import logging
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import List
 from image_quality_reviewer import EchoBrainImageReviewer
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')

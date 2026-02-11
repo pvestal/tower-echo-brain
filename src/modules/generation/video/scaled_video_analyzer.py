@@ -10,7 +10,6 @@ import logging
 import subprocess
 from pathlib import Path
 from typing import Dict, List, Tuple, Any
-import requests
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

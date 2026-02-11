@@ -15,9 +15,7 @@ Voice models stored at: /opt/tower-echo-brain/models/voice/
 
 import asyncio
 import io
-import json
 import logging
-import struct
 import tempfile
 import time
 import wave
@@ -184,12 +182,11 @@ class VoiceService:
 
     async def _download_piper_model(self, model_name: str):
         """Download a Piper voice model from HuggingFace."""
-        import subprocess
 
         piper_dir = VOICE_MODELS_DIR / "piper"
         piper_dir.mkdir(parents=True, exist_ok=True)
 
-        base_url = f"https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0"
+        base_url = "https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0"
         # Parse model name: en_US-lessac-medium → en/en_US/lessac/medium/
         parts = model_name.split("-")
         lang = parts[0][:2]          # en
@@ -368,7 +365,6 @@ class VoiceService:
     ) -> bytes:
         """Synchronous Piper synthesis — runs in thread executor."""
         from piper.config import SynthesisConfig
-        import numpy as np
 
         # Create synthesis config (only supports length_scale)
         syn_config = SynthesisConfig(

@@ -27,23 +27,17 @@ import os
 import time
 from datetime import datetime, timedelta
 from enum import Enum
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from typing import Dict, List, Optional, Any, Tuple, Set
 from pathlib import Path
-import aiohttp
 import asyncpg
 from contextlib import asynccontextmanager
 import hashlib
-import shutil
 import subprocess
 from collections import defaultdict, deque
 
 # Import existing autonomous components
 from .core import AutonomousCore
-from .executor import Executor, TaskResult
-from .scheduler import Scheduler
-from .safety import SafetyController
-from .audit import AuditLogger
 
 logger = logging.getLogger(__name__)
 
@@ -1544,7 +1538,7 @@ async def generate_anime_production_tasks(autonomous_core: AutonomousCore, goal:
                 RETURNING id
             """,
             goal['id'],
-            f"Initialize Anime Production Pipeline",
+            "Initialize Anime Production Pipeline",
             "anime_orchestration",
             "auto",
             1,  # High priority
@@ -1570,7 +1564,7 @@ async def generate_anime_production_tasks(autonomous_core: AutonomousCore, goal:
                 RETURNING id
             """,
             goal['id'],
-            f"Monitor Production Progress",
+            "Monitor Production Progress",
             "anime_monitoring",
             "auto",
             3,

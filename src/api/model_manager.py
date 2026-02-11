@@ -9,7 +9,6 @@ Defines contracts for AI model management and routing systems
 """
 
 from typing import Protocol, runtime_checkable, List, Dict, Optional, Any, AsyncGenerator
-from datetime import datetime
 from enum import Enum
 
 class ModelStatus(Enum):

@@ -9,17 +9,16 @@ Echo Brain's actions actually happen and can be confirmed.
 """
 
 import asyncio
-import subprocess
 import logging
-from typing import Optional, Dict, Any, List, Callable
+from typing import Optional, Dict, Any, List
 from datetime import datetime, timedelta
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 import json
 
 from src.managers.resilient_model_manager import ResilientModelManager, TaskUrgency, get_resilient_manager
-from src.execution.verified_executor import ExecutionStatus, ExecutionResult, VerifiedAction
+from src.execution.verified_executor import ExecutionStatus, ExecutionResult
 
 logger = logging.getLogger(__name__)
 

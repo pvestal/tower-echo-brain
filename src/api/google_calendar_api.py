@@ -3,7 +3,7 @@
 Google Calendar API endpoints for Echo Brain
 Provides calendar sync and event management through natural language interface
 """
-from fastapi import APIRouter, HTTPException, BackgroundTasks
+from fastapi import APIRouter, HTTPException
 from typing import Dict, Any, Optional, List
 from datetime import datetime
 import logging

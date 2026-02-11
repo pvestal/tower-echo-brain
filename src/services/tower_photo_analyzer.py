@@ -5,13 +5,10 @@ Analyzes Google Photos from /mnt/10TB2/Google_Takeout_2025
 """
 
 import asyncio
-import hashlib
-import json
 import sqlite3
 from pathlib import Path
 import base64
 import aiohttp
-from typing import Dict, List
 
 class TowerPhotoAnalyzer:
     def __init__(self):
@@ -74,7 +71,7 @@ class TowerPhotoAnalyzer:
 
 async def main():
     analyzer = TowerPhotoAnalyzer()
-    print(f'Scanning photos on Tower...')
+    print('Scanning photos on Tower...')
     count = await analyzer.scan_photos()
     print(f'Found {count} photos')
     

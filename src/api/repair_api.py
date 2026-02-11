@@ -4,7 +4,7 @@ Provides endpoints for triggering and monitoring autonomous repairs
 """
 import asyncio
 import logging
-from typing import Dict, Any, List, Optional
+from typing import Dict, List
 from datetime import datetime
 from fastapi import APIRouter, HTTPException, BackgroundTasks
 from pydantic import BaseModel

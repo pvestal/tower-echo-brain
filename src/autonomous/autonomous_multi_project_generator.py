@@ -6,7 +6,6 @@ Handles autonomous generation for all active anime projects
 
 import asyncio
 import requests
-import json
 import time
 import logging
 import psycopg2

@@ -2,12 +2,11 @@
 Echo Brain Reasoning API with proper vector retrieval
 Uses ParallelRetriever to search both Qdrant and PostgreSQL
 """
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from typing import Optional, List, Dict, Any
+from typing import Optional
 import logging
 import time
-import asyncio
 import httpx
 import os
 

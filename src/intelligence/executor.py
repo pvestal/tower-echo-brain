@@ -5,21 +5,17 @@ Executes actions with safety controls.
 
 import asyncio
 import asyncpg
-import subprocess
 import shutil
 import json
 import httpx
 import logging
-import tempfile
 import os
 from datetime import datetime
-from pathlib import Path
-from typing import Dict, Any, List, Optional
-import psutil
+from typing import Dict, Any, List
 
 from .schemas import (
     ActionType, SafetyLevel, ShellResult, ModifyResult,
-    APIResult, ServiceResult, QueryResult, ActionLog
+    APIResult, ServiceResult, QueryResult
 )
 
 logger = logging.getLogger(__name__)
@@ -312,7 +308,7 @@ class ActionExecutor:
             )
 
             await self._log_action(
-                ActionType.FILE_MODIFY, path, f"Failed modification",
+                ActionType.FILE_MODIFY, path, "Failed modification",
                 result.dict(), False, execution_time_ms=execution_time_ms
             )
 

@@ -6,9 +6,8 @@ Pattern matches other Echo Brain integrations (telegram_client.py, etc.)
 """
 
 import aiohttp
-import asyncio
 import logging
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any
 from datetime import datetime
 import os
 

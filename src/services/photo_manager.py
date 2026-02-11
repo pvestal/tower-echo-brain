@@ -11,8 +11,7 @@ import logging
 import sqlite3
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
-import aiofiles
+from typing import Dict, List
 import aiohttp
 from PIL import Image
 import imagehash
@@ -561,7 +560,7 @@ async def main():
 
     # Get database stats
     db_stats = manager.db.get_stats()
-    print(f"\n📊 Database Stats:")
+    print("\n📊 Database Stats:")
     print(f"  Total photos: {db_stats['total_photos']}")
     print(f"  Analyzed: {db_stats['analyzed_photos']}")
     print(f"  Duplicates: {db_stats['duplicates_found']}")

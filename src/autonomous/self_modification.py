@@ -4,7 +4,6 @@ Enables autonomous code changes with safety controls
 """
 import os
 import ast
-import json
 import shutil
 import hashlib
 import asyncio
@@ -12,7 +11,7 @@ import logging
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Tuple, Optional, Any
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 import asyncpg
 
 logger = logging.getLogger(__name__)
@@ -118,7 +117,7 @@ class CodeSafetyController:
                     break
 
             if not path_allowed:
-                return False, "high", f"Path not in allowed directories"
+                return False, "high", "Path not in allowed directories"
 
             # Check file extension
             if path.suffix not in self.allowed_extensions:

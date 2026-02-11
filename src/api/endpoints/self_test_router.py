@@ -2,12 +2,11 @@
 Self-test API endpoint for Echo Brain
 Streams test results in real-time
 """
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 import asyncio
 import json
 import sys
-import os
 from datetime import datetime
 
 sys.path.insert(0, '/opt/tower-echo-brain')

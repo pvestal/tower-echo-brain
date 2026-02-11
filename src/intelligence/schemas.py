@@ -2,8 +2,8 @@
 Pydantic schemas for the intelligence layer
 """
 
-from typing import List, Dict, Optional, Any, Union
-from pydantic import BaseModel, Field
+from typing import List, Dict, Optional, Any
+from pydantic import BaseModel
 from datetime import datetime
 from enum import Enum
 

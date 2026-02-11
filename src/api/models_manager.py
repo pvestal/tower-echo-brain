@@ -4,7 +4,6 @@ from typing import List, Optional
 from datetime import datetime
 import asyncpg
 import os
-import hashlib
 import subprocess
 import yaml
 import json
@@ -323,47 +322,8 @@ async def download_model(name: str, url: str, dest_path: str):
     finally:
         await conn.close()
 
-@router.get("/downloads/status")
-async def get_download_status():
-    """Get status of all downloads"""
-    conn = await get_db()
-    try:
-        rows = await conn.fetch("""
-            SELECT * FROM tower_model_downloads
-            ORDER BY created_at DESC
-            LIMIT 20
-        """)
-        return [dict(row) for row in rows]
-    except Exception as e:
-        logger.error(f"Failed to get download status: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        await conn.close()
 
-@router.get("/logs")
-async def get_model_logs(model_name: str = None, limit: int = 50):
-    """Get model operation logs"""
-    conn = await get_db()
-    try:
-        if model_name:
-            rows = await conn.fetch("""
-                SELECT * FROM tower_model_logs
-                WHERE model_name = $1
-                ORDER BY created_at DESC
-                LIMIT $2
-            """, model_name, limit)
-        else:
-            rows = await conn.fetch("""
-                SELECT * FROM tower_model_logs
-                ORDER BY created_at DESC
-                LIMIT $1
-            """, limit)
-        return [dict(row) for row in rows]
-    except Exception as e:
-        logger.error(f"Failed to get model logs: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        await conn.close()
+# NOTE: /downloads/status and /logs endpoints are defined earlier in this file (lines 62-101)
 
 @router.post("/sync-manifests")
 async def sync_manifests():

@@ -4,9 +4,8 @@ Task Orchestrator Interface Protocol
 Defines the contract for task management and orchestration systems
 """
 
-from typing import Protocol, runtime_checkable, List, Dict, Optional, Any, Callable, AsyncIterator
+from typing import Protocol, runtime_checkable, List, Dict, Optional, Any
 from datetime import datetime
-from enum import Enum
 
 # Import existing enums from task_queue.py to maintain compatibility
 from ..tasks.task_queue import Task, TaskPriority, TaskStatus, TaskType

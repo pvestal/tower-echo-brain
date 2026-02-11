@@ -2,17 +2,15 @@
 Echo Brain Deep Self-Diagnostic
 Actually tests intelligence, verifies correctness, identifies gaps.
 """
-import asyncio
 import asyncpg
 import httpx
 import os
 import re
 import ast
 import logging
-from datetime import datetime, timedelta
-from typing import Dict, Any, List, Tuple, Optional
+from datetime import datetime
+from typing import Dict, Any, List, Optional
 from dataclasses import dataclass, asdict, field
-from collections import Counter
 
 logger = logging.getLogger(__name__)
 
@@ -487,7 +485,7 @@ class DeepDiagnostic:
                     except:
                         pass
                         
-                except Exception as e:
+                except Exception:
                     pass
         
         if critical_issues:
@@ -587,7 +585,7 @@ class DeepDiagnostic:
                     fix=f"Investigate {worst[0]} errors in logs"
                 ))
                 
-        except Exception as e:
+        except Exception:
             pass
     
     # ==================== SCORING & SUMMARY ====================

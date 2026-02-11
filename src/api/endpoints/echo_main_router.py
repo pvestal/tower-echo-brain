@@ -3,15 +3,15 @@ Echo Brain Main API Router
 Consolidated ALL Echo Brain endpoints - NO DUPLICATION
 All endpoints under /api/echo/*
 """
-from fastapi import APIRouter, HTTPException, Query
-from typing import Dict, Any, List, Optional
+from fastapi import APIRouter, HTTPException
+from typing import Dict, Any, Optional
 from pydantic import BaseModel
 import logging
 from datetime import datetime
 import psutil
 import os
 import httpx
-from src.model_config import get_model, get_context_window, get_ollama_url
+from src.model_config import get_model
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +32,6 @@ router = APIRouter(tags=["echo-brain"])
 async def echo_health():
     """Main Echo Brain health & status - THE ONLY HEALTH ENDPOINT"""
     from src.main import REQUEST_METRICS
-    import subprocess
 
     # Get service health
     process = psutil.Process(os.getpid())

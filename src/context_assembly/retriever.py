@@ -343,7 +343,7 @@ class ParallelRetriever:
                         logger.info(f"Using preprocessed results: {len(rows)} facts found")
                 elif not rows:
                     # Fallback: generic preprocessing for queries with no results
-                    logger.info(f"No results found for original query, using generic preprocessing")
+                    logger.info("No results found for original query, using generic preprocessing")
                     stop_words = {
                         'what', 'how', 'does', 'do', 'is', 'are', 'the', 'a', 'an', 'and', 'or', 'but',
                         'in', 'on', 'at', 'to', 'for', 'with', 'by', 'from', 'up', 'about', 'into',

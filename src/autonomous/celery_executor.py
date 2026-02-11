@@ -4,7 +4,6 @@ Celery-based executor for distributed task execution
 import logging
 from datetime import datetime
 from typing import Dict, Any, Optional
-import asyncio
 import asyncpg
 from contextlib import asynccontextmanager
 

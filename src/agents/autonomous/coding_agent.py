@@ -4,7 +4,6 @@ DeepSeek Coding Agent - Autonomous code improvement system
 Executes via Echo Brain API with full repository access
 """
 import os
-import json
 import subprocess
 from typing import Dict, Any
 import requests

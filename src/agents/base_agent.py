@@ -1,7 +1,7 @@
 """Base Agent class for all Echo Brain agents"""
 import logging
 import httpx
-from typing import Dict, List, Optional
+from typing import Dict, List
 from abc import ABC, abstractmethod
 
 logger = logging.getLogger(__name__)

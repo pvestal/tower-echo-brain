@@ -4,20 +4,17 @@ Maintains a live model of the Tower system.
 Knows what's running, how things connect, current health.
 """
 
-import asyncio
 import asyncpg
 import psutil
 import subprocess
 import json
-import httpx
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import List, Dict, Any, Optional
 from pathlib import Path
 
 from .schemas import (
-    Service, ServiceStatus, ServiceDependency, ServiceHealth,
-    NetworkMap, Schema, ServiceType
+    Service, ServiceStatus, NetworkMap, Schema, ServiceType
 )
 
 logger = logging.getLogger(__name__)

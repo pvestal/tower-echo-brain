@@ -1,11 +1,8 @@
 #!/usr/bin/env python3
 """Configuration Manager - Centralized configuration management for Echo Brain"""
 
-import os
-import json
 import logging
 from typing import Any, Dict, Optional
-from pathlib import Path
 from dataclasses import dataclass
 from enum import Enum
 from datetime import datetime

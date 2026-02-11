@@ -1,12 +1,11 @@
 """Schema Indexer Worker - Indexes Echo Brain's database structure for self-awareness"""
 
-import asyncio
 import json
 import logging
 import os
 import uuid
 from datetime import datetime, timezone
-from typing import Dict, List, Any
+from typing import Dict, Any
 
 import httpx
 import asyncpg
@@ -218,7 +217,7 @@ class SchemaIndexer:
             })
 
         # Get row count
-        row_count = await conn.fetchval(f"""
+        row_count = await conn.fetchval("""
             SELECT reltuples::BIGINT as estimate
             FROM pg_class
             WHERE relname = $1
@@ -294,7 +293,7 @@ class SchemaIndexer:
 
         # Add foreign keys
         if table_info['foreign_keys']:
-            desc += f"\nForeign key relationships:\n"
+            desc += "\nForeign key relationships:\n"
             for fk in table_info['foreign_keys'][:5]:
                 desc += f"- {fk['column']} references {fk['references_table']}.{fk['references_column']}\n"
 

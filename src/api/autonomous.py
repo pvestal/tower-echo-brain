@@ -10,11 +10,9 @@ from typing import Dict, List, Optional, Any
 from datetime import datetime
 from fastapi import APIRouter, HTTPException, Path, Query
 from pydantic import BaseModel, Field
-import asyncio
 
 from src.autonomous import (
-    AutonomousCore, AutonomousState, SystemStatus,
-    GoalManager, Scheduler, Executor, SafetyController, AuditLogger
+    AutonomousCore
 )
 from src.autonomous.notifications import get_notification_manager
 

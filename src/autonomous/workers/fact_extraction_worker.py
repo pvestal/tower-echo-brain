@@ -9,7 +9,7 @@ import logging
 import httpx
 import asyncpg
 from datetime import datetime
-from typing import List, Dict, Any, Optional
+from typing import List, Dict
 from uuid import uuid4
 import asyncio
 import os

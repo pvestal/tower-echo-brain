@@ -3,7 +3,7 @@ Vault Manager with graceful fallback
 """
 import os
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Optional
 
 logger = logging.getLogger(__name__)
 

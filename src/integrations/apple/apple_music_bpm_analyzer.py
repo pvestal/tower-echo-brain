@@ -845,7 +845,6 @@ class AppleMusicBPMAnalyzer:
 def main():
     """Test the Apple Music BPM analyzer"""
 
-    import asyncio
     import sys
 
     # Load video analysis results
@@ -881,7 +880,7 @@ def main():
 
         if result["matching_tracks"]:
             best_track = result["matching_tracks"][0]
-            print(f"\nBest match:")
+            print("\nBest match:")
             print(f"  Title: {best_track['title']}")
             print(f"  Artist: {best_track['artist']}")
             print(f"  BPM: {best_track['estimated_bpm']}")

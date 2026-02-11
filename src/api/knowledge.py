@@ -4,7 +4,7 @@ Knowledge API - CRUD for facts Echo Brain knows about the user.
 import os
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional
 from uuid import UUID, uuid4
 from datetime import datetime
 import asyncpg

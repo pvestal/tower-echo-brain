@@ -45,7 +45,7 @@ class ReasoningEngine:
         # Track which model is actually being used
         self.active_model = self.reasoning_model
 
-        logger.info(f"🧠 ReasoningEngine initialized:")
+        logger.info("🧠 ReasoningEngine initialized:")
         logger.info(f"  - Ollama: {self.ollama_url}")
         logger.info(f"  - Qdrant: {self.qdrant_url}")
         logger.info(f"  - Collection: {self.collection_name}")

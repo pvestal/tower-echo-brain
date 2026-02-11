@@ -2,13 +2,12 @@
 Echo Brain Self-Diagnosis
 Runs checks and reports problems without human intervention.
 """
-import asyncio
 import os
 import httpx
 import psutil
 import logging
 from datetime import datetime
-from typing import Dict, List, Any
+from typing import Dict
 
 logger = logging.getLogger(__name__)
 

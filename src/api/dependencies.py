@@ -60,7 +60,6 @@ def get_model_manager_instance(
 async def execute_ollama_command(command: list):
     """Execute ollama command directly as fallback"""
     import asyncio
-    import subprocess
 
     try:
         process = await asyncio.create_subprocess_exec(

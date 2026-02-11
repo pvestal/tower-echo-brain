@@ -13,7 +13,6 @@ import json
 import google.auth.transport.requests
 import google.oauth2.credentials
 from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
 
 logger = logging.getLogger(__name__)
 
@@ -330,7 +329,6 @@ async def test_calendar_connection(vault_manager):
 
 if __name__ == "__main__":
     import sys
-    import os
     sys.path.append('/opt/tower-echo-brain')
     from src.integrations.vault_manager import get_vault_manager
 

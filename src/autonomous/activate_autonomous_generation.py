@@ -13,7 +13,7 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
-from capabilities.capability_registry import CapabilityRegistry, CapabilityType
+from capabilities.capability_registry import CapabilityRegistry
 from capabilities.autonomous_loop import AutonomousEventLoop, TaskPriority
 from capabilities.image_generation import ImageGenerationCapability
 

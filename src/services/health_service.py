@@ -353,7 +353,6 @@ class HealthService:
     async def _get_gpu_stats(self) -> Optional[Dict]:
         """Get GPU statistics using nvidia-smi or rocm-smi"""
         try:
-            import subprocess
             import asyncio
 
             # Try NVIDIA first

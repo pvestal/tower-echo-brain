@@ -6,7 +6,7 @@ import logging
 import os
 import re
 from datetime import datetime, timedelta, timezone
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 
 import asyncpg
 

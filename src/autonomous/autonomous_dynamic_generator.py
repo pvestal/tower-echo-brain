@@ -7,12 +7,10 @@ No hardcoding - works with any new projects automatically
 
 import asyncio
 import requests
-import json
 import random
-import time
 import logging
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Dict
 from dynamic_project_loader import DynamicProjectLoader
 from character_distinctions import get_distinguishing_features
 
@@ -66,13 +64,13 @@ class AutonomousDynamicGenerator:
         # Build prompt based on project style
         style = project['style'].lower()
         if 'photorealistic' in style:
-            base_prompt = f"RAW photo, photorealistic, detailed, sharp focus, 85mm lens"
+            base_prompt = "RAW photo, photorealistic, detailed, sharp focus, 85mm lens"
             negative = "anime, cartoon, blurry, soft focus, smooth skin"
         elif 'anime' in style:
-            base_prompt = f"anime style, vibrant colors, detailed, high quality"
+            base_prompt = "anime style, vibrant colors, detailed, high quality"
             negative = "realistic, photograph, blurry"
         else:
-            base_prompt = f"high quality, detailed"
+            base_prompt = "high quality, detailed"
             negative = "blurry, low quality"
 
         # Add ethnicity based on project/character context
@@ -208,7 +206,7 @@ class AutonomousDynamicGenerator:
             return
 
         logger.info(f"\n{'='*60}")
-        logger.info(f"AUTONOMOUS DYNAMIC GENERATION")
+        logger.info("AUTONOMOUS DYNAMIC GENERATION")
         logger.info(f"Projects: {len(projects)}")
         logger.info(f"Images per character: {self.images_per_character}")
         logger.info(f"{'='*60}")

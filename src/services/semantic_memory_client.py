@@ -4,11 +4,9 @@ Semantic Memory Client for Echo Brain
 Provides intelligent creative orchestration with semantic capabilities
 """
 
-import asyncio
 import aiohttp
 import logging
-import json
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Dict, List, Any, Optional
 from datetime import datetime
 import traceback
 

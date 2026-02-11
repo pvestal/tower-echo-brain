@@ -5,12 +5,9 @@ Analyzes detected issues and proposes code fixes (REVIEW gated).
 Part of the IMPROVE stage in the INGEST→THINK→IMPROVE loop.
 """
 
-import asyncio
-import json
 import os
 import logging
-from datetime import datetime
-from typing import Optional, Dict, List, Any
+from typing import Optional, Dict, List
 import asyncpg
 import httpx
 from qdrant_client import QdrantClient

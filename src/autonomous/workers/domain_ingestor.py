@@ -4,7 +4,6 @@ Ingests domain knowledge from all Tower ecosystem sources.
 Handles: code, JSON workflows, markdown, database records, git history, conversations.
 Categories: anime:*, tower:*, external:*
 """
-import asyncio
 import hashlib
 import json
 import os
@@ -12,7 +11,7 @@ import re
 import subprocess
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import List, Optional
 from uuid import uuid4
 
 import asyncpg

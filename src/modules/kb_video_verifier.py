@@ -7,7 +7,7 @@ import requests
 from pathlib import Path
 import logging
 import asyncio
-from typing import Dict, Optional
+from typing import Dict
 
 logger = logging.getLogger(__name__)
 

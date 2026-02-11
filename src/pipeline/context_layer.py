@@ -15,7 +15,7 @@ import time
 import logging
 import httpx
 import asyncpg
-from typing import List, Tuple
+from typing import List
 
 from .models import ContextPackage, ContextSource, QueryIntent
 

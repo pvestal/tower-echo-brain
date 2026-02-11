@@ -8,8 +8,7 @@ import psycopg2
 import os
 import psycopg2.pool
 import logging
-from typing import List, Dict, Any, Optional
-from datetime import datetime
+from typing import List, Dict, Any
 
 logger = logging.getLogger(__name__)
 

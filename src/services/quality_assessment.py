@@ -8,16 +8,13 @@ import os
 import json
 import logging
 import subprocess
-import tempfile
-from typing import Dict, Any, List, Optional, Tuple
-from pathlib import Path
+from typing import Dict, Any, List, Tuple
 import numpy as np
 import cv2
-from PIL import Image, ImageStat
+from PIL import Image
 import torch
 from transformers import CLIPProcessor, CLIPModel
 from datetime import datetime
-import requests
 import hashlib
 
 # Setup logging

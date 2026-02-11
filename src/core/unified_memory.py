@@ -5,7 +5,6 @@ Single source of truth for all data ingestion, storage, and retrieval
 """
 
 import os
-import asyncio
 import json
 import hashlib
 import logging
@@ -287,7 +286,6 @@ class UnifiedMemorySystem:
         embeddings_count = self.stats["embeddings_created"]
         try:
             import httpx
-            import asyncio
             # Use synchronous client since this is a sync method
             with httpx.Client(timeout=5) as client:
                 response = client.get(f"{self.config.qdrant_url}/collections/{self.config.collection_name}")

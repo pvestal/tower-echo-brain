@@ -4,7 +4,6 @@ import os
 import json
 import logging
 from typing import Dict, Any
-import asyncio
 import psycopg2
 from datetime import datetime
 

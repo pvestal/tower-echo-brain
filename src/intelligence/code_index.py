@@ -5,17 +5,16 @@ NOT text search - actual code comprehension.
 """
 
 import ast
-import asyncio
 import hashlib
 import os
 from pathlib import Path
-from typing import List, Dict, Any, Optional, Set
+from typing import List, Dict, Any, Optional
 import asyncpg
 import logging
 from datetime import datetime
 
 from .schemas import (
-    CodeFile, CodeSymbol, CodeDependency, APIEndpoint,
+    APIEndpoint,
     DependencyGraph, CodeIssue, CodeLocation, SymbolType
 )
 

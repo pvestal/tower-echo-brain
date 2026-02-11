@@ -3,11 +3,7 @@ Integrations API - Manage service connections.
 """
 import os
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
-from typing import Optional, List
-from datetime import datetime
 import asyncpg
-import json
 
 router = APIRouter(tags=["integrations"])
 

@@ -3,7 +3,7 @@ Conversation Service for Echo Brain
 Handles conversation search and retrieval
 """
 import logging
-from typing import Dict, List, Any
+from typing import Dict, Any
 from src.core.pg_reasoning import search_pg
 
 logger = logging.getLogger(__name__)

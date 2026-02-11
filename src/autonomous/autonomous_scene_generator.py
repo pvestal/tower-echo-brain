@@ -5,12 +5,9 @@ Generates complete scenes with multiple characters interacting, not individual p
 """
 import asyncio
 import requests
-import json
-import time
 import random
 import logging
 from pathlib import Path
-from typing import List, Dict, Any
 from image_quality_reviewer import EchoBrainImageReviewer
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')

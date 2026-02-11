@@ -6,7 +6,7 @@ import asyncio
 import logging
 import sys
 import os
-from typing import List, Dict, Any
+from typing import Dict, Any
 
 # Add the project root to Python path
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -230,7 +230,7 @@ if __name__ == "__main__":
                 print(f"❌ {component.title()}: {result.get('error', 'Unknown error')}")
 
         # Summary
-        print(f"\n3. Summary:")
+        print("\n3. Summary:")
         print(f"Components tested: {test_results['components_tested']}")
         print(f"Components passed: {test_results['components_passed']}")
         print(f"Success rate: {test_results['components_passed']/test_results['components_tested']*100:.1f}%")

@@ -4,10 +4,9 @@ Agent Development Endpoints for AI Assist
 API endpoints for developing and managing Echo's agent capabilities
 """
 
-import json
 import logging
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel

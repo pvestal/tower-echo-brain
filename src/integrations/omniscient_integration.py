@@ -4,11 +4,9 @@ Echo Brain Omniscient Integration
 Integrates omniscient capabilities directly into Echo Brain's core systems.
 """
 
-import asyncio
 import logging
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any
-import json
+from typing import Dict, Any
 
 logger = logging.getLogger(__name__)
 

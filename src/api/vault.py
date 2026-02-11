@@ -9,7 +9,6 @@ import os
 import hvac
 import asyncpg
 import httpx
-from datetime import datetime
 
 router = APIRouter(prefix="/api/vault", tags=["vault"])
 
@@ -86,7 +85,7 @@ async def list_keys() -> Dict:
                     "is_set": True,
                     "value_preview": "***VAULT***"  # Never expose actual values
                 })
-            except Exception as e:
+            except Exception:
                 keys.append({
                     "key_name": key_name.rstrip('/'),
                     "service": key_name.rstrip('/'),

@@ -4,7 +4,7 @@ Business Logic Applicator for Echo Brain
 Applies learned business logic patterns to responses (separated from pattern matching)
 """
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, List
 import re
 
 logger = logging.getLogger(__name__)

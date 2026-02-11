@@ -7,11 +7,10 @@ import logging
 import os
 import time
 import uuid
-import subprocess
 import aiohttp
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Optional
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
@@ -180,9 +179,9 @@ class EchoVideoGenerator:
             }
         }
 
-        logger.info(f"Created IMPROVED video workflow")
+        logger.info("Created IMPROVED video workflow")
         logger.info(f"Frames: {request.num_frames}, FPS: 24, Duration: {request.num_frames/24:.1f}s")
-        logger.info(f"Output resolution: 1024x1024")
+        logger.info("Output resolution: 1024x1024")
         logger.info(f"Quality improvements: 24fps, {request.num_frames} frames, better CFG/steps")
         logger.debug(f"Workflow structure: {list(workflow.keys())}")
         return workflow

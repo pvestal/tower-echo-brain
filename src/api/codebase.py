@@ -1,6 +1,6 @@
 """Codebase API - Search and analyze codebase"""
 from fastapi import APIRouter, HTTPException, Query
-from typing import List, Dict, Optional
+from typing import Optional
 import psycopg2
 from psycopg2.extras import DictCursor
 import logging

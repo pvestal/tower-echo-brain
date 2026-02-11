@@ -7,13 +7,11 @@ This is a critical safety component that prevents runaway autonomous behavior.
 """
 
 import logging
-import asyncio
 import os
 from typing import Dict, List, Optional, Any, Tuple
 from datetime import datetime, timedelta
 import asyncpg
 from contextlib import asynccontextmanager
-import json
 
 logger = logging.getLogger(__name__)
 
@@ -521,7 +519,7 @@ class SafetyController:
                     WHERE status IN ('approved', 'rejected')
                     AND created_at < NOW() - INTERVAL '30 days'
                 """)
-                logger.info(f"Cleaned up old approval records")
+                logger.info("Cleaned up old approval records")
         except Exception as e:
             logger.error(f"Failed to cleanup approvals: {e}")
 

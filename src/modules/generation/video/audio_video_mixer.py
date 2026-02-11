@@ -6,10 +6,9 @@ Professional-grade mixing with precise synchronization and dynamic audio process
 import json
 import logging
 import subprocess
-import tempfile
 import time
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Dict, List, Optional, Any
 import numpy as np
 
 logging.basicConfig(level=logging.INFO)
@@ -789,7 +788,7 @@ def main():
                 test_video, test_music_info, test_sync_config, "test_cyberpunk_with_music.mp4"
             )
 
-            print(f"\nMixing Results:")
+            print("\nMixing Results:")
             print(f"Input: {result['input_video']}")
             print(f"Output: {result['output_video']}")
             print(f"Processing time: {result['processing_time']:.2f}s")

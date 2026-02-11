@@ -4,13 +4,11 @@ Monitors key directories for new/changed files and triggers ingestion.
 This is the first data connector — detects new ComfyUI outputs,
 new workflows, new model files, etc. and feeds them into the pipeline.
 """
-import asyncio
 import hashlib
 import json
 import os
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List
 
 import asyncpg
 

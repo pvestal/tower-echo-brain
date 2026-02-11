@@ -1,0 +1,29 @@
+# Ruff linter configuration for Echo Brain
+# Strict on new code, tolerant of legacy patterns
+
+target-version = "py312"
+line-length = 120
+
+# Exclude legacy code that has syntax errors and isn't actively maintained
+exclude = [
+    "src/modules/",
+    "src/autonomous/autonomous_loop_v2.py",
+    "src/autonomous/tower_monitor.py",
+    "src/misc/",
+]
+
+[lint]
+select = ["F401", "F811"]
+ignore = []
+
+[lint.per-file-ignores]
+# Agent code re-exports for public API
+"src/agents/__init__.py" = ["F401"]
+# Voice service has guarded numpy import inside method
+"src/services/voice_service.py" = ["F811", "F401"]
+# Voice memory has import for type checking
+"src/services/voice_memory.py" = ["F401"]
+# Autonomous service imports to test availability
+"src/autonomous/service.py" = ["F401"]
+# Self-test imports rich conditionally
+"src/self_test.py" = ["F401"]

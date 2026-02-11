@@ -10,11 +10,9 @@ import re
 import logging
 from datetime import datetime
 from typing import List, Dict, Any, Optional
-import importlib
 
 from .schemas import (
-    Procedure, ProcedureExecution, Step, ActionPlan,
-    ActionType, SafetyLevel, ProcedureCategory
+    Procedure, Step, ActionType, SafetyLevel, ProcedureCategory
 )
 
 logger = logging.getLogger(__name__)

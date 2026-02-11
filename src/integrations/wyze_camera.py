@@ -10,15 +10,11 @@ import cv2
 import numpy as np
 import json
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Dict, List, Optional, Tuple, Callable
 from dataclasses import dataclass, asdict
-import threading
 from concurrent.futures import ThreadPoolExecutor
 import face_recognition
-import requests
-from io import BytesIO
-import base64
 
 logger = logging.getLogger(__name__)
 

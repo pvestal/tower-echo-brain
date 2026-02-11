@@ -81,10 +81,10 @@ async def get_session_context(
         # Add key learnings
         memory_count = context["memory_stats"].get("total_memories", 0)
         context["key_learnings"] = [
-            f"Dual GPU setup: AMD RX 9070 XT (16GB) + NVIDIA RTX 3060 (12GB)",
-            f"Ollama running on NVIDIA due to compatibility",
+            "Dual GPU setup: AMD RX 9070 XT (16GB) + NVIDIA RTX 3060 (12GB)",
+            "Ollama running on NVIDIA due to compatibility",
             f"Vector database has {memory_count} stored memories",
-            f"Echo Brain processing ~472 interactions in last 24h"
+            "Echo Brain processing ~472 interactions in last 24h"
         ]
 
         # Get brain state (simplified)

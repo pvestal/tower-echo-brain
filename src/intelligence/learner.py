@@ -5,15 +5,12 @@ NOT a training loop - this is about recording what worked/failed
 and using that to improve future responses.
 """
 
-import asyncio
 import asyncpg
 import json
 import logging
 import subprocess
-import time
-from datetime import datetime, timedelta
-from typing import Dict, List, Any, Optional
-from pathlib import Path
+from datetime import datetime
+from typing import Dict, List
 
 logger = logging.getLogger(__name__)
 

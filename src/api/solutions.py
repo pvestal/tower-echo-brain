@@ -1,7 +1,6 @@
 """Solutions API - Search past solutions"""
 from fastapi import APIRouter, HTTPException, Query
 import os
-from typing import List, Dict, Optional
 import psycopg2
 from psycopg2.extras import DictCursor
 import logging

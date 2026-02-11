@@ -1,6 +1,5 @@
 """Codebase Indexer Worker - Indexes Echo Brain's own source code for self-awareness"""
 
-import asyncio
 import ast
 import hashlib
 import json

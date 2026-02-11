@@ -4,9 +4,8 @@ Dynamic Escalation Manager
 Replaces hard-coded model selection with persona-driven adaptive system
 """
 
-import asyncio
 import requests
-from typing import Dict, Optional, Tuple
+from typing import Dict
 import logging
 from datetime import datetime
 import sys

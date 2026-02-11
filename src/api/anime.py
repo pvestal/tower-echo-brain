@@ -6,9 +6,8 @@ Provides endpoints for LTX video generation through Echo Brain
 
 import logging
 from typing import Dict, Optional, List
-from fastapi import APIRouter, HTTPException, BackgroundTasks
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-import asyncio
 
 logger = logging.getLogger(__name__)
 

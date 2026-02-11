@@ -6,7 +6,6 @@ If a layer produces it, the model defines it.
 from pydantic import BaseModel, Field
 from enum import Enum
 from typing import List
-from datetime import datetime
 
 
 class QueryIntent(str, Enum):

@@ -1,12 +1,10 @@
 """Echo Brain Video Generation Module"""
-import json
 import requests
-import time
 import uuid
 import subprocess
 import asyncio
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict
 import logging
 
 logging.basicConfig(level=logging.INFO)

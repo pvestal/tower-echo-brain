@@ -3,7 +3,7 @@ Testing framework service for Echo Brain
 """
 import asyncio
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 logger = logging.getLogger(__name__)
 

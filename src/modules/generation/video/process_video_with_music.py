@@ -66,7 +66,7 @@ Examples:
             logger.info(f"🎵 Processing all videos in: {input_path}")
             result = await tester.run_batch_test(str(input_path))
 
-            print(f"\n🎬 BATCH PROCESSING RESULTS:")
+            print("\n🎬 BATCH PROCESSING RESULTS:")
             print(f"Total videos: {result['total_videos']}")
             print(f"Successful: {result['summary']['successful_tests']}")
             print(f"Failed: {result['summary']['failed_tests']}")
@@ -80,12 +80,12 @@ Examples:
                     successful_outputs.append(video_result['final_outputs']['video_with_music'])
 
             if successful_outputs:
-                print(f"\n✅ Generated videos:")
+                print("\n✅ Generated videos:")
                 for output in successful_outputs:
                     print(f"  - {output}")
 
                 if args.jellyfin:
-                    print(f"\n📺 Copying to Jellyfin...")
+                    print("\n📺 Copying to Jellyfin...")
                     # Copy to Jellyfin would be implemented here
 
         else:
@@ -93,7 +93,7 @@ Examples:
                 logger.error("Single file mode requires a video file path")
                 sys.exit(1)
 
-            if not input_path.suffix.lower() in ['.mp4', '.mov', '.avi']:
+            if input_path.suffix.lower() not in ['.mp4', '.mov', '.avi']:
                 logger.error("Input must be a video file (.mp4, .mov, .avi)")
                 sys.exit(1)
 
@@ -101,7 +101,7 @@ Examples:
             result = await tester.run_complete_integration_test(str(input_path))
 
             # Display results
-            print(f"\n🎬 PROCESSING RESULTS:")
+            print("\n🎬 PROCESSING RESULTS:")
             print(f"Video: {input_path.name}")
             print(f"Success: {'✅ YES' if result['performance_metrics']['overall_success'] else '❌ NO'}")
             print(f"Duration: {result['performance_metrics']['total_duration']:.1f}s")
@@ -121,7 +121,7 @@ Examples:
                     print(f"Quality: {quality['overall_score']:.2f}/1.0")
 
                 if args.jellyfin:
-                    print(f"📺 Copying to Jellyfin...")
+                    print("📺 Copying to Jellyfin...")
                     # Jellyfin copy would be implemented here
 
             if result['errors']:

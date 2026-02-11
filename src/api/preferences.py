@@ -5,9 +5,7 @@ Categories: music, anime, communication, appearance, etc.
 import os
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from typing import Optional, Any, List
-from uuid import UUID, uuid4
-from datetime import datetime
+from typing import Optional, Any
 import asyncpg
 import json
 

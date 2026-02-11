@@ -4,11 +4,10 @@ Git Operations API for Echo Brain Autonomous System
 Provides git automation endpoints for repository management
 """
 
-import asyncio
 import json
 import logging
 from datetime import datetime
-from typing import Dict, List, Optional, Any
+from typing import List, Optional
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, BackgroundTasks

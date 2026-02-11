@@ -5,7 +5,6 @@ Knowledge Graph Builder - Builds relationships between facts
 
 import logging
 import asyncpg
-from datetime import datetime
 from typing import List, Dict, Tuple
 import asyncio
 import os

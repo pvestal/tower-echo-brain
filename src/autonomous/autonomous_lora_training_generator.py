@@ -5,12 +5,9 @@ Generates SOLO character images for training + some scenes for context
 """
 import asyncio
 import requests
-import json
 import random
-import time
 import logging
 from pathlib import Path
-from typing import Dict, List
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)

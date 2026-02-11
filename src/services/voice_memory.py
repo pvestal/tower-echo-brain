@@ -7,7 +7,6 @@ Each voice turn (user transcript + Echo response) is:
 
 Designed to run fire-and-forget so it never blocks the voice pipeline.
 """
-import asyncio
 import logging
 import os
 from datetime import datetime

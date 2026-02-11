@@ -6,7 +6,6 @@ Simplified autonomous system that continuously generates photorealistic images
 
 import asyncio
 import requests
-import json
 import time
 import logging
 from pathlib import Path

@@ -1,6 +1,4 @@
-import requests
 import json
-import base64
 import subprocess
 from typing import Dict, Any, Optional
 

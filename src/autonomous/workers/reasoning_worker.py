@@ -7,14 +7,12 @@ It watches for new domain_ingestion_log entries that haven't been reasoned about
 extracts structured facts, finds connections to existing knowledge, detects conflicts,
 and generates notifications when action is needed.
 """
-import asyncio
 import json
 import os
 import re
 import time
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple
-from uuid import uuid4
+from typing import List, Optional
 
 import asyncpg
 import httpx

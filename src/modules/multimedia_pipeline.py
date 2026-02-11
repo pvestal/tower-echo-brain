@@ -2,7 +2,7 @@ import json
 import sqlite3
 import time
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from datetime import datetime
 
 from src.modules.vision_quality_checker import VisionQualityChecker

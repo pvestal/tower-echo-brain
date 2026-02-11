@@ -6,10 +6,9 @@ Conversation Watcher - Monitors for new conversations and ingests them
 import json
 import logging
 import httpx
-import asyncpg
 from datetime import datetime
 from pathlib import Path
-from typing import List, Dict, Optional
+from typing import List, Dict
 from uuid import uuid4
 import asyncio
 import os

@@ -2,7 +2,6 @@
 
 import base64
 import requests
-import json
 from pathlib import Path
 
 def check_with_vision(image_path):

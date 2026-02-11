@@ -6,9 +6,8 @@ to generate intelligent responses based on what Echo Brain knows.
 """
 import asyncio
 import logging
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Any, Optional
 from datetime import datetime
-import json
 import httpx
 from dataclasses import dataclass
 from enum import Enum

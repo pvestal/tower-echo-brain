@@ -38,15 +38,14 @@ import json
 import time
 import logging
 import os
-from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional, Tuple
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional
 from dataclasses import dataclass, field, asdict
 from enum import Enum
-from functools import partial
 
 import httpx
 import asyncpg
-from fastapi import APIRouter, Request
+from fastapi import APIRouter
 
 logger = logging.getLogger(__name__)
 
@@ -687,7 +686,7 @@ class ContractMonitor:
                         result.add_finding(Severity.PASS,
                             f"'{ck_key}' content OK (size={size})")
 
-        except httpx.ConnectError as e:
+        except httpx.ConnectError:
             result.add_finding(Severity.ERROR,
                 f"Connection refused at {base_url} — service down?")
         except httpx.TimeoutException:
@@ -1210,7 +1209,7 @@ async def cli_main():
     # ── Formatted output ──
     W = 90
     print(f"\n{'═' * W}")
-    print(f"  ECHO BRAIN — CONTRACT MONITOR REPORT")
+    print("  ECHO BRAIN — CONTRACT MONITOR REPORT")
     print(f"{'═' * W}")
     print(f"  Run ID:     {snapshot.run_id}")
     print(f"  Timestamp:  {snapshot.timestamp}")
@@ -1244,7 +1243,7 @@ async def cli_main():
     # ── Detailed findings ──
     if verbose or snapshot.verdict != "healthy":
         print(f"\n{'═' * W}")
-        print(f"  DETAILED FINDINGS")
+        print("  DETAILED FINDINGS")
         print(f"{'═' * W}")
 
         for r in snapshot.results:
@@ -1283,11 +1282,11 @@ async def cli_main():
     print(f"  Total time: {snapshot.total_response_time_ms}ms")
 
     if snapshot.verdict == "healthy":
-        print(f"\n  🟢 ALL CONTRACTS VALID")
+        print("\n  🟢 ALL CONTRACTS VALID")
     elif snapshot.verdict == "degraded":
-        print(f"\n  🟡 DEGRADED — review warnings above")
+        print("\n  🟡 DEGRADED — review warnings above")
     else:
-        print(f"\n  🔴 BROKEN — fix FAIL/ERROR items above")
+        print("\n  🔴 BROKEN — fix FAIL/ERROR items above")
 
     print(f"{'═' * W}\n")
 

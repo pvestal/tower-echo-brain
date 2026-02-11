@@ -3,7 +3,6 @@ Celery configuration for distributed task execution
 """
 from celery import Celery
 from kombu import Queue
-import os
 import logging
 
 logger = logging.getLogger(__name__)

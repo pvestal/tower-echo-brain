@@ -13,7 +13,6 @@ import asyncio
 import logging
 import traceback
 from typing import Optional
-from datetime import datetime
 
 # Add the project root to Python path
 sys.path.insert(0, '/opt/tower-echo-brain')
@@ -95,7 +94,7 @@ class AutonomousService:
         if self.core:
             try:
                 status = await self.core.get_status()
-                self.logger.info(f"System Status Dump:")
+                self.logger.info("System Status Dump:")
                 self.logger.info(f"  State: {status.state.value}")
                 self.logger.info(f"  Uptime: {status.uptime_seconds:.1f}s")
                 self.logger.info(f"  Cycles: {status.cycles_completed}")

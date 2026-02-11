@@ -2,10 +2,8 @@
 MCP Service - Connects to Qdrant database for memory operations
 """
 import logging
-import json
 from typing import Dict, Any, List, Optional
 from datetime import datetime
-import os
 
 logger = logging.getLogger(__name__)
 

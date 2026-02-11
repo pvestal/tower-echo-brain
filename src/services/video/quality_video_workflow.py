@@ -1,8 +1,6 @@
 import requests
 import json
 import time
-import os
-from pathlib import Path
 
 COMFYUI_URL = 'http://127.0.0.1:8188'
 

@@ -1,12 +1,11 @@
 """
 Echo Brain Reasoning Router - Transparent, multi-stage reasoning with progress tracking
 """
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
-from typing import Dict, Any, List
+from typing import Dict, Any
 import logging
 import json
-import asyncio
 from datetime import datetime
 import httpx
 import asyncpg

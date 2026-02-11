@@ -1,12 +1,10 @@
 """Self-Test Runner Worker - Validates Echo Brain's output quality"""
 
-import asyncio
 import json
 import logging
 import os
 import time
-from datetime import datetime, timezone
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any
 
 import httpx
 import asyncpg

@@ -4,11 +4,9 @@ Shows real-time color-coded system testing with progress bars
 """
 import asyncio
 import httpx
-import json
 import sys
-import time
 from datetime import datetime
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any
 import logging
 
 # Try to import rich, fallback to simple if not available
@@ -230,7 +228,7 @@ class EchoBrainSelfTester:
                     status = collection.get("status", "unknown")
                     dimensions = collection.get("config", {}).get("params", {}).get("vectors", {}).get("size", 0)
 
-                    self._print(f"  Collection: echo_memory", "green")
+                    self._print("  Collection: echo_memory", "green")
                     self._print(f"  Points: {points:,}", "green")
                     self._print(f"  Status: {status}", "green")
                     self._print(f"  Dimensions: {dimensions}", "green")
@@ -341,7 +339,7 @@ class EchoBrainSelfTester:
                                 "timestamp": datetime.now().isoformat()
                             }
                     else:
-                        self._print(f"  Model not found: mxbai-embed-large", "red")
+                        self._print("  Model not found: mxbai-embed-large", "red")
                         self._print(f"  Available: {', '.join(model_names[:3])}", "yellow")
                         return {
                             "component": "Ollama",
@@ -496,7 +494,6 @@ class EchoBrainSelfTester:
         self._print("Checking file system...", "blue")
 
         try:
-            import os
             from pathlib import Path
 
             conv_dir = Path("/home/patrick/.claude/projects")
@@ -564,7 +561,6 @@ class EchoBrainSelfTester:
                         }
 
                     # Quick test - count conversation files
-                    import os
                     from pathlib import Path
                     conv_files = len(list(Path("/home/patrick/.claude/projects").rglob("*.jsonl")))
 
@@ -602,7 +598,6 @@ class EchoBrainSelfTester:
         """Test complete end-to-end flow"""
         self._print("Testing end-to-end flow...", "blue")
 
-        import os
         from pathlib import Path
 
         components = [

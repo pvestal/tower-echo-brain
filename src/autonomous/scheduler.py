@@ -5,10 +5,9 @@ The Scheduler class manages task scheduling, prioritization, and rate limiting
 for autonomous operations, ensuring efficient and controlled execution.
 """
 
-import asyncio
 import logging
 import os
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Dict, List, Optional, Any
 from datetime import datetime, timedelta
 import asyncpg
 from contextlib import asynccontextmanager

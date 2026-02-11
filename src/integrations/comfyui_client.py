@@ -6,12 +6,9 @@ Provides image and video generation capabilities
 
 import aiohttp
 import asyncio
-import json
 import logging
 import uuid
-from typing import Dict, Any, Optional, List
-from pathlib import Path
-import base64
+from typing import Dict, Any, Optional
 
 logger = logging.getLogger(__name__)
 

@@ -3,7 +3,6 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 import json
-import os
 from datetime import datetime, timedelta
 
 router = APIRouter(prefix="/google", tags=["google_data"])

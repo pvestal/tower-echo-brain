@@ -121,7 +121,6 @@ class UnifiedMemoryService:
         if self.vector_client:
             try:
                 # Get collection info
-                from qdrant_client.http import models
                 collection_info = self.vector_client.get_collection(self.config.collection_name)
                 stats["vector_db"] = "connected"
                 stats["vector_count"] = collection_info.points_count

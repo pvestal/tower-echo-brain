@@ -3,13 +3,12 @@
 
 import asyncio
 import base64
-import io
 import json
 import logging
 import requests
 from pathlib import Path
 from PIL import Image
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List
 import numpy as np
 
 logger = logging.getLogger(__name__)
@@ -274,17 +273,17 @@ class EchoVisionIntegration:
                   "inputs": {"samples": ["5", 0], "vae": ["1", 2]}},
             "7": {"class_type": "SaveImage",
                   "inputs": {"images": ["6", 0],
-                           "filename_prefix": f"quality_checked"}}
+                           "filename_prefix": "quality_checked"}}
         }
     
     async def _save_success_pattern(self, prompt, workflow, frame_path):
         """Save successful patterns for learning"""
         # Save to database
-        logger.info(f"Saving successful pattern to database")
+        logger.info("Saving successful pattern to database")
     
     async def _log_failure(self, prompt, workflow):
         """Log failures for analysis"""
-        logger.warning(f"Logging failure for analysis")
+        logger.warning("Logging failure for analysis")
     
     async def _compile_video(self, frames, project_name):
         """Compile frames into video"""

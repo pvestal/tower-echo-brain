@@ -552,7 +552,7 @@ async def get_detailed_health():
     """Get comprehensive health status including self-awareness metrics."""
     import asyncpg
     import httpx
-    from datetime import datetime, timedelta
+    from datetime import datetime
 
     try:
         # Connect to database
@@ -887,7 +887,6 @@ async def approve_proposal(proposal_id: str):
     """Approve a proposal for implementation."""
     import asyncpg
     from uuid import UUID
-    from datetime import datetime
 
     try:
         UUID(proposal_id)
@@ -1205,7 +1204,6 @@ async def mark_notification_read(notification_id: str):
 async def get_system_logs(limit: int = 100, level: Optional[str] = None, service: Optional[str] = None):
     """Get system logs from journalctl."""
     import subprocess
-    import json
 
     # Build journalctl command
     cmd = ["sudo", "journalctl", "-u", "tower-echo-brain", "-n", str(limit), "--no-pager", "-o", "json"]
