@@ -32,7 +32,7 @@ TARGET_WORKFLOWS="/opt/tower-anime-production/workflows/comfyui"
 PG_HOST="localhost"
 PG_USER="patrick"
 PG_DB="anime_production"
-export PGPASSWORD="RP78eIrW7cI2jYvL5akt1yurE"
+export PGPASSWORD="${DB_PASSWORD:?DB_PASSWORD not set}"
 
 DRY_RUN=false
 SKIP_DB=false

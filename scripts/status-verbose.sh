@@ -122,7 +122,7 @@ echo -e "\n${BOLD}[5/5] PostgreSQL Database Check${NC}"
 echo -e "${BLUE}Database:${NC} echo_brain"
 
 # Check conversations table
-CONV_COUNT=$(PGPASSWORD=RP78eIrW7cI2jYvL5akt1yurE psql -h localhost -U patrick -d echo_brain -t -c "SELECT COUNT(*) FROM conversations" 2>/dev/null | xargs)
+CONV_COUNT=$(PGPASSWORD="${DB_PASSWORD:?DB_PASSWORD not set}" psql -h localhost -U patrick -d echo_brain -t -c "SELECT COUNT(*) FROM conversations" 2>/dev/null | xargs)
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}✅ PostgreSQL connection successful${NC}"
     echo -e "${BLUE}Conversations:${NC} $CONV_COUNT records"
@@ -132,7 +132,7 @@ fi
 
 # Check all tables with counts
 echo -e "\n${BLUE}Table Statistics:${NC}"
-TABLE_STATS=$(PGPASSWORD=RP78eIrW7cI2jYvL5akt1yurE psql -h localhost -U patrick -d echo_brain -t -c "
+TABLE_STATS=$(PGPASSWORD="${DB_PASSWORD:?DB_PASSWORD not set}" psql -h localhost -U patrick -d echo_brain -t -c "
 SELECT
     'conversations' as table_name, COUNT(*) as count
 FROM conversations
@@ -230,7 +230,7 @@ fi
 
 # Check last ingestion
 echo -e "\n${BOLD}Last Ingestion:${NC}"
-LAST_INGESTION=$(PGPASSWORD=RP78eIrW7cI2jYvL5akt1yurE psql -h localhost -U patrick -d echo_brain -t -c "
+LAST_INGESTION=$(PGPASSWORD="${DB_PASSWORD:?DB_PASSWORD not set}" psql -h localhost -U patrick -d echo_brain -t -c "
 SELECT
     MAX(created_at) as last_time,
     COUNT(*) FILTER (WHERE created_at > NOW() - INTERVAL '1 hour') as last_hour,

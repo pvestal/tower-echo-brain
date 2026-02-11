@@ -57,7 +57,7 @@ async def get_db_connection():
             host=os.getenv('DB_HOST', 'localhost'),
             port=int(os.getenv('DB_PORT', 5432)),
             user=os.getenv('DB_USER', 'patrick'),
-            password=os.getenv('DB_PASSWORD', 'RP78eIrW7cI2jYvL5akt1yurE'),
+            password=os.getenv('DB_PASSWORD', ''),
             database=os.getenv('DB_NAME', 'echo_brain'),
             min_size=1,
             max_size=10

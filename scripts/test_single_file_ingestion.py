@@ -28,7 +28,7 @@ import httpx
 DB_HOST = "localhost"
 DB_NAME = "echo_brain"
 DB_USER = "patrick"
-DB_PASS = os.environ.get("DB_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE")
+DB_PASS = os.environ.get("DB_PASSWORD", "")
 QDRANT_URL = "http://localhost:6333"
 OLLAMA_URL = "http://localhost:11434"
 

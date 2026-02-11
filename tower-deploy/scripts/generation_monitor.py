@@ -20,7 +20,7 @@ import sys
 PG_HOST = os.getenv("PG_HOST", "localhost")
 PG_PORT = int(os.getenv("PG_PORT", "5432"))
 PG_USER = os.getenv("PG_USER", "patrick")
-PG_PASSWORD = os.getenv("PG_PASSWORD", "RP78eIrW7cI2jYvL5akt1yurE")
+PG_PASSWORD = os.getenv("PG_PASSWORD", "")
 PG_DATABASE = os.getenv("PG_DATABASE", "anime_production")
 
 

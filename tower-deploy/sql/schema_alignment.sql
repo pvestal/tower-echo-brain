@@ -5,7 +5,7 @@
 -- Purpose: Create validation tracking tables and link to existing schema
 --
 -- Usage:
---   PGPASSWORD=RP78eIrW7cI2jYvL5akt1yurE \
+--   PGPASSWORD=$DB_PASSWORD \
 --   psql -h localhost -U patrick -d anime_production -f schema_alignment.sql
 -- ============================================================
 

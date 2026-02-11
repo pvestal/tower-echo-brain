@@ -1,14 +1,14 @@
 #!/bin/bash
 # Tower Echo Brain startup script with Vault integration
 
-# Source Vault token
-export VAULT_ADDR="http://127.0.0.1:8200"
-export VAULT_TOKEN="hvs.yI6XmqUjZABfcJTxJHzTaruB"
+# Source Vault token from environment (set in systemd unit or .env)
+export VAULT_ADDR="${VAULT_ADDR:-http://127.0.0.1:8200}"
+# VAULT_TOKEN should be set via systemd Environment or sourced from a secure file
 
-# Set database password from environment
-export PGPASSWORD="RP78eIrW7cI2jYvL5akt1yurE"
-export DATABASE_URL="postgresql://patrick:RP78eIrW7cI2jYvL5akt1yurE@localhost:5432/echo_brain"
-export DB_PASSWORD="RP78eIrW7cI2jYvL5akt1yurE"
+# Database credentials from environment
+export DB_PASSWORD="${DB_PASSWORD:?DB_PASSWORD must be set}"
+export PGPASSWORD="$DB_PASSWORD"
+export DATABASE_URL="postgresql://patrick:${DB_PASSWORD}@localhost:5432/echo_brain"
 
 # Echo Brain configuration
 export ECHO_BRAIN_PORT=8309
