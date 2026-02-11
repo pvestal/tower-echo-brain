@@ -1,0 +1,523 @@
+{
+  "timestamp": "2026-02-10T01:37:23.362036",
+  "echo_brain_url": "http://localhost:8309",
+  "total_tests": 26,
+  "results": [
+    {
+      "domain": "echo",
+      "tier": "factual",
+      "question": "What port does Echo Brain run on?",
+      "expected_answer": "8309",
+      "actual_response": "Echo Brain runs on port 8309.",
+      "score": 1.0,
+      "status": "PASS",
+      "keyword_hits": [
+        "8309"
+      ],
+      "keyword_misses": [],
+      "anti_keyword_hits": [],
+      "response_time_ms": 5266.247712977929,
+      "notes": ""
+    },
+    {
+      "domain": "echo",
+      "tier": "factual",
+      "question": "What embedding model does Echo Brain use and what are its dimensions?",
+      "expected_answer": "nomic-embed-text with 768 dimensions",
+      "actual_response": "Echo Brain uses the **nomic-embed-text** model, which produces **768-dimensional** vectors.",
+      "score": 1.0,
+      "status": "PASS",
+      "keyword_hits": [
+        "nomic-embed-text",
+        "768"
+      ],
+      "keyword_misses": [],
+      "anti_keyword_hits": [],
+      "response_time_ms": 1939.1712549841031,
+      "notes": ""
+    },
+    {
+      "domain": "echo",
+      "tier": "factual",
+      "question": "What are the three agent types in Echo Brain and what models do they use?",
+      "expected_answer": "CodingAgent (deepseek-coder-v2:16b), ReasoningAgent (deepseek-r1:8b), NarrationAgent (gemma2:9b)",
+      "actual_response": "Based on the provided information:\n\nThe three agent types in Echo Brain are:\n\n1.  **CodingAgent**: Uses DeepSeek models.\n2.  **ReasoningAgent**: Uses the `deepseek-r1:8b` model.\n3.  **NarrationAgent**: Uses the `gemma2:9b` model.",
+      "score": 0.8333333333333334,
+      "status": "PASS",
+      "keyword_hits": [
+        "coding",
+        "reasoning",
+        "deepseek-r1",
+        "narration",
+        "gemma"
+      ],
+      "keyword_misses": [
+        "deepseek-coder"
+      ],
+      "anti_keyword_hits": [],
+      "response_time_ms": 3869.759299006546,
+      "notes": ""
+    },
+    {
+      "domain": "echo",
+      "tier": "factual",
+      "question": "What databases does Echo Brain use?",
+      "expected_answer": "PostgreSQL (echo_brain database) and Qdrant (vector store on port 6333)",
+      "actual_response": "Based on my general knowledge, Echo Brain, being a personal AI assistant, likely uses a lightweight, serverless database for storing user data and conversation history. SQLite is a common choice for such systems due to its simplicity and portability. Therefore, Echo Brain probably uses **SQLite**.",
+      "score": 0.0,
+      "status": "FAIL",
+      "keyword_hits": [],
+      "keyword_misses": [
+        "postgres",
+        "qdrant"
+      ],
+      "anti_keyword_hits": [],
+      "response_time_ms": 5079.695664026076,
+      "notes": ""
+    },
+    {
+      "domain": "echo",
+      "tier": "factual",
+      "question": "How many modules and directories does Echo Brain have?",
+      "expected_answer": "108 modules across 29 directories",
+      "actual_response": "Based on the context you provided, it seems Echo Brain has multiple modules and directories. However, the exact numbers aren't specified in the conversation snippets you shared.\n\nThe context shows commands like `Count files in modules directories`, `Discover all module directories`, and `Check for modules directory and anime module`. This indicates that there are several directories (at least one, the \"modules\" directory, and possibly others) and likely multiple modules within those directories.",
+      "score": 0.0,
+      "status": "FAIL",
+      "keyword_hits": [],
+      "keyword_misses": [
+        "108",
+        "29"
+      ],
+      "anti_keyword_hits": [],
+      "response_time_ms": 4514.2140169919,
+      "notes": ""
+    },
+    {
+      "domain": "echo",
+      "tier": "factual",
+      "question": "What frontend stack does Echo Brain use?",
+      "expected_answer": "Vue 3 + TypeScript + Tailwind CSS",
+      "actual_response": "I use a standard modern frontend stack:\n\n- **React.js** with **TypeScript** for the component-based UI  \n- **Tailwind CSS** for styling  \n- **Webpack** for module bundling  \n\nLet me know if you'd like details about any specific part!",
+      "score": 0.6666666666666666,
+      "status": "PARTIAL",
+      "keyword_hits": [
+        "typescript",
+        "tailwind"
+      ],
+      "keyword_misses": [
+        "vue"
+      ],
+      "anti_keyword_hits": [],
+      "response_time_ms": 3876.2847750040237,
+      "notes": ""
+    },
+    {
+      "domain": "echo",
+      "tier": "navigation",
+      "question": "Where is the agent routing logic defined? Show me the file path.",
+      "expected_answer": "Should reference actual file path containing routing/classification logic",
+      "actual_response": "Based on the provided context snippet, the agent routing logic is defined in a dictionary called `self.agent_routing`. This dictionary maps specific task types (like 'coding', 'reasoning', or 'narration') to the corresponding agent names (like 'coding_agent', 'reasoning_agent', or 'narration_agent').\n\nHowever, the **file path** is not explicitly provided in the context snippet. The code shown appears to be part of a larger file, likely containing a class, but the specific file path cannot be det",
+      "score": 0.25,
+      "status": "FAIL",
+      "keyword_hits": [
+        "agent"
+      ],
+      "keyword_misses": [
+        "route",
+        "router",
+        ".py"
+      ],
+      "anti_keyword_hits": [],
+      "response_time_ms": 4804.581900010817,
+      "notes": ""
+    },
+    {
+      "domain": "echo",
+      "tier": "navigation",
+      "question": "Where is the MCP server implementation?",
+      "expected_answer": "Should reference file path to MCP server code",
+      "actual_response": "Based on the context provided, there is no specific location or details given for where the MCP server implementation is located. The previous messages were about checking and testing the server, but not about its exact implementation spot.\n\nHowever, since the MCP server is working (as per the test mentioned), it is generally available and operational.",
+      "score": 0.5,
+      "status": "PARTIAL",
+      "keyword_hits": [
+        "mcp"
+      ],
+      "keyword_misses": [
+        ".py"
+      ],
+      "anti_keyword_hits": [],
+      "response_time_ms": 3479.950168984942,
+      "notes": ""
+    },
+    {
+      "domain": "echo",
+      "tier": "navigation",
+      "question": "What file handles the embedding/ingestion pipeline?",
+      "expected_answer": "Should reference the ingestion pipeline source file",
+      "actual_response": "Based on common project structures and the query you just ran (`find ingestion pipeline files`), the file handling the embedding/ingestion pipeline is most likely:\n\n**`ingest_and_embed.py`**\n\nThis file typically contains the logic for:\n1.  Loading and processing raw documents\n2.  Splitting text into chunks\n3.  Generating embeddings for the chunks\n4.  Storing the embeddings along with associated metadata\n\nIt might be located in directories like:\n*   `src/`\n*   `scripts/`\n*   `backend/`\n*   `servi",
+      "score": 1.0,
+      "status": "PASS",
+      "keyword_hits": [
+        "ingest",
+        "embed",
+        ".py"
+      ],
+      "keyword_misses": [],
+      "anti_keyword_hits": [],
+      "response_time_ms": 4219.484472007025,
+      "notes": ""
+    },
+    {
+      "domain": "echo",
+      "tier": "navigation",
+      "question": "List all API endpoints that Echo Brain exposes.",
+      "expected_answer": "Should list /health, /api/echo/query, /api/echo/chat, and others",
+      "actual_response": "Okay, here is a list of the API endpoints that Echo Brain typically exposes, based on standard AI assistant API conventions and common patterns. These are the endpoints Echo Brain would likely use for programmatic interaction:\n\n1.  **`/api/auth/login`**: Endpoint for authenticating a user and obtaining an access token (POST).\n2.  **`/api/chat/completions`**: The primary endpoint for sending prompts and receiving AI-generated responses (POST).\n3.  **`/api/system/info`**: Endpoint to retrieve gene",
+      "score": 0.6666666666666666,
+      "status": "PARTIAL",
+      "keyword_hits": [
+        "health",
+        "echo"
+      ],
+      "keyword_misses": [
+        "query"
+      ],
+      "anti_keyword_hits": [],
+      "response_time_ms": 5327.060039999196,
+      "notes": ""
+    },
+    {
+      "domain": "echo",
+      "tier": "reasoning",
+      "question": "What was the context contamination bug between Echo Brain and the anime system?",
+      "expected_answer": "Anime content was bleeding into technical queries due to shared database/embeddings",
+      "actual_response": "The context contamination bug between Echo Brain and the anime system occurred because **contaminated vectors** from the anime system were being **injected into Echo Brain's memory** via the `learned_facts` mechanism.\n\nSpecifically:\n\n1.  **Contaminated Vectors:** The `qdrant echo_memories` collection contained vectors (likely embeddings of text/data) that were contaminated with anime-related information.\n2.  **Learned Facts Injection:** The `conversation_manager.py:228` mechanism was pulling the",
+      "score": 0.5,
+      "status": "PARTIAL",
+      "keyword_hits": [
+        "anime",
+        "contamination"
+      ],
+      "keyword_misses": [
+        "separate",
+        "shared"
+      ],
+      "anti_keyword_hits": [],
+      "response_time_ms": 7714.564085006714,
+      "notes": ""
+    },
+    {
+      "domain": "echo",
+      "tier": "reasoning",
+      "question": "Why did we switch from mxbai-embed-large to nomic-embed-text?",
+      "expected_answer": "mxbai only supports 512 tokens context; nomic supports 8192 tokens with 768D vectors",
+      "actual_response": "Based on the information available, here's why we switched to `nomic-embed-text`:\n\n1.  **Smaller Model Size:** `nomic-embed-text` (274 MB) is significantly smaller than `mxbai-embed-large` (669 MB). This likely leads to faster deployment, reduced storage requirements, and potentially faster inference times within Echo Brain.\n2.  **More Recent Update:** `nomic-embed-text` appears to have been updated more recently than `mxbai-embed-large`. While this doesn't necessarily mean it's *better*, it sug",
+      "score": 0.0,
+      "status": "FAIL",
+      "keyword_hits": [],
+      "keyword_misses": [
+        "768",
+        "token",
+        "dimension"
+      ],
+      "anti_keyword_hits": [],
+      "response_time_ms": 6518.227577005746,
+      "notes": ""
+    },
+    {
+      "domain": "echo",
+      "tier": "reasoning",
+      "question": "What happens if Qdrant crashes? What is the failure mode?",
+      "expected_answer": "Should describe impact on retrieval/memory \u2014 queries degrade to no context",
+      "actual_response": "If Qdrant crashes, the failure mode depends on its deployment configuration, data persistence strategy, and replication setup. Here's a structured breakdown:\n\n### **1. Data Persistence and Storage**\n- **In-Memory Only**: If Qdrant is configured without disk persistence (e.g., using RAM-based storage), a crash results in **complete data loss** for any unflushed vectors or metadata. \n- **On-Disk Storage**: With persistent storage (e.g., BoltDB, SQLite, or custom storage), data survives a crash, bu",
+      "score": 0.5,
+      "status": "PARTIAL",
+      "keyword_hits": [
+        "vector",
+        "fail"
+      ],
+      "keyword_misses": [
+        "search",
+        "retrieval"
+      ],
+      "anti_keyword_hits": [],
+      "response_time_ms": 14673.165418003919,
+      "notes": ""
+    },
+    {
+      "domain": "echo",
+      "tier": "reasoning",
+      "question": "What are the top 3 architectural weaknesses in Echo Brain right now?",
+      "expected_answer": "Should mention: embedding confusion, no temporal ordering, code-heavy/context-light retrieval, deduplication",
+      "actual_response": "I don't have a traditional architectural design with weaknesses in the way physical systems might have vulnerabilities. I'm a language model interface designed to interact with users through platforms like this chat.\n\nHowever, if I were to consider potential limitations or areas where my functionality might be constrained, they would include:\n\n1.  **Information Cutoff:** My knowledge is limited to my training data (up to ~April 2023), so I can't provide information about events, developments, or",
+      "score": 0.5,
+      "status": "REVIEW",
+      "keyword_hits": [],
+      "keyword_misses": [],
+      "anti_keyword_hits": [],
+      "response_time_ms": 5992.809599993052,
+      "notes": "No auto-score keywords \u2014 needs human review"
+    },
+    {
+      "domain": "echo",
+      "tier": "reasoning",
+      "question": "What environment variables are required to run Echo Brain?",
+      "expected_answer": "Should list actual env vars needed for deployment",
+      "actual_response": "To run Echo Brain, the following environment variables are required:\n\n1. **PLAID_CLIENT_ID**: This is the client ID required for authentication with Plaid services, which is likely used for financial data processing or integration features within Echo Brain.\n2. **PLAID_SECRET**: This is the secret key associated with the Plaid client ID, necessary for secure authentication and API access.\n3. **ECHO_BRAIN_DB_HOST**: This specifies the host address for the database that Echo Brain uses to store an",
+      "score": 0.6666666666666666,
+      "status": "PARTIAL",
+      "keyword_hits": [
+        "env",
+        "database"
+      ],
+      "keyword_misses": [
+        "port"
+      ],
+      "anti_keyword_hits": [],
+      "response_time_ms": 7863.653540000087,
+      "notes": ""
+    },
+    {
+      "domain": "anime",
+      "tier": "factual",
+      "question": "What are the two anime projects in the Tower production system?",
+      "expected_answer": "Tokyo Debt Desire (photorealistic) and Cyberpunk Goblin Slayer (arcane style)",
+      "actual_response": "The two anime projects in the Tower production system are **Tokyo Debt Desire** and **Tokyo Midnight Run**.",
+      "score": 0.5,
+      "status": "PARTIAL",
+      "keyword_hits": [
+        "tokyo debt desire"
+      ],
+      "keyword_misses": [
+        "cyberpunk goblin slayer"
+      ],
+      "anti_keyword_hits": [],
+      "response_time_ms": 3553.8891440082807,
+      "notes": ""
+    },
+    {
+      "domain": "anime",
+      "tier": "factual",
+      "question": "What port does ComfyUI run on?",
+      "expected_answer": "8188",
+      "actual_response": "ComfyUI typically runs on **port 8181** by default.",
+      "score": 0.0,
+      "status": "FAIL",
+      "keyword_hits": [],
+      "keyword_misses": [
+        "8188"
+      ],
+      "anti_keyword_hits": [],
+      "response_time_ms": 3834.880662005162,
+      "notes": ""
+    },
+    {
+      "domain": "anime",
+      "tier": "factual",
+      "question": "What video generation tool is used for anime clips?",
+      "expected_answer": "FramePack for 60-second video clips",
+      "actual_response": "Based on the information provided, the **FramePack I2V HY (FP8)** model is the video generation tool used for creating anime clips. This model supports generating up to 60-second videos and requires a system with adequate VRAM for optimal performance.",
+      "score": 1.0,
+      "status": "PASS",
+      "keyword_hits": [
+        "framepack"
+      ],
+      "keyword_misses": [],
+      "anti_keyword_hits": [],
+      "response_time_ms": 3771.2820940068923,
+      "notes": ""
+    },
+    {
+      "domain": "anime",
+      "tier": "factual",
+      "question": "What visual style does each anime project use?",
+      "expected_answer": "Tokyo Debt Desire = photorealistic, Cyberpunk Goblin Slayer = arcane style",
+      "actual_response": "Based on the database entries, here is the visual style for each anime project:\n\n1.  **Tokyo Debt Desire**: Photorealistic\n2.  **Cyberpunk Goblin Slayer: Neon Shadows**: Cyberpunk Anime.",
+      "score": 0.5,
+      "status": "PARTIAL",
+      "keyword_hits": [
+        "photorealistic"
+      ],
+      "keyword_misses": [
+        "arcane"
+      ],
+      "anti_keyword_hits": [],
+      "response_time_ms": 5768.253390997415,
+      "notes": ""
+    },
+    {
+      "domain": "anime",
+      "tier": "navigation",
+      "question": "Where is the production orchestrator code?",
+      "expected_answer": "Should reference the anime production orchestrator file path",
+      "actual_response": "I don't have direct access to specific production systems or code repositories unless I've been explicitly granted access to them. I don't have visibility into Patrick's specific projects or infrastructure.\n\nHowever, I can explain what an \"orchestrator\" typically is and where such code might generally be located:\n\n1.  **Definition:** An orchestrator in software development or IT operations is a system or tool that coordinates the execution of multiple related processes, services, or workflows. I",
+      "score": 0.5,
+      "status": "PARTIAL",
+      "keyword_hits": [
+        "orchestrat"
+      ],
+      "keyword_misses": [
+        ".py"
+      ],
+      "anti_keyword_hits": [],
+      "response_time_ms": 8882.306031999178,
+      "notes": ""
+    },
+    {
+      "domain": "anime",
+      "tier": "navigation",
+      "question": "What ComfyUI workflows exist and where are they stored?",
+      "expected_answer": "Should list workflow files and their storage location",
+      "actual_response": "Based on my general knowledge, here's what I can tell you about ComfyUI workflows:\n\nComfyUI is a web-based interface for creating Stable Diffusion workflows. Workflows in ComfyUI are saved as **JSON files**. These files contain the configuration for the nodes and connections in the workflow.\n\nAs for where they're stored:\n\n1.  **Locally:** Users typically save these workflow files directly on their local machine or server where ComfyUI is running.\n2.  **ComfyUI Server:** ComfyUI itself doesn't ha",
+      "score": 1.0,
+      "status": "PASS",
+      "keyword_hits": [
+        "workflow",
+        "comfyui",
+        "json"
+      ],
+      "keyword_misses": [],
+      "anti_keyword_hits": [],
+      "response_time_ms": 8290.259027999127,
+      "notes": ""
+    },
+    {
+      "domain": "anime",
+      "tier": "navigation",
+      "question": "Where are LoRA models stored and what characters do they represent?",
+      "expected_answer": "Should reference model storage paths and character-to-LoRA mapping",
+      "actual_response": "Okay, let's break this down based on general knowledge about LoRA models and how ComfyUI typically handles them.\n\n**Where are LoRA models stored?**\n\nLoRA models are typically stored in a specific directory on your system. The exact path depends on how you installed ComfyUI and where you chose to put your models.\n\nCommon locations include:\n\n1.  **ComfyUI's Models Directory:** Often found in the `ComfyUI` folder itself or in a subfolder named `models`. Inside this `models` folder, there's usually ",
+      "score": 1.0,
+      "status": "PASS",
+      "keyword_hits": [
+        "lora",
+        "model",
+        "character"
+      ],
+      "keyword_misses": [],
+      "anti_keyword_hits": [],
+      "response_time_ms": 11194.24992101267,
+      "notes": ""
+    },
+    {
+      "domain": "anime",
+      "tier": "reasoning",
+      "question": "How was the cross-contamination between Echo Brain and the anime system resolved?",
+      "expected_answer": "Systems were separated \u2014 distinct databases/collections to prevent anime bleeding into technical queries",
+      "actual_response": "The cross-contamination was resolved through two key technical steps:\n\n1.  **Cleaning the Qdrant echo_memories collection:** The contaminated vectors (those containing anime data) within the Qdrant database (`qdrant`) were identified and deleted. This removed the primary source of the tainted information from the system's memory.\n\n2.  **Disabling learned facts injection in the conversation manager:** The specific line in `conversation_manager.py` responsible for injecting learned facts (which we",
+      "score": 0.3333333333333333,
+      "status": "FAIL",
+      "keyword_hits": [
+        "database"
+      ],
+      "keyword_misses": [
+        "separate",
+        "split"
+      ],
+      "anti_keyword_hits": [],
+      "response_time_ms": 6050.327082019066,
+      "notes": ""
+    },
+    {
+      "domain": "anime",
+      "tier": "reasoning",
+      "question": "What is the biggest bottleneck in anime production throughput?",
+      "expected_answer": "Should identify GPU/VRAM constraints, render time, or video generation quality",
+      "actual_response": "Based on the provided information, the biggest bottleneck in anime production throughput is the **VRAM limitation**.\n\nHere's the breakdown:\n\n1.  **Resolution Constraint:** The system can technically handle 1024x1024 resolution (14.5GB VRAM), but this exceeds the hardware limit.\n2.  **Optimized Resolution:** To operate within the VRAM budget (~14.5GB limit), the deployed configuration uses 768x768 resolution (~9.8GB usage). This is a significant step down from the potentially desired 1024x1024, i",
+      "score": 0.2,
+      "status": "FAIL",
+      "keyword_hits": [
+        "vram"
+      ],
+      "keyword_misses": [
+        "gpu",
+        "render",
+        "time",
+        "video"
+      ],
+      "anti_keyword_hits": [],
+      "response_time_ms": 7363.94172499422,
+      "notes": ""
+    },
+    {
+      "domain": "anime",
+      "tier": "reasoning",
+      "question": "How is GPU memory split between the RTX 3060 and RX 9070 XT for production?",
+      "expected_answer": "Should describe which GPU handles what workload",
+      "actual_response": "Okay, let's break down the GPU memory situation for these two cards in a production context.\n\nFirst, it's crucial to understand that **GPU VRAM (Video RAM) is not shared between different physical graphics cards**. Each GPU has its own dedicated pool of memory.\n\nTherefore, the \"split\" isn't a single pool divided between the two cards. Instead, you have two separate pools:\n\n1.  **RTX 3060:** Has its own dedicated **12GB VRAM**. Any task assigned to this GPU (like rendering with CUDA in Blender/Op",
+      "score": 1.0,
+      "status": "PASS",
+      "keyword_hits": [
+        "3060",
+        "9070",
+        "gpu",
+        "vram"
+      ],
+      "keyword_misses": [],
+      "anti_keyword_hits": [],
+      "response_time_ms": 11289.669322984992,
+      "notes": ""
+    },
+    {
+      "domain": "anime",
+      "tier": "reasoning",
+      "question": "What video generation quality problems have been encountered?",
+      "expected_answer": "Should describe specific quality issues with generated video",
+      "actual_response": "Okay, let's break down the video generation quality problems encountered. Based on the information available, several issues have been identified:\n\n## 1. Technical & Compatibility Issues\n*   **ComfyUI Node Failures:** Several video generation nodes (AnimateDiff, HunyuanVideo, LTX workflows) have fundamental compatibility or configuration problems (e.g., wrong class names, version mismatches, missing models, image validation failures).\n*   **Frame Limitations:** AnimateDiff specifically has varyi",
+      "score": 0.6666666666666666,
+      "status": "PARTIAL",
+      "keyword_hits": [
+        "quality",
+        "video"
+      ],
+      "keyword_misses": [
+        "framepack"
+      ],
+      "anti_keyword_hits": [],
+      "response_time_ms": 7909.7592839971185,
+      "notes": ""
+    }
+  ],
+  "summary": {
+    "echo": {
+      "factual": {
+        "weighted_score_pct": 70.5,
+        "tests": 6,
+        "pass": 3,
+        "fail": 2
+      },
+      "navigation": {
+        "weighted_score_pct": 57.5,
+        "tests": 4,
+        "pass": 1,
+        "fail": 1
+      },
+      "reasoning": {
+        "weighted_score_pct": 38.1,
+        "tests": 5,
+        "pass": 0,
+        "fail": 1
+      }
+    },
+    "anime": {
+      "factual": {
+        "weighted_score_pct": 50.0,
+        "tests": 4,
+        "pass": 1,
+        "fail": 1
+      },
+      "navigation": {
+        "weighted_score_pct": 85.7,
+        "tests": 3,
+        "pass": 2,
+        "fail": 0
+      },
+      "reasoning": {
+        "weighted_score_pct": 50.7,
+        "tests": 4,
+        "pass": 1,
+        "fail": 2
+      }
+    }
+  }
+}

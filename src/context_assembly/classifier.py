@@ -81,7 +81,8 @@ class DomainClassifier:
                     r"\b(architecture|modules|directories|retriever|ingestion)\b",
                     r"\b(context[\s_]assembly|model[\s_]routing|authoritative)\b",
                     r"\b(vue|typescript|tailwind|react)\b",
-                    r"\b(database|databases|postgres|echo_memory)\b"
+                    r"\b(database|databases|postgres|echo_memory)\b",
+                    r"\b(voice|tts|stt|whisper|piper|speech|audio|microphone|synthesize)\b"
                 ],
                 "negative_signals": [r"\b(anime|character|scene|mei|goblin)\b"],
                 "weight": 1.5  # Higher weight for Echo Brain self-knowledge

@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-02-09T04:42:08.841253",
+  "total": 7,
+  "passed": 7,
+  "failed": 0,
+  "success_rate": 100.0,
+  "results": [
+    {
+      "question": "What vehicles does Patrick own?",
+      "description": "Patrick's 2022 Toyota Tundra 1794 Edition",
+      "passed": true,
+      "matched_term": "tundra",
+      "answer_length": 78
+    },
+    {
+      "question": "What GPUs are in Tower?",
+      "description": "RTX 3060 12GB and RX 9070 XT 16GB",
+      "passed": true,
+      "matched_term": "3060",
+      "answer_length": 346
+    },
+    {
+      "question": "What embedding model does Echo Brain use?",
+      "description": "nomic-embed-text with 768 dimensions",
+      "passed": true,
+      "matched_term": "nomic-embed-text",
+      "answer_length": 252
+    },
+    {
+      "question": "What anime projects is Patrick working on?",
+      "description": "Tokyo Debt Desire and/or Cyberpunk Goblin Slayer",
+      "passed": true,
+      "matched_term": "tokyo debt desire",
+      "answer_length": 1265
+    },
+    {
+      "question": "What RV does Patrick have?",
+      "description": "2021 Sundowner Trailblazer 2286TB",
+      "passed": true,
+      "matched_term": "sundowner",
+      "answer_length": 100
+    },
+    {
+      "question": "What processor does Tower have?",
+      "description": "AMD Ryzen 9 24-core",
+      "passed": true,
+      "matched_term": "ryzen 9",
+      "answer_length": 61
+    },
+    {
+      "question": "How much RAM does Tower have?",
+      "description": "96GB DDR6",
+      "passed": true,
+      "matched_term": "96",
+      "answer_length": 39
+    }
+  ]
+}

@@ -2,8 +2,8 @@
 
 **Personal AI Assistant System — Self-Hosted Knowledge Layer & Agent Orchestrator**
 
-Version: **0.4.0** (Phase 2d: Contract Monitor & Self-Review System)
-Last Updated: 2026-02-10
+Version: **0.5.0** (Voice Interface, Frontend Dashboard, Test Infrastructure)
+Last Updated: 2026-02-11
 
 ---
 
@@ -21,110 +21,140 @@ The long-term vision is a system that:
 
 | Capability | Status | Details |
 |-----------|--------|---------|
-| Vector search over personal data | ✅ Working | 61,932 vectors in Qdrant (768D nomic-embed-text) |
-| Fact extraction from vectors | ✅ Running | 6,129 structured facts stored in PostgreSQL |
-| Conversation ingestion | ✅ Running | Watches Claude conversation exports, 60 min cycles |
-| Knowledge graph building | ✅ Running | Connections between facts, conflict detection |
-| Domain knowledge ingestion | ✅ Phase 2c | Anime production, ComfyUI workflows, models |
-| Reasoning pipeline | ✅ Phase 2c | CLASSIFY→EXTRACT→CONNECT→REASON→ACT |
-| File system monitoring | ✅ Phase 2c | Watches models, workflows, outputs (10 min) |
-| Self-awareness (own code) | ✅ Phase 2c | Codebase indexing, log monitoring, self-testing |
-| Self-improvement proposals | ✅ Phase 2c | Detect issues → reason about cause → propose fix |
-| Notification system | ✅ Phase 2c | Conflicts, new files, important changes |
-| Intelligence layer (ask/query) | ⚠️ Partial | Works but context assembly has quality gaps |
-| Voice interface | ❌ Planned | Wyoming/ESP32 satellite architecture designed |
-| Home Assistant integration | ❌ Planned | Phase 3+ |
-| Web dashboard (Vue3) | ❌ Planned | Frontend exists but limited |
-
-## Contract Monitor (New in 0.4.0)
-
-Echo Brain now includes a self-review system that continuously validates API contracts between frontend and backend:
-
-- **Runs every 5 minutes** - Tests 15 critical API endpoints
-- **Tracks contract health** - Monitors response times, status codes, and data structure
-- **Self-healing** - Detects breaking changes and API drift
-- **Dashboard integration** - Contract health visible in `/api/echo/health/detailed`
-
-Access contract diagnostics:
-- `GET /api/echo/diagnostics/contracts` - Current status and issues
-- `GET /api/echo/diagnostics/contracts/history` - Trend data
-- `POST /api/echo/diagnostics/contracts/run` - Trigger manual test
-- `GET /api/echo/diagnostics/contracts/issues` - Open issues only
+| Vector search over personal data | ✅ Working | 176,566 vectors in Qdrant (768D nomic-embed-text) |
+| Fact extraction from vectors | ✅ Running | 2,558 structured facts in PostgreSQL |
+| Conversation ingestion | ✅ Running | Watches `~/.claude/projects/`, 10 min cycles |
+| Knowledge graph building | ✅ Running | Connections between facts, conflict detection (daily) |
+| Domain knowledge ingestion | ✅ Running | Anime production, ComfyUI workflows, models (60 min) |
+| Reasoning pipeline | ✅ Working | CLASSIFY → RETRIEVE → REASON → RESPOND |
+| File system monitoring | ✅ Running | Watches models, workflows, outputs (10 min) |
+| Self-awareness (own code) | ✅ Running | Codebase indexing (6h), log monitoring (15 min), self-testing (60 min) |
+| Self-improvement proposals | ✅ Running | Detect issues → reason → propose fix (2h, REVIEW gated) |
+| Self-diagnostic system | ✅ Running | Comprehensive health checks, contract monitoring (5 min) |
+| Voice interface (STT + TTS) | ✅ Working | Whisper large-v3 (CUDA) + Piper TTS, WebSocket streaming |
+| Web dashboard (Vue 3) | ✅ Working | Voice panel, system view, memory search, endpoint tester |
+| MCP server | ✅ Working | Model Context Protocol at `/mcp` for Claude integration |
+| Intelligence layer (ask/query) | ✅ Working | `/api/echo/ask` with context retrieval and LLM reasoning |
+| Contract test suite | ✅ Running | Pact V4 consumer contracts + pytest smoke tests |
+| Home Assistant integration | -- Planned | Phase 4+ |
 
 ## Architecture Overview
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                     TOWER SERVER                                 │
-│  AMD Ryzen 9 24-core │ 96GB DDR6 │ RTX 3060 12GB │ RX 9070 XT  │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  ┌─────────────────────────────────────────────────────────┐    │
-│  │              ECHO BRAIN (port 8309)                      │    │
-│  │                                                          │    │
-│  │  FastAPI Application                                     │    │
-│  │  ├── /api/echo/ask             (intelligence queries)    │    │
-│  │  ├── /api/echo/memory          (memory management)       │    │
-│  │  ├── /api/echo/search/domain   (domain knowledge)        │    │
-│  │  ├── /api/echo/knowledge/facts (extracted facts)         │    │
-│  │  ├── /api/echo/knowledge/stats (knowledge graph stats)   │    │
-│  │  ├── /api/echo/notifications   (notification queue)      │    │
-│  │  ├── /api/autonomous/*         (goal/task management)    │    │
-│  │  ├── /api/workers/status       (worker monitoring)       │    │
-│  │  └── /health                   (basic health check)      │    │
-│  │                                                          │    │
-│  │  Worker Scheduler (11 workers)                           │    │
-│  │  ├── file_watcher           (10 min)    ← Phase 2c      │    │
-│  │  ├── log_monitor            (15 min)                     │    │
-│  │  ├── fact_extraction        (30 min)                     │    │
-│  │  ├── reasoning_worker       (30 min)    ← Phase 2c      │    │
-│  │  ├── conversation_watcher   (60 min)                     │    │
-│  │  ├── domain_ingestor        (60 min)    ← Phase 2c      │    │
-│  │  ├── codebase_indexer       (60 min)                     │    │
-│  │  ├── schema_indexer         (60 min)                     │    │
-│  │  ├── self_test_runner       (60 min)                     │    │
-│  │  ├── improvement_engine     (2 hours)                    │    │
-│  │  └── knowledge_graph        (daily)                      │    │
-│  │                                                          │    │
-│  │  Intelligence Layer                                      │    │
-│  │  ├── Query Classification                                │    │
-│  │  ├── Context Assembly (ParallelRetriever)                │    │
-│  │  ├── LLM Reasoning (Ollama)                              │    │
-│  │  └── Response Synthesis                                  │    │
-│  └─────────────────────────────────────────────────────────┘    │
-│                                                                  │
-│  ┌──────────────┐  ┌──────────────┐  ┌───────────────────┐     │
-│  │  PostgreSQL   │  │   Qdrant     │  │     Ollama        │     │
-│  │  (echo_brain) │  │  (6333)      │  │    (11434)        │     │
-│  │  35+ tables   │  │  echo_memory │  │  mistral:7b       │     │
-│  │  - knowledge  │  │  768D vecs   │  │  nomic-embed-text │     │
-│  │    facts      │  │  124,872 pts │  │  gemma2:9b        │     │
-│  └──────────────┘  └──────────────┘  └───────────────────┘     │
-│                                                                  │
-│  ┌──────────────────────────────────────────────────────────┐   │
-│  │  ANIME PRODUCTION SYSTEM (secondary)                      │   │
-│  │  ├── ComfyUI (port 8188)                                 │   │
-│  │  ├── tower_anime database                                 │   │
-│  │  └── LoRA training pipeline                               │   │
-│  └──────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│                      TOWER SERVER                                │
+│  AMD Ryzen 9 24-core | 96GB DDR6 | RTX 3060 12GB | RX 9070 XT  │
+├──────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│  ┌───────────────────────────────────────────────────────────┐   │
+│  │               ECHO BRAIN (port 8309)                       │   │
+│  │                                                            │   │
+│  │  FastAPI Application                                       │   │
+│  │  ├── /health                    (basic health)             │   │
+│  │  ├── /mcp                       (Model Context Protocol)   │   │
+│  │  ├── /api/echo/ask              (intelligence queries)     │   │
+│  │  ├── /api/echo/memory/*         (search, ingest, status)   │   │
+│  │  ├── /api/echo/intelligence/*   (reasoning, code, system)  │   │
+│  │  ├── /api/echo/knowledge/*      (facts, stats)             │   │
+│  │  ├── /api/echo/voice/*          (STT, TTS, WebSocket)      │   │
+│  │  ├── /api/echo/reasoning/*      (analyze, debug)           │   │
+│  │  ├── /api/echo/self-test/*      (quick, full)              │   │
+│  │  ├── /api/echo/diagnostics/*    (contracts, issues)        │   │
+│  │  ├── /api/echo/notifications    (notification queue)       │   │
+│  │  ├── /api/echo/proposals/*      (improvement proposals)    │   │
+│  │  ├── /api/autonomous/*          (goal/task management)     │   │
+│  │  ├── /api/workers/status        (worker monitoring)        │   │
+│  │  └── /api/pipeline/*            (pipeline health/query)    │   │
+│  │                                                            │   │
+│  │  Worker Scheduler (12 workers)                             │   │
+│  │  ├── contract_monitor       (5 min)                        │   │
+│  │  ├── conversation_watcher   (10 min)                       │   │
+│  │  ├── file_watcher           (10 min)                       │   │
+│  │  ├── log_monitor            (15 min)                       │   │
+│  │  ├── fact_extraction        (30 min)                       │   │
+│  │  ├── reasoning_worker       (30 min)                       │   │
+│  │  ├── domain_ingestor        (60 min)                       │   │
+│  │  ├── self_test_runner       (60 min)                       │   │
+│  │  ├── improvement_engine     (2 hours)                      │   │
+│  │  ├── codebase_indexer       (6 hours)                      │   │
+│  │  ├── schema_indexer         (daily)                        │   │
+│  │  └── knowledge_graph        (daily)                        │   │
+│  │                                                            │   │
+│  │  Voice Service                                             │   │
+│  │  ├── STT: Whisper large-v3 (CUDA, float16)                │   │
+│  │  ├── TTS: Piper en_US-lessac-medium (22050 Hz)            │   │
+│  │  ├── VAD: Silero voice activity detection                  │   │
+│  │  └── WebSocket: Real-time bidirectional streaming          │   │
+│  │                                                            │   │
+│  │  Intelligence Layer                                        │   │
+│  │  ├── Query Classification                                  │   │
+│  │  ├── Context Assembly (ParallelRetriever)                  │   │
+│  │  ├── LLM Reasoning (Ollama mistral:7b)                    │   │
+│  │  └── Response Synthesis                                    │   │
+│  │                                                            │   │
+│  │  Frontend (Vue 3 + TypeScript, port 8311)                  │   │
+│  │  ├── Voice Panel (record, playback, mute, debug)           │   │
+│  │  ├── System View (diagnostics, workers, self-test)         │   │
+│  │  ├── Memory Search (vector search UI)                      │   │
+│  │  ├── Ask View (intelligence queries)                       │   │
+│  │  └── Endpoint Tester (API explorer)                        │   │
+│  └───────────────────────────────────────────────────────────┘   │
+│                                                                   │
+│  ┌───────────────┐  ┌───────────────┐  ┌──────────────────┐     │
+│  │  PostgreSQL    │  │   Qdrant      │  │     Ollama       │     │
+│  │  (echo_brain)  │  │  (6333)       │  │    (11434)       │     │
+│  │  - knowledge   │  │  echo_memory  │  │  mistral:7b      │     │
+│  │    facts       │  │  768D vecs    │  │  nomic-embed-text│     │
+│  │  - autonomous  │  │  176,566 pts  │  │  gemma2:9b       │     │
+│  │  - self-aware  │  │               │  │  deepseek-r1:8b  │     │
+│  │  - proposals   │  │  story_bible  │  │  deepseek-coder  │     │
+│  └───────────────┘  └───────────────┘  └──────────────────┘     │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
 See [ARCHITECTURE.md](./docs/ARCHITECTURE.md) for detailed component documentation.
 See [ROADMAP.md](./docs/ROADMAP.md) for the full development plan.
 See [CHANGELOG.md](./CHANGELOG.md) for version history.
 
-## Agent System
+## Voice Interface
 
-Echo Brain includes three specialized agents with automatic routing:
+Echo Brain includes a full voice pipeline: speak to it, get spoken responses back.
 
-| Agent | Model | Purpose | Keywords |
-|-------|-------|---------|----------|
-| **CodingAgent** | deepseek-coder-v2:16b | Code generation, debugging, technical implementation | coding, programming, debug, script |
-| **ReasoningAgent** | deepseek-r1:8b | Analysis, decision-making, problem-solving | reasoning, analysis, research, problem |
-| **NarrationAgent** | gemma2:9b | Creative writing, scene descriptions, storytelling | narration, creative, scene, story |
+| Component | Technology | Details |
+|-----------|-----------|---------|
+| STT | Whisper large-v3 | CUDA-accelerated, float16, on AMD RX 9070 XT |
+| TTS | Piper (en_US-lessac-medium) | Local ONNX model, 22050 Hz output |
+| VAD | Silero | Voice activity detection for utterance segmentation |
+| Streaming | WebSocket | Real-time bidirectional at `/api/echo/voice/ws` |
 
-The system automatically routes queries to the appropriate agent based on intent classification, or you can specify an agent directly via the API.
+**REST endpoints:**
+- `POST /api/echo/voice/transcribe` — Upload audio, get text
+- `POST /api/echo/voice/synthesize` — Send text, get WAV audio
+- `POST /api/echo/voice/chat` — Full loop: audio in -> transcribe -> reason -> TTS -> audio out
+- `GET /api/echo/voice/status` — Voice service health
+- `GET /api/echo/voice/voices` — List available TTS voices
+
+**WebSocket protocol** (`/api/echo/voice/ws`):
+- Client sends `audio_chunk` (base64 PCM) then `audio_end`
+- Server responds with `transcript`, then `response` (text + base64 audio)
+- Status updates: `listening` / `processing` / `speaking`
+
+## Self-Diagnostic System
+
+Echo Brain monitors its own health across multiple dimensions:
+
+- **Contract Monitor** — Tests critical API endpoints every 5 minutes, tracks response times and status codes
+- **Log Monitor** — Reads own service logs every 15 minutes, classifies errors, creates issues
+- **Self-Test Runner** — Validates query responses every 60 minutes, detects regressions
+- **Improvement Engine** — Reasons about detected issues, proposes code fixes (REVIEW gated, never auto-applies)
+
+**Diagnostic endpoints:**
+- `GET /api/echo/diagnostics/test` — Run basic diagnostic test
+- `GET /api/echo/diagnostics/contracts` — Current contract status
+- `GET /api/echo/diagnostics/contracts/history` — Historical trend data
+- `POST /api/echo/diagnostics/contracts/run` — Trigger manual test
+- `GET /api/echo/self-test/quick` — Quick self-test
+- `GET /api/echo/self-test/run` — Full self-test suite
 
 ## Quick Reference
 
@@ -144,78 +174,103 @@ curl -s -X POST http://localhost:8309/api/echo/ask \
   -H "Content-Type: application/json" \
   -d '{"question": "What hardware does Tower have?"}'
 
-# Search domain knowledge (Phase 2c)
-curl -s -X POST http://localhost:8309/api/echo/search/domain \
+# Search memory vectors
+curl -s -X POST http://localhost:8309/api/echo/memory/search \
   -H "Content-Type: application/json" \
-  -d '{"query": "LoRA training settings", "categories": ["anime:pipeline"]}'
+  -d '{"query": "LoRA training settings", "limit": 5}'
 
-# Check knowledge facts (Phase 2c)
+# MCP search (for Claude integration)
+curl -s -X POST http://localhost:8309/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"method": "tools/call", "params": {"name": "search_memory", "arguments": {"query": "test", "limit": 5}}}'
+
+# Voice service status
+curl -s http://localhost:8309/api/echo/voice/status | python3 -m json.tool
+
+# Knowledge facts and graph stats
 curl -s http://localhost:8309/api/echo/knowledge/facts?limit=10 | python3 -m json.tool
-
-# Get knowledge graph statistics (Phase 2c)
 curl -s http://localhost:8309/api/echo/knowledge/stats | python3 -m json.tool
 
-# Check notifications (Phase 2c)
-curl -s http://localhost:8309/api/echo/notifications | python3 -m json.tool
-
-# Check autonomous goals
-sudo -u postgres psql echo_brain -c "SELECT name, status, priority FROM autonomous_goals ORDER BY priority DESC;"
-
-# Check extracted facts (Phase 2c)
-sudo -u postgres psql echo_brain -c "SELECT fact_text, fact_type, confidence FROM knowledge_facts LIMIT 5;"
+# Worker status
+curl -s http://localhost:8309/api/workers/status | python3 -m json.tool
 
 # Check improvement proposals
-sudo -u postgres psql echo_brain -c "SELECT title, status, risk_assessment FROM self_improvement_proposals WHERE status = 'pending';"
+curl -s http://localhost:8309/api/echo/proposals | python3 -m json.tool
 ```
+
+## Testing
+
+```bash
+# Smoke tests (pytest) — tests live service endpoints
+cd /opt/tower-echo-brain && python3 -m pytest tests/echo_brain_smoke_test.py -v
+
+# Contract tests (vitest) — Pact V4 consumer contracts
+cd /opt/tower-echo-brain/contract-tests/consumer && npx vitest run --reporter=verbose
+```
+
+See [tests/TEST_INVENTORY.md](./tests/TEST_INVENTORY.md) for the full test file inventory.
 
 ## Directory Structure
 
 ```
 /opt/tower-echo-brain/
-├── docs/
-│   ├── ARCHITECTURE.md          # System architecture deep dive
-│   ├── ROADMAP.md               # Development phases and milestones
-│   └── prompts/
-│       ├── PHASE1_AUTONOMOUS_CORE.md
-│       ├── PHASE2_LEARNING_AUTONOMY.md
-│       ├── PHASE2_FIX_AND_VERIFY.md
-│       ├── PHASE2A_SELF_AWARENESS.md
-│       └── PHASE2C_REASONING_PIPELINE.md   ← current
 ├── src/
-│   ├── main.py                  # FastAPI app entry point
+│   ├── main.py                     # FastAPI app entry point
 │   ├── api/
-│   │   ├── endpoints/           # Route handlers
-│   │   └── autonomous.py        # Autonomous system API
+│   │   ├── endpoints/              # Route handlers
+│   │   ├── autonomous.py           # Autonomous system API
+│   │   └── voice.py                # Voice REST + WebSocket API
 │   ├── intelligence/
-│   │   └── reasoner.py          # Query processing pipeline
+│   │   └── reasoner.py             # Query processing pipeline
 │   ├── context_assembly/
-│   │   └── retriever.py         # Vector search + context building
+│   │   ├── retriever.py            # Vector search + context building
+│   │   └── classifier.py           # Query intent classification
+│   ├── core/
+│   │   └── self_diagnostic.py      # Comprehensive system diagnostics
 │   ├── autonomous/
-│   │   ├── core.py              # Autonomous orchestration
-│   │   ├── goals.py             # Goal management
-│   │   ├── safety.py            # Safety level enforcement
-│   │   ├── audit.py             # Audit logging
-│   │   ├── scheduler.py         # Task scheduling
-│   │   ├── worker_scheduler.py  # Worker lifecycle management
-│   │   └── workers/
-│   │       ├── fact_extraction_worker.py
-│   │       ├── conversation_watcher.py
-│   │       ├── knowledge_graph_builder.py
-│   │       ├── codebase_indexer.py      ← Phase 2a
-│   │       ├── schema_indexer.py        ← Phase 2a
-│   │       ├── log_monitor.py           ← Phase 2a
-│   │       ├── self_test_runner.py      ← Phase 2a
-│   │       └── improvement_engine.py    ← Phase 2a
+│   │   ├── core.py                 # Autonomous orchestration
+│   │   ├── goals.py                # Goal management
+│   │   ├── safety.py               # Safety level enforcement
+│   │   ├── audit.py                # Audit logging
+│   │   ├── worker_scheduler.py     # Worker lifecycle management
+│   │   └── workers/                # 12 autonomous workers
 │   ├── services/
-│   │   └── embedding_service.py
+│   │   ├── embedding_service.py    # Ollama embedding integration
+│   │   ├── voice_service.py        # Whisper STT + Piper TTS
+│   │   └── voice_memory.py         # Voice conversation persistence
 │   └── pipeline/
-│       └── context_layer.py
+│       └── context_layer.py        # Context retrieval pipeline
+├── frontend/                       # Vue 3 + TypeScript dashboard
+│   └── src/
+│       ├── api/echoApi.ts          # API client (all endpoint bindings)
+│       ├── views/
+│       │   ├── VoicePanel.vue      # Full voice interface (mute, debug, WS)
+│       │   ├── VoiceSimple.vue     # Minimal voice interface
+│       │   ├── VoiceTest.vue       # Voice endpoint tester
+│       │   ├── SystemView.vue      # System diagnostics dashboard
+│       │   ├── AskView.vue         # Intelligence query interface
+│       │   ├── MemoryView.vue      # Vector search UI
+│       │   └── EndpointsView.vue   # API endpoint explorer
+│       └── router/index.ts         # Vue Router config
+├── contract-tests/                 # Pact V4 consumer contract tests
+│   └── consumer/
+│       ├── tests/echo-brain.consumer.spec.ts
+│       └── src/api/echo-brain-client.ts
+├── tests/
+│   ├── echo_brain_smoke_test.py    # Pytest smoke suite (31 tests)
+│   ├── test_auth_integration.py    # Auth integration tests
+│   ├── TEST_INVENTORY.md           # Test file documentation
+│   └── tmp_archive/                # Archived stale/duplicate tests
+├── docs/
+│   ├── ARCHITECTURE.md             # System architecture deep dive
+│   ├── ROADMAP.md                  # Development phases and milestones
+│   └── SELF_DIAGNOSTIC.md          # Diagnostic system documentation
 ├── config/
-│   └── self_tests.json          # Extensible self-test definitions
-├── frontend/                    # Vue3 web dashboard
-├── venv/                        # Python virtual environment
+│   └── self_tests.json             # Extensible self-test definitions
+├── models/voice/piper/             # Piper TTS model files
 ├── CHANGELOG.md
-└── README.md                    # This file
+├── MIGRATION_COMPLETE.md
+└── README.md                       # This file
 ```
 
 ## Configuration
@@ -228,31 +283,23 @@ sudo -u postgres psql echo_brain -c "SELECT title, status, risk_assessment FROM 
 | EMBEDDING_MODEL | `nomic-embed-text` (768D) | workers + retriever |
 | REASONING_MODEL | `mistral:7b` | intelligence/reasoner.py |
 | EXTRACTION_MODEL | `gemma2:9b` | fact_extraction_worker.py |
-| SERVICE_USER | `echo` | systemd service |
 | SERVICE_PORT | `8309` | systemd service |
+| FRONTEND_PORT | `8311` | Vite dev / nginx |
+
+## Database Architecture
+
+Echo Brain uses a **microservices database architecture** with dedicated databases:
+
+| Database | Purpose |
+|----------|---------|
+| **echo_brain** | Main data: conversations, facts, learning, self-awareness, proposals |
+| **tower_auth** | Authentication and service registry |
+| **tower_kb** | Knowledge base (documents, articles) |
+| **anime_production** | Animation production data |
+| **Qdrant** | Vector embeddings: echo_memory (176,566 pts), story_bible |
+
+Database separation from tower_consolidated is complete. See `MIGRATION_COMPLETE.md` for details.
 
 ## Contributing
 
-Echo Brain is a personal project. Development happens through Claude Code prompts stored in `docs/prompts/`. Each prompt is versioned and gated — see [ROADMAP.md](./docs/ROADMAP.md) for the current development plan.
-
-## Database Architecture (Updated Feb 2026)
-
-Echo Brain now uses a **microservices database architecture** with dedicated databases for each service:
-
-### Service Databases
-- **echo_brain**: Main Echo Brain data (conversations, facts, learning items)
-- **tower_auth**: Authentication and service registry
-- **tower_kb**: Knowledge base (documents, articles)
-- **tower_autonomous**: Autonomous agent data
-- **anime_production**: Animation production data
-- **Qdrant**: Vector embeddings (67k+ vectors)
-
-### Migration Status
-✅ **Database separation complete** - tower_consolidated has been fully migrated and emptied.
-See `MIGRATION_COMPLETE.md` for details.
-
-### Configuration
-Database connections are configured in:
-- `/etc/systemd/system/tower-echo-brain.service.d/database.conf`
-- Environment requires: `PGPASSWORD`, `TOWER_DB_PASSWORD`
-
+Echo Brain is a personal project. Development happens through Claude Code sessions. See [ROADMAP.md](./docs/ROADMAP.md) for the current development plan.

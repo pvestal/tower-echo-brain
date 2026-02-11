@@ -1,0 +1,16 @@
+{
+  "name": "echo-brain-contract-consumer",
+  "version": "1.0.0",
+  "description": "Consumer-driven contract tests for Echo Brain frontend",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:contracts": "vitest run --reporter=verbose"
+  },
+  "devDependencies": {
+    "@pact-foundation/pact": "^13.1.0",
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.0",
+    "vitest": "^2.0.0"
+  }
+}

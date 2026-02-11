@@ -27,15 +27,14 @@ export const memoryApi = {
 };
 
 // Intelligence
+// Backend routes: /intelligence/think, /intelligence/map, /intelligence/status, /intelligence/query
 export const intelligenceApi = {
   think: (query: string, context?: string) =>
     api.post('/intelligence/think', { query, context }),
-  compareKnowledge: (topic: string) =>
-    api.post('/intelligence/compare-knowledge', { topic }),
-  knowledgeMap: () => api.get('/intelligence/knowledge-map'),
-  testUnderstanding: (query: string) =>
-    api.post('/intelligence/test-understanding', { query }),
-  thinkingLog: () => api.get('/intelligence/thinking-log'),
+  knowledgeMap: () => api.get('/intelligence/map'),
+  status: () => api.get('/intelligence/status'),
+  query: (query: string) =>
+    api.post('/intelligence/query', { query }),
 };
 
 // Ask (main interface)
@@ -45,11 +44,10 @@ export const askApi = {
 };
 
 // Conversations
+// Backend route: /conversations/search only
 export const conversationsApi = {
   search: (query: string, limit = 10) =>
     api.post('/conversations/search', { query, limit }),
-  health: () => api.get('/conversations/health'),
-  test: () => api.get('/conversations/test'),
 };
 
 // System
@@ -64,7 +62,7 @@ export const systemApi = {
   diagnosticsServices: () => api.get('/intelligence/status'),
   logs: () => api.get('/system/logs'),
   operationsStatus: () => api.get('/intelligence/status'),
-  operationsJobs: () => api.get('/workers/status'),
+  operationsJobs: () => axios.get('/api/workers/status'),
   healthDetailed: () => api.get('/memory/health'),
 };
 
@@ -74,7 +72,7 @@ export const echoApi = {
   query: (query: string) => api.post('/query', { query }),
   brain: () => api.get('/brain'),
   status: () => api.get('/status'),
-  modelsList: () => api.get('/models/list'),
+  modelsList: () => api.get('/models'),
 };
 
 // MCP
@@ -104,22 +102,13 @@ export const selfTestApi = {
   full: () => api.get('/self-test/run'),
 };
 
-// Moltbook
-export const moltbookApi = {
-  health: () => api.get('/moltbook/health'),
-  status: () => api.get('/moltbook/status'),
-  test: () => api.get('/moltbook/test'),
-  profile: () => api.get('/moltbook/profile'),
-  establish: (params: any) => api.post('/moltbook/establish', params),
-  share: (content: string) => api.post('/moltbook/share', { content }),
-  establishmentStatus: () => api.get('/moltbook/establishment/status'),
-};
-
 // Reasoning
+// Backend routes: /reasoning/ask, /reasoning/analyze
 export const reasoningApi = {
+  ask: (query: string) => api.post('/reasoning/ask', { query }),
+  analyze: (query: string) => api.post('/reasoning/analyze', { query }),
   search: (query: string, limit = 10) =>
     api.post('/search', { query, limit }),
-  health: () => api.get('/reasoning/health'),
 };
 
 // Generic endpoint tester
@@ -129,68 +118,57 @@ export const testEndpoint = (method: string, path: string, data?: any) => {
 };
 
 // Get all available endpoints for testing
+// These paths are relative to the api baseURL (/api/echo)
 export const getAllEndpoints = () => {
   return [
-    // Health
-    { method: 'GET', path: '/health/', desc: 'Full health status' },
-    { method: 'GET', path: '/health/quick', desc: 'Quick health check' },
-    { method: 'GET', path: '/health/resources', desc: 'Resource stats' },
-    { method: 'GET', path: '/health/metrics', desc: 'Prometheus metrics' },
-
-    // System
-    { method: 'GET', path: '/system/status', desc: 'System status' },
-    { method: 'GET', path: '/system/ready', desc: 'Readiness check' },
-    { method: 'GET', path: '/system/alive', desc: 'Liveness probe' },
-    { method: 'GET', path: '/system/metrics', desc: 'System metrics' },
-    { method: 'GET', path: '/system/diagnostics', desc: 'Full diagnostics' },
-    { method: 'GET', path: '/system/status/logs', desc: 'Recent logs' },
+    // Echo Core
+    { method: 'GET', path: '/health', desc: 'Echo health' },
+    { method: 'GET', path: '/status', desc: 'Echo status' },
+    { method: 'GET', path: '/brain', desc: 'Echo brain info' },
+    { method: 'GET', path: '/models', desc: 'Available models' },
+    { method: 'POST', path: '/query', desc: 'Echo query', body: '{"query":"test"}' },
+    { method: 'POST', path: '/ask', desc: 'Ask question', body: '{"question":"What is Echo Brain?"}' },
 
     // Memory
-    { method: 'POST', path: '/memory/search', desc: 'Memory search', body: '{"query":"test","limit":5}' },
-    { method: 'POST', path: '/memory/ingest', desc: 'Ingest memory', body: '{"content":"test content"}' },
     { method: 'GET', path: '/memory/status', desc: 'Memory status' },
     { method: 'GET', path: '/memory/health', desc: 'Memory health' },
-
-    // Ask
-    { method: 'POST', path: '/ask', desc: 'Ask question', body: '{"question":"What is Echo Brain?"}' },
-    { method: 'GET', path: '/ask', desc: 'Ask (GET)', params: '?question=test' },
+    { method: 'POST', path: '/memory/search', desc: 'Memory search', body: '{"query":"test","limit":5}' },
+    { method: 'POST', path: '/memory/ingest', desc: 'Ingest memory', body: '{"content":"test content"}' },
 
     // Intelligence
+    { method: 'GET', path: '/intelligence/status', desc: 'Intelligence status' },
+    { method: 'GET', path: '/intelligence/map', desc: 'Knowledge map' },
     { method: 'POST', path: '/intelligence/think', desc: 'Think', body: '{"query":"test"}' },
-    { method: 'GET', path: '/intelligence/knowledge-map', desc: 'Knowledge map' },
-    { method: 'GET', path: '/intelligence/thinking-log', desc: 'Thinking log' },
+    { method: 'POST', path: '/intelligence/query', desc: 'Intelligence query', body: '{"query":"test"}' },
 
     // Conversations
     { method: 'POST', path: '/conversations/search', desc: 'Search conversations', body: '{"query":"test"}' },
-    { method: 'GET', path: '/conversations/health', desc: 'Conversations health' },
-    { method: 'GET', path: '/conversations/test', desc: 'Test conversations' },
-
-    // Echo
-    { method: 'GET', path: '/health', desc: 'Echo health' },
-    { method: 'POST', path: '/query', desc: 'Echo query', body: '{"query":"test"}' },
-    { method: 'GET', path: '/brain', desc: 'Echo brain info' },
-    { method: 'GET', path: '/status', desc: 'Echo status' },
-    { method: 'GET', path: '/models/list', desc: 'Available models' },
 
     // MCP
-    { method: 'GET', path: '/mcp/health', desc: 'MCP health' },
-    { method: 'POST', path: '/mcp', desc: 'MCP search', body: '{"jsonrpc":"2.0","method":"tools/list","params":{},"id":1}' },
+    { method: 'POST', path: '/mcp', desc: 'MCP call', body: '{"jsonrpc":"2.0","method":"tools/list","params":{},"id":1}' },
 
     // Self-test
     { method: 'GET', path: '/self-test/quick', desc: 'Quick self-test' },
     { method: 'GET', path: '/self-test/run', desc: 'Full self-test' },
 
-    // Moltbook
-    { method: 'GET', path: '/moltbook/health', desc: 'Moltbook health' },
-    { method: 'GET', path: '/moltbook/status', desc: 'Moltbook status' },
-    { method: 'GET', path: '/moltbook/profile', desc: 'Moltbook profile' },
+    // System
+    { method: 'GET', path: '/system/logs', desc: 'System logs' },
+    { method: 'GET', path: '/system/resources', desc: 'System resources' },
+    { method: 'GET', path: '/system/dashboard', desc: 'System dashboard' },
+
+    // Reasoning
+    { method: 'POST', path: '/reasoning/ask', desc: 'Reasoning ask', body: '{"query":"test"}' },
+    { method: 'POST', path: '/reasoning/analyze', desc: 'Reasoning analyze', body: '{"query":"test"}' },
+
+    // Diagnostic
+    { method: 'GET', path: '/diagnostic', desc: 'Diagnostic' },
+    { method: 'GET', path: '/diagnostic/quick', desc: 'Quick diagnostic' },
 
     // Search
-    { method: 'GET', path: '/search', desc: 'Search (GET)', params: '?q=test&limit=5' },
-    { method: 'POST', path: '/search', desc: 'Search (POST)', body: '{"query":"test","limit":5}' },
+    { method: 'GET', path: '/search', desc: 'Search', params: '?q=test&limit=5' },
 
-    // Root
-    { method: 'GET', path: '/', desc: 'Service info' },
-    { method: 'GET', path: '/health', desc: 'Root health check' },
+    // Voice
+    { method: 'GET', path: '/voice/status', desc: 'Voice service status' },
+    { method: 'GET', path: '/voice/voices', desc: 'Available TTS voices' },
   ];
 };

@@ -10,6 +10,7 @@ import { RouterLink, RouterView } from 'vue-router';
       <nav class="nav">
         <RouterLink to="/dashboard" class="nav-link">Dashboard</RouterLink>
         <RouterLink to="/ask" class="nav-link">Ask</RouterLink>
+        <RouterLink to="/voice-simple" class="nav-link">🎤 Voice</RouterLink>
         <RouterLink to="/memory" class="nav-link">Memory</RouterLink>
         <RouterLink to="/endpoints" class="nav-link">Endpoints</RouterLink>
         <RouterLink to="/system" class="nav-link">System</RouterLink>

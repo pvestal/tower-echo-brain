@@ -160,10 +160,13 @@ class ReasoningEngine:
         """Classify the type of query"""
         query_lower = query.lower()
 
-        # Self-introspection patterns
+        # Self-introspection patterns (check BEFORE action patterns to avoid misclassification)
         if any(pattern in query_lower for pattern in [
             'what are you', 'who are you', 'tell me about yourself',
-            'your capabilities', 'what can you do', 'how do you work'
+            'your capabilities', 'what can you do', 'how do you work',
+            'are you able', 'can you', 'do you have', 'are you capable',
+            'your voice', 'your name', 'about echo', 'about yourself',
+            'your model', 'your memory', 'your brain',
         ]):
             return QueryType.SELF_INTROSPECTION
 
@@ -765,7 +768,8 @@ class ReasoningEngine:
 
                 if response.status_code == 200:
                     result = response.json()
-                    return result.get('response', 'No response generated')
+                    raw = result.get('response', 'No response generated')
+                    return self._clean_response(raw)
                 else:
                     return f"Error generating response: {response.status_code}"
 
@@ -773,28 +777,65 @@ class ReasoningEngine:
             logger.error(f"Error generating response: {e}")
             return f"I encountered an error generating a response: {str(e)}"
 
+    def _clean_response(self, text: str) -> str:
+        """Strip hallucinated trailing instructions and clean up LLM output."""
+        import re
+
+        text = text.strip()
+
+        # Detect and remove trailing content that looks like leaked system instructions.
+        # These patterns appear when the LLM keeps generating past the answer.
+        leak_patterns = [
+            r';\s*think\s+hard\b.*$',
+            r';\s*(?:you must|you should|remember to|make sure|note:)\b.*$',
+            r'\b(?:CRITICAL|INSTRUCTION|IMPORTANT|NOTE):\s.*$',
+            r'\b(?:system prompt|internal note|debug|verbose)\b.*$',
+        ]
+        for pattern in leak_patterns:
+            text = re.sub(pattern, '', text, flags=re.IGNORECASE | re.DOTALL)
+
+        text = text.strip().rstrip(';').strip()
+
+        # Cap at reasonable length for voice responses
+        if len(text) > 4000:
+            # Find last sentence boundary before 4000
+            cutoff = text[:4000].rfind('.')
+            if cutoff > 2000:
+                text = text[:cutoff + 1]
+
+        return text
+
     def _build_system_prompt(self, query_type: QueryType) -> str:
         """Build system prompt based on query type"""
         base_prompt = """You are Echo Brain, Patrick's intelligent AI assistant for the Tower system.
+You run on the Tower server (192.168.50.135) alongside 27+ services including anime production, knowledge base, voice chat, Apple Music, and financial tools.
 
-CRITICAL INSTRUCTION: You MUST answer based ONLY on the RELEVANT KNOWLEDGE section provided in the context. Do NOT use information from other sources. If the context doesn't contain the answer, say "I don't have that information in my current context."
+When RELEVANT KNOWLEDGE is provided in the context, prioritize it — but you may also use your general knowledge to give helpful, accurate answers. If context is provided but irrelevant to the question, ignore it and answer from your own knowledge. Be honest about what you know vs what you found in context.
 
-You have access to real-time information about services, code, and system state through the provided context."""
+Keep responses concise and conversational. Stop after answering — do not add internal notes or meta-commentary."""
 
         if query_type == QueryType.SELF_INTROSPECTION:
-            return f"{base_prompt} You're being asked about your own capabilities and status. Be accurate and specific about what you can do."
+            return f"""{base_prompt}
+
+You're being asked about yourself. You are Echo Brain — an AI built into the Tower system with:
+- Voice conversation (STT via Whisper on NVIDIA RTX 3060, TTS via Piper)
+- Memory (169K+ vectors in Qdrant, PostgreSQL for structured data)
+- Reasoning engine with domain classification and context assembly
+- Service monitoring and action execution capabilities
+- Knowledge of Patrick's projects, preferences, and history
+Be specific about what you can actually do."""
 
         elif query_type == QueryType.SYSTEM_QUERY:
-            return f"{base_prompt} You're answering a question about system status or services. Use the provided context to give specific, accurate information."
+            return f"{base_prompt}\nYou're answering about system status or services. Use provided context for specifics, but you know the Tower architecture well."
 
         elif query_type == QueryType.CODE_QUERY:
-            return f"{base_prompt} You're being asked about code. Use the code analysis results to provide accurate information about functions, classes, and implementations."
+            return f"{base_prompt}\nYou're being asked about code. Use code analysis results when available. Reference file paths and line numbers when you have them."
 
         elif query_type == QueryType.ACTION_REQUEST:
-            return f"{base_prompt} You've been asked to perform an action. Explain what you did and the results clearly."
+            return f"{base_prompt}\nYou've been asked to perform an action. Explain what you did and the results clearly."
 
         else:
-            return f"{base_prompt} Answer the question using the provided context and your knowledge."
+            return f"{base_prompt}\nAnswer the question using provided context and your general knowledge."
 
     def _build_context_text(self, context: Dict[str, Any], actions_taken: List[Dict[str, Any]]) -> str:
         """Build context text for LLM"""

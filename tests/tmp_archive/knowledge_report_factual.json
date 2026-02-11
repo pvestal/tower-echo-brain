@@ -1,0 +1,127 @@
+{
+  "timestamp": "2026-02-10T02:07:21.915085",
+  "echo_brain_url": "http://localhost:8309",
+  "total_tests": 6,
+  "results": [
+    {
+      "domain": "echo",
+      "tier": "factual",
+      "question": "What port does Echo Brain run on?",
+      "expected_answer": "8309",
+      "actual_response": "Echo Brain runs on port 8309.",
+      "score": 1.0,
+      "status": "PASS",
+      "keyword_hits": [
+        "8309"
+      ],
+      "keyword_misses": [],
+      "anti_keyword_hits": [],
+      "response_time_ms": 3381.6829349962063,
+      "notes": ""
+    },
+    {
+      "domain": "echo",
+      "tier": "factual",
+      "question": "What embedding model does Echo Brain use and what are its dimensions?",
+      "expected_answer": "nomic-embed-text with 768 dimensions",
+      "actual_response": "Echo Brain uses the **nomic-embed-text** embedding model, which produces vectors with **768 dimensions**. This model replaced the older **mxbai-embed-large** model with 1024 dimensions.",
+      "score": 0.6,
+      "status": "PARTIAL",
+      "keyword_hits": [
+        "nomic-embed-text",
+        "768"
+      ],
+      "keyword_misses": [],
+      "anti_keyword_hits": [
+        "mxbai-embed-large",
+        "1024"
+      ],
+      "response_time_ms": 5514.593495987356,
+      "notes": "\u26a0\ufe0f CONTAMINATION: found [mxbai-embed-large, 1024]"
+    },
+    {
+      "domain": "echo",
+      "tier": "factual",
+      "question": "What are the three agent types in Echo Brain and what models do they use?",
+      "expected_answer": "CodingAgent (deepseek-coder-v2:16b), ReasoningAgent (deepseek-r1:8b), NarrationAgent (gemma2:9b)",
+      "actual_response": "The three agent types in Echo Brain and their corresponding models are:\n\n1. **CodingAgent** \u2014 Uses the `deepseek-coder-v2:16b` model.  \n   Triggered by keywords: code, debug, function, script, error, syntax, compile, programming, refactor, algorithm.\n\n2. **ReasoningAgent** \u2014 Uses the `deepseek-r1:8b` model.  \n   Triggered by keywords: analyze, compare, reason, plan, evaluate, strategy, decision, trade-off, architecture.\n\n3. **NarrationAgent** \u2014 Uses the `gemma2:9b` model.  \n   Triggered by keywo",
+      "score": 1.0,
+      "status": "PASS",
+      "keyword_hits": [
+        "coding",
+        "deepseek-coder",
+        "reasoning",
+        "deepseek-r1",
+        "narration",
+        "gemma"
+      ],
+      "keyword_misses": [],
+      "anti_keyword_hits": [],
+      "response_time_ms": 4777.36019299482,
+      "notes": ""
+    },
+    {
+      "domain": "echo",
+      "tier": "factual",
+      "question": "What databases does Echo Brain use?",
+      "expected_answer": "PostgreSQL (echo_brain database) and Qdrant (vector store on port 6333)",
+      "actual_response": "Based on the information I have, I don't have specific details about the databases used by Echo Brain itself. The context provided focuses on the databases used by the Tower system.\n\nAs your AI assistant, I don't have direct knowledge of the specific database infrastructure powering my responses unless it's provided in our conversation history or relevant context. Generally, AI assistants like me can interact with various databases depending on the task, but without specific information about Ec",
+      "score": 0.0,
+      "status": "FAIL",
+      "keyword_hits": [],
+      "keyword_misses": [
+        "postgres",
+        "qdrant"
+      ],
+      "anti_keyword_hits": [],
+      "response_time_ms": 6173.898659006227,
+      "notes": ""
+    },
+    {
+      "domain": "echo",
+      "tier": "factual",
+      "question": "How many modules and directories does Echo Brain have?",
+      "expected_answer": "108 modules across 29 directories",
+      "actual_response": "Okay, let's break down Echo Brain's structure based on the information provided:\n\n1.  **Directories:**\n    *   There is at least one directory named `modules`. This is confirmed by the context (\"Discover all module directories\").\n    *   It's possible there are other directories, but based on the context, `modules` is the key one related to extensions or components.\n\n2.  **Modules:**\n    *   There is at least one module named `anime`. This is confirmed by the context (\"Check for modules director",
+      "score": 0.0,
+      "status": "FAIL",
+      "keyword_hits": [],
+      "keyword_misses": [
+        "108",
+        "29"
+      ],
+      "anti_keyword_hits": [],
+      "response_time_ms": 5476.7894980032,
+      "notes": ""
+    },
+    {
+      "domain": "echo",
+      "tier": "factual",
+      "question": "What frontend stack does Echo Brain use?",
+      "expected_answer": "Vue 3 + TypeScript + Tailwind CSS",
+      "actual_response": "Great question! Echo Brain uses a modern frontend stack including **React** for the user interface, **TypeScript** for type safety, and **Tailwind CSS** for styling. This combination provides a fast, responsive, and developer-friendly experience. Additionally, the platform leverages **Next.js** as the framework to support server-side rendering and static site generation for optimal performance and SEO.\n\nIf you're interested in building or integrating with Echo Brain, our API is available for dev",
+      "score": 0.6666666666666666,
+      "status": "PARTIAL",
+      "keyword_hits": [
+        "typescript",
+        "tailwind"
+      ],
+      "keyword_misses": [
+        "vue"
+      ],
+      "anti_keyword_hits": [],
+      "response_time_ms": 4118.430376984179,
+      "notes": ""
+    }
+  ],
+  "summary": {
+    "echo": {
+      "factual": {
+        "weighted_score_pct": 62.1,
+        "tests": 6,
+        "pass": 2,
+        "fail": 2
+      }
+    }
+  }
+}

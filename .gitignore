@@ -110,3 +110,10 @@ show_calendar_events.py
 config/omniscient.json
 config/auth/
 fix_*.py
+contract-tests/consumer/node_modules/
+
+# Binary artifacts
+models/
+*.tar.gz
+*.onnx
+*.onnx.json
