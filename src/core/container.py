@@ -11,30 +11,44 @@ from typing import Dict, Any, Optional, Type, TypeVar, Protocol
 from enum import Enum
 from dataclasses import dataclass
 
-# Import interfaces
-# Removed mock interfaces - using real implementations
-from ..interfaces.llm_interface import (
-    LLMInterface, OllamaLLMInterface, CodeLLMInterface, ConversationalLLMInterface
-)
-from ..interfaces.embedding_interface import (
-    EmbeddingInterface, SemanticEmbeddingInterface, MultilingualEmbeddingInterface
-)
-from ..interfaces.vision_interface import (
-    VisionInterface, ImageClassificationInterface, ObjectDetectionInterface,
-    ImageQualityInterface, ImageGenerationInterface, ImageEnhancementInterface
-)
-from ..interfaces.vector_store_interface import (
-    VectorStoreInterface, AdvancedVectorStoreInterface, SemanticVectorStoreInterface
-)
+# Interface and mock imports — deferred until actually needed.
+# The src/interfaces/ and src/mocks/ directories are not yet implemented.
+# When they are created, uncomment these imports and remove the stubs below.
+#
+# from ..interfaces.llm_interface import (
+#     LLMInterface, OllamaLLMInterface, CodeLLMInterface, ConversationalLLMInterface
+# )
+# from ..interfaces.embedding_interface import (
+#     EmbeddingInterface, SemanticEmbeddingInterface, MultilingualEmbeddingInterface
+# )
+# from ..interfaces.vision_interface import (
+#     VisionInterface, ImageClassificationInterface, ObjectDetectionInterface,
+#     ImageQualityInterface, ImageGenerationInterface, ImageEnhancementInterface
+# )
+# from ..interfaces.vector_store_interface import (
+#     VectorStoreInterface, AdvancedVectorStoreInterface, SemanticVectorStoreInterface
+# )
+# from ..mocks.mock_llm import MockLLM, MockOllamaLLM, MockCodeLLM, MockConversationalLLM
+# from ..mocks.mock_embedding import MockEmbedding, MockSemanticEmbedding, MockMultilingualEmbedding
+# from ..mocks.mock_vision import (
+#     MockVision, MockImageClassification, MockObjectDetection,
+#     MockImageQuality, MockImageGeneration, MockImageEnhancement
+# )
+# from ..mocks.mock_vector_store import MockVectorStore, MockAdvancedVectorStore, MockSemanticVectorStore
 
-# Import mock implementations
-from ..mocks.mock_llm import MockLLM, MockOllamaLLM, MockCodeLLM, MockConversationalLLM
-from ..mocks.mock_embedding import MockEmbedding, MockSemanticEmbedding, MockMultilingualEmbedding
-from ..mocks.mock_vision import (
-    MockVision, MockImageClassification, MockObjectDetection,
-    MockImageQuality, MockImageGeneration, MockImageEnhancement
-)
-from ..mocks.mock_vector_store import MockVectorStore, MockAdvancedVectorStore, MockSemanticVectorStore
+# Stub type aliases so the rest of the file compiles without the interfaces/mocks dirs.
+# These will be replaced by real Protocol classes when the interfaces module is created.
+LLMInterface = OllamaLLMInterface = CodeLLMInterface = ConversationalLLMInterface = type
+EmbeddingInterface = SemanticEmbeddingInterface = MultilingualEmbeddingInterface = type
+VisionInterface = ImageClassificationInterface = ObjectDetectionInterface = type
+ImageQualityInterface = ImageGenerationInterface = ImageEnhancementInterface = type
+VectorStoreInterface = AdvancedVectorStoreInterface = SemanticVectorStoreInterface = type
+
+MockLLM = MockOllamaLLM = MockCodeLLM = MockConversationalLLM = type
+MockEmbedding = MockSemanticEmbedding = MockMultilingualEmbedding = type
+MockVision = MockImageClassification = MockObjectDetection = type
+MockImageQuality = MockImageGeneration = MockImageEnhancement = type
+MockVectorStore = MockAdvancedVectorStore = MockSemanticVectorStore = type
 
 T = TypeVar('T')
 

@@ -69,8 +69,8 @@ class TestHealth:
         assert ms < 1000, f"Health check slow: {ms:.1f}ms (expected <1000ms)"
 
     def test_api_echo_health(self):
-        """GET /api/echo/health — namespaced health endpoint."""
-        resp = get("/api/echo/health")
+        """GET /api/echo/health/detailed — namespaced health endpoint."""
+        resp = get("/api/echo/health/detailed")
         assert resp.status_code == 200, f"Echo health failed: HTTP {resp.status_code}"
 
     def test_openapi_spec(self):

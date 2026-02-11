@@ -10,16 +10,18 @@ import os
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/agents", tags=["agents"])
 
-# Import agents
+# Agent instances — not yet implemented (planned feature).
+# These stubs allow the router to mount without crashing.
+coding_agent = None
+reasoning_agent = None
+narration_agent = None
+
 try:
-    from ..agents.coding_agent import coding_agent
-    from ..agents.reasoning_agent import reasoning_agent
-    from ..agents.narration_agent import narration_agent
+    from src.agents.autonomous.coding_agent import DeepSeekCodingAgent
+    coding_agent = DeepSeekCodingAgent()
+    logger.info("Loaded DeepSeekCodingAgent as coding_agent")
 except ImportError:
-    # Fallback for standalone testing
-    from src.agents.coding_agent import coding_agent
-    from src.agents.reasoning_agent import reasoning_agent
-    from src.agents.narration_agent import narration_agent
+    logger.warning("coding_agent not available (src.agents.autonomous.coding_agent missing)")
 
 class CodingTaskRequest(BaseModel):
     task: str
@@ -39,6 +41,8 @@ class CodingTaskResponse(BaseModel):
 @router.post("/coding", response_model=CodingTaskResponse)
 async def run_coding_task(request: CodingTaskRequest):
     """Run a coding task through the coding agent"""
+    if coding_agent is None:
+        raise HTTPException(status_code=503, detail="Coding agent not available")
     try:
         logger.info(f"Coding agent request: {request.task[:50]}...")
         result = await coding_agent.process(
@@ -109,6 +113,8 @@ class ExecuteRequest(BaseModel):
 @router.post("/reasoning", response_model=ReasoningTaskResponse)
 async def run_reasoning_task(request: ReasoningTaskRequest):
     """Run a reasoning task through the reasoning agent"""
+    if reasoning_agent is None:
+        raise HTTPException(status_code=503, detail="Reasoning agent not available")
     try:
         logger.info(f"Reasoning agent request: {request.task[:50]}...")
         result = await reasoning_agent.process(
@@ -138,6 +144,8 @@ async def get_reasoning_history():
 @router.post("/narration", response_model=NarrationTaskResponse)
 async def run_narration_task(request: NarrationTaskRequest):
     """Run a narration task through the narration agent"""
+    if narration_agent is None:
+        raise HTTPException(status_code=503, detail="Narration agent not available")
     try:
         logger.info(f"Narration agent request: {request.scene[:50]}...")
         result = await narration_agent.process(
@@ -216,32 +224,29 @@ async def execute_code(request: ExecuteRequest):
 @router.get("/status")
 async def get_agents_status():
     """Get status of all agents"""
+    def _agent_info(name, agent):
+        if agent is None:
+            return {"name": name, "status": "not_implemented", "model": "none", "tasks_processed": 0}
+        return {
+            "name": name,
+            "model": getattr(agent, 'model_name', 'unknown'),
+            "status": "active",
+            "tasks_processed": len(agent.history) if hasattr(agent, 'history') else 0,
+        }
+
     return {
         "agents": [
-            {
-                "name": "CodingAgent",
-                "model": getattr(coding_agent, 'model_name', 'unknown'),
-                "status": "active",
-                "tasks_processed": len(coding_agent.history) if hasattr(coding_agent, 'history') else 0
-            },
-            {
-                "name": "ReasoningAgent",
-                "model": getattr(reasoning_agent, 'model_name', 'unknown'),
-                "status": "active",
-                "tasks_processed": len(reasoning_agent.history) if hasattr(reasoning_agent, 'history') else 0
-            },
-            {
-                "name": "NarrationAgent",
-                "model": getattr(narration_agent, 'model_name', 'unknown'),
-                "status": "active",
-                "tasks_processed": len(narration_agent.history) if hasattr(narration_agent, 'history') else 0
-            }
+            _agent_info("CodingAgent", coding_agent),
+            _agent_info("ReasoningAgent", reasoning_agent),
+            _agent_info("NarrationAgent", narration_agent),
         ]
     }
 
 @router.post("/narration/anime")
 async def narrate_and_generate(request: Dict[str, Any]):
     """Develop narrative and generate anime image."""
+    if narration_agent is None:
+        raise HTTPException(status_code=503, detail="Narration agent not available")
     scene_concept = request.get("scene_concept", "")
     project_id = request.get("project_id")
 

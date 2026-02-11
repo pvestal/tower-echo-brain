@@ -192,15 +192,53 @@ except ImportError as e:
 except Exception as e:
     logger.error(f"❌ Search router failed: {e}")
 
-# Mount Reasoning API - Transparent multi-stage reasoning
+# Mount Echo Reasoning API - Transparent multi-stage reasoning (/analyze, /debug)
 try:
-    from src.api.endpoints.echo_reasoning_router import router as reasoning_router
-    app.include_router(reasoning_router, prefix="/api/echo")
-    logger.info("✅ Reasoning router mounted at /api/echo/reasoning")
+    from src.api.endpoints.echo_reasoning_router import router as echo_reasoning_router
+    app.include_router(echo_reasoning_router, prefix="/api/echo")
+    logger.info("✅ Echo reasoning router mounted at /api/echo/reasoning")
 except ImportError as e:
     logger.warning(f"⚠️ Reasoning router not available: {e}")
 except Exception as e:
     logger.error(f"❌ Reasoning router failed: {e}")
+
+# Mount additional API routers (non-critical — each is independently guarded)
+_optional_routers = [
+    ("src.api.models_manager", "router", None, "Models manager (/api/models)"),
+    ("src.api.knowledge", "router", None, "Knowledge (/api/knowledge)"),
+    ("src.api.solutions", "router", None, "Solutions (/api/echo/solutions)"),
+    ("src.api.codebase", "router", None, "Codebase (/api/echo/codebase)"),
+    ("src.api.preferences", "router", "/api/echo/preferences", "Preferences"),
+    ("src.api.integrations", "router", "/api/echo/integrations", "Integrations"),
+    ("src.api.claude_bridge", "router", None, "Claude bridge (/api/echo)"),
+    ("src.api.vault", "router", None, "Vault (/api/vault)"),
+    ("src.api.repair_api", "router", None, "Repair (/api/repair)"),
+    ("src.api.resilience_status", "router", None, "Resilience (/api/resilience)"),
+    ("src.api.notifications_api", "router", None, "Notifications (/api/notifications)"),
+    ("src.api.delegation_routes", "router", None, "Delegation (/delegate)"),
+    ("src.api.anime", "router", None, "Anime (/api/echo/anime)"),
+    ("src.api.lora_training", "router", None, "LoRA training (/api/lora)"),
+    ("src.api.takeout_stub", "router", None, "Takeout stub"),
+    ("src.api.google_calendar_api", "router", None, "Google Calendar (/api/calendar)"),
+    ("src.api.google_data", "router", None, "Google Data (/google)"),
+    ("src.api.home_assistant_api", "router", None, "Home Assistant (/api/home)"),
+    ("src.api.git_operations", "router", None, "Git operations (/git)"),
+]
+
+for module_path, attr_name, prefix, label in _optional_routers:
+    try:
+        import importlib
+        mod = importlib.import_module(module_path)
+        _router = getattr(mod, attr_name)
+        if prefix:
+            app.include_router(_router, prefix=prefix)
+        else:
+            app.include_router(_router)
+        logger.info(f"✅ {label} router mounted")
+    except ImportError as e:
+        logger.warning(f"⚠️ {label} router not available: {e}")
+    except Exception as e:
+        logger.error(f"❌ {label} router failed to mount: {e}")
 
 # Mount Contract Monitor Router
 try:

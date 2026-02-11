@@ -13,7 +13,7 @@
       ],
       "request": {
         "method": "GET",
-        "path": "/api/v1/health"
+        "path": "/api/echo/health/detailed"
       },
       "response": {
         "body": {
@@ -140,7 +140,7 @@
       ],
       "request": {
         "method": "GET",
-        "path": "/api/v1/health"
+        "path": "/api/echo/health/detailed"
       },
       "response": {
         "body": {
@@ -297,7 +297,7 @@
           "header": {}
         },
         "method": "POST",
-        "path": "/api/v1/query"
+        "path": "/api/echo/memory/search"
       },
       "response": {
         "body": {
@@ -455,7 +455,7 @@
           ]
         },
         "method": "POST",
-        "path": "/api/v1/query"
+        "path": "/api/echo/memory/search"
       },
       "response": {
         "body": {
@@ -560,7 +560,7 @@
           "header": {}
         },
         "method": "POST",
-        "path": "/api/v1/query"
+        "path": "/api/echo/memory/search"
       },
       "response": {
         "body": {
@@ -622,7 +622,7 @@
       ],
       "request": {
         "method": "GET",
-        "path": "/api/v1/ingestion/status"
+        "path": "/api/echo/ingestion/status"
       },
       "response": {
         "body": {
@@ -1157,7 +1157,7 @@
       ],
       "request": {
         "method": "GET",
-        "path": "/api/v1/ingestion/status"
+        "path": "/api/echo/ingestion/status"
       },
       "response": {
         "body": {

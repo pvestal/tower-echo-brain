@@ -54,7 +54,7 @@ class TowerServicesMonitor:
                 if "" in content:
                     content = content.replace(
                         "'password': ''",
-                        "'password': os.getenv("TOWER_DB_PASSWORD", "")"
+                        "'password': os.getenv('TOWER_DB_PASSWORD', '')"
                     )
                     with open(config_path, 'w') as f:
                         f.write(content)

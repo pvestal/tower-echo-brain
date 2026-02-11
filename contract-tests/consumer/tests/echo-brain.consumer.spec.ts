@@ -40,13 +40,13 @@ const provider = new PactV4({
 
 describe('Echo Brain API Contract', () => {
 
-  describe('GET /api/v1/health', () => {
+  describe('GET /api/echo/health/detailed', () => {
     it('returns system health with component status', async () => {
       await provider
         .addInteraction()
         .given('the system is running')
         .uponReceiving('a health check request')
-        .withRequest('GET', '/api/v1/health')
+        .withRequest('GET', '/api/echo/health/detailed')
         .willRespondWith(200, (builder) => {
           builder
             .headers({ 'Content-Type': 'application/json' })
@@ -88,7 +88,7 @@ describe('Echo Brain API Contract', () => {
         .addInteraction()
         .given('the vector store is unreachable')
         .uponReceiving('a health check when vector store is down')
-        .withRequest('GET', '/api/v1/health')
+        .withRequest('GET', '/api/echo/health/detailed')
         .willRespondWith(200, (builder) => {
           builder
             .headers({ 'Content-Type': 'application/json' })
@@ -124,13 +124,13 @@ describe('Echo Brain API Contract', () => {
 
   // ─── Query Endpoint ──────────────────────────────────────────
 
-  describe('POST /api/v1/query', () => {
+  describe('POST /api/echo/memory/search', () => {
     it('returns search results for a knowledge query', async () => {
       await provider
         .addInteraction()
         .given('the vector store has indexed documents')
         .uponReceiving('a knowledge query request')
-        .withRequest('POST', '/api/v1/query', (builder) => {
+        .withRequest('POST', '/api/echo/memory/search', (builder) => {
           builder
             .headers({ 'Content-Type': 'application/json' })
             .jsonBody({
@@ -178,7 +178,7 @@ describe('Echo Brain API Contract', () => {
         .addInteraction()
         .given('the vector store has no matching documents')
         .uponReceiving('a query with no results')
-        .withRequest('POST', '/api/v1/query', (builder) => {
+        .withRequest('POST', '/api/echo/memory/search', (builder) => {
           builder
             .headers({ 'Content-Type': 'application/json' })
             .jsonBody({
@@ -293,13 +293,13 @@ describe('Echo Brain API Contract', () => {
 
   // ─── Ingestion Status ─────────────────────────────────────────
 
-  describe('GET /api/v1/ingestion/status', () => {
+  describe('GET /api/echo/ingestion/status', () => {
     it('returns current ingestion pipeline status', async () => {
       await provider
         .addInteraction()
         .given('an ingestion has completed previously')
         .uponReceiving('a request for ingestion status')
-        .withRequest('GET', '/api/v1/ingestion/status')
+        .withRequest('GET', '/api/echo/ingestion/status')
         .willRespondWith(200, (builder) => {
           builder
             .headers({ 'Content-Type': 'application/json' })
@@ -328,7 +328,7 @@ describe('Echo Brain API Contract', () => {
         .addInteraction()
         .given('no ingestion has ever run')
         .uponReceiving('ingestion status when never run')
-        .withRequest('GET', '/api/v1/ingestion/status')
+        .withRequest('GET', '/api/echo/ingestion/status')
         .willRespondWith(200, (builder) => {
           builder
             .headers({ 'Content-Type': 'application/json' })
@@ -429,7 +429,7 @@ describe('Echo Brain API Contract', () => {
         .addInteraction()
         .given('the system is running')
         .uponReceiving('a query request with empty body')
-        .withRequest('POST', '/api/v1/query', (builder) => {
+        .withRequest('POST', '/api/echo/memory/search', (builder) => {
           builder
             .headers({ 'Content-Type': 'application/json' })
             .jsonBody({});

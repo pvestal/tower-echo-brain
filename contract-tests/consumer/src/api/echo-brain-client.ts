@@ -50,14 +50,14 @@ export class EchoBrainClient {
 
   /** Check backend health and component status */
   async getHealth(): Promise<HealthResponse> {
-    return this.get<HealthResponse>('/api/v1/health');
+    return this.get<HealthResponse>('/api/echo/health/detailed');
   }
 
   // ─── Knowledge Query ──────────────────────────────────────────
 
   /** Search the vector store for relevant knowledge */
   async query(request: QueryRequest): Promise<QueryResponse> {
-    return this.post<QueryResponse>('/api/v1/query', request);
+    return this.post<QueryResponse>('/api/echo/memory/search', request);
   }
 
   // ─── Memory ───────────────────────────────────────────────────
@@ -65,7 +65,7 @@ export class EchoBrainClient {
   /** List memories with pagination */
   async listMemories(page = 1, pageSize = 20): Promise<MemoryListResponse> {
     return this.get<MemoryListResponse>(
-      `/api/v1/memories?page=${page}&page_size=${pageSize}`
+      `/api/v1/memories?page=${page}&page_size=${pageSize}`  // Legacy v1 endpoint still mounted
     );
   }
 
@@ -95,7 +95,7 @@ export class EchoBrainClient {
 
   /** Get current ingestion pipeline status */
   async getIngestionStatus(): Promise<IngestionStatusResponse> {
-    return this.get<IngestionStatusResponse>('/api/v1/ingestion/status');
+    return this.get<IngestionStatusResponse>('/api/echo/ingestion/status');
   }
 
   // ─── HTTP Internals ───────────────────────────────────────────

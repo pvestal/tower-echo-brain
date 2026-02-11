@@ -123,4 +123,3 @@ if response.status_code == 200:
     print("Timeout after 120 seconds")
 else:
     print(f"Failed to queue: {response.text}")
-EOF'

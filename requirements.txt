@@ -1,7 +1,67 @@
-fastapi
-uvicorn[standard]
-httpx
-asyncpg
-pydantic
-python-multipart
-psutil
+# Echo Brain - Python Dependencies
+# Generated from live venv: 2026-02-11
+# Install: pip install -r requirements.txt
+
+# === Core Web Framework ===
+fastapi==0.128.0
+uvicorn[standard]==0.40.0
+pydantic==2.12.5
+pydantic-settings==2.12.0
+python-multipart==0.0.22
+sse-starlette==3.2.0
+
+# === HTTP Clients ===
+httpx==0.28.1
+requests==2.32.5
+
+# === Database ===
+asyncpg==0.31.0
+psycopg2-binary==2.9.11
+SQLAlchemy==2.0.46
+qdrant-client==1.16.2
+
+# === ML / Inference ===
+ollama==0.6.1
+sentence-transformers==5.2.2
+transformers==5.1.0
+numpy==2.4.2
+scikit-learn==1.8.0
+safetensors==0.7.0
+
+# === Voice (STT + TTS) ===
+faster-whisper==1.2.1
+piper-tts==1.4.1
+webrtcvad==2.0.10
+
+# === Vision / Image ===
+pillow==12.0.0
+open_clip_torch==3.2.0
+
+# === LangChain / Agents ===
+langchain-core==1.2.7
+langchain-text-splitters==1.1.0
+langgraph==1.0.7
+
+# === Task Queue ===
+celery==5.6.2
+redis==7.1.0
+
+# === Utilities ===
+python-dotenv==1.2.1
+psutil==7.2.2
+PyYAML==6.0.3
+schedule==1.2.2
+aiofiles==25.1.0
+networkx==3.6.1
+loguru==0.7.3
+rich==14.3.1
+cryptography==46.0.4
+hvac==2.4.0
+orjson==3.11.6
+toml==0.10.2
+
+# === PyTorch (platform-specific) ===
+# Tower uses AMD RX 9070 XT with ROCm. Install separately:
+#   pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm6.2
+# For NVIDIA: pip install torch torchvision torchaudio
+# Versions in venv: torch==2.10.0+rocm7.0, torchaudio==2.10.0+rocm7.0, torchvision==0.25.0+rocm7.0
