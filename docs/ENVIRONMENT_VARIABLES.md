@@ -6,8 +6,8 @@
 
 ```bash
 # PostgreSQL connection
-DATABASE_URL=postgresql://patrick:RP78eIrW7cI2jYvL5akt1yurE@localhost:5432/echo_brain
-DB_PASSWORD=RP78eIrW7cI2jYvL5akt1yurE
+DATABASE_URL=postgresql://patrick:<DB_PASSWORD>@localhost:5432/echo_brain
+DB_PASSWORD=<DB_PASSWORD>
 DB_USER=patrick
 DB_NAME=echo_brain
 DB_HOST=localhost
@@ -189,7 +189,7 @@ GPU_MEMORY_FRACTION=0.8
 
 ```bash
 # Core configuration
-DATABASE_URL=postgresql://patrick:RP78eIrW7cI2jYvL5akt1yurE@localhost:5432/echo_brain
+DATABASE_URL=postgresql://patrick:<DB_PASSWORD>@localhost:5432/echo_brain
 QDRANT_URL=http://localhost:6333
 OLLAMA_URL=http://localhost:11434
 ECHO_BRAIN_PORT=8309

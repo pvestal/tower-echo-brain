@@ -74,7 +74,7 @@ npm run build  # Outputs to `dist/` for Nginx to serve
 ```sql
 -- Database and user setup
 CREATE DATABASE echo_brain;
-CREATE USER patrick WITH PASSWORD 'RP78eIrW7cI2jYvL5akt1yurE';
+CREATE USER patrick WITH PASSWORD '<DB_PASSWORD>';
 GRANT ALL PRIVILEGES ON DATABASE echo_brain TO patrick;
 
 -- Core tables (auto-created on first run)
@@ -107,7 +107,7 @@ scene_embeddings
 **Environment Variables:**
 ```bash
 # Backend (.env)
-DATABASE_URL="postgresql://patrick:RP78eIrW7cI2jYvL5akt1yurE@localhost/echo_brain"
+DATABASE_URL="postgresql://patrick:<DB_PASSWORD>@localhost/echo_brain"
 OLLAMA_BASE_URL="http://localhost:11434"
 OLLAMA_MODEL="mistral:7b"
 QDRANT_URL="http://localhost:6333"

@@ -21,7 +21,7 @@ Echo Brain should be able to answer: "What's broken in your own code right now?"
 - Codebase: /opt/tower-echo-brain/src/ (Python, FastAPI)
 - Venv: /opt/tower-echo-brain/venv/bin/python
 - Service file: /etc/systemd/system/tower-echo-brain.service (runs as echo user)
-- DATABASE_URL: postgresql://patrick:WL12Ow4cuhEAWcO3Iaw7d2J7JEV8Hklr@localhost/echo_brain
+- DATABASE_URL: postgresql://patrick:<DB_PASSWORD>@localhost/echo_brain
 
 ## Safety Gates for Phase 2a
 
@@ -88,7 +88,7 @@ print(f'Ollama: ✅ Models: {\", \".join(models[:5])}')
 "
 
 # 5. Database accessible?
-PGPASSWORD=WL12Ow4cuhEAWcO3Iaw7d2J7JEV8Hklr psql -h localhost -U patrick -d echo_brain -c "
+PGPASSWORD=<DB_PASSWORD> psql -h localhost -U patrick -d echo_brain -c "
 SELECT COUNT(*) as facts FROM facts;
 " 2>/dev/null | head -3
 
@@ -248,7 +248,7 @@ sudo -u postgres psql echo_brain -c "\dt self_*"
 
 ```bash
 echo "=== GATE 2: Schema Verification ==="
-PGPASSWORD=WL12Ow4cuhEAWcO3Iaw7d2J7JEV8Hklr psql -h localhost -U patrick -d echo_brain -c "
+PGPASSWORD=<DB_PASSWORD> psql -h localhost -U patrick -d echo_brain -c "
 SELECT table_name, 
        (SELECT COUNT(*) FROM information_schema.columns WHERE table_name = t.table_name) as columns
 FROM information_schema.tables t
@@ -347,7 +347,7 @@ class CodebaseIndexer:
         ]
         
         self.db_url = os.environ.get("DATABASE_URL", 
-            "postgresql://patrick:WL12Ow4cuhEAWcO3Iaw7d2J7JEV8Hklr@localhost/echo_brain")
+            "postgresql://patrick:<DB_PASSWORD>@localhost/echo_brain")
         self.qdrant_url = "http://localhost:6333"
         self.ollama_url = "http://localhost:11434"
         self.collection = "echo_memory"
@@ -707,7 +707,7 @@ class ImprovementEngine:
     
     def __init__(self):
         self.db_url = os.environ.get("DATABASE_URL",
-            "postgresql://patrick:WL12Ow4cuhEAWcO3Iaw7d2J7JEV8Hklr@localhost/echo_brain")
+            "postgresql://patrick:<DB_PASSWORD>@localhost/echo_brain")
         self.qdrant_url = "http://localhost:6333"
         self.ollama_url = "http://localhost:11434"
         self.collection = "echo_memory"
@@ -922,7 +922,7 @@ sleep 120
 echo "=== GATE 5: First Cycle Results ==="
 
 # Codebase indexed?
-PGPASSWORD=WL12Ow4cuhEAWcO3Iaw7d2J7JEV8Hklr psql -h localhost -U patrick -d echo_brain -c "
+PGPASSWORD=<DB_PASSWORD> psql -h localhost -U patrick -d echo_brain -c "
 SELECT COUNT(*) as files_indexed, 
        SUM(line_count) as total_lines,
        SUM(jsonb_array_length(functions)) as total_functions,
@@ -931,14 +931,14 @@ FROM self_codebase_index;
 "
 
 # Schema indexed?
-PGPASSWORD=WL12Ow4cuhEAWcO3Iaw7d2J7JEV8Hklr psql -h localhost -U patrick -d echo_brain -c "
+PGPASSWORD=<DB_PASSWORD> psql -h localhost -U patrick -d echo_brain -c "
 SELECT COUNT(*) as tables_indexed,
        SUM(row_count) as total_rows
 FROM self_schema_index;
 "
 
 # Issues detected?
-PGPASSWORD=WL12Ow4cuhEAWcO3Iaw7d2J7JEV8Hklr psql -h localhost -U patrick -d echo_brain -c "
+PGPASSWORD=<DB_PASSWORD> psql -h localhost -U patrick -d echo_brain -c "
 SELECT issue_type, severity, COUNT(*) 
 FROM self_detected_issues 
 GROUP BY issue_type, severity 
@@ -946,7 +946,7 @@ ORDER BY severity, issue_type;
 "
 
 # Self-tests run?
-PGPASSWORD=WL12Ow4cuhEAWcO3Iaw7d2J7JEV8Hklr psql -h localhost -U patrick -d echo_brain -c "
+PGPASSWORD=<DB_PASSWORD> psql -h localhost -U patrick -d echo_brain -c "
 SELECT test_name, passed, response_time_ms 
 FROM self_test_results 
 WHERE run_at > NOW() - INTERVAL '10 minutes'
@@ -954,7 +954,7 @@ ORDER BY test_name;
 "
 
 # Health metrics recorded?
-PGPASSWORD=WL12Ow4cuhEAWcO3Iaw7d2J7JEV8Hklr psql -h localhost -U patrick -d echo_brain -c "
+PGPASSWORD=<DB_PASSWORD> psql -h localhost -U patrick -d echo_brain -c "
 SELECT metric_name, metric_value, recorded_at 
 FROM self_health_metrics 
 ORDER BY recorded_at DESC 
@@ -962,7 +962,7 @@ LIMIT 10;
 "
 
 # Improvement proposals generated? (may be empty on first cycle if no open issues yet)
-PGPASSWORD=WL12Ow4cuhEAWcO3Iaw7d2J7JEV8Hklr psql -h localhost -U patrick -d echo_brain -c "
+PGPASSWORD=<DB_PASSWORD> psql -h localhost -U patrick -d echo_brain -c "
 SELECT title, risk_assessment, status, created_at
 FROM self_improvement_proposals
 ORDER BY created_at DESC
@@ -970,7 +970,7 @@ LIMIT 5;
 "
 
 # Anime pipeline indexed? (secondary — OK if empty)
-PGPASSWORD=WL12Ow4cuhEAWcO3Iaw7d2J7JEV8Hklr psql -h localhost -U patrick -d echo_brain -c "
+PGPASSWORD=<DB_PASSWORD> psql -h localhost -U patrick -d echo_brain -c "
 SELECT file_path, line_count, jsonb_array_length(functions) as funcs
 FROM self_codebase_index
 WHERE file_path LIKE '%anime%' OR file_path LIKE '%tower-anime%'
@@ -1068,7 +1068,7 @@ After this prompt completes, ALL must be true:
 
 ## Important Notes
 
-- Database: `echo_brain` on localhost, user `patrick`, password `WL12Ow4cuhEAWcO3Iaw7d2J7JEV8Hklr`
+- Database: `echo_brain` on localhost, user `patrick`, password `<DB_PASSWORD>`
 - Service runs as `echo` user — all new files need 755 permissions
 - New workers MUST be importable independently (no broken import chains)
 - All workers use the same `run_cycle()` interface as existing workers

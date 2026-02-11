@@ -76,7 +76,7 @@ Add to your Claude Desktop `claude_desktop_config.json`:
       "command": "/opt/tower-echo-brain/venv/bin/python",
       "args": ["/opt/tower-echo-brain/mcp_server/main.py"],
       "env": {
-        "ECHO_BRAIN_DB_PASSWORD": "RP78eIrW7cI2jYvL5akt1yurE",
+        "ECHO_BRAIN_DB_PASSWORD": "<DB_PASSWORD>",
         "PYTHONPATH": "/opt/tower-echo-brain"
       }
     }
@@ -229,7 +229,7 @@ Ollama (localhost:11434)
 ```bash
 # Enable debug logging
 export PYTHONPATH=/opt/tower-echo-brain
-export ECHO_BRAIN_DB_PASSWORD=RP78eIrW7cI2jYvL5akt1yurE
+export ECHO_BRAIN_DB_PASSWORD=<DB_PASSWORD>
 python /opt/tower-echo-brain/mcp_server/main.py
 ```
 

@@ -250,3 +250,90 @@ Trust is earned incrementally. Echo Brain can detect issues and reason about fix
 
 ### Why local Whisper + Piper for voice?
 Same philosophy as embeddings — everything runs on Tower hardware (RX 9070 XT for Whisper CUDA, CPU for Piper). No cloud APIs, no latency, no data leaving the network. Whisper large-v3 provides excellent accuracy; Piper provides fast, natural-sounding TTS.
+
+---
+
+## Embedding Model Migration History
+
+Echo Brain has been through three embedding models:
+
+1. **OpenAI text-embedding-ada-002** (1536D) — Original model, required API calls and cost money per request.
+2. **mxbai-embed-large** (1024D) — First local model via Ollama. Only supported a **512-token context window**, meaning most code, conversations, and docs were truncated before embedding. Poor retrieval quality.
+3. **nomic-embed-text** (768D) — Current model. **8,192-token context window** (16x larger). Content is embedded fully, not truncated. Slight reduction in vector precision (768 vs 1024) more than offset by context improvement.
+
+The migration to nomic-embed-text required deleting the old `echo_memory` collection (1024D vectors incompatible), recreating at 768D, and complete re-ingestion. All references to mxbai-embed-large were cleaned from the facts database.
+
+**Note:** CLIP is used for image/video embeddings, NOT nomic-embed-text. nomic is exclusively for text.
+
+---
+
+## Context Contamination Bug (Resolved)
+
+Echo Brain and Tower Anime Production originally shared database tables and Qdrant collections. When queried about its own architecture, Echo Brain would retrieve anime content (LoRA configs, character descriptions) and mix it into technical answers.
+
+**Resolution:** Complete separation — Echo Brain uses the `echo_brain` database and `echo_memory` collection, anime production uses `anime_production` database with separate collections. Memory middleware filters searches to Echo Brain's own collections only. The shared `tower_consolidated` database is being phased out.
+
+---
+
+## Known Architectural Weaknesses
+
+1. **No retrieval confidence gate** — When vector search returns low-similarity results, the LLM falls back to general knowledge and generates plausible-sounding but incorrect answers (e.g., claiming SQLite). No threshold triggers "I don't have specific information about that."
+
+2. **No temporal ordering in vectors** — Qdrant vectors have no timestamp metadata. Echo Brain cannot distinguish current facts from historical ones, causing stale information to surface as current.
+
+3. **Code-heavy, context-light retrieval** — Many code snippets but few architectural explanations in the vector store. Implementation details are findable; "why was this decision made?" questions are not.
+
+4. **Extreme duplication** — Some content (particularly the context contamination fix code) appears 10+ times identically, flooding search results with redundant chunks and pushing unique content out of top results.
+
+---
+
+## Failure Modes
+
+### Qdrant Crash (port 6333)
+- **Impact:** All semantic search and memory retrieval fails
+- **Behavior:** Queries still work but responses degrade to generic LLM answers with no personalization
+- **Recovery:** `sudo systemctl restart qdrant` — vectors persist on disk
+
+### Ollama Crash (port 11434)
+- **Impact:** Total failure — no LLM inference, no embeddings
+- **Behavior:** All query endpoints return errors or timeouts
+- **Recovery:** `sudo systemctl restart ollama` — models cached on disk
+
+### PostgreSQL Crash (port 5432)
+- **Impact:** No routing config, no conversation history, no facts
+- **Behavior:** Queries may work with cached routing but cannot log or access facts
+- **Recovery:** `sudo systemctl restart postgresql`
+
+### GPU Resource Contention
+- **RTX 3060 (12GB):** Ollama LLM inference
+- **RX 9070 XT (16GB):** Whisper STT (CUDA), ComfyUI image generation, FramePack video
+- Running heavy workloads on both GPUs simultaneously risks VRAM exhaustion
+
+---
+
+## Ingestion Pipeline
+
+```
+Source Document (markdown, code, conversation, JSON)
+    │
+    ▼
+Chunking (segments < 6,000 chars with overlap)
+    │
+    ▼
+Deduplication (SHA-256 hash check)
+    │
+    ▼
+Embedding (768D via nomic-embed-text / Ollama)
+    │
+    ▼
+Storage (Qdrant echo_memory + PostgreSQL metadata)
+    │
+    ▼
+Logging (domain_ingestion_log table)
+```
+
+**Key files:**
+- Orchestrator: `src/ingestion/orchestrator.py`
+- Chunking: `src/ingestion/chunker.py`
+- Embedding: `src/services/embedding_service.py`
+- Conversation ingestion: `scripts/ingest_conversations.py`

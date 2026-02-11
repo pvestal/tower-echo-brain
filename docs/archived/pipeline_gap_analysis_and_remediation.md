@@ -289,7 +289,7 @@ def get_generation_stats(hours=24):
         host="localhost",
         database="anime_production",
         user="patrick",
-        password="RP78eIrW7cI2jYvL5akt1yurE"
+        password=os.getenv("DB_PASSWORD", "")
     )
     cur = conn.cursor()
 
