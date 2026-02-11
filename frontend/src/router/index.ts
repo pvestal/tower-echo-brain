@@ -35,6 +35,21 @@ const routes = [
     path: '/logs',
     name: 'Logs',
     component: () => import('@/views/LogsView.vue')
+  },
+  {
+    path: '/voice',
+    name: 'Voice',
+    component: () => import('@/views/VoicePanel.vue')
+  },
+  {
+    path: '/voice-simple',
+    name: 'VoiceSimple',
+    component: () => import('@/views/VoiceSimple.vue')
+  },
+  {
+    path: '/voice-test',
+    name: 'VoiceTest',
+    component: () => import('@/views/VoiceTest.vue')
   }
 ];
 

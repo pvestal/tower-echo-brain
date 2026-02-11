@@ -5,7 +5,76 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ---
 
-## [0.3.0] - 2026-02-06 (Phase 2a: Self-Awareness — IN PROGRESS)
+## [0.5.0] - 2026-02-11 (Voice Interface, Frontend Dashboard, Test Infrastructure)
+
+### Added
+- Voice interface: Whisper large-v3 STT (CUDA float16) + Piper TTS (en_US-lessac-medium)
+- Voice REST endpoints: transcribe, synthesize, synthesize/base64, chat
+- Voice WebSocket endpoint for real-time bidirectional streaming (`/api/echo/voice/ws`)
+- Voice service health and voice model listing endpoints
+- Voice conversation persistence to Echo Brain memory
+- VoicePanel.vue: full voice UI with recording, playback, mute/volume, collapsible debug panels, WS latency/reconnect tracking
+- VoiceSimple.vue: minimal voice interface with mute
+- VoiceTest.vue: voice endpoint testing tool with dynamic URL support
+- Mute button and volume slider (GainNode-based) in voice interfaces
+- Per-message debug panels showing query type, confidence, sources, audio stats
+- STT debug panels showing detected language and confidence
+- WebSocket status bar with ping latency and reconnect count
+- Pact V4 consumer contract tests for voice endpoints (status, voices)
+- Pytest smoke tests for voice endpoints (status, voices, synthesize)
+- TEST_INVENTORY.md documenting all test files
+
+### Changed
+- SystemView.vue: removed dead UI for non-existent endpoints (moltbook, thinking log, etc.)
+- echoApi.ts: removed phantom endpoint bindings, fixed paths to match actual backend routes
+- VoiceTest.vue: replaced hardcoded localhost:8309 with dynamic URL computation
+- getAllEndpoints(): rewritten with verified backend routes including voice endpoints
+- Worker count: 11 → 12 (added contract_monitor at 5 min interval)
+- Qdrant vectors: 124,872 → 176,566
+- Renamed test_actual_integration.py → test_auth_integration.py with cleaned function names
+
+### Removed
+- moltbookApi (no backend routes existed)
+- intelligenceApi.compareKnowledge, testUnderstanding, thinkingLog (non-existent endpoints)
+- conversationsApi.health, conversationsApi.test (non-existent endpoints)
+- reasoningApi.health (non-existent endpoint)
+- 5 stale/duplicate test files archived to tests/tmp_archive/
+
+### Fixed
+- echoApi.ts: modelsList path /models/list → /models
+- echoApi.ts: knowledgeMap path /intelligence/knowledge-map → /intelligence/map
+- echoApi.ts: operationsJobs using wrong baseURL (prepended /api/echo) → absolute path
+- getAllEndpoints() contained ~15 phantom routes that don't exist on the backend
+
+---
+
+## [0.4.1] - 2026-02-11 (Enhanced Self-Diagnostic System)
+
+### Added
+- Comprehensive self-diagnostic system (`src/core/self_diagnostic.py`)
+- System service monitoring (ports, systemd units)
+- Knowledge source validation (facts, vectors, conversations)
+- Ingestion pipeline health checks
+- Resource usage tracking
+- API health testing
+- Data quality detection (duplicates, low-confidence, stale data)
+- Codebase analysis (TODOs, issues)
+
+---
+
+## [0.4.0] - 2026-02-11 (Reasoning Pipeline & Domain Ingestion)
+
+### Added
+- Reasoning pipeline: CLASSIFY → RETRIEVE → REASON → RESPOND
+- File watcher worker (10 min cycles)
+- Domain ingestor worker (60 min cycles)
+- Reasoning worker (30 min cycles)
+- Contract monitor worker (5 min cycles, tests 15+ endpoints)
+- Database separation complete (tower_consolidated migrated)
+
+---
+
+## [0.3.0] - 2026-02-06 (Phase 2a: Self-Awareness)
 
 ### Added
 - Self-awareness database schema (6 tables: self_codebase_index, self_schema_index, self_detected_issues, self_test_results, self_health_metrics, self_improvement_proposals)

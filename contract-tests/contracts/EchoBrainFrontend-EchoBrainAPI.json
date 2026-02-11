@@ -1,0 +1,1227 @@
+{
+  "consumer": {
+    "name": "EchoBrainFrontend"
+  },
+  "interactions": [
+    {
+      "description": "a health check request",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "the system is running"
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/health"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "services": {
+              "database": {
+                "latency_ms": 2.5,
+                "status": "up"
+              },
+              "ollama": {
+                "latency_ms": 12.3,
+                "status": "up"
+              },
+              "vector_store": {
+                "latency_ms": 5.1,
+                "status": "up"
+              }
+            },
+            "status": "healthy",
+            "uptime_seconds": 86400,
+            "version": "1.2.0"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.services.database.latency_ms": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "decimal"
+                }
+              ]
+            },
+            "$.services.database.status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "up|down|degraded"
+                }
+              ]
+            },
+            "$.services.ollama.latency_ms": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "decimal"
+                }
+              ]
+            },
+            "$.services.ollama.status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "up|down|degraded"
+                }
+              ]
+            },
+            "$.services.vector_store.latency_ms": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "decimal"
+                }
+              ]
+            },
+            "$.services.vector_store.status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "up|down|degraded"
+                }
+              ]
+            },
+            "$.status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "healthy|degraded|unhealthy"
+                }
+              ]
+            },
+            "$.uptime_seconds": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "integer"
+                }
+              ]
+            },
+            "$.version": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {},
+          "status": {}
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "description": "a health check when vector store is down",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "the vector store is unreachable"
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/health"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "services": {
+              "database": {
+                "latency_ms": 2.5,
+                "status": "up"
+              },
+              "ollama": {
+                "latency_ms": 12.3,
+                "status": "up"
+              },
+              "vector_store": {
+                "latency_ms": 0,
+                "status": "down"
+              }
+            },
+            "status": "degraded",
+            "uptime_seconds": 86400,
+            "version": "1.2.0"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.services.database.latency_ms": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "decimal"
+                }
+              ]
+            },
+            "$.services.database.status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.services.ollama.latency_ms": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "decimal"
+                }
+              ]
+            },
+            "$.services.ollama.status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.services.vector_store.latency_ms": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "decimal"
+                }
+              ]
+            },
+            "$.services.vector_store.status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.uptime_seconds": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "integer"
+                }
+              ]
+            },
+            "$.version": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {},
+          "status": {}
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "description": "a knowledge query request",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "the vector store has indexed documents"
+        }
+      ],
+      "request": {
+        "body": {
+          "content": {
+            "query": "How is the Victron MultiPlus configured?",
+            "top_k": 5
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.query": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.top_k": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "integer"
+                }
+              ]
+            }
+          },
+          "header": {}
+        },
+        "method": "POST",
+        "path": "/api/v1/query"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "model_used": "nomic-embed-text",
+            "query_time_ms": 45.2,
+            "results": [
+              {
+                "content": "The Victron MultiPlus II is configured for...",
+                "created_at": "2025-01-15T10:30:00Z",
+                "id": "mem_abc123",
+                "metadata": {
+                  "chunk_index": 3,
+                  "file": "conversation_2025-01-15.jsonl"
+                },
+                "score": 0.87,
+                "source": "claude_conversations"
+              }
+            ],
+            "total_matches": 12
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.model_used": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.query_time_ms": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "decimal"
+                }
+              ]
+            },
+            "$.results": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 1
+                }
+              ]
+            },
+            "$.results[*].content": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.results[*].created_at": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "format": "yyyy-MM-dd'T'HH:mm:ss'Z'",
+                  "match": "datetime"
+                }
+              ]
+            },
+            "$.results[*].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.results[*].metadata": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.results[*].metadata.chunk_index": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "integer"
+                }
+              ]
+            },
+            "$.results[*].metadata.file": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.results[*].score": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "decimal"
+                }
+              ]
+            },
+            "$.results[*].source": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.total_matches": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "integer"
+                }
+              ]
+            }
+          },
+          "header": {},
+          "status": {}
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "description": "a query request with empty body",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "the system is running"
+        }
+      ],
+      "request": {
+        "body": {
+          "content": {},
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "method": "POST",
+        "path": "/api/v1/query"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "detail": "query field is required",
+            "error_code": "VALIDATION_ERROR",
+            "timestamp": "2025-02-11T12:00:00Z"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.detail": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.error_code": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.timestamp": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "format": "yyyy-MM-dd'T'HH:mm:ss'Z'",
+                  "match": "datetime"
+                }
+              ]
+            }
+          },
+          "header": {},
+          "status": {}
+        },
+        "status": 422
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "description": "a query with no results",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "the vector store has no matching documents"
+        }
+      ],
+      "request": {
+        "body": {
+          "content": {
+            "min_score": 0.8,
+            "query": "completely unrelated gibberish xyz123",
+            "top_k": 5
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.min_score": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "decimal"
+                }
+              ]
+            },
+            "$.query": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.top_k": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "integer"
+                }
+              ]
+            }
+          },
+          "header": {}
+        },
+        "method": "POST",
+        "path": "/api/v1/query"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "model_used": "nomic-embed-text",
+            "query_time_ms": 12.1,
+            "results": [],
+            "total_matches": 0
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.model_used": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.query_time_ms": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "decimal"
+                }
+              ]
+            },
+            "$.total_matches": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "integer"
+                }
+              ]
+            }
+          },
+          "header": {},
+          "status": {}
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "description": "a request for ingestion status",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "an ingestion has completed previously"
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/ingestion/status"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "documents_failed": 2,
+            "documents_processed": 347,
+            "last_run": "2025-02-10T03:00:00Z",
+            "last_run_status": "success",
+            "next_scheduled": "2025-02-11T03:00:00Z",
+            "running": false
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.documents_failed": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "integer"
+                }
+              ]
+            },
+            "$.documents_processed": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "integer"
+                }
+              ]
+            },
+            "$.last_run": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "format": "yyyy-MM-dd'T'HH:mm:ss'Z'",
+                  "match": "datetime"
+                }
+              ]
+            },
+            "$.last_run_status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "success|failed|partial"
+                }
+              ]
+            },
+            "$.next_scheduled": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "format": "yyyy-MM-dd'T'HH:mm:ss'Z'",
+                  "match": "datetime"
+                }
+              ]
+            },
+            "$.running": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {},
+          "status": {}
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "description": "a request to create a memory",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "the system can accept new memories"
+        }
+      ],
+      "request": {
+        "body": {
+          "content": {
+            "category": "infrastructure",
+            "content": "New configuration note for Qdrant setup",
+            "source": "manual_entry"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.category": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.content": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.source": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {}
+        },
+        "method": "POST",
+        "path": "/api/v1/memories"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "embedded": true,
+            "id": "mem_new_001",
+            "status": "created"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.embedded": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {},
+          "status": {}
+        },
+        "status": 201
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "description": "a request to list available voices",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "the voice service is running"
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/api/echo/voice/voices"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "installed": [
+              {
+                "config_exists": true,
+                "name": "en_US-lessac-medium",
+                "path": "/opt/tower-echo-brain/models/voice/piper/en_US-lessac-medium.onnx",
+                "size_mb": 75.2
+              }
+            ],
+            "models_dir": "/opt/tower-echo-brain/models/voice/piper",
+            "suggested": [
+              {
+                "description": "High quality US English",
+                "name": "en_US-lessac-high",
+                "quality": "high"
+              }
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.installed": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 1
+                }
+              ]
+            },
+            "$.installed[*].config_exists": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.installed[*].name": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.installed[*].path": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.installed[*].size_mb": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "decimal"
+                }
+              ]
+            },
+            "$.models_dir": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.suggested": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 1
+                }
+              ]
+            },
+            "$.suggested[*].description": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.suggested[*].name": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.suggested[*].quality": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {},
+          "status": {}
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "description": "a request to list memories",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "memories exist in the database"
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/memories",
+        "query": {
+          "page": [
+            "1"
+          ],
+          "page_size": [
+            "20"
+          ]
+        }
+      },
+      "response": {
+        "body": {
+          "content": {
+            "memories": [
+              {
+                "category": "infrastructure",
+                "content": "Tower server runs 28 microservices...",
+                "created_at": "2025-01-10T08:00:00Z",
+                "embedding_model": "nomic-embed-text",
+                "id": "mem_001",
+                "source": "claude_conversations",
+                "updated_at": "2025-01-10T08:00:00Z"
+              }
+            ],
+            "page": 1,
+            "page_size": 20,
+            "total": 150
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.memories": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 1
+                }
+              ]
+            },
+            "$.memories[*].category": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.memories[*].content": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.memories[*].created_at": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "format": "yyyy-MM-dd'T'HH:mm:ss'Z'",
+                  "match": "datetime"
+                }
+              ]
+            },
+            "$.memories[*].embedding_model": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.memories[*].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.memories[*].source": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.memories[*].updated_at": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "format": "yyyy-MM-dd'T'HH:mm:ss'Z'",
+                  "match": "datetime"
+                }
+              ]
+            },
+            "$.page": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "integer"
+                }
+              ]
+            },
+            "$.page_size": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "integer"
+                }
+              ]
+            },
+            "$.total": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "integer"
+                }
+              ]
+            }
+          },
+          "header": {},
+          "status": {}
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "description": "a voice status request",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "the voice service is running"
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/api/echo/voice/status"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "initialized": true,
+            "stt_available": true,
+            "tts_available": true
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.initialized": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.stt_available": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.tts_available": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {},
+          "status": {}
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "description": "ingestion status when never run",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "no ingestion has ever run"
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/ingestion/status"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "documents_failed": 0,
+            "documents_processed": 0,
+            "last_run": null,
+            "last_run_status": null,
+            "next_scheduled": null,
+            "running": false
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.documents_failed": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "integer"
+                }
+              ]
+            },
+            "$.documents_processed": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "integer"
+                }
+              ]
+            },
+            "$.running": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {},
+          "status": {}
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    }
+  ],
+  "metadata": {
+    "pactRust": {
+      "ffi": "0.4.22",
+      "models": "1.2.3"
+    },
+    "pactSpecification": {
+      "version": "4.0"
+    }
+  },
+  "provider": {
+    "name": "EchoBrainAPI"
+  }
+}

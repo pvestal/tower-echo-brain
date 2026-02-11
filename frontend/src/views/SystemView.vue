@@ -34,18 +34,10 @@
           <button @click="callEndpoint('knowledgeMap')" class="btn">
             Knowledge Map
           </button>
-          <button @click="callEndpoint('thinkingLog')" class="btn">
-            Thinking Log
+          <button @click="callEndpoint('intelligenceStatus')" class="btn">
+            Intelligence Status
           </button>
         </div>
-      </div>
-      <div class="grid grid-2 gap-2">
-        <button @click="testUnderstanding" class="btn">
-          Test Understanding
-        </button>
-        <button @click="compareKnowledge" class="btn">
-          Compare Knowledge
-        </button>
       </div>
     </div>
 
@@ -56,14 +48,6 @@
         <input v-model="conversationQuery" placeholder="Search conversations..." class="w-full mb-2" />
         <button @click="searchConversations" class="btn btn-primary w-full">
           Search Conversations
-        </button>
-      </div>
-      <div class="grid grid-2 gap-2">
-        <button @click="callEndpoint('conversationsHealth')" class="btn">
-          Conversations Health
-        </button>
-        <button @click="callEndpoint('conversationsTest')" class="btn">
-          Test Conversations
         </button>
       </div>
     </div>
@@ -87,30 +71,6 @@
       </button>
     </div>
 
-    <!-- Moltbook Integration -->
-    <div class="card mb-3">
-      <h3>Moltbook Integration</h3>
-      <div class="grid grid-4 gap-2">
-        <button @click="callEndpoint('moltbookHealth')" class="btn">
-          Health
-        </button>
-        <button @click="callEndpoint('moltbookStatus')" class="btn">
-          Status
-        </button>
-        <button @click="callEndpoint('moltbookProfile')" class="btn">
-          Profile
-        </button>
-        <button @click="callEndpoint('moltbookTest')" class="btn">
-          Test
-        </button>
-      </div>
-      <div class="mt-2">
-        <button @click="callEndpoint('moltbookEstablishmentStatus')" class="btn w-full">
-          Establishment Status
-        </button>
-      </div>
-    </div>
-
     <!-- System Diagnostics -->
     <div class="card mb-3">
       <h3>System Diagnostics</h3>
@@ -127,9 +87,6 @@
         <button @click="callEndpoint('systemMetrics')" class="btn">
           Metrics
         </button>
-        <button @click="callEndpoint('systemMetricsHistory')" class="btn">
-          Metrics History
-        </button>
         <button @click="callEndpoint('systemDiagnostics')" class="btn">
           Full Diagnostics
         </button>
@@ -141,6 +98,9 @@
         </button>
         <button @click="callEndpoint('systemLogs')" class="btn">
           System Logs
+        </button>
+        <button @click="callEndpoint('healthDetailed')" class="btn">
+          Detailed Health
         </button>
       </div>
     </div>
@@ -154,9 +114,6 @@
         </button>
         <button @click="callEndpoint('operationsJobs')" class="btn">
           Active Jobs
-        </button>
-        <button @click="callEndpoint('healthDetailed')" class="btn">
-          Detailed Health
         </button>
       </div>
     </div>
@@ -199,7 +156,6 @@ import {
   intelligenceApi,
   conversationsApi,
   mcpApi,
-  moltbookApi,
   systemApi,
   selfTestApi
 } from '@/api/echoApi';
@@ -221,28 +177,16 @@ const endpoints: Record<string, () => Promise<any>> = {
 
   // Intelligence
   knowledgeMap: intelligenceApi.knowledgeMap,
-  thinkingLog: intelligenceApi.thinkingLog,
-
-  // Conversations
-  conversationsHealth: conversationsApi.health,
-  conversationsTest: conversationsApi.test,
+  intelligenceStatus: intelligenceApi.status,
 
   // MCP
   mcpHealth: mcpApi.health,
-
-  // Moltbook
-  moltbookHealth: moltbookApi.health,
-  moltbookStatus: moltbookApi.status,
-  moltbookProfile: moltbookApi.profile,
-  moltbookTest: moltbookApi.test,
-  moltbookEstablishmentStatus: moltbookApi.establishmentStatus,
 
   // System
   systemStatus: systemApi.status,
   systemReady: systemApi.ready,
   systemAlive: systemApi.alive,
   systemMetrics: systemApi.metrics,
-  systemMetricsHistory: systemApi.metricsHistory,
   systemDiagnostics: systemApi.diagnostics,
   systemDiagnosticsDatabase: systemApi.diagnosticsDatabase,
   systemDiagnosticsServices: systemApi.diagnosticsServices,
@@ -305,44 +249,6 @@ const think = async () => {
 
   try {
     const response = await intelligenceApi.think(thinkQuery.value);
-    lastDuration.value = Date.now() - start;
-    lastResponse.value = response.data;
-  } catch (error: any) {
-    lastDuration.value = Date.now() - start;
-    lastError.value = error.response?.data?.detail || error.message;
-  }
-};
-
-const testUnderstanding = async () => {
-  const query = prompt('Enter query to test understanding:');
-  if (!query) return;
-
-  lastResponse.value = null;
-  lastError.value = '';
-  lastEndpoint.value = 'Test Understanding';
-  const start = Date.now();
-
-  try {
-    const response = await intelligenceApi.testUnderstanding(query);
-    lastDuration.value = Date.now() - start;
-    lastResponse.value = response.data;
-  } catch (error: any) {
-    lastDuration.value = Date.now() - start;
-    lastError.value = error.response?.data?.detail || error.message;
-  }
-};
-
-const compareKnowledge = async () => {
-  const topic = prompt('Enter topic to compare knowledge:');
-  if (!topic) return;
-
-  lastResponse.value = null;
-  lastError.value = '';
-  lastEndpoint.value = 'Compare Knowledge';
-  const start = Date.now();
-
-  try {
-    const response = await intelligenceApi.compareKnowledge(topic);
     lastDuration.value = Date.now() - start;
     lastResponse.value = response.data;
   } catch (error: any) {

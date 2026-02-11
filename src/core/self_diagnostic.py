@@ -34,37 +34,61 @@ class EchoBrainDiagnostic:
     """
     
     def __init__(self):
+        # Read password from systemd config or environment
+        password = os.getenv("DB_PASSWORD", "")
+        if not password:
+            # Try to read from systemd service config
+            try:
+                with open("/etc/systemd/system/tower-echo-brain.service.d/database.conf", "r") as f:
+                    for line in f:
+                        if line.startswith("Environment=") and "DB_PASSWORD=" in line:
+                            password = line.split("DB_PASSWORD=")[1].strip().strip('"')
+                            break
+            except:
+                pass
+
         self.db_config = {
             "host": "localhost",
             "database": "echo_brain",
             "user": "patrick",
-            "password": os.getenv("DB_PASSWORD", "")
+            "password": password
         }
         self.results: List[DiagnosticResult] = []
         
     async def run_full_diagnostic(self) -> Dict[str, Any]:
         """Run all diagnostics and return comprehensive report"""
         self.results = []
-        
+
         start_time = datetime.now()
-        
+
         # Run all diagnostic categories
+        await self._diagnose_system_services()
         await self._diagnose_knowledge_sources()
         await self._diagnose_unified_layer()
         await self._diagnose_mcp_integration()
         await self._diagnose_api_endpoints()
+        await self._diagnose_ingestion_pipeline()
         await self._diagnose_codebase()
         await self._diagnose_data_quality()
         await self._analyze_usage_patterns()
-        
+        await self._diagnose_resource_usage()
+
         # Generate recommendations
         recommendations = self._generate_recommendations()
-        
+
         # Calculate health score
         health_score = self._calculate_health_score()
-        
+
         elapsed = (datetime.now() - start_time).total_seconds()
-        
+
+        # Log diagnostic results
+        logger.info(f"Diagnostic completed in {elapsed:.2f}s - Health Score: {health_score}%")
+        for r in self.results:
+            if r.status == "critical":
+                logger.error(f"[{r.category}] {r.name}: {r.message}")
+            elif r.status == "warning":
+                logger.warning(f"[{r.category}] {r.name}: {r.message}")
+
         return {
             "timestamp": datetime.now().isoformat(),
             "elapsed_seconds": round(elapsed, 2),
@@ -75,8 +99,293 @@ class EchoBrainDiagnostic:
             "quick_stats": await self._get_quick_stats()
         }
     
+    # ==================== SYSTEM SERVICES ====================
+
+    async def _diagnose_system_services(self):
+        """Check all system services and ports"""
+        import subprocess
+        import socket
+
+        # Check systemd services
+        services = {
+            "tower-echo-brain": 8309,
+            "tower-auth": 8088,
+            "tower-semantic-memory": 8310
+        }
+
+        for service, port in services.items():
+            try:
+                result = subprocess.run(
+                    ["systemctl", "is-active", service],
+                    capture_output=True,
+                    text=True,
+                    timeout=5
+                )
+                is_active = result.stdout.strip() == "active"
+
+                # Also check if port is listening
+                port_open = False
+                try:
+                    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    sock.settimeout(1)
+                    result = sock.connect_ex(('localhost', port))
+                    port_open = result == 0
+                    sock.close()
+                except:
+                    pass
+
+                if is_active and port_open:
+                    status = "healthy"
+                    msg = f"Service active and port {port} listening"
+                elif is_active:
+                    status = "warning"
+                    msg = f"Service active but port {port} not responding"
+                elif port_open:
+                    status = "warning"
+                    msg = f"Port {port} listening but service not managed by systemd"
+                else:
+                    status = "critical"
+                    msg = f"Service inactive and port {port} not listening"
+
+                self.results.append(DiagnosticResult(
+                    category="services",
+                    name=service,
+                    status=status,
+                    message=msg,
+                    details={"active": is_active, "port": port, "port_open": port_open},
+                    recommendation=f"sudo systemctl restart {service}" if not is_active else None
+                ))
+            except Exception as e:
+                self.results.append(DiagnosticResult(
+                    category="services",
+                    name=service,
+                    status="critical",
+                    message=f"Failed to check service: {e}"
+                ))
+
+        # Check critical ports
+        critical_ports = {
+            6333: "Qdrant",
+            5432: "PostgreSQL",
+            11434: "Ollama"
+        }
+
+        for port, name in critical_ports.items():
+            try:
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(1)
+                result = sock.connect_ex(('localhost', port))
+                sock.close()
+
+                if result == 0:
+                    self.results.append(DiagnosticResult(
+                        category="services",
+                        name=f"{name} Port",
+                        status="healthy",
+                        message=f"Port {port} is listening",
+                        details={"port": port}
+                    ))
+                else:
+                    self.results.append(DiagnosticResult(
+                        category="services",
+                        name=f"{name} Port",
+                        status="critical",
+                        message=f"Port {port} not accessible",
+                        details={"port": port},
+                        recommendation=f"Check if {name} service is running"
+                    ))
+            except Exception as e:
+                self.results.append(DiagnosticResult(
+                    category="services",
+                    name=f"{name} Port",
+                    status="warning",
+                    message=f"Could not check port {port}: {e}"
+                ))
+
+    # ==================== INGESTION PIPELINE ====================
+
+    async def _diagnose_ingestion_pipeline(self):
+        """Check ingestion pipeline and timers"""
+        import subprocess
+
+        # Check ingestion timer
+        try:
+            result = subprocess.run(
+                ["systemctl", "is-active", "echo-brain-ingest.timer"],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+            timer_active = result.stdout.strip() == "active"
+
+            # Get next run time
+            next_run = None
+            if timer_active:
+                result = subprocess.run(
+                    ["systemctl", "status", "echo-brain-ingest.timer"],
+                    capture_output=True,
+                    text=True,
+                    timeout=5
+                )
+                for line in result.stdout.split('\n'):
+                    if "Trigger:" in line:
+                        next_run = line.split("Trigger:")[1].strip()
+                        break
+
+            self.results.append(DiagnosticResult(
+                category="ingestion",
+                name="Ingestion Timer",
+                status="healthy" if timer_active else "warning",
+                message=f"Timer {'active' if timer_active else 'inactive'}" + (f", next run: {next_run}" if next_run else ""),
+                details={"active": timer_active, "next_run": next_run},
+                recommendation="sudo systemctl start echo-brain-ingest.timer" if not timer_active else None
+            ))
+        except Exception as e:
+            self.results.append(DiagnosticResult(
+                category="ingestion",
+                name="Ingestion Timer",
+                status="warning",
+                message=f"Could not check timer: {e}"
+            ))
+
+        # Check last ingestion
+        try:
+            pool = await asyncpg.create_pool(**self.db_config, min_size=1, max_size=2)
+            async with pool.acquire() as conn:
+                last_ingestion = await conn.fetchrow("""
+                    SELECT
+                        MAX(created_at) as last_time,
+                        COUNT(*) FILTER (WHERE created_at > NOW() - INTERVAL '1 hour') as last_hour,
+                        COUNT(*) FILTER (WHERE created_at > NOW() - INTERVAL '24 hours') as last_day
+                    FROM conversations
+                """)
+
+                if last_ingestion:
+                    last_time = last_ingestion['last_time']
+                    hours_ago = (datetime.now(last_time.tzinfo) - last_time).total_seconds() / 3600 if last_time else 999
+
+                    if hours_ago < 6:
+                        status = "healthy"
+                    elif hours_ago < 24:
+                        status = "warning"
+                    else:
+                        status = "critical"
+
+                    self.results.append(DiagnosticResult(
+                        category="ingestion",
+                        name="Last Ingestion",
+                        status=status,
+                        message=f"Last ingestion {hours_ago:.1f} hours ago",
+                        details={
+                            "last_time": last_time.isoformat() if last_time else None,
+                            "last_hour": last_ingestion['last_hour'],
+                            "last_day": last_ingestion['last_day']
+                        },
+                        recommendation="Run manual ingestion script" if hours_ago > 24 else None
+                    ))
+            await pool.close()
+        except Exception as e:
+            self.results.append(DiagnosticResult(
+                category="ingestion",
+                name="Last Ingestion",
+                status="warning",
+                message=f"Could not check: {e}"
+            ))
+
+    # ==================== RESOURCE USAGE ====================
+
+    async def _diagnose_resource_usage(self):
+        """Check system resource usage"""
+        import psutil
+
+        # CPU Usage
+        cpu_percent = psutil.cpu_percent(interval=1)
+        if cpu_percent < 70:
+            status = "healthy"
+        elif cpu_percent < 90:
+            status = "warning"
+        else:
+            status = "critical"
+
+        self.results.append(DiagnosticResult(
+            category="resources",
+            name="CPU Usage",
+            status=status,
+            message=f"{cpu_percent:.1f}% CPU usage",
+            details={"cpu_percent": cpu_percent, "cpu_count": psutil.cpu_count()},
+            recommendation="Check for runaway processes" if cpu_percent > 90 else None
+        ))
+
+        # Memory Usage
+        memory = psutil.virtual_memory()
+        if memory.percent < 80:
+            status = "healthy"
+        elif memory.percent < 90:
+            status = "warning"
+        else:
+            status = "critical"
+
+        self.results.append(DiagnosticResult(
+            category="resources",
+            name="Memory Usage",
+            status=status,
+            message=f"{memory.percent:.1f}% memory used ({memory.used / (1024**3):.1f}GB / {memory.total / (1024**3):.1f}GB)",
+            details={
+                "percent": memory.percent,
+                "used_gb": memory.used / (1024**3),
+                "total_gb": memory.total / (1024**3)
+            },
+            recommendation="Consider restarting memory-intensive services" if memory.percent > 90 else None
+        ))
+
+        # Disk Usage
+        disk = psutil.disk_usage('/opt')
+        if disk.percent < 80:
+            status = "healthy"
+        elif disk.percent < 90:
+            status = "warning"
+        else:
+            status = "critical"
+
+        self.results.append(DiagnosticResult(
+            category="resources",
+            name="Disk Usage (/opt)",
+            status=status,
+            message=f"{disk.percent:.1f}% disk used ({disk.used / (1024**3):.1f}GB / {disk.total / (1024**3):.1f}GB)",
+            details={
+                "percent": disk.percent,
+                "used_gb": disk.used / (1024**3),
+                "total_gb": disk.total / (1024**3)
+            },
+            recommendation="Clean up old logs and temporary files" if disk.percent > 80 else None
+        ))
+
+        # Check Echo Brain specific processes
+        echo_processes = []
+        for proc in psutil.process_iter(['pid', 'name', 'cmdline', 'cpu_percent', 'memory_percent']):
+            try:
+                cmdline = ' '.join(proc.info['cmdline'] or [])
+                if 'echo-brain' in cmdline or 'echo_brain' in cmdline:
+                    echo_processes.append({
+                        'pid': proc.info['pid'],
+                        'name': proc.info['name'],
+                        'cpu': proc.info['cpu_percent'],
+                        'memory': proc.info['memory_percent'],
+                        'cmd': cmdline[:100]
+                    })
+            except:
+                pass
+
+        self.results.append(DiagnosticResult(
+            category="resources",
+            name="Echo Brain Processes",
+            status="info",
+            message=f"{len(echo_processes)} Echo Brain processes running",
+            details={"processes": echo_processes[:5]}  # Limit to top 5
+        ))
+
     # ==================== KNOWLEDGE SOURCES ====================
-    
+
     async def _diagnose_knowledge_sources(self):
         """Check all knowledge data sources"""
         

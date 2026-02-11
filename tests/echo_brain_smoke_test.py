@@ -517,6 +517,52 @@ class TestPerformance:
 
 
 # ═════════════════════════════════════════════════════════════════════════════
+#  TEST GROUP 8: VOICE ENDPOINTS
+# ═════════════════════════════════════════════════════════════════════════════
+
+class TestVoiceEndpoints:
+    """Voice API endpoint smoke tests."""
+
+    def test_voice_status(self):
+        """GET /api/echo/voice/status — service health."""
+        resp = get("/api/echo/voice/status")
+        assert resp.status_code == 200, f"Voice status failed: HTTP {resp.status_code}"
+
+        body = resp.json()
+        # Should have some status information
+        assert isinstance(body, dict), f"Expected dict, got {type(body).__name__}"
+
+    def test_voice_voices(self):
+        """GET /api/echo/voice/voices — available TTS voices."""
+        resp = get("/api/echo/voice/voices")
+        assert resp.status_code == 200, f"Voice voices failed: HTTP {resp.status_code}"
+
+        body = resp.json()
+        assert "installed" in body, f"Missing 'installed' in response: {list(body.keys())}"
+        assert "suggested" in body, f"Missing 'suggested' in response: {list(body.keys())}"
+        assert isinstance(body["installed"], list), "installed should be a list"
+        assert isinstance(body["suggested"], list), "suggested should be a list"
+        assert len(body["suggested"]) > 0, "Should have at least one suggested voice"
+
+    def test_voice_synthesize(self):
+        """POST /api/echo/voice/synthesize — TTS generates audio."""
+        resp = requests.post(
+            f"{BASE_URL}/api/echo/voice/synthesize",
+            json={"text": "Hello from the smoke test.", "length_scale": 1.0},
+            headers={"Content-Type": "application/json"},
+            timeout=QUERY_TIMEOUT,
+        )
+
+        if resp.status_code == 503:
+            pytest.skip("Voice TTS service not initialized")
+
+        assert resp.status_code == 200, f"Voice synthesize failed: HTTP {resp.status_code}"
+        assert resp.headers.get("content-type", "").startswith("audio/"), \
+            f"Expected audio content-type, got {resp.headers.get('content-type')}"
+        assert len(resp.content) > 100, f"Audio response too small: {len(resp.content)} bytes"
+
+
+# ═════════════════════════════════════════════════════════════════════════════
 #  SUMMARY REPORT
 # ═════════════════════════════════════════════════════════════════════════════
 

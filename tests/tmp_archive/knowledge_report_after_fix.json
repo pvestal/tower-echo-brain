@@ -1,0 +1,4 @@
+usage: echo_brain_knowledge_diagnostic.py [-h] [--domain {echo,anime}]
+                                          [--tier {factual,navigation,reasoning}]
+                                          [--output OUTPUT] [--verbose]
+echo_brain_knowledge_diagnostic.py: error: unrecognized arguments: --output-json
