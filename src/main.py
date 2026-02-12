@@ -216,8 +216,6 @@ _optional_routers = [
     ("src.api.resilience_status", "router", None, "Resilience (/api/resilience)"),
     ("src.api.notifications_api", "router", None, "Notifications (/api/notifications)"),
     ("src.api.delegation_routes", "router", None, "Delegation (/delegate)"),
-    ("src.api.anime", "router", None, "Anime (/api/echo/anime)"),
-    ("src.api.lora_training", "router", None, "LoRA training (/api/lora)"),
     ("src.api.takeout_stub", "router", None, "Takeout stub"),
     ("src.api.google_calendar_api", "router", None, "Google Calendar (/api/calendar)"),
     ("src.api.google_data", "router", None, "Google Data (/google)"),

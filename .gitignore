@@ -125,6 +125,9 @@ tests/tmp_archive/
 # Marker files
 .qdrant-initialized
 
+# Monitoring data
+alertmanager/
+
 # Binary artifacts
 models/
 *.tar.gz

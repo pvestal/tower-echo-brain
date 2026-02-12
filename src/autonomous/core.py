@@ -21,9 +21,6 @@ import time
 # Import autonomous components
 from .goals import GoalManager
 from .scheduler import Scheduler, ScheduleConfig
-# from .executor import Executor, TaskResult  # Placeholder in __init__.py
-from .celery_executor import CeleryExecutor
-# from .events import EventWatcher  # Not implemented yet
 from .safety import SafetyController
 from .audit import AuditLogger
 
@@ -89,15 +86,8 @@ class AutonomousCore:
             max_tasks_per_minute=self.config.get('max_tasks_per_minute', 10),
             max_tasks_per_hour=self.config.get('max_tasks_per_hour', 100)
         ))
-        # Use Celery executor for distributed execution
-        try:
-            self.executor = CeleryExecutor(self.db_config)
-            logger.info("Using CeleryExecutor for distributed task execution")
-        except Exception as e:
-            logger.warning(f"Failed to initialize CeleryExecutor: {e}, falling back to regular Executor")
-            from . import Executor  # Get placeholder from __init__.py
-            self.executor = Executor()
-        # self.event_watcher = EventWatcher()  # Not implemented yet
+        from . import Executor
+        self.executor = Executor()
         self.event_watcher = None
         self.safety_controller = SafetyController()
         self.audit_logger = AuditLogger()
