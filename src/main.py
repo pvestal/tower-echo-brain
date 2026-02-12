@@ -329,10 +329,13 @@ async def api_v1_health():
         db_healthy = False
 
     try:
-        # Check Qdrant
-        from src.integrations.qdrant_client import qdrant_client
-        qdrant_client.client.get_collections()
-    except:
+        # Check Qdrant via HTTP
+        import httpx
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(f"{os.getenv('QDRANT_URL', 'http://localhost:6333')}/collections", timeout=2.0)
+            if resp.status_code != 200:
+                vector_healthy = False
+    except Exception:
         vector_healthy = False
 
     try:
