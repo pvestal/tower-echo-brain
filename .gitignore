@@ -112,6 +112,19 @@ config/auth/
 fix_*.py
 contract-tests/consumer/node_modules/
 
+# Built output
+static/dist/
+frontend/dist/
+
+# Test artifacts
+tests/tmp_archive/
+
+# Disabled workflows
+*.disabled
+
+# Marker files
+.qdrant-initialized
+
 # Binary artifacts
 models/
 *.tar.gz
