@@ -28,9 +28,9 @@ class KnowledgeSource:
 class UnifiedKnowledgeLayer:
     """
     Central knowledge retrieval that combines:
-    1. PostgreSQL facts table (6,129 facts)
-    2. Qdrant vector memory (24,657 vectors)
-    3. PostgreSQL conversations (13,630 messages)
+    1. PostgreSQL facts table (~6,000 facts)
+    2. Qdrant vector memory (260,000+ vectors)
+    3. PostgreSQL conversations
     4. Core system facts (hardcoded essentials)
     """
 
@@ -72,13 +72,13 @@ class UnifiedKnowledgeLayer:
         "echo_brain_facts_count": {
             "subject": "Echo Brain facts table",
             "predicate": "contains",
-            "object": "6,129 facts stored in PostgreSQL",
+            "object": "~6,000 facts stored in PostgreSQL",
             "confidence": 1.0
         },
         "echo_brain_conversations": {
             "subject": "Echo Brain conversations",
             "predicate": "contains",
-            "object": "13,630 messages from Claude conversations",
+            "object": "Claude conversation history indexed and searchable",
             "confidence": 1.0
         },
 
@@ -86,13 +86,13 @@ class UnifiedKnowledgeLayer:
         "echo_brain_vectors": {
             "subject": "Echo Brain",
             "predicate": "vector storage",
-            "object": "Qdrant on port 6333 with collection 'echo_memory' (24,657+ vectors)",
+            "object": "Qdrant on port 6333 with collection 'echo_memory' (260,000+ vectors)",
             "confidence": 1.0
         },
         "echo_brain_embeddings": {
             "subject": "Echo Brain",
             "predicate": "embedding model",
-            "object": "mxbai-embed-large:latest (1024 dimensions)",
+            "object": "nomic-embed-text (768 dimensions)",
             "confidence": 1.0
         },
 
@@ -128,7 +128,7 @@ class UnifiedKnowledgeLayer:
         "echo_brain_purpose": {
             "subject": "Echo Brain",
             "predicate": "purpose",
-            "object": "Personal AI assistant using 13k+ conversations and 24k+ memory vectors for contextual responses",
+            "object": "Personal AI assistant using 260k+ memory vectors and structured facts for contextual responses",
             "confidence": 1.0
         },
         "echo_brain_llm_models": {
@@ -140,19 +140,19 @@ class UnifiedKnowledgeLayer:
         "echo_brain_vector_count": {
             "subject": "Echo Brain",
             "predicate": "vector count",
-            "object": "24,657 vectors in Qdrant collection echo_memory (as of Feb 2026)",
+            "object": "260,000+ vectors in Qdrant collection echo_memory (as of Feb 2026)",
             "confidence": 1.0
         },
         "echo_brain_fact_count": {
             "subject": "Echo Brain",
-            "predicate": "fact count", 
-            "object": "6,129 facts in PostgreSQL facts table",
+            "predicate": "fact count",
+            "object": "~6,000 facts in PostgreSQL facts table",
             "confidence": 1.0
         },
         "echo_brain_conversation_count": {
             "subject": "Echo Brain",
             "predicate": "conversation count",
-            "object": "13,630 conversation messages indexed from Claude chat history",
+            "object": "Claude conversation history indexed from ~/.claude/projects/",
             "confidence": 1.0
         },
         "echo_brain_architecture": {
@@ -205,6 +205,50 @@ class UnifiedKnowledgeLayer:
             "subject": "Echo Brain",
             "predicate": "GitHub repository",
             "object": "github.com/pvestal/tower-echo-brain",
+            "confidence": 1.0
+        },
+
+        # Anime Production System (updated 2026-02-14)
+        "lora_studio_port": {
+            "subject": "LoRA Studio",
+            "predicate": "runs on port",
+            "object": "8401 (tower-lora-studio.service)",
+            "confidence": 1.0
+        },
+        "lora_studio_location": {
+            "subject": "LoRA Studio",
+            "predicate": "installation path",
+            "object": "/opt/tower-anime-production/training/lora-studio/",
+            "confidence": 1.0
+        },
+        "anime_production_archived": {
+            "subject": "Tower Anime Production API",
+            "predicate": "status",
+            "object": "ARCHIVED since 2026-02-12. Old port 8328 disabled. All functionality in LoRA Studio (port 8401)",
+            "confidence": 1.0
+        },
+        "comfyui_config": {
+            "subject": "ComfyUI",
+            "predicate": "systemd memory limits",
+            "object": "MemoryMax=64G, MemoryHigh=48G (raised from 16G/12G on 2026-02-14)",
+            "confidence": 1.0
+        },
+        "framepack_config": {
+            "subject": "FramePack",
+            "predicate": "gpu_memory_preservation",
+            "object": "6.0 required for RTX 3060 at 544x704+ (3.5 causes GPU OOM)",
+            "confidence": 1.0
+        },
+        "framepack_wrapper": {
+            "subject": "FramePack",
+            "predicate": "ComfyUI wrapper",
+            "object": "ComfyUI-FramePackWrapper_Plus only (old wrapper disabled as .disabled)",
+            "confidence": 1.0
+        },
+        "framepack_timing": {
+            "subject": "FramePack generation",
+            "predicate": "timing at 544x704",
+            "object": "~20min for 2s, ~13min for 3s, ~25-30min for 5s (gpu_memory_preservation=6.0)",
             "confidence": 1.0
         }
     }
@@ -346,10 +390,11 @@ class UnifiedKnowledgeLayer:
             # Generate embedding for query
             async with httpx.AsyncClient(timeout=30) as client:
                 response = await client.post(
-                    "http://localhost:11434/api/embeddings",
-                    json={"model": "mxbai-embed-large:latest", "prompt": query}
+                    "http://localhost:11434/api/embed",
+                    json={"model": "nomic-embed-text", "input": query}
                 )
-                embedding = response.json().get("embedding", [])
+                resp_data = response.json()
+                embedding = (resp_data.get("embeddings") or [[]])[0] or resp_data.get("embedding", [])
 
             if embedding:
                 # Search Qdrant using HTTP API directly (like MCP service)
@@ -506,7 +551,7 @@ If the context contains specific facts about the question (especially from Known
             return "Echo Brain agent model"
 
         if "embedding model" in query_lower and "dimensions" in query_lower:
-            return "embedding model nomic-embed-text 768 dimensions"
+            return "embedding model nomic-embed-text dimensions"
 
         if "frontend stack" in query_lower:
             return "frontend stack Vue TypeScript Tailwind"
