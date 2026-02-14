@@ -9,6 +9,14 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/google", tags=["google_data"])
 
+GOOGLE_SCOPES = [
+    "https://www.googleapis.com/auth/photoslibrary.readonly",
+    "https://www.googleapis.com/auth/calendar",
+    "https://www.googleapis.com/auth/calendar.events",
+    "https://www.googleapis.com/auth/gmail.modify",
+    "https://www.googleapis.com/auth/drive.file",
+]
+
 async def get_google_credentials_from_tower_auth():
     """Get Google OAuth credentials via tower-auth SSO"""
     try:
@@ -17,7 +25,7 @@ async def get_google_credentials_from_tower_auth():
         if not token:
             logger.warning("No Google token available from tower-auth")
             return None
-        return Credentials(token=token)
+        return Credentials(token=token, scopes=GOOGLE_SCOPES)
     except Exception as e:
         logger.error(f"Error getting credentials from tower-auth: {e}")
         return None

@@ -134,17 +134,43 @@ class TowerAuthBridge:
         if provider in self.cached_tokens:
             token_info = self.cached_tokens[provider]
 
-            # Check if token expired
-            if token_info.get('expires_at') and token_info['expires_at'] < datetime.now():
-                # Refresh token
-                await self.refresh_token(provider)
+            # Check if token expired or missing expiry (assume expired)
+            needs_refresh = False
+            if token_info.get('expires_at'):
+                needs_refresh = token_info['expires_at'] < datetime.now()
+            elif provider == 'google':
+                # No expiry tracked — test the token
+                needs_refresh = not await self._test_google_token(token_info.get('access_token', ''))
+
+            if needs_refresh:
+                refreshed = await self.refresh_token(provider)
+                if not refreshed:
+                    logger.warning(f"Token refresh failed for {provider}")
+                    return None
 
             return self.cached_tokens.get(provider, {}).get('access_token')
 
         return None
 
+    async def _test_google_token(self, token: str) -> bool:
+        """Quick test if a Google access token is still valid."""
+        if not token:
+            return False
+        try:
+            async with httpx.AsyncClient(timeout=5) as client:
+                resp = await client.get(
+                    "https://www.googleapis.com/oauth2/v1/tokeninfo",
+                    params={"access_token": token},
+                )
+                return resp.status_code == 200
+        except Exception:
+            return False
+
     async def refresh_token(self, provider: str) -> bool:
         """Refresh OAuth token through Tower Auth"""
+        if provider == 'google':
+            return await self._refresh_google_token()
+
         if provider not in self.cached_tokens:
             return False
 
@@ -172,6 +198,27 @@ class TowerAuthBridge:
         except Exception as e:
             logger.error(f"Token refresh failed: {e}")
 
+        return False
+
+    async def _refresh_google_token(self) -> bool:
+        """Refresh Google token via tower-auth's Vault-backed refresh endpoint."""
+        try:
+            async with httpx.AsyncClient(timeout=15) as client:
+                response = await client.post(
+                    f"{self.auth_service_url}/api/auth/oauth/google/refresh"
+                )
+                if response.status_code == 200:
+                    data = response.json()
+                    self.cached_tokens['google'] = {
+                        'access_token': data['access_token'],
+                        'expires_at': datetime.now() + timedelta(seconds=data.get('expires_in', 3600)),
+                    }
+                    logger.info("✅ Google token refreshed via tower-auth")
+                    return True
+                else:
+                    logger.error(f"Google refresh returned {response.status_code}: {response.text[:200]}")
+        except Exception as e:
+            logger.error(f"Google token refresh failed: {e}")
         return False
 
     async def load_existing_tokens(self) -> Dict[str, Any]:
@@ -205,7 +252,10 @@ class TowerAuthBridge:
         from googleapiclient.discovery import build
         from google.oauth2.credentials import Credentials
 
-        creds = Credentials(token=token)
+        creds = Credentials(token=token, scopes=[
+            "https://www.googleapis.com/auth/calendar",
+            "https://www.googleapis.com/auth/calendar.events",
+        ])
         service = build('calendar', 'v3', credentials=creds)
         return service
 
@@ -349,6 +399,136 @@ class TowerAuthBridge:
         except Exception as e:
             logger.error(f"Photos batch sync failed: {e}")
             return {'error': str(e)}
+
+    # Apple Music integration via tower-auth
+    async def get_apple_music_developer_token(self) -> Optional[str]:
+        """Get Apple Music developer token via tower-auth"""
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(f"{self.auth_service_url}/api/auth/apple-music/developer-token")
+                if response.status_code == 200:
+                    return response.json().get('token')
+        except Exception as e:
+            logger.error(f"Failed to get Apple Music developer token: {e}")
+        return None
+
+    async def get_apple_music_user_token(self, user_id: str = "patrick") -> Optional[str]:
+        """Get Apple Music user token via tower-auth"""
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    f"{self.auth_service_url}/api/auth/apple-music/token",
+                    params={"user_id": user_id}
+                )
+                if response.status_code == 200:
+                    return response.json().get('user_token')
+        except Exception as e:
+            logger.error(f"Failed to get Apple Music user token: {e}")
+        return None
+
+    async def get_apple_music_status(self, user_id: str = "patrick") -> Dict[str, Any]:
+        """Check Apple Music authorization status via tower-auth"""
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    f"{self.auth_service_url}/api/auth/apple-music/status",
+                    params={"user_id": user_id}
+                )
+                if response.status_code == 200:
+                    return response.json()
+        except Exception as e:
+            logger.error(f"Apple Music status check failed: {e}")
+        return {"authorized": False, "error": "tower-auth unreachable"}
+
+    async def search_apple_music(self, query: str, types: str = "songs,albums,playlists", limit: int = 10) -> Dict[str, Any]:
+        """Search Apple Music catalog via developer token"""
+        developer_token = await self.get_apple_music_developer_token()
+        if not developer_token:
+            return {"error": "No Apple Music developer token available"}
+
+        try:
+            async with httpx.AsyncClient(timeout=15) as client:
+                response = await client.get(
+                    "https://api.music.apple.com/v1/catalog/us/search",
+                    headers={"Authorization": f"Bearer {developer_token}"},
+                    params={"term": query, "types": types, "limit": limit}
+                )
+                if response.status_code == 200:
+                    return response.json().get('results', {})
+                else:
+                    return {"error": f"Apple Music API returned {response.status_code}"}
+        except Exception as e:
+            logger.error(f"Apple Music search failed: {e}")
+            return {"error": str(e)}
+
+    async def get_apple_music_playlists(self, user_id: str = "patrick") -> Dict[str, Any]:
+        """Get user's Apple Music playlists (requires Music User Token)"""
+        developer_token = await self.get_apple_music_developer_token()
+        user_token = await self.get_apple_music_user_token(user_id)
+
+        if not developer_token:
+            return {"error": "No Apple Music developer token available"}
+        if not user_token:
+            return {"error": "No Apple Music user token - user must authorize via tower-auth"}
+
+        try:
+            async with httpx.AsyncClient(timeout=15) as client:
+                response = await client.get(
+                    "https://api.music.apple.com/v1/me/library/playlists",
+                    headers={
+                        "Authorization": f"Bearer {developer_token}",
+                        "Music-User-Token": user_token
+                    }
+                )
+                if response.status_code == 200:
+                    return response.json()
+                else:
+                    return {"error": f"Apple Music API returned {response.status_code}"}
+        except Exception as e:
+            logger.error(f"Apple Music playlists failed: {e}")
+            return {"error": str(e)}
+
+    # Plaid financial integration via tower-auth
+    async def get_plaid_accounts(self) -> Dict[str, Any]:
+        """Get linked Plaid accounts via tower-auth"""
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(f"{self.auth_service_url}/api/auth/plaid/accounts")
+                if response.status_code == 200:
+                    return response.json()
+        except Exception as e:
+            logger.error(f"Failed to get Plaid accounts: {e}")
+        return {"error": "tower-auth unreachable", "accounts": []}
+
+    async def get_plaid_transactions(self, start_date: str = None, end_date: str = None) -> Dict[str, Any]:
+        """Get Plaid transactions via tower-auth"""
+        try:
+            params = {}
+            if start_date:
+                params["start_date"] = start_date
+            if end_date:
+                params["end_date"] = end_date
+            async with httpx.AsyncClient(timeout=30) as client:
+                response = await client.get(
+                    f"{self.auth_service_url}/api/auth/plaid/transactions",
+                    params=params
+                )
+                if response.status_code == 200:
+                    return response.json()
+        except Exception as e:
+            logger.error(f"Failed to get Plaid transactions: {e}")
+        return {"error": "tower-auth unreachable", "transactions": []}
+
+    async def get_plaid_balances(self) -> Dict[str, Any]:
+        """Get Plaid account balances via tower-auth"""
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(f"{self.auth_service_url}/api/auth/plaid/balances")
+                if response.status_code == 200:
+                    return response.json()
+        except Exception as e:
+            logger.error(f"Failed to get Plaid balances: {e}")
+        return {"error": "tower-auth unreachable", "balances": []}
 
     # Apple SSO implementation
     async def initiate_apple_sso(self) -> Dict[str, Any]:
