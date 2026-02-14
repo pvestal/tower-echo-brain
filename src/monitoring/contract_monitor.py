@@ -950,7 +950,7 @@ class ContractMonitor:
                     "last_seen": r["last_seen"].isoformat(),
                     "occurrences": r["occurrences"],
                     "age_hours": round(
-                        (datetime.now(timezone.utc) - r["first_seen"].replace(tzinfo=None))
+                        (datetime.now(timezone.utc) - r["first_seen"])
                         .total_seconds() / 3600, 1
                     ),
                 }

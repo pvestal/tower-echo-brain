@@ -350,10 +350,14 @@ class SafetyController:
             async with self.get_connection() as conn:
                 rows = await conn.fetch(
                     """
-                    SELECT a.id, a.task_id, a.action_description, a.risk_assessment,
-                           a.proposed_action, a.status, a.created_at,
+                    SELECT a.id, a.task_id,
+                           a.action_description AS task_description,
+                           a.risk_assessment,
+                           a.proposed_action, a.status,
+                           a.created_at AS requested_at,
                            t.name as task_name, t.task_type, t.priority,
-                           g.name as goal_name
+                           g.name as goal_name,
+                           TRUE AS requires_approval
                     FROM autonomous_approvals a
                     JOIN autonomous_tasks t ON a.task_id = t.id
                     JOIN autonomous_goals g ON t.goal_id = g.id

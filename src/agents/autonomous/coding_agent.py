@@ -12,6 +12,23 @@ class DeepSeekCodingAgent:
     def __init__(self):
         self.api_url = "http://localhost:8309/api/echo/chat"
         self.repo_path = "/opt/tower-echo-brain"
+        self.model = "deepseek-r1:8b"
+        self.history: list = []
+
+    async def process(self, task: str, context: Dict[str, Any] = None) -> Dict[str, Any]:
+        """Process a coding task (BaseAgent interface)"""
+        result = self.execute_autonomous_fix(task)
+        self.history.append({"task": task[:100], "result": result})
+        if len(self.history) > 50:
+            self.history = self.history[-50:]
+        return {
+            "task": task,
+            "response": result.get("solution", result.get("error", "Fix attempted")),
+            "code": result.get("code_changes"),
+            "validation": None,
+            "model": self.model,
+            "context_used": context or {}
+        }
 
     def analyze_codebase(self) -> Dict[str, Any]:
         """Perform comprehensive codebase analysis"""

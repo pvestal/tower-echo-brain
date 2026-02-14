@@ -6,9 +6,11 @@
 # Use in CI or locally before deploying either side.
 #
 # Usage:
-#   ./scripts/run_contract_tests.sh          # run both
+#   ./scripts/run_contract_tests.sh          # run both (consumer + provider)
 #   ./scripts/run_contract_tests.sh consumer  # consumer only
 #   ./scripts/run_contract_tests.sh provider  # provider only
+#   ./scripts/run_contract_tests.sh routes    # all-routes contract test
+#   ./scripts/run_contract_tests.sh all       # consumer + provider + routes
 # ──────────────────────────────────────────────────────────────────
 
 set -euo pipefail
@@ -57,21 +59,21 @@ run_consumer() {
 
 run_provider() {
     log_step "Running Provider Contract Verification (Python/FastAPI)"
-    
+
     cd "$PROJECT_DIR/provider"
-    
+
     # Check contract exists
     if ! ls "$CONTRACT_DIR"/*.json 1>/dev/null 2>&1; then
         log_fail "No contract file found. Run consumer tests first."
         exit 1
     fi
-    
+
     # Install deps if needed
     if ! python3 -c "import pytest" 2>/dev/null; then
         echo "Installing provider test dependencies..."
         pip install -r requirements.txt --quiet --break-system-packages
     fi
-    
+
     if python3 -m pytest test_provider_verification.py -v --tb=short; then
         log_pass "Provider satisfies consumer contract"
     else
@@ -79,6 +81,33 @@ run_provider() {
         echo ""
         echo "The FastAPI backend has drifted from what the Vue frontend expects."
         echo "Check the test output above for which interactions failed."
+        exit 1
+    fi
+}
+
+run_routes() {
+    log_step "Running All-Routes Contract Test (203 endpoints)"
+
+    cd "$PROJECT_DIR/provider"
+
+    # Check service is running
+    if ! curl -sf http://localhost:8309/health >/dev/null 2>&1; then
+        log_fail "Echo Brain service not running at localhost:8309"
+        exit 1
+    fi
+
+    # Install aiohttp if needed
+    if ! python3 -c "import aiohttp" 2>/dev/null; then
+        echo "Installing aiohttp..."
+        pip install aiohttp --quiet --break-system-packages
+    fi
+
+    if python3 test_all_routes.py; then
+        log_pass "All-routes contract test passed"
+    else
+        log_fail "Some routes failed contract test"
+        echo ""
+        echo "Run 'python3 test_all_routes.py --json' for machine-readable output."
         exit 1
     fi
 }
@@ -92,14 +121,24 @@ case "${1:-both}" in
     provider)
         run_provider
         ;;
+    routes)
+        run_routes
+        ;;
     both)
         run_consumer
         run_provider
         log_step "All Contract Tests Passed"
         log_pass "Frontend and backend are in sync"
         ;;
+    all)
+        run_consumer
+        run_provider
+        run_routes
+        log_step "All Contract Tests Passed (Consumer + Provider + Routes)"
+        log_pass "Frontend and backend are in sync, all routes verified"
+        ;;
     *)
-        echo "Usage: $0 [consumer|provider|both]"
+        echo "Usage: $0 [consumer|provider|routes|both|all]"
         exit 1
         ;;
 esac

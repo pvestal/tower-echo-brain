@@ -6,6 +6,7 @@ Stores and executes procedures - sequences of steps to accomplish tasks.
 import asyncio
 import asyncpg
 import json
+import os
 import re
 import logging
 from datetime import datetime
@@ -32,7 +33,7 @@ class ProcedureLibrary:
             "host": "localhost",
             "database": "echo_brain",
             "user": "patrick",
-            "password": ""
+            "password": os.getenv("DB_PASSWORD", "")
         }
         self._pool = None
         self._executor = None

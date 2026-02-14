@@ -59,6 +59,8 @@ async def get_home_entities():
 
         entities = await bridge.get_entities()
         return {"entities": entities, "count": len(entities)}
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error getting entities: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to get entities: {str(e)}")

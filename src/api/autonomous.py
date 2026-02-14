@@ -5,6 +5,7 @@ Provides REST API endpoints for managing autonomous operations including
 goals, tasks, approvals, system control, and audit logging.
 """
 
+import json
 import logging
 from typing import Dict, List, Optional, Any
 from datetime import datetime
@@ -478,10 +479,10 @@ async def get_audit_logs(
                 id=log['id'],
                 timestamp=log['timestamp'],
                 event_type=log.get('event_type', 'unknown'),
-                component=log.get('goal_name', 'autonomous'),
-                message=log.get('action', str(log.get('details', ''))),
-                level=log.get('safety_level', 'info'),
-                metadata=log.get('details')
+                component=log.get('goal_name') or 'autonomous',
+                message=log.get('action') or str(log.get('details', '')),
+                level=log.get('safety_level') or 'info',
+                metadata=json.loads(log['details']) if isinstance(log.get('details'), str) else log.get('details')
             )
             for log in logs
         ]

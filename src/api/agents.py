@@ -194,9 +194,11 @@ async def execute_code(request: ExecuteRequest):
         return result
 
     # Otherwise do direct code execution
+    if not request.code:
+        raise HTTPException(status_code=400, detail="code field is required when agent_type is not specified")
     if request.language.lower() not in ["python", "py"]:
         raise HTTPException(status_code=400, detail="Only Python execution supported currently")
-    
+
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
         f.write(request.code)
         temp_path = f.name

@@ -10,76 +10,46 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any
 import json
 
-import google.auth.transport.requests
 import google.oauth2.credentials
 from googleapiclient.discovery import build
 
 logger = logging.getLogger(__name__)
 
 class GoogleCalendarBridge:
-    """Google Calendar integration for Echo Brain"""
+    """Google Calendar integration for Echo Brain via tower-auth SSO"""
 
-    def __init__(self, vault_manager):
-        self.vault_manager = vault_manager
+    def __init__(self):
         self.credentials = None
         self.service = None
         self.connected = False
 
     async def initialize(self) -> bool:
-        """Initialize Google Calendar connection"""
+        """Initialize Google Calendar connection via tower-auth"""
         try:
-            logger.info("📅 Initializing Google Calendar integration...")
+            from src.integrations.tower_auth_bridge import tower_auth
 
-            # Get Google credentials from vault
-            google_creds = self.vault_manager.get_google_credentials()
-            if not google_creds:
-                logger.warning("📅 No Google credentials found in vault")
+            logger.info("Initializing Google Calendar integration via tower-auth...")
+
+            token = await tower_auth.get_valid_token('google')
+            if not token:
+                logger.warning("No Google token available from tower-auth")
                 return False
 
-            # Create OAuth2 credentials
-            if 'access_token' in google_creds:
-                self.credentials = google.oauth2.credentials.Credentials(
-                    token=google_creds.get('access_token'),
-                    refresh_token=google_creds.get('refresh_token'),
-                    client_id=google_creds.get('client_id'),
-                    client_secret=google_creds.get('client_secret'),
-                    token_uri=google_creds.get('token_uri', 'https://oauth2.googleapis.com/token'),
-                    scopes=['https://www.googleapis.com/auth/calendar']
-                )
+            self.credentials = google.oauth2.credentials.Credentials(token=token)
+            self.service = build('calendar', 'v3', credentials=self.credentials)
 
-                # Test credentials by attempting to refresh if needed
-                if await self._refresh_credentials_if_needed():
-                    # Build Calendar service
-                    self.service = build('calendar', 'v3', credentials=self.credentials)
+            # Test connection
+            await self._test_connection()
 
-                    # Test connection with a simple API call
-                    await self._test_connection()
+            if self.connected:
+                logger.info("Google Calendar connected successfully via tower-auth")
+                return True
 
-                    if self.connected:
-                        logger.info("✅ Google Calendar connected successfully")
-                        return True
-
-            logger.warning("📅 Google Calendar credentials not properly configured")
+            logger.warning("Google Calendar connection test failed")
             return False
 
         except Exception as e:
-            logger.error(f"❌ Failed to initialize Google Calendar: {e}")
-            return False
-
-    async def _refresh_credentials_if_needed(self) -> bool:
-        """Refresh credentials if needed"""
-        if not self.credentials:
-            return False
-
-        try:
-            if self.credentials.expired:
-                logger.info("📅 Refreshing Google Calendar credentials...")
-                request = google.auth.transport.requests.Request()
-                self.credentials.refresh(request)
-                logger.info("✅ Google Calendar credentials refreshed")
-            return True
-        except Exception as e:
-            logger.error(f"❌ Failed to refresh Google Calendar credentials: {e}")
+            logger.error(f"Failed to initialize Google Calendar: {e}")
             return False
 
     async def _test_connection(self):
@@ -206,18 +176,28 @@ class GoogleCalendarBridge:
 
         try:
             # Convert event data to Google Calendar format
+            # Detect all-day events (date-only strings like "2026-06-23")
+            start_val = event_data['start_time']
+            end_val = event_data['end_time']
+            is_all_day = len(start_val) <= 10 and len(end_val) <= 10
+
             google_event = {
                 'summary': event_data.get('title', 'New Event'),
                 'description': event_data.get('description', ''),
-                'start': {
-                    'dateTime': event_data['start_time'],
-                    'timeZone': event_data.get('timezone', 'UTC'),
-                },
-                'end': {
-                    'dateTime': event_data['end_time'],
-                    'timeZone': event_data.get('timezone', 'UTC'),
-                },
             }
+
+            if is_all_day:
+                google_event['start'] = {'date': start_val}
+                google_event['end'] = {'date': end_val}
+            else:
+                google_event['start'] = {
+                    'dateTime': start_val,
+                    'timeZone': event_data.get('timezone', 'UTC'),
+                }
+                google_event['end'] = {
+                    'dateTime': end_val,
+                    'timeZone': event_data.get('timezone', 'UTC'),
+                }
 
             if event_data.get('location'):
                 google_event['location'] = event_data['location']
@@ -237,6 +217,102 @@ class GoogleCalendarBridge:
         except Exception as e:
             logger.error(f"❌ Failed to create calendar event: {e}")
             return None
+
+    async def get_events_for_month(self, year: int, month: int) -> Dict[str, Any]:
+        """Get events from ALL calendars for a given month, with calendar colors.
+
+        Query window covers the full visible grid: Sunday of the first week
+        through Saturday of the last week, so multi-day events that start in
+        adjacent months are captured.
+        """
+        if not self.connected:
+            return {"calendars": [], "events": [], "year": year, "month": month}
+
+        try:
+            import calendar as cal_mod
+            from datetime import date as date_cls
+
+            first_of_month = date_cls(year, month, 1)
+            _, days_in_month = cal_mod.monthrange(year, month)
+            last_of_month = date_cls(year, month, days_in_month)
+
+            # Grid starts on Sunday of the week containing the 1st
+            grid_start = first_of_month - timedelta(days=first_of_month.weekday() + 1)
+            if first_of_month.weekday() == 6:  # Sunday
+                grid_start = first_of_month
+            # Grid ends on Saturday of the week containing the last day
+            days_to_sat = (5 - last_of_month.weekday()) % 7
+            if last_of_month.weekday() == 6:  # Sunday → need 6 more days
+                days_to_sat = 6
+            grid_end = last_of_month + timedelta(days=days_to_sat)
+
+            time_min = f"{grid_start.isoformat()}T00:00:00Z"
+            time_max = f"{grid_end.isoformat()}T23:59:59Z"
+
+            # Get calendar list with colors
+            cal_list_result = self.service.calendarList().list().execute()
+            cal_items = cal_list_result.get("items", [])
+
+            calendars_meta = []
+            all_events = []
+
+            for cal_entry in cal_items:
+                cal_id = cal_entry["id"]
+                cal_summary = cal_entry.get("summary", cal_id)
+                bg_color = cal_entry.get("backgroundColor", "#238636")
+
+                calendars_meta.append({
+                    "id": cal_id,
+                    "summary": cal_summary,
+                    "color": bg_color,
+                })
+
+                try:
+                    events_result = self.service.events().list(
+                        calendarId=cal_id,
+                        timeMin=time_min,
+                        timeMax=time_max,
+                        singleEvents=True,
+                        orderBy="startTime",
+                        maxResults=2500,
+                    ).execute()
+                except Exception as e:
+                    logger.warning(f"Failed to fetch events for {cal_summary}: {e}")
+                    continue
+
+                for event in events_result.get("items", []):
+                    start = event.get("start", {}).get(
+                        "dateTime", event.get("start", {}).get("date", "")
+                    )
+                    end = event.get("end", {}).get(
+                        "dateTime", event.get("end", {}).get("date", "")
+                    )
+                    all_events.append({
+                        "id": event["id"],
+                        "summary": event.get("summary", "No title"),
+                        "start": start,
+                        "end": end,
+                        "location": event.get("location", ""),
+                        "calendar_id": cal_id,
+                        "calendar_name": cal_summary,
+                        "calendar_color": bg_color,
+                    })
+
+            # Sort by start time
+            all_events.sort(key=lambda e: e["start"])
+
+            return {
+                "calendars": calendars_meta,
+                "events": all_events,
+                "year": year,
+                "month": month,
+                "grid_start": grid_start.isoformat(),
+                "grid_end": grid_end.isoformat(),
+            }
+
+        except Exception as e:
+            logger.error(f"Failed to get events for month {year}-{month:02d}: {e}")
+            return {"calendars": [], "events": [], "year": year, "month": month}
 
     async def get_calendar_status(self) -> Dict[str, Any]:
         """Get comprehensive calendar status for Echo Brain"""
@@ -281,22 +357,23 @@ class GoogleCalendarBridge:
 # Global calendar bridge instance
 _calendar_bridge: Optional[GoogleCalendarBridge] = None
 
-async def get_calendar_bridge(vault_manager) -> Optional[GoogleCalendarBridge]:
-    """Get or create Calendar bridge instance"""
+async def get_calendar_bridge() -> Optional[GoogleCalendarBridge]:
+    """Get or create Calendar bridge instance, retrying if previously disconnected"""
     global _calendar_bridge
 
-    if _calendar_bridge is None:
-        _calendar_bridge = GoogleCalendarBridge(vault_manager)
+    if _calendar_bridge is None or not _calendar_bridge.connected:
+        _calendar_bridge = GoogleCalendarBridge()
         connected = await _calendar_bridge.initialize()
         if not connected:
-            logger.warning("📅 Google Calendar bridge not available")
+            logger.warning("Google Calendar bridge not available")
+            _calendar_bridge = None
             return None
 
     return _calendar_bridge
 
-async def get_calendar_status_for_echo(vault_manager) -> Dict[str, Any]:
+async def get_calendar_status_for_echo() -> Dict[str, Any]:
     """Get calendar status formatted for Echo Brain queries"""
-    bridge = await get_calendar_bridge(vault_manager)
+    bridge = await get_calendar_bridge()
     if not bridge:
         return {
             "available": False,
@@ -310,30 +387,30 @@ async def get_calendar_status_for_echo(vault_manager) -> Dict[str, Any]:
     }
 
 # CLI testing function
-async def test_calendar_connection(vault_manager):
+async def test_calendar_connection():
     """Test Google Calendar connection from command line"""
-    print("📅 Testing Google Calendar connection...")
+    print("Testing Google Calendar connection...")
 
-    bridge = await get_calendar_bridge(vault_manager)
+    bridge = await get_calendar_bridge()
     if bridge:
         status = await bridge.get_calendar_status()
-        print(f"✅ Google Calendar connected: {json.dumps(status, indent=2)}")
+        print(f"Google Calendar connected: {json.dumps(status, indent=2)}")
 
-        # Get upcoming events
         events = await bridge.get_upcoming_events()
-        print(f"📅 Found {len(events)} upcoming events")
+        print(f"Found {len(events)} upcoming events")
         for event in events[:3]:
             print(f"  - {event['summary']} at {event['start']}")
     else:
-        print("❌ Google Calendar connection failed")
+        print("Google Calendar connection failed")
 
 if __name__ == "__main__":
     import sys
     sys.path.append('/opt/tower-echo-brain')
-    from src.integrations.vault_manager import get_vault_manager
 
     async def main():
-        vault_manager = await get_vault_manager()
-        await test_calendar_connection(vault_manager)
+        from src.integrations.tower_auth_bridge import tower_auth
+        await tower_auth.initialize()
+        await tower_auth.load_existing_tokens()
+        await test_calendar_connection()
 
     asyncio.run(main())

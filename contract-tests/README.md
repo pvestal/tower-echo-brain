@@ -1,54 +1,102 @@
 # Echo Brain Contract Tests
 
-Consumer-driven contract testing between the Vue.js frontend and FastAPI backend.
+Contract testing suite for Echo Brain's 203 API routes. Includes consumer-driven Pact tests (frontend/backend sync) and comprehensive all-routes contract verification.
+
+## Test Types
+
+### 1. Consumer/Provider (Pact)
+Verifies the Vue.js frontend and FastAPI backend agree on API shapes.
+
+```
+consumer/  → Vue/TS tests that generate contract.json
+contracts/ → Generated Pact contract files
+provider/  → Python tests that verify FastAPI satisfies contracts
+```
+
+### 2. All-Routes Contract Test
+Hits every route from the OpenAPI spec with proper payloads, verifying no 500s.
+
+```
+provider/test_all_routes.py  → Tests all 203 routes against running service
+```
+
+## Quick Start
+
+```bash
+# Run all-routes test (most common)
+./scripts/run_contract_tests.sh routes
+
+# Run consumer + provider Pact tests
+./scripts/run_contract_tests.sh both
+
+# Run everything
+./scripts/run_contract_tests.sh all
+
+# Run all-routes directly with JSON output
+cd provider && python3 test_all_routes.py --json
+```
+
+## All-Routes Test Details
+
+The `test_all_routes.py` script:
+1. Fetches the OpenAPI spec from the running service
+2. Tests every GET/POST/PUT/PATCH route with appropriate payloads
+3. Reports PASS (< 500), FAIL (>= 500 or timeout), SKIP (dangerous/slow)
+4. Exits 0 if all testable routes pass, 1 if any fail
+
+**Skipped by design:**
+- DELETE methods (destructive)
+- Autonomous lifecycle endpoints (kill/stop/start/pause/resume)
+- Known slow endpoints (> 15s: deep diagnostics, batch photo analysis)
+
+**Expected external-dependency failures** (503 when not configured):
+- Home Assistant routes (need HA server + token)
+- Apple Music playlists (need developer + user tokens)
+- Narration agent (not yet implemented)
+
+### Adding Payloads for New POST Routes
+
+Edit `POST_PAYLOADS` in `test_all_routes.py`:
+
+```python
+POST_PAYLOADS["/api/new/endpoint"] = {"field": "value"}
+```
+
+Set to `None` to explicitly skip a route:
+```python
+POST_PAYLOADS["/api/slow/endpoint"] = None  # skip
+```
 
 ## Architecture
 
 ```
 ┌─────────────────┐     contract.json     ┌─────────────────┐
-│   Vue Frontend   │ ──── generates ────▶ │   Pact Broker    │
+│   Vue Frontend   │ ──── generates ────> │   Pact Broker    │
 │   (Consumer)     │                       │   (or local)     │
 └─────────────────┘                       └────────┬─────────┘
                                                    │
                                           verifies against
                                                    │
-                                          ┌────────▼─────────┐
+                                          ┌────────v─────────┐
                                           │  FastAPI Backend  │
                                           │   (Provider)      │
                                           └──────────────────┘
+
+┌──────────────────────────────────────────────────────────────┐
+│  test_all_routes.py                                          │
+│  Fetches /openapi.json → tests ALL 203 routes → report      │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-## Flow
+## CI Integration
 
-1. **Consumer tests** (Vue/TS) define expected request/response pairs
-2. Pact generates a contract JSON file from those expectations
-3. **Provider tests** (Python) replay the contract against the real FastAPI app
-4. If the provider can't satisfy the contract → test fails → drift caught
+See [INTEGRATION.md](./INTEGRATION.md) for wiring into GitHub Actions and git hooks.
 
-## Quick Start
+## Current Coverage (2026-02-14)
 
-### Consumer side (Vue/TypeScript)
-```bash
-cd consumer
-npm install
-npm test
-```
-
-### Provider side (Python/FastAPI)
-```bash
-cd provider
-pip install -r requirements.txt
-pytest
-```
-
-### Both (CI script)
-```bash
-./scripts/run_contract_tests.sh
-```
-
-## Adding New Contract Tests
-
-1. Define the interaction in `consumer/tests/` (what the frontend expects)
-2. Run consumer tests to generate updated contract
-3. Run provider tests to verify the backend still satisfies it
-4. Both sides pass → safe to deploy
+| Metric | Count |
+|--------|-------|
+| Total routes | 203 |
+| Passing | 178+ |
+| Skipped (by design) | 13 |
+| Failing (external deps) | 12 |

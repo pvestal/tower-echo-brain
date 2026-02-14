@@ -1,43 +1,32 @@
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi import APIRouter, HTTPException
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
-import json
+from googleapiclient.errors import HttpError
+import logging
 from datetime import datetime, timedelta
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/google", tags=["google_data"])
-security = HTTPBearer()
 
-def load_google_credentials():
-    """Load Google OAuth credentials from config file"""
+async def get_google_credentials_from_tower_auth():
+    """Get Google OAuth credentials via tower-auth SSO"""
     try:
-        with open('/opt/tower-echo-brain/config/google_credentials.json') as f:
-            cred_data = json.load(f)
-
-        return Credentials(
-            token=cred_data['token'],
-            refresh_token=cred_data.get('refresh_token'),
-            token_uri=cred_data.get('token_uri', 'https://oauth2.googleapis.com/token'),
-            client_id=cred_data.get('client_id'),
-            client_secret=cred_data.get('client_secret'),
-            scopes=cred_data.get('scopes', [])
-        )
+        from src.integrations.tower_auth_bridge import tower_auth
+        token = await tower_auth.get_valid_token('google')
+        if not token:
+            logger.warning("No Google token available from tower-auth")
+            return None
+        return Credentials(token=token)
     except Exception as e:
-        print(f"Error loading credentials: {e}")
+        logger.error(f"Error getting credentials from tower-auth: {e}")
         return None
 
-async def verify_auth(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    """Simple auth verification - in production this would validate JWT tokens"""
-    # For now, just check if token exists
-    if not credentials.credentials:
-        raise HTTPException(status_code=401, detail="Missing token")
-    return credentials.credentials
-
 @router.get("/emails/count")
-async def get_email_count(token: str = Depends(verify_auth)):
+async def get_email_count():
     """Get count of emails in Gmail"""
     try:
-        creds = load_google_credentials()
+        creds = await get_google_credentials_from_tower_auth()
         if not creds:
             raise HTTPException(status_code=503, detail="Google credentials not available")
 
@@ -58,18 +47,22 @@ async def get_email_count(token: str = Depends(verify_auth)):
         }
 
     except Exception as e:
-        print(f"Error getting email count: {e}")
+        logger.error(f"Error getting email count: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to get email count: {str(e)}")
 
 @router.get("/photos/count")
-async def get_photos_count(token: str = Depends(verify_auth)):
+async def get_photos_count():
     """Get count of photos in Google Photos"""
     try:
-        creds = load_google_credentials()
+        creds = await get_google_credentials_from_tower_auth()
         if not creds:
             raise HTTPException(status_code=503, detail="Google credentials not available")
 
-        service = build('photoslibrary', 'v1', credentials=creds)
+        service = build(
+            'photoslibrary', 'v1', credentials=creds,
+            discoveryServiceUrl='https://photoslibrary.googleapis.com/$discovery/rest?version=v1',
+            cache_discovery=False,
+        )
 
         # Get media items count
         # Note: Google Photos API doesn't provide direct count, so we estimate
@@ -87,15 +80,20 @@ async def get_photos_count(token: str = Depends(verify_auth)):
             "note": "Estimated count - Google Photos API requires full enumeration"
         }
 
+    except HttpError as e:
+        if e.resp.status in (403, 401):
+            logger.warning(f"Google Photos API access denied: {e}")
+            raise HTTPException(status_code=503, detail="Google Photos API access denied — OAuth scope may not include Photos")
+        raise HTTPException(status_code=500, detail=f"Failed to get photos count: {str(e)}")
     except Exception as e:
-        print(f"Error getting photos count: {e}")
+        logger.error(f"Error getting photos count: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to get photos count: {str(e)}")
 
 @router.get("/calendar/count")
-async def get_calendar_count(token: str = Depends(verify_auth)):
+async def get_calendar_count():
     """Get count of calendar events"""
     try:
-        creds = load_google_credentials()
+        creds = await get_google_credentials_from_tower_auth()
         if not creds:
             raise HTTPException(status_code=503, detail="Google credentials not available")
 
@@ -137,34 +135,36 @@ async def get_calendar_count(token: str = Depends(verify_auth)):
         }
 
     except Exception as e:
-        print(f"Error getting calendar count: {e}")
+        logger.error(f"Error getting calendar count: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to get calendar count: {str(e)}")
 
 @router.get("/summary")
-async def get_google_summary(token: str = Depends(verify_auth)):
+async def get_google_summary():
     """Get summary of all Google data counts"""
     try:
-        # Collect all counts
-        email_data = await get_email_count(token)
-        photos_data = await get_photos_count(token)
-        calendar_data = await get_calendar_count(token)
+        # Collect all counts — degrade gracefully per service
+        summary: dict = {"timestamp": datetime.now().isoformat()}
 
-        return {
-            "emails": {
-                "total": email_data["count"],
-                "inbox": email_data["inbox_count"]
-            },
-            "photos": {
-                "estimated_total": photos_data["count"],
-                "note": photos_data["note"]
-            },
-            "calendar": {
-                "events_60_days": calendar_data["count"],
-                "upcoming_7_days": calendar_data["upcoming_count"]
-            },
-            "timestamp": datetime.now().isoformat()
-        }
+        try:
+            email_data = await get_email_count()
+            summary["emails"] = {"total": email_data["count"], "inbox": email_data["inbox_count"]}
+        except HTTPException:
+            summary["emails"] = {"error": "unavailable"}
+
+        try:
+            photos_data = await get_photos_count()
+            summary["photos"] = {"estimated_total": photos_data["count"], "note": photos_data["note"]}
+        except HTTPException:
+            summary["photos"] = {"error": "unavailable — OAuth scope may not include Photos"}
+
+        try:
+            calendar_data = await get_calendar_count()
+            summary["calendar"] = {"events_60_days": calendar_data["count"], "upcoming_7_days": calendar_data["upcoming_count"]}
+        except HTTPException:
+            summary["calendar"] = {"error": "unavailable"}
+
+        return summary
 
     except Exception as e:
-        print(f"Error getting Google summary: {e}")
+        logger.error(f"Error getting Google summary: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to get Google summary: {str(e)}")

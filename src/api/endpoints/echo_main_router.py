@@ -371,7 +371,7 @@ async def search_conversations(request: Dict[str, Any]):
             host='localhost',
             database='echo_brain',
             user='patrick',
-            password='',
+            password=os.getenv('DB_PASSWORD', ''),
             timeout=5
         )
 
@@ -488,10 +488,12 @@ async def search(q: str, limit: int = 10):
     # Also search conversations
     conv_results = await search_conversations({"query": q, "limit": limit//2})
 
+    mem_count = len(memory_results) if isinstance(memory_results, list) else len(memory_results.get("results", []))
+
     return {
         "memory": memory_results,
         "conversations": conv_results,
-        "total": len(memory_results.get("results", [])) + conv_results["count"]
+        "total": mem_count + conv_results["count"]
     }
 
 # ============= BRAIN VISUALIZATION =============

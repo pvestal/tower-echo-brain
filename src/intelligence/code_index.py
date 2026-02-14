@@ -226,7 +226,7 @@ class CodeIntelligence:
             "host": "localhost",
             "database": "echo_brain",
             "user": "patrick",
-            "password": ""
+            "password": os.getenv("DB_PASSWORD", "")
         }
         self._pool = None
         self.analyzer = PythonCodeAnalyzer()

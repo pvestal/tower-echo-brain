@@ -9,6 +9,7 @@ import psutil
 import subprocess
 import json
 import logging
+import os
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 from pathlib import Path
@@ -31,7 +32,7 @@ class SystemModel:
             "host": "localhost",
             "database": "echo_brain",
             "user": "patrick",
-            "password": ""
+            "password": os.getenv("DB_PASSWORD", "")
         }
         self._pool = None
 
