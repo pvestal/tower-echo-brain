@@ -70,7 +70,7 @@ INGESTION_SOURCES = {
 }
 
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
-EMBED_MODEL = os.getenv("EMBED_MODEL", "nomic-embed-text")  # Must match collection dimension (1024)
+EMBED_MODEL = os.getenv("EMBED_MODEL", "nomic-embed-text")  # Must match collection dimension (768)
 QDRANT_URL = os.getenv("QDRANT_URL", "http://localhost:6333")
 COLLECTION = os.getenv("QDRANT_COLLECTION", "echo_memory")
 DB_URL = os.getenv("DATABASE_URL", "postgresql://echo:echo_secure_password_123@localhost/echo_brain")
@@ -251,11 +251,11 @@ class DomainIngestor:
             # AI Models inventory
             try:
                 models = await anime_conn.fetch(
-                    "SELECT model_name, model_path, model_type, base_model, description FROM ai_models")
+                    "SELECT model_name, model_path, model_type, base_model, status FROM ai_models")
                 for m in models:
                     text = (f"AI Model: {m['model_name']}\nType: {m.get('model_type', '?')}\n"
                             f"Path: {m.get('model_path', 'N/A')}\nBase: {m.get('base_model', 'N/A')}\n"
-                            f"Description: {m.get('description', 'N/A')}")
+                            f"Status: {m.get('status', 'N/A')}")
                     await self._store_db_record(conn, text, "anime:safetensors",
                                                 f"db:models:{m['model_name']}", {"model": m["model_name"]})
             except Exception as e:
@@ -452,7 +452,8 @@ class DomainIngestor:
                                         json={"model": EMBED_MODEL, "input": text})
                 if resp.status_code != 200:
                     return None
-                embedding = resp.json().get("embedding")
+                data = resp.json()
+                embedding = (data.get("embeddings") or [[]])[0] or data.get("embedding", [])
                 if not embedding:
                     return None
 
