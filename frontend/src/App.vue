@@ -15,6 +15,7 @@ import { RouterLink, RouterView } from 'vue-router';
         <RouterLink to="/endpoints" class="nav-link">Endpoints</RouterLink>
         <RouterLink to="/system" class="nav-link">System</RouterLink>
         <RouterLink to="/logs" class="nav-link">Logs</RouterLink>
+        <RouterLink to="/calendar" class="nav-link">Calendar</RouterLink>
       </nav>
     </div>
 

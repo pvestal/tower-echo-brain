@@ -50,6 +50,11 @@ const routes = [
     path: '/voice-test',
     name: 'VoiceTest',
     component: () => import('@/views/VoiceTest.vue')
+  },
+  {
+    path: '/calendar',
+    name: 'Calendar',
+    component: () => import('@/views/CalendarView.vue')
   }
 ];
 

@@ -14,7 +14,6 @@ logger = logging.getLogger(__name__)
 # Import calendar integration
 try:
     from src.integrations.google_calendar import get_calendar_bridge, get_calendar_status_for_echo
-    from src.integrations.vault_manager import get_vault_manager
     CALENDAR_AVAILABLE = True
 except ImportError as e:
     logger.warning(f"Google Calendar integration not available: {e}")
@@ -45,8 +44,7 @@ async def get_calendar_status():
         raise HTTPException(status_code=503, detail="Google Calendar integration not available")
 
     try:
-        vault_manager = await get_vault_manager()
-        status = await get_calendar_status_for_echo(vault_manager)
+        status = await get_calendar_status_for_echo()
         return status
     except Exception as e:
         logger.error(f"Error getting calendar status: {e}")
@@ -59,8 +57,7 @@ async def get_calendars():
         raise HTTPException(status_code=503, detail="Google Calendar integration not available")
 
     try:
-        vault_manager = await get_vault_manager()
-        bridge = await get_calendar_bridge(vault_manager)
+        bridge = await get_calendar_bridge()
         if not bridge:
             raise HTTPException(status_code=503, detail="Calendar not connected")
 
@@ -77,8 +74,7 @@ async def get_upcoming_events(hours: int = 24, max_results: int = 10, calendar_i
         raise HTTPException(status_code=503, detail="Google Calendar integration not available")
 
     try:
-        vault_manager = await get_vault_manager()
-        bridge = await get_calendar_bridge(vault_manager)
+        bridge = await get_calendar_bridge()
         if not bridge:
             raise HTTPException(status_code=503, detail="Calendar not connected")
 
@@ -95,8 +91,7 @@ async def get_today_events(calendar_id: str = "primary"):
         raise HTTPException(status_code=503, detail="Google Calendar integration not available")
 
     try:
-        vault_manager = await get_vault_manager()
-        bridge = await get_calendar_bridge(vault_manager)
+        bridge = await get_calendar_bridge()
         if not bridge:
             raise HTTPException(status_code=503, detail="Calendar not connected")
 
@@ -117,8 +112,7 @@ async def get_events_for_date(date: str, calendar_id: str = "primary"):
         # Parse date
         event_date = datetime.strptime(date, '%Y-%m-%d')
 
-        vault_manager = await get_vault_manager()
-        bridge = await get_calendar_bridge(vault_manager)
+        bridge = await get_calendar_bridge()
         if not bridge:
             raise HTTPException(status_code=503, detail="Calendar not connected")
 
@@ -130,6 +124,28 @@ async def get_events_for_date(date: str, calendar_id: str = "primary"):
         logger.error(f"Error getting events for date: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to get events for date: {str(e)}")
 
+@router.get("/events/month")
+async def get_events_for_month(year: int = 2026, month: int = 2):
+    """Get events from ALL calendars for a given month, with calendar colors."""
+    if not CALENDAR_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Google Calendar integration not available")
+
+    if month < 1 or month > 12:
+        raise HTTPException(status_code=400, detail="month must be 1-12")
+
+    try:
+        bridge = await get_calendar_bridge()
+        if not bridge:
+            raise HTTPException(status_code=503, detail="Calendar not connected")
+
+        return await bridge.get_events_for_month(year, month)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting month events: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get month events: {str(e)}")
+
+
 @router.post("/events")
 async def create_event(event: EventRequest, calendar_id: str = "primary"):
     """Create a new calendar event"""
@@ -137,8 +153,7 @@ async def create_event(event: EventRequest, calendar_id: str = "primary"):
         raise HTTPException(status_code=503, detail="Google Calendar integration not available")
 
     try:
-        vault_manager = await get_vault_manager()
-        bridge = await get_calendar_bridge(vault_manager)
+        bridge = await get_calendar_bridge()
         if not bridge:
             raise HTTPException(status_code=503, detail="Calendar not connected")
 
@@ -172,8 +187,7 @@ async def query_calendar(query: CalendarQuery):
         raise HTTPException(status_code=503, detail="Google Calendar integration not available")
 
     try:
-        vault_manager = await get_vault_manager()
-        bridge = await get_calendar_bridge(vault_manager)
+        bridge = await get_calendar_bridge()
         if not bridge:
             raise HTTPException(status_code=503, detail="Calendar not connected")
 

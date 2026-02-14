@@ -193,14 +193,15 @@ except Exception as e:
     logger.error(f"❌ Search router failed: {e}")
 
 # Mount Echo Reasoning API - Transparent multi-stage reasoning (/analyze, /debug)
+# NOTE: Uses distinct variable name to avoid shadowing the reasoning_router above
 try:
     from src.api.endpoints.echo_reasoning_router import router as echo_reasoning_router
-    app.include_router(echo_reasoning_router, prefix="/api/echo")
-    logger.info("✅ Echo reasoning router mounted at /api/echo/reasoning")
+    app.include_router(echo_reasoning_router, prefix="/api/echo/analyze")
+    logger.info("✅ Echo reasoning router mounted at /api/echo/analyze")
 except ImportError as e:
-    logger.warning(f"⚠️ Reasoning router not available: {e}")
+    logger.warning(f"⚠️ Echo reasoning router not available: {e}")
 except Exception as e:
-    logger.error(f"❌ Reasoning router failed: {e}")
+    logger.error(f"❌ Echo reasoning router failed: {e}")
 
 # Mount additional API routers (non-critical — each is independently guarded)
 _optional_routers = [
@@ -219,8 +220,13 @@ _optional_routers = [
     ("src.api.takeout_stub", "router", None, "Takeout stub"),
     ("src.api.google_calendar_api", "router", None, "Google Calendar (/api/calendar)"),
     ("src.api.google_data", "router", None, "Google Data (/google)"),
+    ("src.api.google_ingest_api", "router", None, "Google Ingest (/api/google/ingest)"),
+    ("src.api.apple_music_api", "router", None, "Apple Music (/api/music)"),
+    ("src.api.plaid_api", "router", None, "Plaid Finance (/api/finance)"),
+    ("src.api.services_api", "router", "/api/echo", "Services Status (/api/echo/services)"),
     ("src.api.home_assistant_api", "router", None, "Home Assistant (/api/home)"),
     ("src.api.git_operations", "router", None, "Git operations (/git)"),
+    ("src.api.photo_dedup_api", "router", None, "Photo Dedup (/api/photos)"),
 ]
 
 for module_path, attr_name, prefix, label in _optional_routers:
@@ -1353,6 +1359,18 @@ async def startup_event():
     except Exception as e:
         logger.error(f"❌ Failed to create database pool: {e}")
 
+    # Initialize Tower Auth Bridge for SSO token management
+    try:
+        from src.integrations.tower_auth_bridge import tower_auth
+        auth_connected = await tower_auth.initialize()
+        if auth_connected:
+            await tower_auth.load_existing_tokens()
+            logger.info("Tower Auth bridge initialized and tokens loaded")
+        else:
+            logger.warning("Tower Auth service not available - external integrations will be limited")
+    except Exception as e:
+        logger.error(f"Failed to initialize Tower Auth bridge: {e}")
+
     try:
         # Add project root to path if needed
         import sys
@@ -1466,6 +1484,24 @@ async def startup_event():
             logger.info("✅ Registered file_watcher worker (10 min)")
         except Exception as e:
             logger.error(f"❌ Failed to register file_watcher: {e}")
+
+        try:
+            from src.autonomous.workers.photo_dedup_worker import PhotoDedupWorker
+            worker = PhotoDedupWorker()
+            worker_scheduler.register_worker("photo_dedup", worker.run_cycle, interval_minutes=120)
+            workers_registered += 1
+            logger.info("✅ Registered photo_dedup worker (120 min)")
+        except Exception as e:
+            logger.error(f"❌ Failed to register photo_dedup: {e}")
+
+        try:
+            from src.autonomous.workers.google_ingest_worker import GoogleIngestWorker
+            worker = GoogleIngestWorker()
+            worker_scheduler.register_worker("google_ingest", worker.run_cycle, interval_minutes=60)
+            workers_registered += 1
+            logger.info("✅ Registered google_ingest worker (60 min)")
+        except Exception as e:
+            logger.error(f"❌ Failed to register google_ingest: {e}")
 
         # Register contract monitor worker if available
         if contract_monitor:

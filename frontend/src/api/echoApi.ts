@@ -111,6 +111,28 @@ export const reasoningApi = {
     api.post('/search', { query, limit }),
 };
 
+// Calendar (separate base URL — /api/calendar)
+const calendarAxios = axios.create({ baseURL: '/api/calendar', timeout: 30000 });
+
+export const calendarApi = {
+  getCalendars: () => calendarAxios.get('/calendars'),
+  getMonthEvents: (year: number, month: number) =>
+    calendarAxios.get('/events/month', { params: { year, month } }),
+  getStatus: () => calendarAxios.get('/status'),
+};
+
+// Google Ingest (separate base URL — /api/google/ingest)
+const googleIngestAxios = axios.create({ baseURL: '/api/google/ingest', timeout: 120000 });
+
+export const googleIngestApi = {
+  ingestCalendar: () => googleIngestAxios.post('/calendar'),
+  ingestEmail: (query?: string) =>
+    googleIngestAxios.post('/email', null, { params: query ? { query } : undefined }),
+  ingestDrive: () => googleIngestAxios.post('/drive'),
+  ingestAll: () => googleIngestAxios.post('/all'),
+  stats: () => googleIngestAxios.get('/stats'),
+};
+
 // Generic endpoint tester
 export const testEndpoint = (method: string, path: string, data?: any) => {
   const config = { method, url: path, data };

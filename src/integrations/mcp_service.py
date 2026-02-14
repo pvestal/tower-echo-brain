@@ -21,7 +21,7 @@ class MCPService:
 
             # Initialize Ollama for embeddings (matching unified memory system)
             self.ollama_url = "http://localhost:11434"
-            self.embedding_model = "mxbai-embed-large:latest"
+            self.embedding_model = "nomic-embed-text"
             self.embeddings_available = True
 
         except Exception as e:
@@ -85,20 +85,21 @@ class MCPService:
                 try:
                     with httpx.Client(timeout=30) as client:
                         response = client.post(
-                            f"{self.ollama_url}/api/embeddings",
-                            json={"model": self.embedding_model, "prompt": query}
+                            f"{self.ollama_url}/api/embed",
+                            json={"model": self.embedding_model, "input": query}
                         )
                         if response.status_code == 200:
-                            query_embedding = response.json().get("embedding", [])
+                            resp_data = response.json()
+                            query_embedding = (resp_data.get("embeddings") or [[]])[0] or resp_data.get("embedding", [])
                         else:
                             # Fallback: create random embedding for testing
                             import random
-                            query_embedding = [random.random() for _ in range(1024)]
+                            query_embedding = [random.random() for _ in range(768)]
                             logger.warning(f"Ollama embedding failed with status {response.status_code}, using random")
                 except Exception as e:
                     # Fallback: create random embedding for testing
                     import random
-                    query_embedding = [random.random() for _ in range(1024)]
+                    query_embedding = [random.random() for _ in range(768)]
                     logger.warning(f"Ollama embedding failed: {e}, using random")
 
                 # Search in Qdrant using HTTP API directly
@@ -147,11 +148,22 @@ class MCPService:
             # Create text representation
             text = f"{subject} {predicate} {object_}"
 
-            if self.embedding_model:
-                embedding = self.embedding_model.encode(text).tolist()
-            else:
-                import random
-                embedding = [random.random() for _ in range(1024)]
+            # Get embedding via Ollama
+            import httpx
+            try:
+                with httpx.Client(timeout=30) as client:
+                    resp = client.post(
+                        f"{self.ollama_url}/api/embed",
+                        json={"model": self.embedding_model, "input": text}
+                    )
+                    resp_data = resp.json()
+                    embedding = (resp_data.get("embeddings") or [[]])[0] or resp_data.get("embedding", [])
+                    if not embedding:
+                        logger.warning("Empty embedding from Ollama for store_fact")
+                        return ""
+            except Exception as embed_err:
+                logger.error(f"Failed to embed fact: {embed_err}")
+                return ""
 
             # Store in Qdrant
             from qdrant_client.models import PointStruct

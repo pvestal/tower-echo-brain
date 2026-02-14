@@ -444,6 +444,10 @@ async function startRecording() {
 
     // Create audio processing pipeline
     audioContext = new AudioContext({ sampleRate: 16000 })
+    // Ensure AudioContext is running (browsers may suspend even from user gesture)
+    if (audioContext.state === 'suspended') {
+      await audioContext.resume()
+    }
     const source = audioContext.createMediaStreamSource(mediaStream)
 
     // Analyser for waveform visualization

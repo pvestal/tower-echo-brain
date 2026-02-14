@@ -21,7 +21,7 @@ class ImprovementEngine:
 
     def __init__(self):
         self.db_url = os.environ.get("DATABASE_URL",
-            "postgresql://patrick:WL12Ow4cuhEAWcO3Iaw7d2J7JEV8Hklr@localhost/echo_brain")
+            f"postgresql://patrick:{os.environ.get('DB_PASSWORD', '')}@localhost/echo_brain")
         self.qdrant_url = "http://localhost:6333"
         self.ollama_url = "http://localhost:11434"
         self.collection = "echo_memory"

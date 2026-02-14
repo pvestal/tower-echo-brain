@@ -152,15 +152,16 @@ class EmbeddingService:
             async with httpx.AsyncClient(timeout=60) as client:
                 for text in texts:
                     response = await client.post(
-                        f"{self.ollama_url}/api/embeddings",
+                        f"{self.ollama_url}/api/embed",
                         json={
                             "model": self.model,
-                            "prompt": text
+                            "input": text
                         }
                     )
                     response.raise_for_status()
                     data = response.json()
-                    embeddings.append(data["embedding"])
+                    embedding = (data.get("embeddings") or [[]])[0] or data.get("embedding", [])
+                    embeddings.append(embedding)
             return embeddings
 
 async def create_embedding_service() -> EmbeddingService:

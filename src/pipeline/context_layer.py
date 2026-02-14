@@ -27,7 +27,7 @@ QDRANT_THRESHOLD = 0.3              # LOWERED from 0.7 - was missing relevant co
 QDRANT_LIMIT = 10
 PG_DSN = f"postgresql://patrick:{os.getenv('DB_PASSWORD', '')}@localhost/echo_brain"
 OLLAMA_URL = "http://localhost:11434"
-EMBEDDING_MODEL = "mxbai-embed-large"  # 1024D model that matches echo_memory collection
+EMBEDDING_MODEL = "nomic-embed-text"   # 768D model that matches echo_memory collection
 MAX_CONTEXT_TOKENS = 4000            # Don't overwhelm the reasoning model
 
 
@@ -194,13 +194,15 @@ class ContextLayer:
         """Get embedding vector from Ollama."""
         try:
             resp = await self.http_client.post(
-                f"{OLLAMA_URL}/api/embeddings",
-                json={"model": EMBEDDING_MODEL, "prompt": text},
+                f"{OLLAMA_URL}/api/embed",
+                json={"model": EMBEDDING_MODEL, "input": text},
             )
             resp.raise_for_status()
-            embedding = resp.json().get("embedding", [])
+            resp_data = resp.json()
+            # Handle both new ("embeddings") and old ("embedding") Ollama API formats
+            embedding = (resp_data.get("embeddings") or [[]])[0] or resp_data.get("embedding", [])
             if not embedding:
-                logger.error("Empty embedding returned from Ollama")
+                logger.error(f"Empty embedding returned from Ollama, keys: {list(resp_data.keys())}")
                 return []
             return embedding
         except Exception as e:

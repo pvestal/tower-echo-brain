@@ -1,7 +1,7 @@
 # Echo Brain Architecture
 
-Version: 0.5.0
-Last Updated: 2026-02-11
+Version: 0.5.1
+Last Updated: 2026-02-12
 
 ---
 
@@ -33,30 +33,32 @@ PostgreSQL (echo_brain)                    Qdrant (echo_memory)
 ┌────────────────────────────┐             ┌─────────────────────────┐
 │ KNOWLEDGE                  │             │ 768D vectors            │
 │  knowledge_facts (2,558)   │◄───────────►│ nomic-embed-text        │
-│  conversations             │             │ 176,566 points          │
-│  documents                 │             │                         │
-│  graph_edges               │             │ Payload metadata:       │
-│  extraction_coverage       │             │  source, type, text,    │
-│                            │             │  file_path, functions   │
-│ AUTONOMOUS                 │             └─────────────────────────┘
-│  autonomous_goals          │
-│  autonomous_tasks          │             Qdrant (story_bible)
-│  autonomous_audit_log      │             ┌─────────────────────────┐
-│  autonomous_notifications  │             │ Anime story/character   │
-│                            │             │ reference collection    │
-│ SELF-AWARENESS             │             └─────────────────────────┘
-│  self_codebase_index       │
-│  self_schema_index         │             Ollama (localhost:11434)
-│  self_detected_issues      │             ┌─────────────────────────┐
-│  self_test_results         │             │ mistral:7b   (reasoning)│
-│  self_health_metrics       │             │ gemma2:9b    (extract.) │
-│  self_improvement_proposals│             │ nomic-embed-text (emb.) │
-│                            │             │ deepseek-r1:8b          │
-│ DIAGNOSTICS                │             │ deepseek-coder-v2:16b   │
-│  contract_monitor results  │             │ qwen2.5-coder:14b       │
-│  diagnostic history        │             │ llava:7b / llava:13b    │
-└────────────────────────────┘             │ llama3.2:3b             │
-                                           └─────────────────────────┘
+│  facts (6,129 SPO triples) │             │ 194,921 points          │
+│  conversations             │             │                         │
+│  documents                 │             │ Payload indexes:        │
+│  graph_edges               │             │  content (full-text)    │
+│  extraction_coverage       │             │  type (keyword)         │
+│                            │             │  category (keyword)     │
+│ AUTONOMOUS                 │             │                         │
+│  autonomous_goals          │             │ Payload metadata:       │
+│  autonomous_tasks          │             │  source, type, content, │
+│  autonomous_audit_log      │             │  file_path, category,   │
+│  autonomous_notifications  │             │  chunk_index, role      │
+│                            │             └─────────────────────────┘
+│ SELF-AWARENESS             │
+│  self_codebase_index       │             Ollama (localhost:11434)
+│  self_schema_index         │             ┌─────────────────────────┐
+│  self_detected_issues      │             │ mistral:7b   (reasoning)│
+│  self_test_results         │             │ gemma2:9b    (extract.) │
+│  self_health_metrics       │             │ nomic-embed-text (emb.) │
+│  self_improvement_proposals│             │ deepseek-r1:8b          │
+│                            │             │ deepseek-coder-v2:16b   │
+│ DIAGNOSTICS                │             │ qwen2.5-coder:14b       │
+│  contract_monitor results  │             │ llava:7b / llava:13b    │
+│  diagnostic history        │             │ llama3.2:3b             │
+│  domain_ingestion_log      │             └─────────────────────────┘
+│  domain_category_stats     │
+└────────────────────────────┘
 ```
 
 ### 2. Worker System
@@ -133,19 +135,43 @@ User Query
     │
     ▼
 Query Classifier (src/context_assembly/classifier.py)
-    │  Classifies: SYSTEM_QUERY, CODE_QUERY, GENERAL_KNOWLEDGE, etc.
+    │  Classifies into 7 domains: TECHNICAL, ANIME, PERSONAL, SYSTEM,
+    │  GENERAL, CREATIVE, FINANCIAL (regex-based, not LLM)
     ▼
 Context Assembly (src/context_assembly/retriever.py)
-    │  ParallelRetriever searches Qdrant echo_memory
-    │  limit=20, score_threshold=0.3
-    │  Searches across ALL source types (facts, code, conversations, self_codebase)
+    │  ParallelRetriever runs in parallel:
+    │  ├─ Qdrant HYBRID SEARCH (vector + full-text, 70/30 fusion)
+    │  ├─ PostgreSQL FTS (claude_conversations)
+    │  └─ PostgreSQL facts (subject/predicate/object triples)
+    │  Domain filters prevent cross-contamination
     ▼
-LLM Reasoning (Ollama mistral:7b)
+LLM Reasoning (Ollama — model selected by intent)
+    │  CODING → qwen2.5-coder:7b
+    │  REASONING → deepseek-r1:8b
+    │  PERSONAL → llama3.1:8b
+    │  FACTUAL → mistral:7b
+    │  CREATIVE → gemma2:9b
     │  System prompt + assembled context + user query
-    │  Generates response grounded in retrieved context
     ▼
 Response (with confidence, sources, reasoning_time_ms)
 ```
+
+#### Hybrid Search (v0.5.1, 2026-02-12)
+
+Inspired by OpenClaw's memory architecture. The Qdrant search now combines two retrieval methods:
+
+```
+Query → [Parallel]
+         ├─ Vector similarity (cosine, 30 results, threshold 0.3)
+         └─ Full-text keyword match (Qdrant text index, 30 results)
+         ↓
+Weighted Score Fusion
+    score = 0.7 × vector_score + 0.3 × text_score
+         ↓
+Dedup by point_id → Authoritative boosting → Top K
+```
+
+This solves the "exact identifier miss" problem — queries for `cyberrealistic_v9.safetensors` or `dataset_approval_api.py` now return relevant results that pure vector similarity missed.
 
 ### 5. Frontend Dashboard
 
@@ -277,13 +303,31 @@ Echo Brain and Tower Anime Production originally shared database tables and Qdra
 
 ## Known Architectural Weaknesses
 
-1. **No retrieval confidence gate** — When vector search returns low-similarity results, the LLM falls back to general knowledge and generates plausible-sounding but incorrect answers (e.g., claiming SQLite). No threshold triggers "I don't have specific information about that."
+### Retrieval & Memory
+1. **No retrieval confidence gate** — When vector search returns low-similarity results, the LLM falls back to general knowledge and generates plausible-sounding but incorrect answers. No threshold triggers "I don't have specific information about that."
+2. **No temporal ordering in vectors** — Vectors have `ingested_at` but no source timestamp. Cannot distinguish current facts from historical ones.
+3. **No memory decay** — All 194K vectors treated equally regardless of age. No forgetting curve, no time-weighted scoring.
+4. **No memory consolidation** — Similar/duplicate vectors never merged. Some content appears 10+ times, flooding results.
+5. **No SHA-256 dedup on ingestion** — `domain_ingestor` has content hashing but `conversation_watcher` does not, leading to duplicate conversation chunks.
 
-2. **No temporal ordering in vectors** — Qdrant vectors have no timestamp metadata. Echo Brain cannot distinguish current facts from historical ones, causing stale information to surface as current.
+### Reasoning & Intelligence
+6. **No true reasoning** — "Reasoning" is retrieval + single LLM call. No chain-of-thought extraction, no multi-hop reasoning, no iterative refinement.
+7. **No conflict detection** — Can retrieve contradictory facts without flagging them. No consistency validation.
+8. **No fact verification** — LLM response is never checked against retrieved sources for accuracy.
+9. **Orphaned reasoning implementations** — `ReasoningEngine`, `IntelligenceEngine`, `UnifiedKnowledgeLayer` exist in `src/core/` but are NOT connected to the main pipeline. Creates confusion about "where does reasoning happen."
+10. **Chain-of-thought placeholder** — `thinking_steps=[]` in reasoning_layer.py is never populated, even when using deepseek-r1.
 
-3. **Code-heavy, context-light retrieval** — Many code snippets but few architectural explanations in the vector store. Implementation details are findable; "why was this decision made?" questions are not.
+### Routing & Classification
+11. **Regex-only domain classification** — No LLM-based intent detection. Classification is brittle pattern matching.
+12. **No multi-intent support** — Complex queries like "search my anime conversations and compare to tower architecture" get classified as one domain only.
 
-4. **Extreme duplication** — Some content (particularly the context contamination fix code) appears 10+ times identically, flooding search results with redundant chunks and pushing unique content out of top results.
+### Infrastructure
+13. **Embedding model mismatch** — Pipeline uses `mxbai-embed-large` (1024D) but EmbeddingService defaults to `nomic-embed-text` (768D). Fallback would break Qdrant searches since collection is 768D.
+14. **Model availability unverified** — Code assumes 5+ Ollama models loaded, but RTX 3060 12GB can only hold ~1-2 at a time. No runtime fallback chain.
+15. **19 unmounted routers** — Dead code in `src/api/` — routers implemented but never mounted in main.py.
+16. **Agent system is mock** — `src/services/agent_service.py` returns hardcoded responses. Not functional.
+17. **No authentication** — Open API with no access control, rate limiting, or API keys.
+18. **Credentials in source** — Database password embedded as env var default in 11+ files.
 
 ---
 

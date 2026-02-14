@@ -17,6 +17,18 @@ export default defineConfig({
       '/api/echo': {
         target: 'http://localhost:8309',
         changeOrigin: true
+      },
+      '/api/calendar': {
+        target: 'http://localhost:8309',
+        changeOrigin: true
+      },
+      '/api/google': {
+        target: 'http://localhost:8309',
+        changeOrigin: true
+      },
+      '/api/workers': {
+        target: 'http://localhost:8309',
+        changeOrigin: true
       }
     }
   },

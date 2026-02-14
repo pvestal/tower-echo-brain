@@ -4,6 +4,7 @@ Shows real-time color-coded system testing with progress bars
 """
 import asyncio
 import httpx
+import os
 import sys
 from datetime import datetime
 from typing import Dict, Any
@@ -292,25 +293,25 @@ class EchoBrainSelfTester:
                     model_names = [m["name"] for m in models.get("models", [])]
 
                     # Check for model with or without :latest tag
-                    has_model = "mxbai-embed-large" in model_names or "mxbai-embed-large:latest" in model_names
+                    has_model = "nomic-embed-text" in model_names or "nomic-embed-text:latest" in model_names
                     if has_model:
-                        model_name = "mxbai-embed-large:latest" if "mxbai-embed-large:latest" in model_names else "mxbai-embed-large"
+                        model_name = "nomic-embed-text:latest" if "nomic-embed-text:latest" in model_names else "nomic-embed-text"
                         self._print(f"  Model found: {model_name}", "green")
 
                         # Test embedding
                         self._print("  Testing embedding generation...", "blue")
                         embed_response = await client.post(
-                            "http://localhost:11434/api/embeddings",
+                            "http://localhost:11434/api/embed",
                             json={
                                 "model": model_name,
-                                "prompt": "Test embedding for Echo Brain"
+                                "input": "Test embedding for Echo Brain"
                             },
                             timeout=60
                         )
 
                         if embed_response.status_code == 200:
                             embed_data = embed_response.json()
-                            embedding = embed_data.get("embedding", [])
+                            embedding = (embed_data.get("embeddings") or [[]])[0] or embed_data.get("embedding", [])
 
                             if embedding and len(embedding) > 0:
                                 self._print(f"  Embedding generated: {len(embedding)} dimensions", "green")
@@ -339,12 +340,12 @@ class EchoBrainSelfTester:
                                 "timestamp": datetime.now().isoformat()
                             }
                     else:
-                        self._print("  Model not found: mxbai-embed-large", "red")
+                        self._print("  Model not found: nomic-embed-text", "red")
                         self._print(f"  Available: {', '.join(model_names[:3])}", "yellow")
                         return {
                             "component": "Ollama",
                             "status": "failed",
-                            "error": "Model mxbai-embed-large not found",
+                            "error": "Model nomic-embed-text not found",
                             "available_models": model_names,
                             "timestamp": datetime.now().isoformat()
                         }
@@ -374,7 +375,7 @@ class EchoBrainSelfTester:
             async with httpx.AsyncClient(timeout=10) as client:
                 endpoints = [
                     ("Health", "/health"),
-                    ("Memory Status", "/api/memory/status"),
+                    ("Memory Status", "/api/echo/memory/status"),
                 ]
 
                 results = {}
@@ -425,11 +426,12 @@ class EchoBrainSelfTester:
             }
 
     async def test_mcp_server(self) -> Dict[str, Any]:
-        """Test MCP Server functionality"""
+        """Test MCP Server functionality — search + store"""
         self._print("Testing MCP Server...", "blue")
 
         try:
-            async with httpx.AsyncClient(timeout=15) as client:
+            async with httpx.AsyncClient(timeout=30) as client:
+                # Test 1: search_memory with a real query and meaningful limit
                 self._print("  Testing search_memory tool...", "blue")
 
                 response = await client.post(
@@ -439,39 +441,15 @@ class EchoBrainSelfTester:
                         "params": {
                             "name": "search_memory",
                             "arguments": {
-                                "query": "test",
-                                "limit": 1
+                                "query": "Echo Brain architecture embedding model",
+                                "limit": 5
                             }
                         }
                     },
-                    timeout=10
+                    timeout=15
                 )
 
-                if response.status_code == 200:
-                    data = response.json()
-                    results = data.get("result", [])
-
-                    if isinstance(results, list):
-                        self._print(f"  Search working: {len(results)} results", "green")
-
-                        if results:
-                            self._print(f"    Top score: {results[0].get('score', 0):.3f}", "green")
-
-                        return {
-                            "component": "MCP Server",
-                            "status": "passed",
-                            "search_results": len(results),
-                            "timestamp": datetime.now().isoformat()
-                        }
-                    else:
-                        self._print("  Search returned invalid format", "yellow")
-                        return {
-                            "component": "MCP Server",
-                            "status": "degraded",
-                            "error": "Invalid response format",
-                            "timestamp": datetime.now().isoformat()
-                        }
-                else:
+                if response.status_code != 200:
                     self._print(f"  MCP Error: HTTP {response.status_code}", "red")
                     return {
                         "component": "MCP Server",
@@ -479,6 +457,70 @@ class EchoBrainSelfTester:
                         "error": f"HTTP {response.status_code}",
                         "timestamp": datetime.now().isoformat()
                     }
+
+                data = response.json()
+                results = data if isinstance(data, list) else data.get("result", [])
+
+                if not isinstance(results, list):
+                    self._print("  Search returned invalid format", "yellow")
+                    return {
+                        "component": "MCP Server",
+                        "status": "failed",
+                        "error": "Invalid response format",
+                        "timestamp": datetime.now().isoformat()
+                    }
+
+                self._print(f"  search_memory: {len(results)} results", "green")
+
+                top_score = 0
+                if results:
+                    top_score = results[0].get('score', 0)
+                    self._print(f"    Top score: {top_score:.3f}", "green")
+                    # Verify result structure
+                    first = results[0]
+                    has_content = bool(first.get('content'))
+                    has_source = bool(first.get('source'))
+                    self._print(f"    Has content: {has_content}, Has source: {has_source}", "green")
+
+                # Test 2: get_facts
+                self._print("  Testing get_facts tool...", "blue")
+                facts_response = await client.post(
+                    "http://localhost:8309/mcp",
+                    json={
+                        "method": "tools/call",
+                        "params": {
+                            "name": "get_facts",
+                            "arguments": {
+                                "topic": "Echo Brain"
+                            }
+                        }
+                    },
+                    timeout=10
+                )
+
+                facts_count = 0
+                if facts_response.status_code == 200:
+                    facts_data = facts_response.json()
+                    facts_list = facts_data if isinstance(facts_data, list) else facts_data.get("result", [])
+                    facts_count = len(facts_list) if isinstance(facts_list, list) else 0
+                    self._print(f"  get_facts: {facts_count} facts", "green")
+
+                # Determine status
+                if len(results) >= 3 and top_score > 0.3:
+                    status = "passed"
+                elif len(results) >= 1:
+                    status = "degraded"
+                else:
+                    status = "failed"
+
+                return {
+                    "component": "MCP Server",
+                    "status": status,
+                    "search_results": len(results),
+                    "top_score": round(top_score, 3),
+                    "facts_found": facts_count,
+                    "timestamp": datetime.now().isoformat()
+                }
 
         except Exception as e:
             self._print(f"MCP Server Test Failed: {str(e)[:100]}", "red")
@@ -545,7 +587,7 @@ class EchoBrainSelfTester:
         try:
             # First check current state
             async with httpx.AsyncClient(timeout=10) as client:
-                response = await client.get("http://localhost:8309/api/memory/status")
+                response = await client.get("http://localhost:8309/api/echo/memory/status")
 
                 if response.status_code == 200:
                     status_data = response.json()

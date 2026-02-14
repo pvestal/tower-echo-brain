@@ -298,23 +298,54 @@ class VoiceService:
 
     def _prepare_audio(self, audio_bytes: bytes, sample_rate: int) -> str:
         """
-        Convert raw audio bytes to a temporary WAV file for faster-whisper.
-        If already WAV format (starts with RIFF header), save directly.
-        """
-        tmp = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
+        Prepare audio bytes for faster-whisper transcription.
 
-        if audio_bytes[:4] == b"RIFF":
-            # Already WAV format
-            tmp.write(audio_bytes)
+        Detects the audio format by magic bytes:
+        - WAV (RIFF header): save directly as .wav
+        - WebM (EBML header): save as .webm — ffmpeg decodes it
+        - OGG/Opus: save as .ogg
+        - MP3: save as .mp3
+        - Raw PCM (no recognized header): wrap in WAV container
+
+        faster-whisper uses ffmpeg internally, so it can handle all
+        common audio formats as long as the file extension is correct.
+        """
+        header = audio_bytes[:4]
+
+        if header == b"RIFF":
+            suffix = ".wav"
+            wrap_pcm = False
+        elif header == b"\x1a\x45\xdf\xa3":
+            # WebM / Matroska (EBML header) — from MediaRecorder
+            suffix = ".webm"
+            wrap_pcm = False
+        elif header == b"OggS":
+            suffix = ".ogg"
+            wrap_pcm = False
+        elif audio_bytes[:3] == b"ID3" or audio_bytes[:2] in (b"\xff\xfb", b"\xff\xf3", b"\xff\xf2"):
+            suffix = ".mp3"
+            wrap_pcm = False
+        elif header == b"fLaC":
+            suffix = ".flac"
+            wrap_pcm = False
         else:
-            # Raw PCM — wrap in WAV container
+            # Assume raw PCM int16 mono — wrap in WAV container
+            suffix = ".wav"
+            wrap_pcm = True
+
+        tmp = tempfile.NamedTemporaryFile(suffix=suffix, delete=False)
+
+        if wrap_pcm:
             with wave.open(tmp, "wb") as wf:
                 wf.setnchannels(1)
                 wf.setsampwidth(2)  # 16-bit
                 wf.setframerate(sample_rate)
                 wf.writeframes(audio_bytes)
+        else:
+            tmp.write(audio_bytes)
 
         tmp.close()
+        logger.debug(f"Prepared audio: {len(audio_bytes)} bytes → {suffix} ({tmp.name})")
         return tmp.name
 
     # ------------------------------------------------------------------
@@ -493,15 +524,25 @@ class VoiceService:
     # ------------------------------------------------------------------
 
     def get_status(self) -> dict:
-        """Return current voice service status."""
+        """Return current voice service status with actual runtime values."""
+        stt_info = {
+            "loaded": self._stt_model is not None,
+            "model": STT_MODEL_SIZE,
+            "device": STT_DEVICE,
+            "compute_type": STT_COMPUTE_TYPE,
+        }
+        # Report actual device/compute if model is loaded
+        if self._stt_model is not None:
+            try:
+                props = self._stt_model.model.properties
+                stt_info["device"] = props.get("device", STT_DEVICE)
+                stt_info["compute_type"] = props.get("compute_type", STT_COMPUTE_TYPE)
+            except Exception:
+                pass
+
         return {
             "initialized": self._initialized,
-            "stt": {
-                "loaded": self._stt_model is not None,
-                "model": STT_MODEL_SIZE,
-                "device": STT_DEVICE,
-                "compute_type": STT_COMPUTE_TYPE,
-            },
+            "stt": stt_info,
             "tts": {
                 "loaded": self._tts_voice is not None,
                 "model": TTS_MODEL_NAME,

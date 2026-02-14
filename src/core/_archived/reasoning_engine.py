@@ -33,7 +33,7 @@ class ReasoningEngine:
         self.ollama_url = ollama_url or os.getenv("OLLAMA_URL", "http://localhost:11434")
         self.qdrant_url = qdrant_url or os.getenv("QDRANT_URL", "http://localhost:6333")
         self.collection_name = collection_name or os.getenv("QDRANT_COLLECTION", "echo_memory")
-        self.embedding_model = embedding_model or os.getenv("EMBEDDING_MODEL", "mxbai-embed-large:latest")
+        self.embedding_model = embedding_model or os.getenv("EMBEDDING_MODEL", "nomic-embed-text")
         self.reasoning_model = reasoning_model or os.getenv("OLLAMA_MODEL", "mistral:7b")
 
         # Available fallback models in priority order (ONLY WHAT'S ACTUALLY INSTALLED)
@@ -524,7 +524,7 @@ async def check_dependencies() -> Dict[str, Any]:
                 models["available"] = model_list
                 
                 # Check for specific models
-                checks["embedding_model"] = any("mxbai-embed-large" in m for m in model_list)
+                checks["embedding_model"] = any("nomic-embed-text" in m for m in model_list)
                 checks["reasoning_model"] = any(
                     any(x in m for x in ["llama3", "mistral", "phi"])
                     for m in model_list

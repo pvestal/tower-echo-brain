@@ -3,12 +3,13 @@ Parallel Context Retriever - Fetches from multiple sources based on domain
 Uses domain classification to prevent cross-contamination
 """
 import os
+import re
 import asyncio
 import logging
 import httpx
 import asyncpg
 from typing import List, Dict, Any, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 from .classifier import DomainClassifier, Domain
 
@@ -28,9 +29,9 @@ class ParallelRetriever:
         self.qdrant_url = "http://localhost:6333"
         self.ollama_url = "http://localhost:11434"
         self.embedding_model = "nomic-embed-text"  # 768D
-        # Use DATABASE_URL if available, otherwise use DB_PASSWORD with fallback
+        # Use DATABASE_URL if available, otherwise use DB_PASSWORD (no hardcoded fallback)
         self.pg_dsn = os.getenv('DATABASE_URL',
-            f"postgresql://patrick:{os.getenv('DB_PASSWORD', 'WL12Ow4cuhEAWcO3Iaw7d2J7JEV8Hklr')}@localhost/echo_brain")
+            f"postgresql://patrick:{os.getenv('DB_PASSWORD', '')}@localhost/echo_brain")
 
     async def initialize(self):
         """Initialize connection pools"""
@@ -127,10 +128,28 @@ class ParallelRetriever:
         # Step 5: Apply domain filtering to results
         filtered_sources = self.classifier.filter_results_by_domain(sources, primary_domain)
 
-        # Step 6: Sort by relevance
+        # Step 6: Apply time-decay recency boost
+        self._apply_time_decay(filtered_sources)
+
+        # Step 7: Sort by relevance (after time-decay adjustments)
         filtered_sources.sort(key=lambda x: x.get("score", 0), reverse=True)
 
-        # Step 7: Limit to max_results
+        # Step 8: Confidence gate — flag if best result is too weak
+        best_score = filtered_sources[0].get("score", 0) if filtered_sources else 0
+        retrieval_confident = best_score >= self.CONFIDENCE_GATE_THRESHOLD
+
+        if not retrieval_confident and filtered_sources:
+            logger.warning(
+                f"Confidence gate: best score {best_score:.3f} < threshold "
+                f"{self.CONFIDENCE_GATE_THRESHOLD} — retrieval may be unreliable"
+            )
+
+        # Step 9: Conflict detection — flag contradictory facts
+        conflicts = self._detect_conflicts(filtered_sources)
+        if conflicts:
+            logger.warning(f"Conflict detection: {len(conflicts)} potential contradiction(s) found")
+
+        # Step 10: Limit to max_results
         final_sources = filtered_sources[:max_results]
 
         elapsed_ms = int((datetime.now() - start_time).total_seconds() * 1000)
@@ -143,6 +162,9 @@ class ParallelRetriever:
             "total_found": len(filtered_sources),
             "total_returned": len(final_sources),
             "retrieval_ms": elapsed_ms,
+            "retrieval_confident": retrieval_confident,
+            "best_score": best_score,
+            "conflicts": conflicts,
             "allowed_collections": allowed_sources.get("qdrant_collections", []),
             "allowed_tables": allowed_sources.get("pg_tables", [])
         }
@@ -171,6 +193,16 @@ class ParallelRetriever:
         except:
             return False
 
+    # Hybrid search weights (inspired by OpenClaw's 70/30 split)
+    VECTOR_WEIGHT = 0.7
+    TEXT_WEIGHT = 0.3
+
+    # Confidence gate: if best retrieval score is below this, flag low confidence
+    CONFIDENCE_GATE_THRESHOLD = 0.35
+
+    # Time-decay: halve the recency boost after this many days
+    TIME_DECAY_HALFLIFE_DAYS = 30
+
     async def _search_qdrant(
         self,
         query: str,
@@ -178,63 +210,288 @@ class ParallelRetriever:
         collection: str,
         domain: Domain
     ) -> List[Dict]:
-        """Search a Qdrant collection"""
+        """Hybrid search: vector similarity + full-text keyword matching, fused with weighted scores"""
         try:
-            # Domain-specific thresholds
             sources = self.classifier.get_allowed_sources(domain)
             min_score = sources.get("min_score", 0.3)
 
-            resp = await self.http_client.post(
-                f"{self.qdrant_url}/collections/{collection}/points/search",
-                json={
-                    "vector": embedding,
-                    "limit": 20,  # Get more, filter later
-                    "score_threshold": min_score,
-                    "with_payload": True
-                }
+            # Run vector search and text search in parallel
+            vector_task = self._qdrant_vector_search(embedding, collection, min_score)
+            text_task = self._qdrant_text_search(query, collection)
+
+            vector_results, text_results = await asyncio.gather(
+                vector_task, text_task, return_exceptions=True
             )
-            resp.raise_for_status()
 
-            results = []
-            for point in resp.json().get("result", []):
-                payload = point.get("payload", {})
-                content = payload.get("text", payload.get("content", ""))
+            if isinstance(vector_results, Exception):
+                logger.error(f"Vector search failed: {vector_results}")
+                vector_results = []
+            if isinstance(text_results, Exception):
+                logger.error(f"Text search failed: {text_results}")
+                text_results = []
 
-                if content:
-                    results.append({
-                        "type": "vector",
-                        "source": f"qdrant/{collection}",
-                        "content": content[:1000],  # Truncate
-                        "score": point.get("score", 0),
-                        "metadata": {
-                            k: v for k, v in payload.items()
-                            if k not in ("text", "content", "embedding")
-                        }
-                    })
+            # Fuse results with weighted scoring
+            fused = self._fuse_hybrid_results(
+                vector_results, text_results, collection
+            )
 
-            # Apply authoritative source boosting BEFORE returning results
-            for result in results:
+            # Apply authoritative source boosting
+            for result in fused:
                 payload = result.get("metadata", {})
-                # Boost authoritative architecture docs
                 if payload.get("authoritative", False) or payload.get("priority", 0) >= 100:
                     result["score"] *= 2.5
-                    logger.debug(f"Boosted authoritative source: {result['score']:.4f}")
                 elif payload.get("source") == "architecture_doc":
                     result["score"] *= 2.0
-                    logger.debug(f"Boosted architecture doc: {result['score']:.4f}")
                 elif payload.get("content_type") == "documentation":
                     result["score"] *= 1.5
-                    logger.debug(f"Boosted documentation: {result['score']:.4f}")
 
-            # Re-sort after boosting
-            results.sort(key=lambda r: r.get("score", 0), reverse=True)
+            fused.sort(key=lambda r: r.get("score", 0), reverse=True)
 
-            logger.info(f"Qdrant/{collection}: {len(results)} results for domain {domain} (boosted & sorted)")
-            return results
+            v_count = len(vector_results)
+            t_count = len(text_results)
+            logger.info(
+                f"Qdrant/{collection} hybrid: {v_count} vector + {t_count} text → "
+                f"{len(fused)} fused results for domain {domain}"
+            )
+            return fused
 
         except Exception as e:
-            logger.error(f"Qdrant search failed for {collection}: {e}")
+            logger.error(f"Qdrant hybrid search failed for {collection}: {e}")
             return []
+
+    async def _qdrant_vector_search(
+        self, embedding: List[float], collection: str, min_score: float
+    ) -> List[Dict]:
+        """Pure vector similarity search against Qdrant"""
+        resp = await self.http_client.post(
+            f"{self.qdrant_url}/collections/{collection}/points/search",
+            json={
+                "vector": embedding,
+                "limit": 30,
+                "score_threshold": min_score,
+                "with_payload": True
+            }
+        )
+        resp.raise_for_status()
+        results = []
+        for point in resp.json().get("result", []):
+            payload = point.get("payload", {})
+            content = payload.get("text", payload.get("content", ""))
+            if content:
+                results.append({
+                    "point_id": point.get("id"),
+                    "content": content[:1000],
+                    "score": float(point.get("score", 0)),
+                    "payload": payload
+                })
+        return results
+
+    async def _qdrant_text_search(self, query: str, collection: str) -> List[Dict]:
+        """Full-text keyword search against Qdrant's text index on content field"""
+        # Extract meaningful search terms (skip stop words, keep identifiers)
+        terms = self._extract_text_search_terms(query)
+        if not terms:
+            return []
+
+        resp = await self.http_client.post(
+            f"{self.qdrant_url}/collections/{collection}/points/scroll",
+            json={
+                "limit": 30,
+                "with_payload": True,
+                "filter": {
+                    "must": [
+                        {"key": "content", "match": {"text": terms}}
+                    ]
+                }
+            }
+        )
+        resp.raise_for_status()
+        results = []
+        for i, point in enumerate(resp.json().get("result", {}).get("points", [])):
+            payload = point.get("payload", {})
+            content = payload.get("text", payload.get("content", ""))
+            if content:
+                # Convert rank position to 0-1 score (reciprocal rank)
+                text_score = 1.0 / (1.0 + i)
+                results.append({
+                    "point_id": point.get("id"),
+                    "content": content[:1000],
+                    "score": text_score,
+                    "payload": payload
+                })
+        return results
+
+    def _extract_text_search_terms(self, query: str) -> str:
+        """Extract the best keyword terms for full-text matching.
+        Preserves technical identifiers (file names, model names, function names)
+        that vector search often misses."""
+        # Identifiers with special chars — keep them intact
+        import re
+        identifiers = re.findall(
+            r'[a-zA-Z_][a-zA-Z0-9_.-]*(?:_v\d+|\.(?:py|ts|js|json|yaml|safetensors|service))',
+            query
+        )
+
+        stop_words = {
+            'what', 'how', 'does', 'do', 'is', 'are', 'the', 'a', 'an', 'and', 'or',
+            'but', 'in', 'on', 'at', 'to', 'for', 'with', 'by', 'from', 'about',
+            'that', 'this', 'these', 'those', 'they', 'them', 'there', 'where',
+            'when', 'why', 'which', 'who', 'use', 'uses', 'used', 'using',
+            'can', 'could', 'would', 'should', 'will', 'shall', 'may', 'might',
+            'tell', 'show', 'give', 'find', 'get', 'list', 'me', 'my', 'all',
+        }
+
+        words = []
+        for word in query.split():
+            clean = word.strip('.,?!()[]{}"\':;')
+            if len(clean) > 1 and clean.lower() not in stop_words:
+                words.append(clean)
+
+        # Prioritize identifiers, then remaining words
+        combined = list(dict.fromkeys(identifiers + words))  # dedup preserving order
+        return ' '.join(combined[:8])
+
+    def _fuse_hybrid_results(
+        self,
+        vector_results: List[Dict],
+        text_results: List[Dict],
+        collection: str
+    ) -> List[Dict]:
+        """Weighted fusion of vector and text search results.
+        Score = VECTOR_WEIGHT * vector_score + TEXT_WEIGHT * text_score"""
+        # Index by point_id for merging
+        merged: Dict[Any, Dict] = {}
+
+        for r in vector_results:
+            pid = r["point_id"]
+            merged[pid] = {
+                "type": "hybrid",
+                "source": f"qdrant/{collection}",
+                "content": r["content"],
+                "score": self.VECTOR_WEIGHT * r["score"],
+                "metadata": {
+                    k: v for k, v in r["payload"].items()
+                    if k not in ("text", "content", "embedding")
+                },
+                "_vector_score": r["score"],
+                "_text_score": 0.0,
+            }
+
+        for r in text_results:
+            pid = r["point_id"]
+            if pid in merged:
+                # Found in both — add text contribution
+                merged[pid]["score"] += self.TEXT_WEIGHT * r["score"]
+                merged[pid]["_text_score"] = r["score"]
+            else:
+                # Text-only hit (vector missed it)
+                merged[pid] = {
+                    "type": "hybrid",
+                    "source": f"qdrant/{collection}",
+                    "content": r["content"],
+                    "score": self.TEXT_WEIGHT * r["score"],
+                    "metadata": {
+                        k: v for k, v in r["payload"].items()
+                        if k not in ("text", "content", "embedding")
+                    },
+                    "_vector_score": 0.0,
+                    "_text_score": r["score"],
+                }
+
+        results = list(merged.values())
+
+        # Log fusion stats
+        both = sum(1 for r in results if r["_vector_score"] > 0 and r["_text_score"] > 0)
+        vector_only = sum(1 for r in results if r["_vector_score"] > 0 and r["_text_score"] == 0)
+        text_only = sum(1 for r in results if r["_vector_score"] == 0 and r["_text_score"] > 0)
+        logger.info(f"Fusion: {both} both, {vector_only} vector-only, {text_only} text-only")
+
+        # Clean up internal scoring fields
+        for r in results:
+            del r["_vector_score"]
+            del r["_text_score"]
+
+        return results
+
+    def _apply_time_decay(self, sources: List[Dict]) -> None:
+        """Apply recency boost: recent sources get higher scores, old ones decay.
+        Uses exponential decay with configurable half-life.
+        Modifies sources in-place."""
+        now = datetime.now(timezone.utc)
+        halflife_seconds = self.TIME_DECAY_HALFLIFE_DAYS * 86400
+
+        for source in sources:
+            meta = source.get("metadata", {})
+            timestamp_str = (
+                meta.get("ingested_at")
+                or meta.get("timestamp")
+                or meta.get("created_at")
+                or ""
+            )
+            if not timestamp_str:
+                continue  # No timestamp — leave score unchanged
+
+            try:
+                # Parse ISO format timestamp
+                ts = datetime.fromisoformat(timestamp_str.replace("Z", "+00:00"))
+                if ts.tzinfo is None:
+                    ts = ts.replace(tzinfo=timezone.utc)
+                age_seconds = max(0, (now - ts).total_seconds())
+
+                # Exponential decay: boost = 2^(-age/halflife)
+                # Recent (0 days) → boost = 1.0
+                # 30 days old → boost = 0.5
+                # 60 days old → boost = 0.25
+                import math
+                decay_factor = math.pow(2, -age_seconds / halflife_seconds)
+
+                # Apply as a weighted blend: 80% original score + 20% recency
+                original_score = source.get("score", 0)
+                source["score"] = 0.8 * original_score + 0.2 * original_score * decay_factor
+            except (ValueError, TypeError):
+                continue  # Unparseable timestamp — skip
+
+    def _detect_conflicts(self, sources: List[Dict]) -> List[Dict]:
+        """Detect contradictory information in retrieved sources.
+        Looks for facts with the same subject+predicate but different objects."""
+        conflicts = []
+
+        # Only check fact-type sources
+        fact_sources = [s for s in sources if s.get("type") == "fact"]
+        if len(fact_sources) < 2:
+            return conflicts
+
+        # Group by subject+predicate
+        groups: Dict[str, List[Dict]] = {}
+        for fact in fact_sources:
+            meta = fact.get("metadata", {})
+            subject = meta.get("subject", "").lower().strip()
+            predicate = meta.get("predicate", "").lower().strip()
+            if subject and predicate:
+                key = f"{subject}|{predicate}"
+                groups.setdefault(key, []).append(fact)
+
+        # Find groups with conflicting objects
+        for key, group_facts in groups.items():
+            if len(group_facts) < 2:
+                continue
+
+            objects = set()
+            for f in group_facts:
+                obj = f.get("metadata", {}).get("object", "").strip()
+                if obj:
+                    objects.add(obj)
+
+            if len(objects) > 1:
+                subject, predicate = key.split("|", 1)
+                conflicts.append({
+                    "subject": subject,
+                    "predicate": predicate,
+                    "conflicting_values": list(objects),
+                    "source_count": len(group_facts)
+                })
+
+        return conflicts
 
     async def _search_postgresql(
         self,

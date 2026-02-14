@@ -57,7 +57,7 @@ class LLMService:
                     content=data.get("response", ""),
                     model=data.get("model", model),
                     total_duration_ms=data.get("total_duration", 0) / 1_000_000,
-                    tokens_per_second=data.get("eval_count", 0) / (data.get("eval_duration", 1) / 1_000_000_000)
+                    tokens_per_second=data.get("eval_count", 0) / max(data.get("eval_duration", 1) / 1_000_000_000, 0.001)
                 )
 
     async def generate_stream(
@@ -117,7 +117,7 @@ class LLMService:
                     content=data.get("message", {}).get("content", ""),
                     model=data.get("model", model),
                     total_duration_ms=data.get("total_duration", 0) / 1_000_000,
-                    tokens_per_second=data.get("eval_count", 0) / (data.get("eval_duration", 1) / 1_000_000_000)
+                    tokens_per_second=data.get("eval_count", 0) / max(data.get("eval_duration", 1) / 1_000_000_000, 0.001)
                 )
 
 @lru_cache()

@@ -5,6 +5,7 @@ Conversation Watcher - Monitors for new conversations and ingests them
 
 import json
 import logging
+import hashlib
 import httpx
 from datetime import datetime
 from pathlib import Path
@@ -39,6 +40,7 @@ class ConversationWatcher:
         self.tracking_file = Path("/opt/tower-echo-brain/data/processed_conversations.json")
         self.tracking_file.parent.mkdir(exist_ok=True)
         self.processed_files = self.load_processed_files()
+        self._seen_hashes: set = set()  # SHA-256 dedup within a cycle
 
     def load_processed_files(self) -> set:
         """Load list of already processed files"""
@@ -178,23 +180,36 @@ class ConversationWatcher:
 
         for chunk in chunks:
             try:
-                # Get embedding
-                async with httpx.AsyncClient() as client:
+                # SHA-256 dedup: skip chunks we've already embedded
+                chunk_hash = hashlib.sha256(chunk['text'].encode()).hexdigest()[:16]
+                if chunk_hash in self._seen_hashes:
+                    continue
+                self._seen_hashes.add(chunk_hash)
+
+                # Get embedding — Ollama /api/embed returns {"embeddings": [[...]]}
+                async with httpx.AsyncClient(timeout=30) as client:
                     response = await client.post(
                         f"{self.ollama_url}/api/embed",
-                        json={"model": "nomic-embed-text", "prompt": chunk['text']}
+                        json={"model": "nomic-embed-text", "input": chunk['text']}
                     )
-                    embedding = response.json()["embedding"]
+                    resp_data = response.json()
+                    # Handle both old ("embedding") and new ("embeddings") response formats
+                    embedding = resp_data.get("embeddings", [None])[0] or resp_data.get("embedding")
+                    if not embedding:
+                        logger.warning(f"No embedding returned, keys: {list(resp_data.keys())}")
+                        continue
 
                     points.append({
                         "id": str(uuid4()),
                         "vector": embedding,
                         "payload": {
-                            "text": chunk['text'],
-                            "source": "conversation",
+                            "content": chunk['text'],
+                            "type": "conversation",
+                            "source": "conversation_watcher",
                             "file_path": str(file_path),
                             "role": chunk.get('role', 'unknown'),
                             "timestamp": chunk.get('timestamp', ''),
+                            "content_hash": chunk_hash,
                             "ingested_at": datetime.now().isoformat()
                         }
                     })

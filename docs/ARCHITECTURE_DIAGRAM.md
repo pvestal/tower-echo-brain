@@ -29,9 +29,10 @@ graph TB
             end
 
             subgraph Intelligence["Intelligence Layer"]
-                classifier["Query Classifier"]
+                classifier["Query Classifier<br/>(7 domains)"]
                 retriever["Context Assembly<br/>(ParallelRetriever)"]
-                llm_reason["LLM Reasoning<br/>(mistral:7b)"]
+                hybrid["Hybrid Search<br/>70% vector + 30% text"]
+                llm_reason["LLM Reasoning<br/>(intent-based model)"]
             end
 
             subgraph Workers["Worker Scheduler (12 workers)"]
@@ -66,8 +67,8 @@ graph TB
         end
 
         subgraph Data["Data Layer"]
-            pg[("PostgreSQL<br/>echo_brain<br/>2,558 facts")]
-            qdrant[("Qdrant<br/>echo_memory<br/>176,566 vectors<br/>768D")]
+            pg[("PostgreSQL<br/>echo_brain<br/>6,129 facts")]
+            qdrant[("Qdrant<br/>echo_memory<br/>194,921 vectors<br/>768D + text index")]
             ollama["Ollama (11434)<br/>mistral:7b<br/>nomic-embed-text<br/>gemma2:9b<br/>deepseek-r1:8b"]
         end
 
@@ -98,7 +99,8 @@ graph TB
     %% Intelligence pipeline
     ask --> classifier
     classifier --> retriever
-    retriever --> qdrant
+    retriever --> hybrid
+    hybrid --> qdrant
     retriever --> llm_reason
     llm_reason --> ollama
 
@@ -130,6 +132,7 @@ graph TB
 
     class health,mcp,ask,memory,intel,knowledge,voice_api,reasoning,selftest,diag,auto,workers_ep apiStyle
     class stt,tts,vad,ws voiceStyle
+    class hybrid voiceStyle
     class conv,fw,fact,domain,code_idx,schema_idx,kg,contract,logmon,reason_w,selftest_w,improve workerStyle
     class pg,qdrant,ollama dataStyle
     class rx,rtx gpuStyle
@@ -155,8 +158,8 @@ flowchart LR
     end
 
     subgraph STORE
-        I[(Qdrant<br/>176K vectors)]
-        J[(PostgreSQL<br/>2.5K facts)]
+        I[(Qdrant<br/>195K vectors<br/>+ text index)]
+        J[(PostgreSQL<br/>6.1K facts)]
     end
 
     subgraph THINK

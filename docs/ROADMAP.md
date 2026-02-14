@@ -1,6 +1,6 @@
 # Echo Brain Roadmap
 
-Last Updated: 2026-02-11
+Last Updated: 2026-02-12
 
 ---
 
@@ -97,7 +97,7 @@ Echo Brain uses semantic versioning: **MAJOR.MINOR.PATCH**
 
 ---
 
-### v0.5.0 — Voice Interface, Frontend Dashboard, Test Infrastructure ← CURRENT
+### v0.5.0 — Voice Interface, Frontend Dashboard, Test Infrastructure
 **Goal:** Full voice pipeline, production-ready frontend, comprehensive test coverage.
 **Status:** COMPLETE (Feb 11, 2026)
 
@@ -125,25 +125,88 @@ Echo Brain uses semantic versioning: **MAJOR.MINOR.PATCH**
 - [x] Test inventory documentation
 - [x] Archived 5 stale/duplicate test files
 
+---
+
+### v0.5.1 — Hybrid Search ← CURRENT
+**Goal:** Improve retrieval quality with combined vector + keyword search.
+**Status:** COMPLETE (Feb 12, 2026)
+
+- [x] Qdrant full-text payload index on `content` field (word tokenizer, lowercase)
+- [x] Qdrant keyword indexes on `type` and `category` fields
+- [x] Hybrid search in `ParallelRetriever._search_qdrant()` — vector + text in parallel
+- [x] Weighted score fusion: `0.7 × vector + 0.3 × text` (OpenClaw-inspired)
+- [x] Text-only results surface hits that vector similarity missed
+- [x] GENERAL domain now includes `echo_memory` (was empty → zero results)
+- [x] ANIME domain expanded with checkpoint/safetensors/model name signals
+- [x] OpenClaw analysis stored as KB fact
+
 **Data milestones:**
-- 176,566 vectors in Qdrant echo_memory (768D nomic-embed-text)
-- 2,558 structured facts in PostgreSQL
-- 12 autonomous workers running (0 errors on 11 of 12)
-- 176,566 embeddings created
+- 194,921 vectors in Qdrant echo_memory (768D nomic-embed-text)
+- 189,992 points with full-text index
+- 6,129 structured facts in PostgreSQL
+- 13 autonomous workers running
 
 ---
 
-### v0.6.x — Quality Feedback Loop (NEXT)
-**Goal:** Close quality gaps in knowledge extraction and retrieval.
+### v0.6.x — Close the Gaps (NEXT)
+**Goal:** Address the critical gaps identified in the Feb 12 comprehensive audit.
 
-| Milestone | Details |
-|-----------|---------|
-| Fact validation | Second LLM pass to check extracted fact quality |
-| Contradiction detector | Find conflicting facts automatically |
-| Query regression suite | Expand self-tests to 50+ known-good Q&A pairs |
-| Stale data cleanup | Automated detection and REVIEW-gated deletion |
-| Extraction quality scoring | Rate each fact, discard low-quality |
-| Embedding model evaluation | Compare nomic-embed-text vs alternatives |
+#### Memory (Storing, Accessing, Forgetting)
+
+| # | Milestone | Priority | Details |
+|---|-----------|----------|---------|
+| 1 | Memory decay / time-weighting | HIGH | All 194K vectors treated equally regardless of age. Implement time-decay scoring so recent context ranks higher. |
+| 2 | Memory consolidation & dedup | HIGH | Similar vectors never merged. Some content appears 10+ times. Implement SHA-256 dedup on conversation ingestion + periodic consolidation worker. |
+| 3 | Memory importance scoring | MEDIUM | No mechanism to weight critical facts higher than casual conversation snippets. Add importance field to payloads, score based on frequency of retrieval + explicit marking. |
+| 4 | Pre-compaction session persistence | MEDIUM | When Claude's context window compresses, important session insights are lost. Add endpoint for "save session summary" before context loss. |
+| 5 | Stale data cleanup worker | MEDIUM | Automated detection of outdated vectors (superseded facts, old conversation noise). REVIEW-gated deletion. |
+
+#### Response & Dynamic Interactions
+
+| # | Milestone | Priority | Details |
+|---|-----------|----------|---------|
+| 6 | Retrieval confidence gate | HIGH | LLM fabricates when retrieval is weak. Add threshold: if best score < 0.4, respond "I don't have specific information" instead of hallucinating. |
+| 7 | Conflict detection in results | HIGH | Retrieval can return contradictory facts. Detect and flag before LLM synthesis. |
+| 8 | Fact verification (post-generation) | MEDIUM | LLM response is never checked against sources. Add post-generation validation pass. |
+| 9 | Multi-turn conversation context | MEDIUM | Each query is stateless. No conversation history carried between turns for follow-up questions. |
+| 10 | Response streaming | LOW | Currently waits for full LLM response. Add SSE/streaming for better UX on voice and web. |
+
+#### Thinking & Intelligence
+
+| # | Milestone | Priority | Details |
+|---|-----------|----------|---------|
+| 11 | Chain-of-thought extraction | HIGH | `thinking_steps=[]` is never populated even with deepseek-r1. Extract `<think>` blocks from model output. |
+| 12 | Multi-hop reasoning | HIGH | Currently single LLM call. For complex queries, implement: retrieve → reason → retrieve again → synthesize. |
+| 13 | Clean up orphaned reasoning code | MEDIUM | `ReasoningEngine`, `IntelligenceEngine`, `UnifiedKnowledgeLayer` in `src/core/` are disconnected from the pipeline. Either integrate them or delete. |
+| 14 | Agent system (real implementation) | LOW | `agent_service.py` returns mock responses. Either implement real agent collaboration or remove the pretense. |
+
+#### Routing & Classification
+
+| # | Milestone | Priority | Details |
+|---|-----------|----------|---------|
+| 15 | LLM-assisted classification | MEDIUM | Replace regex-only domain classifier with lightweight LLM classification for ambiguous queries. |
+| 16 | Multi-intent query handling | MEDIUM | "Compare anime settings to tower architecture" → currently picks one domain. Support multi-domain queries. |
+| 17 | Model availability verification | HIGH | Code assumes 5+ Ollama models loaded but RTX 3060 can hold ~1-2. Add runtime model check + graceful fallback chain. |
+
+#### Infrastructure & Hygiene
+
+| # | Milestone | Priority | Details |
+|---|-----------|----------|---------|
+| 18 | Fix embedding model mismatch | HIGH | Pipeline uses mxbai-embed-large (1024D), EmbeddingService defaults to nomic-embed-text (768D). Collection is 768D. Standardize everywhere. |
+| 19 | Mount or delete 19 dead routers | MEDIUM | `src/api/` has 19 implemented but unmounted routers. Decision: mount needed ones, delete the rest. |
+| 20 | Fix duplicate reasoning router mount | HIGH | `main.py` lines 177-198 mount two different reasoning routers under the same prefix. Second shadows first. |
+| 21 | Conversation watcher embedding bug | HIGH | Worker uses `response.json()["embedding"]` but Ollama returns `["embeddings"]`. 0 chunks ingested. |
+| 22 | Scrub credentials from source | MEDIUM | Database password in 11+ files as env var default. Move to Vault-only. |
+| 23 | Complete requirements.txt | MEDIUM | Missing qdrant-client, torch, whisper, piper, and ~20 other dependencies. |
+| 24 | Fix 9 syntax errors in video modules | LOW | `src/modules/generation/video/` — missing f-string prefixes. Dead code but should be fixed or deleted. |
+
+#### Remaining from Original v0.6.x Plan
+
+| # | Milestone | Priority | Details |
+|---|-----------|----------|---------|
+| 25 | Fact validation (second LLM pass) | MEDIUM | Verify extracted facts against source content. |
+| 26 | Query regression suite expansion | MEDIUM | Currently 8 self-tests, target 50+ known-good Q&A pairs. |
+| 27 | Extraction quality scoring | LOW | Rate each extracted fact, auto-discard low-quality. |
 
 ---
 

@@ -51,8 +51,10 @@ class DomainClassifier:
             Domain.ANIME: {
                 "signals": [
                     r"\b(anime|manga|episode|scene|character)\b",
-                    r"\b(tokyo[\s_]debt|goblin[\s_]slayer|mei|cyberpunk[\s_]goblins)\b",
+                    r"\b(tokyo[\s_]debt|goblin[\s_]slayer|mei|cyberpunk[\s_]goblins|mario[\s_]galaxy)\b",
                     r"\b(comfyui|lora|generation|storyboard|frame)\b",
+                    r"\b(checkpoint|safetensors|cfg[\s_]scale|sampler|negative[\s_]prompt)\b",
+                    r"\b(cyberrealistic|realistic[\s_]vision|realcartoon|chilloutmix)\b",
                     r"\b(narrat|story|plot|protagonist)\b"
                 ],
                 "negative_signals": [r"\b(code|function|api|debug|sql)\b"],
@@ -151,11 +153,11 @@ class DomainClassifier:
                 "min_score": 0.3
             },
             Domain.GENERAL: {
-                "qdrant_collections": [],  # No vector search for general
+                "qdrant_collections": ["echo_memory"],  # Hybrid search for unclassified queries too
                 "pg_tables": [],  # No conversation search
                 "facts_filter": lambda f: True,  # Allow all facts
                 "max_sources": 20,  # Increased to allow more facts
-                "min_score": 0.3  # Lower threshold for better recall
+                "min_score": 0.25  # Lower threshold — general queries need recall
             },
             Domain.CREATIVE: {
                 "qdrant_collections": ["echo_memory"],  # Use echo_memory for all
