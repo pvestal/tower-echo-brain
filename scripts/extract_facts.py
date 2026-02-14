@@ -8,6 +8,8 @@ import asyncio
 import httpx
 import asyncpg
 import logging
+import os
+import re
 from datetime import datetime
 import json
 
@@ -33,29 +35,36 @@ async def extract_facts_from_vector(vector_data: dict) -> list:
         return []
 
     # Craft prompt based on content type
+    triple_format = """Return ONLY a JSON array of objects with these exact keys:
+- "subject": the specific entity (a class name, service name, config key — NEVER "The", "A", "It", "This")
+- "predicate": the relationship (e.g. "runs on port", "uses model", "depends on")
+- "object": the value or target
+- "category": topic category
+
+Example: [{"subject": "Echo Brain", "predicate": "runs on port", "object": "8309", "category": "system"}]"""
+
     if vec_type == "code":
-        prompt = f"""Extract key facts from this code snippet. Focus on:
-- What functions/classes are defined
-- What they do
+        prompt = f"""Extract key facts from this code snippet as structured triples. Focus on:
+- What functions/classes are defined and what they do
 - Key dependencies or imports
 - Important configuration values
 
 Code from {source}:
 {content[:1500]}
 
-Return facts as JSON array with 'fact' and 'category' keys. Be concise."""
+{triple_format}"""
 
     elif vec_type == "documentation":
-        prompt = f"""Extract key facts from this documentation:
+        prompt = f"""Extract key facts from this documentation as structured triples:
 {content[:1500]}
 
-Return facts as JSON array with 'fact' and 'category' keys."""
+{triple_format}"""
 
     else:
-        prompt = f"""Extract key facts from this content:
+        prompt = f"""Extract key facts from this content as structured triples:
 {content[:1000]}
 
-Return facts as JSON array with 'fact' and 'category' keys."""
+{triple_format}"""
 
     try:
         # Call Ollama
@@ -154,21 +163,30 @@ async def process_vectors():
                     if facts:
                         # Store facts in database (using triple format)
                         for fact_data in facts:
-                            fact_text = fact_data.get("fact", "")
                             category = fact_data.get("category", "general")
 
-                            if fact_text:
-                                # Parse fact into subject-predicate-object
-                                parts = fact_text.split(" ", 2)
-                                if len(parts) >= 3:
-                                    subject = parts[0]
-                                    predicate = parts[1]
-                                    obj = " ".join(parts[2:])
-                                else:
-                                    subject = "Echo Brain"
-                                    predicate = "has fact"
-                                    obj = fact_text
+                            # Structured triple format (preferred)
+                            if "subject" in fact_data and "predicate" in fact_data and "object" in fact_data:
+                                subject = str(fact_data["subject"]).strip()
+                                predicate = str(fact_data["predicate"]).strip()
+                                obj = str(fact_data["object"]).strip()
+                                fact_text = f"{subject} {predicate} {obj}"
+                            elif "fact" in fact_data:
+                                # Legacy flat format — skip garbage subjects
+                                fact_text = fact_data["fact"]
+                                subject = "Echo Brain"
+                                predicate = "has fact"
+                                obj = fact_text
+                            else:
+                                continue
 
+                            # Filter garbage: skip subjects that are articles/pronouns
+                            if subject.lower() in ("the", "a", "an", "it", "this", "that", "there", "these", "those"):
+                                subject = "Echo Brain"
+                                predicate = "has fact"
+                                obj = fact_text
+
+                            if subject and predicate and obj:
                                 await conn.execute(
                                     """INSERT INTO facts
                                        (subject, predicate, object, fact_text, category, source, confidence, source_vector_id, created_at)

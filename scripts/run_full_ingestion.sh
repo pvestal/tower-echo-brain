@@ -41,7 +41,7 @@ run_ingestion() {
 echo "=== STARTING INGESTION PIPELINE ===" | tee -a "$LOG_FILE"
 
 # 1. Ingest Claude conversations (most important)
-run_ingestion "ingest_conversations.py" "Claude Conversations"
+run_ingestion "ingest_claude_conversations.py" "Claude Conversations"
 
 # 2. Ingest source code changes
 run_ingestion "ingest_source_code.py" "Source Code"
