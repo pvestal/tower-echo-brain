@@ -1,7 +1,7 @@
 # Echo Brain Architecture
 
-Version: 0.5.1
-Last Updated: 2026-02-12
+Version: 0.6.0
+Last Updated: 2026-02-15
 
 ---
 
@@ -92,6 +92,15 @@ Workers are the engine of the ingest→think→improve loop. Each worker impleme
 |--------|----------|-------------|--------|
 | `improvement_engine` | 2 hours | Reads open issues from `self_detected_issues`, searches indexed codebase for relevant code, reasons about root cause via LLM, generates fix proposals stored in `self_improvement_proposals`. **NEVER auto-applies.** | AUTO (generate) / REVIEW (apply) |
 
+#### QUALITY Workers (v0.6.0 — verify, decay, dedup, resolve)
+
+| Worker | Interval | What It Does | Safety |
+|--------|----------|-------------|--------|
+| `decay` | daily | Applies logarithmic confidence decay to stale, low-access vectors. Vectors with access_count > 5 are exempt. | AUTO |
+| `dedup` | 6 hours | Scans for near-duplicate vectors (cosine > 0.98), merges metadata into survivor, deletes duplicate. | AUTO |
+| `fact_scrubber` | 2 hours | Verifies facts against source vectors via cosine similarity + LLM check. Demotes low-quality facts. | AUTO |
+| `governor` | 12 hours | Resolves conflicting facts (same subject+predicate, different objects) by effective_score ranking. Logs to `governor_decisions`. | AUTO |
+
 ### 3. Voice Service
 
 The voice service provides speech-to-text, text-to-speech, and full voice chat with Echo Brain's reasoning pipeline.
@@ -173,6 +182,92 @@ Dedup by point_id → Authoritative boosting → Top K
 
 This solves the "exact identifier miss" problem — queries for `cyberrealistic_v9.safetensors` or `dataset_approval_api.py` now return relevant results that pure vector similarity missed.
 
+#### Adaptive Search Weighting (v0.6.0)
+
+Queries are classified as KEYWORD, CONCEPTUAL, or MIXED, and weights are adjusted:
+
+```
+"retriever.py"              → KEYWORD    (vector=0.4, text=0.6)
+"how does echo brain learn" → CONCEPTUAL (vector=0.85, text=0.15)
+"echo brain architecture"   → MIXED      (vector=0.7, text=0.3)
+```
+
+#### Temporal Decay + Confidence (v0.6.0)
+
+Every vector now carries `confidence` (0.2–1.0), `last_accessed`, and `access_count`. Retrieval scoring:
+
+```
+score = base_score × stored_confidence × (0.8 + 0.2 × decay_factor)
+```
+
+- Logarithmic decay: `decay = 1 / (1 + ln(1 + age_days/halflife))`
+- Vectors with `access_count > 5` are exempt (usage-validated)
+- After retrieval, `last_accessed` and `access_count` are updated (fire-and-forget)
+
+#### Graph Enrichment (v0.6.0)
+
+After scoring, the top-5 results are used to query the knowledge graph:
+
+```
+Top-5 sources → extract entities → 1-hop graph traversal
+    → graph_sources (type="graph", score = confidence × 0.5)
+    → appended to results before final sort
+```
+
+### 4b. Knowledge Graph Engine (v0.6.0)
+
+NetworkX-backed directed graph over facts and graph_edges. Lazy-loaded on first query.
+
+```
+PostgreSQL facts (subject/predicate/object)
+    + graph_edges (from_entity/to_entity/relation_type)
+    ↓
+NetworkX DiGraph (nodes = entities, edges = predicates with confidence)
+    ↓
+API: /api/echo/graph/related/{entity}  — BFS traversal
+     /api/echo/graph/path              — shortest path
+     /api/echo/graph/neighborhood      — ego subgraph
+     /api/echo/graph/stats             — node/edge/density
+     /api/echo/graph/refresh           — incremental reload
+    ↓
+MCP: explore_graph tool for Claude Code
+```
+
+Incremental refresh adds only new facts; full rebuild every 24h.
+
+### 4c. HMLR Pipeline (v0.6.0)
+
+Inspired by the HMLR (Hierarchical Memory with Learned Retrieval) pattern. Two workers maintain fact quality:
+
+```
+FactScrubber (every 2h)                Governor (every 12h)
+┌─────────────────────────────┐        ┌──────────────────────────────────┐
+│ For each unverified fact:   │        │ For each (subject, predicate)    │
+│  1. Re-embed fact text      │        │ with multiple different objects:  │
+│  2. Cosine sim vs source    │        │  1. effective = conf×0.6 +       │
+│     vector                  │        │     recency×0.4                  │
+│  3. sim < 0.5 → auto-demote│        │  2. If spread < 0.1 → flag      │
+│  4. sim 0.5-0.7 → LLM check│        │     for human review             │
+│  5. sim > 0.7 → verified   │        │  3. Else keep winner, demote     │
+│  6. GPU check: skip LLM if │        │     losers (conf × 0.3)          │
+│     busy > 80%              │        │  4. Log to governor_decisions    │
+└─────────────────────────────┘        └──────────────────────────────────┘
+```
+
+### 4d. Semantic Deduplication (v0.6.0)
+
+Prevents duplicate vectors at ingestion time and cleans existing duplicates:
+
+```
+Inline (all ingestion paths):           Background (DedupWorker, every 6h):
+  Before upsert:                          Scroll batches of 50 (with vectors):
+    search(embedding, threshold=0.97)       search(vector, threshold=0.98)
+    If match → merge_metadata + bump        If match → keep higher access_count
+    If no match → proceed with upsert       Merge metadata, delete loser
+```
+
+Merge strategy: earliest `ingested_at`, sum `access_counts`, highest `confidence`.
+
 ### 5. Frontend Dashboard
 
 Vue 3 + TypeScript single-page application served on port 8311.
@@ -194,8 +289,11 @@ API client: `frontend/src/api/echoApi.ts` — all endpoint bindings with proper 
 Model Context Protocol server at `/mcp` enables Claude Code integration.
 
 **Available tools:**
-- `search_memory` — Semantic vector search across echo_memory
+- `search_memory` — Semantic vector search across echo_memory (now with confidence, query_type, adaptive weights)
 - `get_facts` — Retrieve structured facts by topic
+- `store_fact` — Store a new fact with confidence score
+- `explore_graph` — Knowledge graph traversal: related entities, paths, neighborhood stats
+- `manage_ollama` — List, pull, delete, refresh Ollama models
 
 ### 7. Safety System
 
@@ -305,15 +403,15 @@ Echo Brain and Tower Anime Production originally shared database tables and Qdra
 
 ### Retrieval & Memory
 1. **No retrieval confidence gate** — When vector search returns low-similarity results, the LLM falls back to general knowledge and generates plausible-sounding but incorrect answers. No threshold triggers "I don't have specific information about that."
-2. **No temporal ordering in vectors** — Vectors have `ingested_at` but no source timestamp. Cannot distinguish current facts from historical ones.
-3. **No memory decay** — All 194K vectors treated equally regardless of age. No forgetting curve, no time-weighted scoring.
-4. **No memory consolidation** — Similar/duplicate vectors never merged. Some content appears 10+ times, flooding results.
-5. **No SHA-256 dedup on ingestion** — `domain_ingestor` has content hashing but `conversation_watcher` does not, leading to duplicate conversation chunks.
+2. ~~**No temporal ordering in vectors**~~ — **RESOLVED v0.6.0**: Vectors now carry `confidence`, `last_accessed`, `access_count`. Logarithmic time decay in retriever.
+3. ~~**No memory decay**~~ — **RESOLVED v0.6.0**: Logarithmic decay with usage-validated exemptions. Daily DecayWorker.
+4. ~~**No memory consolidation**~~ — **RESOLVED v0.6.0**: Semantic dedup (0.97 inline, 0.98 background) with metadata merge.
+5. ~~**No SHA-256 dedup on ingestion**~~ — **RESOLVED v0.6.0**: All ingestion paths check for near-duplicates before upsert.
 
 ### Reasoning & Intelligence
 6. **No true reasoning** — "Reasoning" is retrieval + single LLM call. No chain-of-thought extraction, no multi-hop reasoning, no iterative refinement.
-7. **No conflict detection** — Can retrieve contradictory facts without flagging them. No consistency validation.
-8. **No fact verification** — LLM response is never checked against retrieved sources for accuracy.
+7. ~~**No conflict detection**~~ — **RESOLVED v0.6.0**: Governor worker resolves conflicting facts; retriever detects contradictions in search results.
+8. ~~**No fact verification**~~ — **RESOLVED v0.6.0**: FactScrubber verifies facts against source vectors (cosine + LLM).
 9. **Orphaned reasoning implementations** — `ReasoningEngine`, `IntelligenceEngine`, `UnifiedKnowledgeLayer` exist in `src/core/` but are NOT connected to the main pipeline. Creates confusion about "where does reasoning happen."
 10. **Chain-of-thought placeholder** — `thinking_steps=[]` in reasoning_layer.py is never populated, even when using deepseek-r1.
 

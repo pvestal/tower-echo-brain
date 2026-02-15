@@ -154,16 +154,33 @@ class UnifiedMemorySystem:
                 if embedding:
                     # Qdrant requires UUID format
                     point_uuid = str(uuid.uuid4())
-                    success = await self._store_embedding_qdrant(
-                        point_uuid,
-                        embedding,
-                        {
+                    payload = {
                             'content': msg['content'][:1000],
                             'role': msg['role'],
                             'conversation_id': conversation_id,
                             'file': file_path.name,
-                            'timestamp': datetime.now().isoformat()
+                            'timestamp': datetime.now().isoformat(),
+                            'confidence': 0.8,
+                            'last_accessed': datetime.now().isoformat(),
+                            'access_count': 0,
                         }
+
+                    # Dedup check before storing
+                    try:
+                        from src.core.dedup import check_duplicate, merge_metadata, bump_existing_point
+                        dup = await check_duplicate(embedding)
+                        if dup:
+                            merged = merge_metadata(dup["payload"], payload)
+                            await bump_existing_point(dup["id"], merged)
+                            logger.debug(f"Dedup: bumped existing point {dup['id']}")
+                            continue
+                    except Exception:
+                        pass  # dedup is non-blocking
+
+                    success = await self._store_embedding_qdrant(
+                        point_uuid,
+                        embedding,
+                        payload,
                     )
                     if success:
                         file_embeddings += 1

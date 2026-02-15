@@ -180,7 +180,10 @@ class MCPService:
                     "predicate": predicate,
                     "object": object_,
                     "confidence": confidence,
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now().isoformat(),
+                    "ingested_at": datetime.now().isoformat(),
+                    "last_accessed": datetime.now().isoformat(),
+                    "access_count": 0,
                 }
             )
 
