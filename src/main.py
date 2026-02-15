@@ -269,7 +269,26 @@ async def mcp_handler(request: dict):
             "tools": [
                 {"name": "search_memory", "description": "Search Echo Brain memories"},
                 {"name": "get_facts", "description": "Get facts from Echo Brain"},
-                {"name": "store_fact", "description": "Store a fact in Echo Brain"}
+                {"name": "store_fact", "description": "Store a fact in Echo Brain"},
+                {
+                    "name": "manage_ollama",
+                    "description": "Manage Ollama models: list, pull, delete, refresh, show running",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "action": {
+                                "type": "string",
+                                "enum": ["list", "running", "pull", "delete", "refresh", "pull_status", "show"],
+                                "description": "Action to perform"
+                            },
+                            "model": {
+                                "type": "string",
+                                "description": "Model name (required for pull, delete, refresh, show)"
+                            }
+                        },
+                        "required": ["action"]
+                    }
+                }
             ]
         }
     elif method == "tools/call":
@@ -297,6 +316,9 @@ async def mcp_handler(request: dict):
                 fact_id = await mcp_service.store_fact(subject, predicate, object_, confidence)
                 return {"fact_id": fact_id, "stored": True}
 
+            elif tool_name == "manage_ollama":
+                return await _handle_ollama_mcp(arguments)
+
             else:
                 return {"error": f"Unknown tool: {tool_name}"}
 
@@ -305,6 +327,112 @@ async def mcp_handler(request: dict):
             return {"error": str(e)}
 
     return {"error": f"Unknown method: {method}"}
+
+async def _handle_ollama_mcp(arguments: dict) -> dict:
+    """Handle the manage_ollama MCP tool."""
+    import httpx
+
+    ollama_url = os.getenv("OLLAMA_URL", "http://localhost:11434")
+    action = arguments.get("action", "list")
+    model = arguments.get("model", "")
+
+    try:
+        if action == "list":
+            async with httpx.AsyncClient(timeout=10) as client:
+                resp = await client.get(f"{ollama_url}/api/tags")
+                resp.raise_for_status()
+                data = resp.json()
+            models = []
+            for m in data.get("models", []):
+                d = m.get("details", {})
+                models.append({
+                    "name": m["name"],
+                    "size_gb": round(m.get("size", 0) / 1e9, 2),
+                    "family": d.get("family"),
+                    "parameter_size": d.get("parameter_size"),
+                    "quantization": d.get("quantization_level"),
+                })
+            return {"models": models, "count": len(models)}
+
+        elif action == "running":
+            async with httpx.AsyncClient(timeout=10) as client:
+                resp = await client.get(f"{ollama_url}/api/ps")
+                resp.raise_for_status()
+                data = resp.json()
+            running = []
+            for m in data.get("models", []):
+                running.append({
+                    "name": m.get("name"),
+                    "size_gb": round(m.get("size", 0) / 1e9, 2),
+                    "vram_gb": round(m.get("size_vram", 0) / 1e9, 2),
+                    "expires_at": m.get("expires_at"),
+                })
+            return {"running": running, "count": len(running)}
+
+        elif action == "pull":
+            if not model:
+                return {"error": "model name required for pull"}
+            # Trigger pull via the REST endpoint (which handles background + progress)
+            async with httpx.AsyncClient(timeout=10) as client:
+                resp = await client.post(
+                    "http://localhost:8309/api/models/ollama/pull",
+                    json={"name": model}
+                )
+                return resp.json()
+
+        elif action == "delete":
+            if not model:
+                return {"error": "model name required for delete"}
+            async with httpx.AsyncClient(timeout=30) as client:
+                resp = await client.request("DELETE", f"{ollama_url}/api/delete", json={"name": model})
+            if resp.status_code == 404:
+                return {"error": f"Model '{model}' not found"}
+            resp.raise_for_status()
+            return {"status": "deleted", "model": model}
+
+        elif action == "refresh":
+            if not model:
+                return {"error": "model name required for refresh"}
+            async with httpx.AsyncClient(timeout=10) as client:
+                resp = await client.post(
+                    "http://localhost:8309/api/models/ollama/{}/refresh".format(model),
+                )
+                return resp.json()
+
+        elif action == "pull_status":
+            async with httpx.AsyncClient(timeout=10) as client:
+                resp = await client.get("http://localhost:8309/api/models/ollama/pull-status")
+                return resp.json()
+
+        elif action == "show":
+            if not model:
+                return {"error": "model name required for show"}
+            async with httpx.AsyncClient(timeout=10) as client:
+                resp = await client.post(f"{ollama_url}/api/show", json={"name": model})
+            if resp.status_code == 404:
+                return {"error": f"Model '{model}' not found"}
+            resp.raise_for_status()
+            info = resp.json()
+            details = info.get("details", {})
+            return {
+                "name": model,
+                "family": details.get("family"),
+                "parameter_size": details.get("parameter_size"),
+                "quantization_level": details.get("quantization_level"),
+                "format": details.get("format"),
+                "template": info.get("template", "")[:200],
+                "system": info.get("system", "")[:200],
+                "license": info.get("license", "")[:200],
+            }
+
+        else:
+            return {"error": f"Unknown action: {action}. Valid: list, running, pull, delete, refresh, pull_status, show"}
+
+    except httpx.ConnectError:
+        return {"error": "Ollama is not running (connection refused)"}
+    except Exception as e:
+        return {"error": str(e)}
+
 
 @app.get("/mcp/health")
 async def mcp_health():

@@ -1,8 +1,9 @@
 from fastapi import APIRouter, HTTPException, BackgroundTasks
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Dict
 from datetime import datetime
 import asyncpg
+import httpx
 import os
 import subprocess
 import yaml
@@ -11,6 +12,11 @@ from pathlib import Path
 import logging
 
 logger = logging.getLogger(__name__)
+
+OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
+
+# In-memory pull progress tracking
+_pull_progress: Dict[str, dict] = {}
 
 router = APIRouter(prefix="/api/models", tags=["models"])
 
@@ -41,6 +47,10 @@ class ModelDownloadRequest(BaseModel):
 
 class ModelVerifyRequest(BaseModel):
     names: Optional[List[str]] = None  # None = verify all
+
+class OllamaPullRequest(BaseModel):
+    name: str              # e.g. "llama3.2:8b", "deepseek-r1:14b"
+    insecure: bool = False
 
 async def get_db():
     """Get database connection"""
@@ -125,6 +135,268 @@ async def list_models(category: str = None, status: str = None):
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         await conn.close()
+
+# =============================================================================
+# OLLAMA MODEL MANAGEMENT
+# =============================================================================
+
+@router.get("/ollama")
+async def list_ollama_models():
+    """List all Ollama models with details (size, family, quantization, modified)"""
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.get(f"{OLLAMA_URL}/api/tags")
+            resp.raise_for_status()
+            data = resp.json()
+
+        models = []
+        for m in data.get("models", []):
+            details = m.get("details", {})
+            models.append({
+                "name": m["name"],
+                "size_bytes": m.get("size", 0),
+                "size_gb": round(m.get("size", 0) / 1e9, 2),
+                "digest": m.get("digest", "")[:12],
+                "modified_at": m.get("modified_at"),
+                "family": details.get("family"),
+                "parameter_size": details.get("parameter_size"),
+                "quantization_level": details.get("quantization_level"),
+                "format": details.get("format"),
+            })
+
+        return {"models": models, "count": len(models)}
+    except httpx.ConnectError:
+        raise HTTPException(status_code=503, detail="Ollama is not running")
+    except Exception as e:
+        logger.error(f"Failed to list Ollama models: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/ollama/running")
+async def list_running_models():
+    """Show models currently loaded in memory (GPU/CPU)"""
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.get(f"{OLLAMA_URL}/api/ps")
+            resp.raise_for_status()
+            data = resp.json()
+
+        models = []
+        for m in data.get("models", []):
+            models.append({
+                "name": m.get("name"),
+                "size_bytes": m.get("size", 0),
+                "size_gb": round(m.get("size", 0) / 1e9, 2),
+                "size_vram_bytes": m.get("size_vram", 0),
+                "size_vram_gb": round(m.get("size_vram", 0) / 1e9, 2),
+                "digest": m.get("digest", "")[:12],
+                "expires_at": m.get("expires_at"),
+            })
+
+        return {"running": models, "count": len(models)}
+    except httpx.ConnectError:
+        raise HTTPException(status_code=503, detail="Ollama is not running")
+    except Exception as e:
+        logger.error(f"Failed to list running models: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/ollama/pull-status")
+async def get_pull_status():
+    """Get status of all in-progress and recent pulls"""
+    return {"pulls": _pull_progress}
+
+
+@router.post("/ollama/pull")
+async def pull_ollama_model(request: OllamaPullRequest, background_tasks: BackgroundTasks):
+    """Pull (download) an Ollama model. Runs in background with progress tracking."""
+    model_name = request.name
+
+    # Check if already pulling
+    if model_name in _pull_progress and _pull_progress[model_name].get("status") == "pulling":
+        return {
+            "status": "already_pulling",
+            "model": model_name,
+            "progress": _pull_progress[model_name]
+        }
+
+    # Initialize progress tracking
+    _pull_progress[model_name] = {
+        "status": "queued",
+        "model": model_name,
+        "started_at": datetime.now().isoformat(),
+        "completed_pct": 0,
+        "current_layer": None,
+        "error": None,
+    }
+
+    await log_operation(f"ollama/{model_name}", "ollama_pull", "queued", f"Pull queued for {model_name}")
+
+    background_tasks.add_task(_pull_ollama_background, model_name, request.insecure)
+
+    return {
+        "status": "queued",
+        "model": model_name,
+        "message": f"Pull started for {model_name}. Check /api/models/ollama/pull-status for progress."
+    }
+
+
+async def _pull_ollama_background(model_name: str, insecure: bool = False):
+    """Background task: stream-pull an Ollama model and track progress."""
+    _pull_progress[model_name]["status"] = "pulling"
+
+    try:
+        payload = {"name": model_name, "stream": True}
+        if insecure:
+            payload["insecure"] = True
+
+        async with httpx.AsyncClient(timeout=None) as client:
+            async with client.stream("POST", f"{OLLAMA_URL}/api/pull", json=payload) as resp:
+                resp.raise_for_status()
+                async for line in resp.aiter_lines():
+                    if not line:
+                        continue
+                    try:
+                        chunk = json.loads(line)
+                    except json.JSONDecodeError:
+                        continue
+
+                    status = chunk.get("status", "")
+                    _pull_progress[model_name]["current_layer"] = status
+
+                    # Track download percentage
+                    total = chunk.get("total", 0)
+                    completed = chunk.get("completed", 0)
+                    if total > 0:
+                        _pull_progress[model_name]["completed_pct"] = round(completed / total * 100, 1)
+                    elif "success" in status.lower():
+                        _pull_progress[model_name]["completed_pct"] = 100
+
+        _pull_progress[model_name]["status"] = "complete"
+        _pull_progress[model_name]["completed_pct"] = 100
+        _pull_progress[model_name]["completed_at"] = datetime.now().isoformat()
+        logger.info(f"Ollama pull complete: {model_name}")
+        await log_operation(f"ollama/{model_name}", "ollama_pull", "complete", f"Successfully pulled {model_name}")
+
+        # Auto-sync to registry
+        await _sync_single_ollama_model(model_name)
+
+    except Exception as e:
+        error_msg = str(e)
+        _pull_progress[model_name]["status"] = "failed"
+        _pull_progress[model_name]["error"] = error_msg
+        logger.error(f"Ollama pull failed for {model_name}: {error_msg}")
+        await log_operation(f"ollama/{model_name}", "ollama_pull", "failed", error_msg)
+
+
+async def _sync_single_ollama_model(model_name: str):
+    """Sync a single Ollama model into the tower_models registry after pull."""
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.post(f"{OLLAMA_URL}/api/show", json={"name": model_name})
+            if resp.status_code != 200:
+                return
+            info = resp.json()
+
+        size_bytes = 0
+        # Sum parameter and template sizes from modelinfo
+        if "size" in info:
+            size_bytes = info["size"]
+        # Fallback: list and find
+        if size_bytes == 0:
+            async with httpx.AsyncClient(timeout=10) as client:
+                resp = await client.get(f"{OLLAMA_URL}/api/tags")
+                for m in resp.json().get("models", []):
+                    if m["name"] == model_name:
+                        size_bytes = m.get("size", 0)
+                        break
+
+        db_name = f"ollama/{model_name}"
+        conn = await get_db()
+        try:
+            await conn.execute("""
+                INSERT INTO tower_models (name, display_name, category, file_path, file_size_bytes, status)
+                VALUES ($1, $2, 'ollama', $3, $4, 'healthy')
+                ON CONFLICT (name) DO UPDATE SET
+                    file_size_bytes = EXCLUDED.file_size_bytes,
+                    status = 'healthy',
+                    last_verified = NOW(),
+                    updated_at = NOW()
+            """, db_name, model_name, f"ollama://{model_name}", size_bytes)
+        finally:
+            await conn.close()
+    except Exception as e:
+        logger.error(f"Failed to sync model {model_name} to registry: {e}")
+
+
+@router.delete("/ollama/{name:path}")
+async def delete_ollama_model(name: str):
+    """Delete an Ollama model from disk and registry."""
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await client.request("DELETE", f"{OLLAMA_URL}/api/delete", json={"name": name})
+
+        if resp.status_code == 404:
+            raise HTTPException(status_code=404, detail=f"Model '{name}' not found in Ollama")
+        resp.raise_for_status()
+
+        # Remove from registry
+        db_name = f"ollama/{name}"
+        conn = await get_db()
+        try:
+            await conn.execute("DELETE FROM tower_models WHERE name = $1", db_name)
+        finally:
+            await conn.close()
+
+        # Clean up pull progress
+        _pull_progress.pop(name, None)
+
+        await log_operation(db_name, "ollama_delete", "deleted", f"Deleted model {name}")
+        logger.info(f"Ollama model deleted: {name}")
+
+        return {"status": "deleted", "model": name}
+    except HTTPException:
+        raise
+    except httpx.ConnectError:
+        raise HTTPException(status_code=503, detail="Ollama is not running")
+    except Exception as e:
+        logger.error(f"Failed to delete Ollama model {name}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/ollama/{name:path}/refresh")
+async def refresh_ollama_model(name: str, background_tasks: BackgroundTasks):
+    """Re-pull an Ollama model to get the latest version."""
+    # Verify model exists first
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.post(f"{OLLAMA_URL}/api/show", json={"name": name})
+            if resp.status_code == 404:
+                raise HTTPException(status_code=404, detail=f"Model '{name}' not found. Use /ollama/pull to download it first.")
+    except HTTPException:
+        raise
+    except httpx.ConnectError:
+        raise HTTPException(status_code=503, detail="Ollama is not running")
+
+    # Re-pull (Ollama pull is idempotent — downloads only changed layers)
+    _pull_progress[name] = {
+        "status": "queued",
+        "model": name,
+        "started_at": datetime.now().isoformat(),
+        "completed_pct": 0,
+        "current_layer": None,
+        "error": None,
+    }
+
+    await log_operation(f"ollama/{name}", "ollama_refresh", "queued", f"Refresh queued for {name}")
+    background_tasks.add_task(_pull_ollama_background, name, False)
+
+    return {
+        "status": "queued",
+        "model": name,
+        "message": f"Refresh started for {name}. Only changed layers will be downloaded."
+    }
+
 
 @router.get("/{name}/path")
 async def get_model_path(name: str):

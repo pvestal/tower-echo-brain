@@ -5,6 +5,26 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ---
 
+## [0.5.1] - 2026-02-15 (Ollama Model Management)
+
+### Added
+- Ollama model management REST endpoints under `/api/models/ollama`:
+  - `GET /ollama` — List all models with size, family, quantization, parameters
+  - `GET /ollama/running` — Show models currently loaded in GPU/CPU memory
+  - `POST /ollama/pull` — Pull new models with background progress tracking
+  - `GET /ollama/pull-status` — Check progress of active/recent pulls
+  - `POST /ollama/{name}/refresh` — Re-pull existing model (delta download)
+  - `DELETE /ollama/{name}` — Delete model from Ollama and tower_models registry
+- MCP tool `manage_ollama` with actions: list, running, pull, delete, refresh, pull_status, show
+- Auto-sync pulled models into tower_models DB registry after download completes
+- All Ollama operations logged to tower_model_logs for audit trail
+
+### Changed
+- MCP tools/list now returns 4 tools (added manage_ollama alongside search_memory, get_facts, store_fact)
+- models_manager.py uses httpx for Ollama API calls (async, streaming support) instead of subprocess
+
+---
+
 ## [0.5.0] - 2026-02-11 (Voice Interface, Frontend Dashboard, Test Infrastructure)
 
 ### Added

@@ -548,7 +548,8 @@ async def mcp_protocol(request: dict):
             "tools": [
                 {"name": "search_memory", "description": "Search Echo Brain memories"},
                 {"name": "get_facts", "description": "Get structured facts"},
-                {"name": "store_fact", "description": "Store new fact"}
+                {"name": "store_fact", "description": "Store new fact"},
+                {"name": "manage_ollama", "description": "Manage Ollama models: list, pull, delete, refresh, show running"}
             ]
         }
 
@@ -560,6 +561,10 @@ async def mcp_protocol(request: dict):
         return await mcp_service.search_memory(args.get("query", ""), args.get("limit", 10))
     elif tool_name == "get_facts":
         return await mcp_service.get_facts(args.get("topic"), args.get("limit", 100))
+    elif tool_name == "manage_ollama":
+        # Delegate to the main app's handler
+        from src.main import _handle_ollama_mcp
+        return await _handle_ollama_mcp(args)
 
     return {"error": f"Unknown tool: {tool_name}"}
 
