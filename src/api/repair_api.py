@@ -4,8 +4,6 @@ Provides endpoints for triggering and monitoring autonomous repairs.
 Wired to the existing SelfRepair system in src/autonomous/self_repair.py.
 """
 import logging
-from typing import Dict, List
-from datetime import datetime
 from fastapi import APIRouter, HTTPException, BackgroundTasks
 from pydantic import BaseModel
 

@@ -4,7 +4,6 @@ Apple Music API endpoints for Echo Brain
 Proxies requests through tower-auth bridge for Apple Music integration
 """
 from fastapi import APIRouter, HTTPException
-from typing import Optional
 import logging
 
 logger = logging.getLogger(__name__)

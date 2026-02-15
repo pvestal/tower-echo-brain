@@ -2,7 +2,7 @@
 Google Data Ingestion API — Echo Brain
 Trigger ingestion of Calendar, Gmail, and Drive data into Qdrant.
 """
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from typing import Optional
 import logging
 

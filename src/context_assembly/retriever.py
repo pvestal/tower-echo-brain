@@ -3,7 +3,6 @@ Parallel Context Retriever - Fetches from multiple sources based on domain
 Uses domain classification to prevent cross-contamination
 """
 import os
-import re
 import asyncio
 import logging
 import httpx
