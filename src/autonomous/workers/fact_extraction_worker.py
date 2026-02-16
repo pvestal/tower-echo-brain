@@ -163,6 +163,34 @@ Response (JSON array only):"""
                         )
                         embedding = embed_response.json()["embedding"]
 
+                        fact_confidence = fact.get('confidence', 0.8)
+                        fact_payload = {
+                            "text": fact_text,
+                            "source": "extracted_fact",
+                            "fact_id": fact_id,
+                            "subject": fact['subject'],
+                            "predicate": fact['predicate'],
+                            "object": fact['object'],
+                            "confidence": fact_confidence,
+                            "extracted_at": datetime.now().isoformat(),
+                            "ingested_at": datetime.now().isoformat(),
+                            "last_accessed": datetime.now().isoformat(),
+                            "access_count": 0,
+                        }
+
+                        # Dedup check
+                        try:
+                            from src.core.dedup import check_duplicate, merge_metadata, bump_existing_point
+                            dup = await check_duplicate(embedding)
+                            if dup:
+                                merged = merge_metadata(dup["payload"], fact_payload)
+                                await bump_existing_point(dup["id"], merged)
+                                logger.debug(f"Dedup: bumped existing fact point {dup['id']}")
+                                stored_count += 1
+                                continue
+                        except Exception:
+                            pass  # dedup is non-blocking
+
                         # Store in Qdrant
                         await client.put(
                             f"{self.qdrant_url}/collections/{self.collection}/points",
@@ -170,16 +198,7 @@ Response (JSON array only):"""
                                 "points": [{
                                     "id": str(uuid4()),
                                     "vector": embedding,
-                                    "payload": {
-                                        "text": fact_text,
-                                        "source": "extracted_fact",
-                                        "fact_id": fact_id,
-                                        "subject": fact['subject'],
-                                        "predicate": fact['predicate'],
-                                        "object": fact['object'],
-                                        "confidence": fact.get('confidence', 0.8),
-                                        "extracted_at": datetime.now().isoformat()
-                                    }
+                                    "payload": fact_payload,
                                 }]
                             }
                         )

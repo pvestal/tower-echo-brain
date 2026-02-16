@@ -57,19 +57,35 @@ class MCPService:
             # Convert to MCP format expected by calling code
             results = []
             for source in retrieval_result.get("sources", []):
-                results.append({
+                result_entry = {
                     "id": source.get("metadata", {}).get("source_id", ""),
                     "score": source.get("score", 0),
                     "content": source.get("content", ""),
                     "source": source.get("source", "unknown"),
                     "type": source.get("type", "memory"),
-                    "payload": source.get("metadata", {})
-                })
+                    "payload": source.get("metadata", {}),
+                }
+                # Include confidence from payload if available
+                meta = source.get("metadata", {})
+                if "confidence" in meta:
+                    result_entry["confidence"] = meta["confidence"]
+                results.append(result_entry)
 
             await retriever.shutdown()
 
             logger.info(f"Domain-aware search for '{query}' classified as {retrieval_result.get('domain')} "
                        f"returned {len(results)} results from collections {retrieval_result.get('allowed_collections')}")
+
+            # Return enriched dict with metadata when available
+            query_type = retrieval_result.get("query_type")
+            search_weights = retrieval_result.get("search_weights")
+            if query_type or search_weights:
+                return {
+                    "results": results,
+                    "query_type": query_type,
+                    "search_weights": search_weights,
+                    "domain": retrieval_result.get("domain"),
+                }
             return results
 
         except Exception as e:
@@ -180,7 +196,10 @@ class MCPService:
                     "predicate": predicate,
                     "object": object_,
                     "confidence": confidence,
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now().isoformat(),
+                    "ingested_at": datetime.now().isoformat(),
+                    "last_accessed": datetime.now().isoformat(),
+                    "access_count": 0,
                 }
             )
 

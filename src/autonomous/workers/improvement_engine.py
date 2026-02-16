@@ -112,7 +112,7 @@ class ImprovementEngine:
                     ELSE 3
                 END,
                 created_at DESC
-            LIMIT %s
+            LIMIT $1
         """
 
         rows = await conn.fetch(query, self.max_issues_per_cycle * 2)  # Get extra to account for existing proposals

@@ -68,7 +68,7 @@ async def get_db_connection():
 
 app = FastAPI(
     title="Tower Echo Brain",
-    version="0.4.0",
+    version="0.6.0",
     docs_url="/docs",
     redoc_url="/redoc",
 )
@@ -78,7 +78,7 @@ app = FastAPI(
 async def api_root():
     return {
         "service": "Echo Brain",
-        "version": "0.4.0",
+        "version": "0.6.0",
         "status": "running",
         "timestamp": datetime.now().isoformat()
     }
@@ -208,7 +208,7 @@ _optional_routers = [
     ("src.api.models_manager", "router", None, "Models manager (/api/models)"),
     ("src.api.knowledge", "router", None, "Knowledge (/api/knowledge)"),
     ("src.api.solutions", "router", None, "Solutions (/api/echo/solutions)"),
-    ("src.api.codebase", "router", None, "Codebase (/api/echo/codebase)"),
+    # ("src.api.codebase", "router", None, "Codebase (/api/echo/codebase)"),  # Disabled — indexer not implemented
     ("src.api.preferences", "router", "/api/echo/preferences", "Preferences"),
     ("src.api.integrations", "router", "/api/echo/integrations", "Integrations"),
     ("src.api.claude_bridge", "router", None, "Claude bridge (/api/echo)"),
@@ -254,6 +254,16 @@ except ImportError as e:
 except Exception as e:
     logger.error(f"❌ Contract monitor router failed: {e}")
 
+# Mount Knowledge Graph API
+try:
+    from src.api.endpoints.graph_router import router as graph_router
+    app.include_router(graph_router, prefix="/api/echo")
+    logger.info("✅ Graph router mounted at /api/echo/graph")
+except ImportError as e:
+    logger.warning(f"⚠️ Graph router not available: {e}")
+except Exception as e:
+    logger.error(f"❌ Graph router failed: {e}")
+
 # Health endpoints are now in the consolidated echo_main_router
 
 # Create minimal MCP endpoints inline for now
@@ -270,6 +280,25 @@ async def mcp_handler(request: dict):
                 {"name": "search_memory", "description": "Search Echo Brain memories"},
                 {"name": "get_facts", "description": "Get facts from Echo Brain"},
                 {"name": "store_fact", "description": "Store a fact in Echo Brain"},
+                {
+                    "name": "explore_graph",
+                    "description": "Explore the knowledge graph: find related entities, paths, and neighborhood stats",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "entity": {
+                                "type": "string",
+                                "description": "Entity name to explore"
+                            },
+                            "depth": {
+                                "type": "integer",
+                                "description": "Traversal depth (1-3, default 2)",
+                                "default": 2
+                            }
+                        },
+                        "required": ["entity"]
+                    }
+                },
                 {
                     "name": "manage_ollama",
                     "description": "Manage Ollama models: list, pull, delete, refresh, show running",
@@ -301,6 +330,25 @@ async def mcp_handler(request: dict):
                 limit = arguments.get("limit", 10)
                 results = await mcp_service.search_memory(query, limit)
                 return results
+
+            elif tool_name == "explore_graph":
+                entity = arguments.get("entity", "")
+                depth = min(int(arguments.get("depth", 2)), 3)
+                try:
+                    from src.core.graph_engine import get_graph_engine
+                    engine = get_graph_engine()
+                    await engine._ensure_loaded()
+                    related = engine.get_related(entity, depth=depth, max_results=50)
+                    neighborhood = engine.get_neighborhood(entity, hops=depth)
+                    stats = engine.get_stats()
+                    return {
+                        "entity": entity,
+                        "related": related,
+                        "neighborhood": neighborhood,
+                        "graph_stats": stats,
+                    }
+                except Exception as e:
+                    return {"error": f"Graph not available: {e}"}
 
             elif tool_name == "get_facts":
                 topic = arguments.get("topic")
@@ -1531,24 +1579,27 @@ async def startup_event():
         except Exception as e:
             logger.error(f"❌ Failed to register conversation_watcher: {e}")
 
-        try:
-            from src.autonomous.workers.knowledge_graph_builder import KnowledgeGraphBuilder
-            worker = KnowledgeGraphBuilder()
-            worker_scheduler.register_worker("knowledge_graph", worker.run_cycle, interval_minutes=1440)  # daily
-            workers_registered += 1
-            logger.info("✅ Registered knowledge_graph worker (daily)")
-        except Exception as e:
-            logger.error(f"❌ Failed to register knowledge_graph: {e}")
+        # knowledge_graph_builder disabled — superseded by graph_engine.py (v0.6.0)
+        # The old worker requires a graph_edges table; the new GraphEngine reads facts directly.
+        # try:
+        #     from src.autonomous.workers.knowledge_graph_builder import KnowledgeGraphBuilder
+        #     worker = KnowledgeGraphBuilder()
+        #     worker_scheduler.register_worker("knowledge_graph", worker.run_cycle, interval_minutes=1440)
+        #     workers_registered += 1
+        #     logger.info("✅ Registered knowledge_graph worker (daily)")
+        # except Exception as e:
+        #     logger.error(f"❌ Failed to register knowledge_graph: {e}")
 
         # Register new Phase 2a self-awareness workers
-        try:
-            from src.autonomous.workers.codebase_indexer import CodebaseIndexer
-            worker = CodebaseIndexer()
-            worker_scheduler.register_worker("codebase_indexer", worker.run_cycle, interval_minutes=360)  # Every 6 hours
-            workers_registered += 1
-            logger.info("✅ Registered codebase_indexer worker (6 hours)")
-        except Exception as e:
-            logger.error(f"❌ Failed to register codebase_indexer: {e}")
+        # codebase_indexer disabled — file doesn't exist, graph_engine.py handles code-related graph traversal
+        # try:
+        #     from src.autonomous.workers.codebase_indexer import CodebaseIndexer
+        #     worker = CodebaseIndexer()
+        #     worker_scheduler.register_worker("codebase_indexer", worker.run_cycle, interval_minutes=360)
+        #     workers_registered += 1
+        #     logger.info("✅ Registered codebase_indexer worker (6 hours)")
+        # except Exception as e:
+        #     logger.error(f"❌ Failed to register codebase_indexer: {e}")
 
         try:
             from src.autonomous.workers.schema_indexer import SchemaIndexer
@@ -1630,6 +1681,53 @@ async def startup_event():
             logger.info("✅ Registered google_ingest worker (60 min)")
         except Exception as e:
             logger.error(f"❌ Failed to register google_ingest: {e}")
+
+        # v0.6.0 workers: temporal decay, dedup, fact scrubber, governor
+        try:
+            from src.autonomous.workers.decay_worker import DecayWorker
+            worker = DecayWorker()
+            worker_scheduler.register_worker("decay", worker.run_cycle, interval_minutes=1440)  # Daily
+            workers_registered += 1
+            logger.info("✅ Registered decay worker (daily)")
+        except Exception as e:
+            logger.error(f"❌ Failed to register decay: {e}")
+
+        try:
+            from src.autonomous.workers.dedup_worker import DedupWorker
+            worker = DedupWorker()
+            worker_scheduler.register_worker("dedup", worker.run_cycle, interval_minutes=360)  # Every 6h
+            workers_registered += 1
+            logger.info("✅ Registered dedup worker (6 hours)")
+        except Exception as e:
+            logger.error(f"❌ Failed to register dedup: {e}")
+
+        try:
+            from src.autonomous.workers.fact_scrubber import FactScrubber
+            worker = FactScrubber()
+            worker_scheduler.register_worker("fact_scrubber", worker.run_cycle, interval_minutes=120)  # Every 2h
+            workers_registered += 1
+            logger.info("✅ Registered fact_scrubber worker (2 hours)")
+        except Exception as e:
+            logger.error(f"❌ Failed to register fact_scrubber: {e}")
+
+        try:
+            from src.autonomous.workers.governor import Governor
+            worker = Governor()
+            worker_scheduler.register_worker("governor", worker.run_cycle, interval_minutes=720)  # Every 12h
+            workers_registered += 1
+            logger.info("✅ Registered governor worker (12 hours)")
+        except Exception as e:
+            logger.error(f"❌ Failed to register governor: {e}")
+
+        # Initialize Graph Engine (lazy — loads on first query)
+        try:
+            from src.core.graph_engine import get_graph_engine
+            db_url = os.getenv("DATABASE_URL", "postgresql://echo:echo_secure_password_123@localhost/echo_brain")
+            engine = get_graph_engine()
+            engine.initialize(db_url)
+            logger.info("✅ Graph engine initialized (lazy)")
+        except Exception as e:
+            logger.error(f"❌ Failed to init graph engine: {e}")
 
         # Register contract monitor worker if available
         if contract_monitor:

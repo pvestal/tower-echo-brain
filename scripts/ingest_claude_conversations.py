@@ -116,18 +116,37 @@ async def process_jsonl_file(filepath: Path, db_conn, qdrant_client, session):
                                     # Generate integer ID from hash
                                     point_id = int(hashlib.md5(f"{file_hash}_{line_num}_{chunk_idx}".encode()).hexdigest()[:8], 16)
 
-                                    point = PointStruct(
-                                        id=point_id,
-                                        vector=embedding,
-                                        payload={
+                                    payload = {
                                             "type": "conversation",
                                             "role": role,
                                             "content": chunk,
                                             "file_path": str(filepath),
                                             "line_number": line_num,
                                             "chunk_index": chunk_idx,
-                                            "ingested_at": datetime.now().isoformat()
+                                            "ingested_at": datetime.now().isoformat(),
+                                            "confidence": 0.8,
+                                            "last_accessed": datetime.now().isoformat(),
+                                            "access_count": 0,
                                         }
+
+                                    # Dedup check
+                                    try:
+                                        from src.core.dedup import check_duplicate, merge_metadata, bump_existing_point
+                                        import asyncio
+                                        dup = asyncio.get_event_loop().run_until_complete(
+                                            check_duplicate(embedding)
+                                        ) if not asyncio.get_event_loop().is_running() else None
+                                        # In async context, dedup is best-effort
+                                        if dup:
+                                            logger.info(f"Dedup: skipping duplicate (score={dup['score']:.3f})")
+                                            continue
+                                    except Exception:
+                                        pass  # dedup is non-blocking
+
+                                    point = PointStruct(
+                                        id=point_id,
+                                        vector=embedding,
+                                        payload=payload,
                                     )
 
                                     try:

@@ -3,10 +3,13 @@ Parallel Context Retriever - Fetches from multiple sources based on domain
 Uses domain classification to prevent cross-contamination
 """
 import os
+import re
+import math
 import asyncio
 import logging
 import httpx
 import asyncpg
+from enum import Enum
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timezone
 
@@ -82,6 +85,11 @@ class ParallelRetriever:
         # Step 2: Get allowed sources for this domain
         allowed_sources = self.classifier.get_allowed_sources(primary_domain)
 
+        # Step 2b: Classify query type for adaptive weighting
+        query_type = self._classify_query_type(query)
+        weights = self.WEIGHT_PRESETS[query_type]
+        logger.info(f"Query type: {query_type.value}, weights: {weights}")
+
         # Step 3: Build parallel retrieval tasks
         tasks = []
 
@@ -92,7 +100,8 @@ class ParallelRetriever:
                 for collection in allowed_sources["qdrant_collections"]:
                     if await self._collection_exists(collection):
                         tasks.append(self._search_qdrant(
-                            query, embedding, collection, primary_domain
+                            query, embedding, collection, primary_domain,
+                            query_type=query_type,
                         ))
 
         # Search PostgreSQL tables
@@ -127,8 +136,16 @@ class ParallelRetriever:
         # Step 5: Apply domain filtering to results
         filtered_sources = self.classifier.filter_results_by_domain(sources, primary_domain)
 
-        # Step 6: Apply time-decay recency boost
+        # Step 6: Apply time-decay recency boost (with confidence + access-count)
         self._apply_time_decay(filtered_sources)
+
+        # Step 6b: Enrich with graph traversal
+        try:
+            graph_sources = await self._enrich_with_graph(filtered_sources, query)
+            if graph_sources:
+                filtered_sources.extend(graph_sources)
+        except Exception as e:
+            logger.debug(f"Graph enrichment skipped: {e}")
 
         # Step 7: Sort by relevance (after time-decay adjustments)
         filtered_sources.sort(key=lambda x: x.get("score", 0), reverse=True)
@@ -151,12 +168,19 @@ class ParallelRetriever:
         # Step 10: Limit to max_results
         final_sources = filtered_sources[:max_results]
 
+        # Step 11: Fire-and-forget access tracking
+        point_ids = [s.get("point_id") for s in final_sources if s.get("point_id")]
+        if point_ids:
+            asyncio.create_task(self._track_access(point_ids))
+
         elapsed_ms = int((datetime.now() - start_time).total_seconds() * 1000)
 
         return {
             "query": query,
             "domain": primary_domain.value,
             "domain_confidence": confidence,
+            "query_type": query_type.value,
+            "search_weights": weights,
             "sources": final_sources,
             "total_found": len(filtered_sources),
             "total_returned": len(final_sources),
@@ -192,7 +216,19 @@ class ParallelRetriever:
         except:
             return False
 
-    # Hybrid search weights (inspired by OpenClaw's 70/30 split)
+    # ── Adaptive search weight presets ──────────────────────────────────
+    class QueryType(str, Enum):
+        KEYWORD = "keyword"       # file.py, error_code, port 8309
+        CONCEPTUAL = "conceptual" # "how does X work", "explain the architecture"
+        MIXED = "mixed"           # default
+
+    WEIGHT_PRESETS = {
+        QueryType.KEYWORD:    {"vector": 0.4, "text": 0.6},
+        QueryType.CONCEPTUAL: {"vector": 0.85, "text": 0.15},
+        QueryType.MIXED:      {"vector": 0.7, "text": 0.3},
+    }
+
+    # Legacy constants (used as defaults if classification is skipped)
     VECTOR_WEIGHT = 0.7
     TEXT_WEIGHT = 0.3
 
@@ -207,7 +243,8 @@ class ParallelRetriever:
         query: str,
         embedding: List[float],
         collection: str,
-        domain: Domain
+        domain: Domain,
+        query_type: Optional['ParallelRetriever.QueryType'] = None,
     ) -> List[Dict]:
         """Hybrid search: vector similarity + full-text keyword matching, fused with weighted scores"""
         try:
@@ -229,9 +266,13 @@ class ParallelRetriever:
                 logger.error(f"Text search failed: {text_results}")
                 text_results = []
 
-            # Fuse results with weighted scoring
+            # Fuse results with adaptive weights
+            qt = query_type or self.QueryType.MIXED
+            weights = self.WEIGHT_PRESETS[qt]
             fused = self._fuse_hybrid_results(
-                vector_results, text_results, collection
+                vector_results, text_results, collection,
+                vector_weight=weights["vector"],
+                text_weight=weights["text"],
             )
 
             # Apply authoritative source boosting
@@ -354,10 +395,16 @@ class ParallelRetriever:
         self,
         vector_results: List[Dict],
         text_results: List[Dict],
-        collection: str
+        collection: str,
+        vector_weight: Optional[float] = None,
+        text_weight: Optional[float] = None,
     ) -> List[Dict]:
         """Weighted fusion of vector and text search results.
-        Score = VECTOR_WEIGHT * vector_score + TEXT_WEIGHT * text_score"""
+        Score = vector_weight * vector_score + text_weight * text_score
+        Preserves point_id for downstream access tracking."""
+        vw = vector_weight if vector_weight is not None else self.VECTOR_WEIGHT
+        tw = text_weight if text_weight is not None else self.TEXT_WEIGHT
+
         # Index by point_id for merging
         merged: Dict[Any, Dict] = {}
 
@@ -367,7 +414,8 @@ class ParallelRetriever:
                 "type": "hybrid",
                 "source": f"qdrant/{collection}",
                 "content": r["content"],
-                "score": self.VECTOR_WEIGHT * r["score"],
+                "score": vw * r["score"],
+                "point_id": pid,
                 "metadata": {
                     k: v for k, v in r["payload"].items()
                     if k not in ("text", "content", "embedding")
@@ -380,7 +428,7 @@ class ParallelRetriever:
             pid = r["point_id"]
             if pid in merged:
                 # Found in both — add text contribution
-                merged[pid]["score"] += self.TEXT_WEIGHT * r["score"]
+                merged[pid]["score"] += tw * r["score"]
                 merged[pid]["_text_score"] = r["score"]
             else:
                 # Text-only hit (vector missed it)
@@ -388,7 +436,8 @@ class ParallelRetriever:
                     "type": "hybrid",
                     "source": f"qdrant/{collection}",
                     "content": r["content"],
-                    "score": self.TEXT_WEIGHT * r["score"],
+                    "score": tw * r["score"],
+                    "point_id": pid,
                     "metadata": {
                         k: v for k, v in r["payload"].items()
                         if k not in ("text", "content", "embedding")
@@ -403,7 +452,7 @@ class ParallelRetriever:
         both = sum(1 for r in results if r["_vector_score"] > 0 and r["_text_score"] > 0)
         vector_only = sum(1 for r in results if r["_vector_score"] > 0 and r["_text_score"] == 0)
         text_only = sum(1 for r in results if r["_vector_score"] == 0 and r["_text_score"] > 0)
-        logger.info(f"Fusion: {both} both, {vector_only} vector-only, {text_only} text-only")
+        logger.info(f"Fusion: {both} both, {vector_only} vector-only, {text_only} text-only (w={vw:.2f}/{tw:.2f})")
 
         # Clean up internal scoring fields
         for r in results:
@@ -413,11 +462,14 @@ class ParallelRetriever:
         return results
 
     def _apply_time_decay(self, sources: List[Dict]) -> None:
-        """Apply recency boost: recent sources get higher scores, old ones decay.
-        Uses exponential decay with configurable half-life.
-        Modifies sources in-place."""
+        """Apply logarithmic time decay with stored confidence and access-count exemption.
+
+        Formula: score = base_score * stored_confidence * (0.8 + 0.2 * decay_factor)
+        Vectors with access_count > 5 are exempt from decay (usage-validated).
+        Modifies sources in-place.
+        """
         now = datetime.now(timezone.utc)
-        halflife_seconds = self.TIME_DECAY_HALFLIFE_DAYS * 86400
+        halflife_days = self.TIME_DECAY_HALFLIFE_DAYS
 
         for source in sources:
             meta = source.get("metadata", {})
@@ -431,22 +483,25 @@ class ParallelRetriever:
                 continue  # No timestamp — leave score unchanged
 
             try:
-                # Parse ISO format timestamp
                 ts = datetime.fromisoformat(timestamp_str.replace("Z", "+00:00"))
                 if ts.tzinfo is None:
                     ts = ts.replace(tzinfo=timezone.utc)
-                age_seconds = max(0, (now - ts).total_seconds())
+                age_days = max(0, (now - ts).total_seconds() / 86400)
 
-                # Exponential decay: boost = 2^(-age/halflife)
-                # Recent (0 days) → boost = 1.0
-                # 30 days old → boost = 0.5
-                # 60 days old → boost = 0.25
-                import math
-                decay_factor = math.pow(2, -age_seconds / halflife_seconds)
+                # Stored confidence (default 0.7 for legacy vectors missing the field)
+                stored_confidence = max(0.2, float(meta.get("confidence", 0.7)))
 
-                # Apply as a weighted blend: 80% original score + 20% recency
+                # Usage-validated vectors are exempt from decay
+                access_count = int(meta.get("access_count", 0))
+                if access_count > 5:
+                    decay_factor = 1.0
+                else:
+                    # Logarithmic decay: gentler curve than exponential
+                    decay_factor = 1.0 / (1.0 + math.log1p(age_days / halflife_days))
+
                 original_score = source.get("score", 0)
-                source["score"] = 0.8 * original_score + 0.2 * original_score * decay_factor
+                source["score"] = original_score * stored_confidence * (0.8 + 0.2 * decay_factor)
+                source["_confidence"] = stored_confidence
             except (ValueError, TypeError):
                 continue  # Unparseable timestamp — skip
 
@@ -774,3 +829,115 @@ class ParallelRetriever:
                 words.append(clean_word)
 
         return ' '.join(words[:8])  # Limit to 8 key terms
+
+    # ── Adaptive search weight classification ──────────────────────────
+    _KEYWORD_PATTERNS = re.compile(
+        r'[a-zA-Z_]\w*\.\w+'       # file.py, module.class
+        r'|[a-zA-Z_]\w*_\w+'       # snake_case identifiers
+        r'|[a-zA-Z][a-zA-Z0-9]*[A-Z]\w*'  # camelCase / PascalCase
+        r'|\b\d{2,5}\b'            # port numbers, error codes
+        r'|\b(?:error|traceback|exception|stack)\b'
+        , re.IGNORECASE
+    )
+
+    _CONCEPTUAL_SIGNALS = re.compile(
+        r'\b(?:how|why|what|explain|describe|overview|architecture|design|concept|approach)\b'
+        , re.IGNORECASE
+    )
+
+    def _classify_query_type(self, query: str) -> 'ParallelRetriever.QueryType':
+        """Classify a query to select optimal search weights."""
+        keyword_hits = len(self._KEYWORD_PATTERNS.findall(query))
+        conceptual_hits = len(self._CONCEPTUAL_SIGNALS.findall(query))
+        word_count = len(query.split())
+
+        # Long queries with question words are conceptual
+        if conceptual_hits >= 2 or (conceptual_hits >= 1 and word_count > 8):
+            return self.QueryType.CONCEPTUAL
+        # Short queries with identifiers/numbers are keyword
+        if keyword_hits >= 2 and conceptual_hits == 0:
+            return self.QueryType.KEYWORD
+        if keyword_hits >= 1 and word_count <= 4:
+            return self.QueryType.KEYWORD
+        return self.QueryType.MIXED
+
+    # ── Access tracking (fire-and-forget) ──────────────────────────────
+    async def _track_access(self, point_ids: List[Any], collection: str = "echo_memory") -> None:
+        """Increment access_count and update last_accessed on returned points.
+        Runs as fire-and-forget — errors are logged but never block retrieval."""
+        if not point_ids:
+            return
+        try:
+            now_iso = datetime.now(timezone.utc).isoformat()
+            # Qdrant set_payload only sets fields, so we need to read+write for increment.
+            # For efficiency, just set last_accessed and best-effort increment.
+            for pid in point_ids[:20]:  # cap at 20 to avoid overwhelming Qdrant
+                try:
+                    # Read current access_count
+                    resp = await self.http_client.post(
+                        f"{self.qdrant_url}/collections/{collection}/points",
+                        json={"ids": [pid], "with_payload": ["access_count"]},
+                    )
+                    if resp.status_code == 200:
+                        pts = resp.json().get("result", [])
+                        current = pts[0].get("payload", {}).get("access_count", 0) if pts else 0
+                    else:
+                        current = 0
+
+                    await self.http_client.post(
+                        f"{self.qdrant_url}/collections/{collection}/points/payload",
+                        json={
+                            "payload": {
+                                "last_accessed": now_iso,
+                                "access_count": current + 1,
+                            },
+                            "points": [pid],
+                        },
+                    )
+                except Exception:
+                    pass  # individual point failure is OK
+        except Exception as e:
+            logger.debug(f"Access tracking failed (non-blocking): {e}")
+
+    # ── Graph enrichment ───────────────────────────────────────────────
+    async def _enrich_with_graph(self, sources: List[Dict], query: str) -> List[Dict]:
+        """Extract entities from top results and query the graph for related context."""
+        graph_sources = []
+        try:
+            from src.core.graph_engine import get_graph_engine
+            engine = get_graph_engine()
+            if not engine._graph:
+                return []
+
+            # Extract entities from top-5 fact sources
+            entities = set()
+            for s in sources[:5]:
+                meta = s.get("metadata", {})
+                subj = meta.get("subject", "")
+                if subj:
+                    entities.add(subj.lower())
+
+            if not entities:
+                # Try extracting from query
+                words = [w.lower() for w in query.split() if len(w) > 3]
+                entities.update(words[:3])
+
+            # Query graph for 1-hop related entities
+            for entity in list(entities)[:3]:
+                related = engine.get_related(entity, depth=1, max_results=5)
+                for rel in related:
+                    graph_sources.append({
+                        "type": "graph",
+                        "source": "knowledge_graph",
+                        "content": f"{rel.get('from', entity)} → {rel.get('predicate', '?')} → {rel.get('to', '?')}",
+                        "score": float(rel.get("confidence", 0.5)) * 0.5,
+                        "metadata": {
+                            "from_entity": rel.get("from", entity),
+                            "to_entity": rel.get("to", ""),
+                            "predicate": rel.get("predicate", ""),
+                            "confidence": rel.get("confidence", 0.5),
+                        },
+                    })
+        except Exception as e:
+            logger.debug(f"Graph enrichment skipped: {e}")
+        return graph_sources

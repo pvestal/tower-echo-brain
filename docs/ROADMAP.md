@@ -127,7 +127,7 @@ Echo Brain uses semantic versioning: **MAJOR.MINOR.PATCH**
 
 ---
 
-### v0.5.1 — Hybrid Search ← CURRENT
+### v0.5.1 — Hybrid Search
 **Goal:** Improve retrieval quality with combined vector + keyword search.
 **Status:** COMPLETE (Feb 12, 2026)
 
@@ -148,65 +148,52 @@ Echo Brain uses semantic versioning: **MAJOR.MINOR.PATCH**
 
 ---
 
-### v0.6.x — Close the Gaps (NEXT)
-**Goal:** Address the critical gaps identified in the Feb 12 comprehensive audit.
+### v0.6.0 — Close the Gaps ← CURRENT
+**Goal:** Address critical gaps: temporal decay, semantic dedup, adaptive search, knowledge graph traversal, HMLR fact verification pipeline.
+**Status:** IN PROGRESS (Feb 15, 2026)
+**Inspired by:** Competitive analysis of Mem0, Khoj, HMLR, Memento-MCP, and 16 other AI memory systems.
 
-#### Memory (Storing, Accessing, Forgetting)
+#### Feature 1: Temporal Decay + Confidence Scoring ✅
+- [x] `confidence`, `last_accessed`, `access_count` fields on all Qdrant payloads
+- [x] Logarithmic decay in retriever (gentler than exponential, floor at 0.2)
+- [x] Usage-validated vectors (access_count > 5) exempt from decay
+- [x] Fire-and-forget access tracking after every search
+- [x] Daily `DecayWorker` for background confidence decay
+- [x] One-time `scripts/backfill_confidence.py` for existing vectors
 
-| # | Milestone | Priority | Details |
-|---|-----------|----------|---------|
-| 1 | Memory decay / time-weighting | HIGH | All 194K vectors treated equally regardless of age. Implement time-decay scoring so recent context ranks higher. |
-| 2 | Memory consolidation & dedup | HIGH | Similar vectors never merged. Some content appears 10+ times. Implement SHA-256 dedup on conversation ingestion + periodic consolidation worker. |
-| 3 | Memory importance scoring | MEDIUM | No mechanism to weight critical facts higher than casual conversation snippets. Add importance field to payloads, score based on frequency of retrieval + explicit marking. |
-| 4 | Pre-compaction session persistence | MEDIUM | When Claude's context window compresses, important session insights are lost. Add endpoint for "save session summary" before context loss. |
-| 5 | Stale data cleanup worker | MEDIUM | Automated detection of outdated vectors (superseded facts, old conversation noise). REVIEW-gated deletion. |
+#### Feature 2: Semantic Deduplication ✅
+- [x] `src/core/dedup.py` — shared module (check_duplicate, merge_metadata, bump_existing_point)
+- [x] Inline dedup check (threshold=0.97) wired into all 5 ingestion paths
+- [x] Background `DedupWorker` (threshold=0.98) scans for near-duplicates every 6h
+- [x] Merge strategy: keep higher access_count, earliest ingested_at, highest confidence
 
-#### Response & Dynamic Interactions
+#### Feature 3: Adaptive Search Weighting ✅
+- [x] `QueryType` enum: KEYWORD / CONCEPTUAL / MIXED
+- [x] `_classify_query_type()` — regex-based signal detection
+- [x] Weight presets: keyword=0.4/0.6, conceptual=0.85/0.15, mixed=0.7/0.3
+- [x] `query_type` and `search_weights` returned in retriever response
 
-| # | Milestone | Priority | Details |
-|---|-----------|----------|---------|
-| 6 | Retrieval confidence gate | HIGH | LLM fabricates when retrieval is weak. Add threshold: if best score < 0.4, respond "I don't have specific information" instead of hallucinating. |
-| 7 | Conflict detection in results | HIGH | Retrieval can return contradictory facts. Detect and flag before LLM synthesis. |
-| 8 | Fact verification (post-generation) | MEDIUM | LLM response is never checked against sources. Add post-generation validation pass. |
-| 9 | Multi-turn conversation context | MEDIUM | Each query is stateless. No conversation history carried between turns for follow-up questions. |
-| 10 | Response streaming | LOW | Currently waits for full LLM response. Add SSE/streaming for better UX on voice and web. |
+#### Feature 4: Knowledge Graph + HMLR Pipeline ✅
+- [x] `src/core/graph_engine.py` — NetworkX DiGraph over facts + graph_edges
+- [x] Lazy loading, incremental refresh, full rebuild every 24h
+- [x] `GET /api/echo/graph/related/{entity}`, `/path`, `/neighborhood/{entity}`, `/stats`, `POST /refresh`
+- [x] Graph enrichment in retriever: top-5 entities → 1-hop traversal → graph_sources
+- [x] `explore_graph` MCP tool for Claude Code integration
+- [x] `FactScrubber` worker: cosine similarity + LLM verification of extracted facts (every 2h)
+- [x] `Governor` worker: conflict resolution via effective_score (confidence×0.6 + recency×0.4), every 12h
+- [x] `governor_decisions` audit table for transparency
 
-#### Thinking & Intelligence
-
-| # | Milestone | Priority | Details |
-|---|-----------|----------|---------|
-| 11 | Chain-of-thought extraction | HIGH | `thinking_steps=[]` is never populated even with deepseek-r1. Extract `<think>` blocks from model output. |
-| 12 | Multi-hop reasoning | HIGH | Currently single LLM call. For complex queries, implement: retrieve → reason → retrieve again → synthesize. |
-| 13 | Clean up orphaned reasoning code | MEDIUM | `ReasoningEngine`, `IntelligenceEngine`, `UnifiedKnowledgeLayer` in `src/core/` are disconnected from the pipeline. Either integrate them or delete. |
-| 14 | Agent system (real implementation) | LOW | `agent_service.py` returns mock responses. Either implement real agent collaboration or remove the pretense. |
-
-#### Routing & Classification
-
-| # | Milestone | Priority | Details |
-|---|-----------|----------|---------|
-| 15 | LLM-assisted classification | MEDIUM | Replace regex-only domain classifier with lightweight LLM classification for ambiguous queries. |
-| 16 | Multi-intent query handling | MEDIUM | "Compare anime settings to tower architecture" → currently picks one domain. Support multi-domain queries. |
-| 17 | Model availability verification | HIGH | Code assumes 5+ Ollama models loaded but RTX 3060 can hold ~1-2. Add runtime model check + graceful fallback chain. |
-
-#### Infrastructure & Hygiene
+#### Remaining v0.6.x items (not yet addressed)
 
 | # | Milestone | Priority | Details |
 |---|-----------|----------|---------|
-| 18 | Fix embedding model mismatch | HIGH | Pipeline uses mxbai-embed-large (1024D), EmbeddingService defaults to nomic-embed-text (768D). Collection is 768D. Standardize everywhere. |
-| 19 | Mount or delete 19 dead routers | MEDIUM | `src/api/` has 19 implemented but unmounted routers. Decision: mount needed ones, delete the rest. |
-| 20 | Fix duplicate reasoning router mount | HIGH | `main.py` lines 177-198 mount two different reasoning routers under the same prefix. Second shadows first. |
-| 21 | Conversation watcher embedding bug | HIGH | Worker uses `response.json()["embedding"]` but Ollama returns `["embeddings"]`. 0 chunks ingested. |
-| 22 | Scrub credentials from source | MEDIUM | Database password in 11+ files as env var default. Move to Vault-only. |
-| 23 | Complete requirements.txt | MEDIUM | Missing qdrant-client, torch, whisper, piper, and ~20 other dependencies. |
-| 24 | Fix 9 syntax errors in video modules | LOW | `src/modules/generation/video/` — missing f-string prefixes. Dead code but should be fixed or deleted. |
-
-#### Remaining from Original v0.6.x Plan
-
-| # | Milestone | Priority | Details |
-|---|-----------|----------|---------|
-| 25 | Fact validation (second LLM pass) | MEDIUM | Verify extracted facts against source content. |
-| 26 | Query regression suite expansion | MEDIUM | Currently 8 self-tests, target 50+ known-good Q&A pairs. |
-| 27 | Extraction quality scoring | LOW | Rate each extracted fact, auto-discard low-quality. |
+| 4 | Pre-compaction session persistence | MEDIUM | Save session summary before context loss |
+| 9 | Multi-turn conversation context | MEDIUM | Carry conversation history between turns |
+| 10 | Response streaming | LOW | SSE/streaming for better UX |
+| 11 | Chain-of-thought extraction | HIGH | Extract `<think>` blocks from deepseek-r1 |
+| 12 | Multi-hop reasoning | HIGH | Retrieve → reason → retrieve again → synthesize |
+| 15 | LLM-assisted classification | MEDIUM | Replace regex-only domain classifier |
+| 17 | Model availability verification | HIGH | Runtime model check + fallback chain |
 
 ---
 

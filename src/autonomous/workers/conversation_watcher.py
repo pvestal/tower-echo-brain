@@ -199,10 +199,7 @@ class ConversationWatcher:
                         logger.warning(f"No embedding returned, keys: {list(resp_data.keys())}")
                         continue
 
-                    points.append({
-                        "id": str(uuid4()),
-                        "vector": embedding,
-                        "payload": {
+                    payload = {
                             "content": chunk['text'],
                             "type": "conversation",
                             "source": "conversation_watcher",
@@ -210,8 +207,28 @@ class ConversationWatcher:
                             "role": chunk.get('role', 'unknown'),
                             "timestamp": chunk.get('timestamp', ''),
                             "content_hash": chunk_hash,
-                            "ingested_at": datetime.now().isoformat()
+                            "ingested_at": datetime.now().isoformat(),
+                            "confidence": 0.8,
+                            "last_accessed": datetime.now().isoformat(),
+                            "access_count": 0,
                         }
+
+                    # Dedup check
+                    try:
+                        from src.core.dedup import check_duplicate, merge_metadata, bump_existing_point
+                        dup = await check_duplicate(embedding)
+                        if dup:
+                            merged = merge_metadata(dup["payload"], payload)
+                            await bump_existing_point(dup["id"], merged)
+                            logger.debug(f"Dedup: bumped existing point {dup['id']}")
+                            continue
+                    except Exception:
+                        pass  # dedup is non-blocking
+
+                    points.append({
+                        "id": str(uuid4()),
+                        "vector": embedding,
+                        "payload": payload,
                     })
 
                     # Batch store every 10 points
