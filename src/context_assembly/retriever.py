@@ -71,11 +71,14 @@ class ParallelRetriever:
         """
         start_time = datetime.now()
 
-        # Step 1: Classify query domain
+        # Step 0: Compute embedding early — used for both classification and retrieval
+        embedding = await self._get_embedding(query)
+
+        # Step 1: Classify query domain (pass embedding for cosine-similarity fallback)
         if override_domain:
             domains = [(override_domain, 1.0)]
         else:
-            domains = self.classifier.classify(query)
+            domains = await self.classifier.classify(query, query_embedding=embedding)
 
         primary_domain = domains[0][0] if domains else Domain.GENERAL
         confidence = domains[0][1] if domains else 0.5
@@ -93,9 +96,8 @@ class ParallelRetriever:
         # Step 3: Build parallel retrieval tasks
         tasks = []
 
-        # Get embedding for vector search (if needed)
+        # Use the already-computed embedding for vector search
         if allowed_sources.get("qdrant_collections"):
-            embedding = await self._get_embedding(query)
             if embedding:
                 for collection in allowed_sources["qdrant_collections"]:
                     if await self._collection_exists(collection):
@@ -267,12 +269,18 @@ class ParallelRetriever:
                 text_results = []
 
             # Fuse results with adaptive weights
+            # If vector search returned no usable results, give text full weight
             qt = query_type or self.QueryType.MIXED
             weights = self.WEIGHT_PRESETS[qt]
+            if not vector_results and text_results:
+                v_weight, t_weight = 0.0, 1.0
+                logger.info(f"No vector results — text gets full weight")
+            else:
+                v_weight, t_weight = weights["vector"], weights["text"]
             fused = self._fuse_hybrid_results(
                 vector_results, text_results, collection,
-                vector_weight=weights["vector"],
-                text_weight=weights["text"],
+                vector_weight=v_weight,
+                text_weight=t_weight,
             )
 
             # Apply authoritative source boosting
@@ -299,6 +307,24 @@ class ParallelRetriever:
             logger.error(f"Qdrant hybrid search failed for {collection}: {e}")
             return []
 
+    @staticmethod
+    def _is_readable_text(text: str) -> bool:
+        """Check if content is human-readable text, not binary/base64 garbage.
+        Returns False for content that has very few spaces or mostly non-word chars."""
+        if not text or len(text) < 10:
+            return False
+        # Readable text should have spaces (at least 1 per ~20 chars)
+        space_ratio = text.count(' ') / len(text)
+        if space_ratio < 0.02:
+            return False
+        # Check for predominantly alphanumeric gibberish (base64, hashes)
+        # Readable text has punctuation, short words, newlines etc.
+        alnum_count = sum(1 for c in text[:200] if c.isalnum())
+        if len(text[:200]) > 0 and alnum_count / len(text[:200]) > 0.85:
+            # Very dense alphanumeric — likely base64 or encoded data
+            return False
+        return True
+
     async def _qdrant_vector_search(
         self, embedding: List[float], collection: str, min_score: float
     ) -> List[Dict]:
@@ -307,31 +333,53 @@ class ParallelRetriever:
             f"{self.qdrant_url}/collections/{collection}/points/search",
             json={
                 "vector": embedding,
-                "limit": 30,
+                "limit": 50,  # Fetch more to compensate for garbage filtering
                 "score_threshold": min_score,
                 "with_payload": True
             }
         )
         resp.raise_for_status()
         results = []
+        garbage_count = 0
         for point in resp.json().get("result", []):
             payload = point.get("payload", {})
             content = payload.get("text", payload.get("content", ""))
-            if content:
+            if content and self._is_readable_text(content):
                 results.append({
                     "point_id": point.get("id"),
                     "content": content[:1000],
                     "score": float(point.get("score", 0)),
                     "payload": payload
                 })
+            elif content:
+                garbage_count += 1
+
+            if len(results) >= 30:
+                break
+
+        if garbage_count > 0:
+            logger.info(f"Filtered {garbage_count} non-readable vectors from {collection}")
         return results
 
     async def _qdrant_text_search(self, query: str, collection: str) -> List[Dict]:
-        """Full-text keyword search against Qdrant's text index on content field"""
+        """Full-text keyword search against Qdrant's text index on content field.
+        Uses OR semantics (should clauses) so documents matching ANY term are returned.
+        Documents matching more terms are ranked higher."""
         # Extract meaningful search terms (skip stop words, keep identifiers)
-        terms = self._extract_text_search_terms(query)
+        terms_str = self._extract_text_search_terms(query)
+        if not terms_str:
+            return []
+
+        terms = terms_str.split()
         if not terms:
             return []
+
+        # Use 'should' clauses for OR semantics — each term is independent
+        # Qdrant match.text with 'must' requires ALL tokens; 'should' requires ANY
+        should_clauses = [
+            {"key": "content", "match": {"text": term}}
+            for term in terms
+        ]
 
         resp = await self.http_client.post(
             f"{self.qdrant_url}/collections/{collection}/points/scroll",
@@ -339,27 +387,34 @@ class ParallelRetriever:
                 "limit": 30,
                 "with_payload": True,
                 "filter": {
-                    "must": [
-                        {"key": "content", "match": {"text": terms}}
-                    ]
+                    "should": should_clauses
                 }
             }
         )
         resp.raise_for_status()
+
+        # Score by how many query terms appear in the content
+        terms_lower = [t.lower() for t in terms]
         results = []
-        for i, point in enumerate(resp.json().get("result", {}).get("points", [])):
+        for point in resp.json().get("result", {}).get("points", []):
             payload = point.get("payload", {})
             content = payload.get("text", payload.get("content", ""))
-            if content:
-                # Convert rank position to 0-1 score (reciprocal rank)
-                text_score = 1.0 / (1.0 + i)
-                results.append({
-                    "point_id": point.get("id"),
-                    "content": content[:1000],
-                    "score": text_score,
-                    "payload": payload
-                })
-        return results
+            if content and self._is_readable_text(content):
+                # Score by term overlap: fraction of query terms found in content
+                content_lower = content.lower()
+                matches = sum(1 for t in terms_lower if t in content_lower)
+                text_score = matches / len(terms_lower)
+                if text_score > 0:
+                    results.append({
+                        "point_id": point.get("id"),
+                        "content": content[:1000],
+                        "score": text_score,
+                        "payload": payload
+                    })
+
+        # Sort by term overlap score descending
+        results.sort(key=lambda r: r["score"], reverse=True)
+        return results[:30]
 
     def _extract_text_search_terms(self, query: str) -> str:
         """Extract the best keyword terms for full-text matching.
@@ -462,10 +517,11 @@ class ParallelRetriever:
         return results
 
     def _apply_time_decay(self, sources: List[Dict]) -> None:
-        """Apply logarithmic time decay with stored confidence and access-count exemption.
+        """Apply logarithmic time decay with access-count exemption.
 
-        Formula: score = base_score * stored_confidence * (0.8 + 0.2 * decay_factor)
+        Formula: score = base_score * (0.85 + 0.15 * decay_factor)
         Vectors with access_count > 5 are exempt from decay (usage-validated).
+        Decay only penalizes old content (up to 15% reduction).
         Modifies sources in-place.
         """
         now = datetime.now(timezone.utc)
@@ -488,9 +544,6 @@ class ParallelRetriever:
                     ts = ts.replace(tzinfo=timezone.utc)
                 age_days = max(0, (now - ts).total_seconds() / 86400)
 
-                # Stored confidence (default 0.7 for legacy vectors missing the field)
-                stored_confidence = max(0.2, float(meta.get("confidence", 0.7)))
-
                 # Usage-validated vectors are exempt from decay
                 access_count = int(meta.get("access_count", 0))
                 if access_count > 5:
@@ -500,8 +553,8 @@ class ParallelRetriever:
                     decay_factor = 1.0 / (1.0 + math.log1p(age_days / halflife_days))
 
                 original_score = source.get("score", 0)
-                source["score"] = original_score * stored_confidence * (0.8 + 0.2 * decay_factor)
-                source["_confidence"] = stored_confidence
+                # Mild decay: at most 15% penalty for old content
+                source["score"] = original_score * (0.85 + 0.15 * decay_factor)
             except (ValueError, TypeError):
                 continue  # Unparseable timestamp — skip
 

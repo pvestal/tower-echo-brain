@@ -1,6 +1,6 @@
 # Echo Brain Roadmap
 
-Last Updated: 2026-02-12
+Last Updated: 2026-02-16
 
 ---
 
@@ -148,9 +148,9 @@ Echo Brain uses semantic versioning: **MAJOR.MINOR.PATCH**
 
 ---
 
-### v0.6.0 — Close the Gaps ← CURRENT
+### v0.6.0 — Close the Gaps
 **Goal:** Address critical gaps: temporal decay, semantic dedup, adaptive search, knowledge graph traversal, HMLR fact verification pipeline.
-**Status:** IN PROGRESS (Feb 15, 2026)
+**Status:** COMPLETE (Feb 15, 2026)
 **Inspired by:** Competitive analysis of Mem0, Khoj, HMLR, Memento-MCP, and 16 other AI memory systems.
 
 #### Feature 1: Temporal Decay + Confidence Scoring ✅
@@ -183,7 +183,51 @@ Echo Brain uses semantic versioning: **MAJOR.MINOR.PATCH**
 - [x] `Governor` worker: conflict resolution via effective_score (confidence×0.6 + recency×0.4), every 12h
 - [x] `governor_decisions` audit table for transparency
 
-#### Remaining v0.6.x items (not yet addressed)
+---
+
+### v0.6.1 — Retrieval Quality Overhaul ← CURRENT
+**Goal:** Fix the complete retrieval pipeline — context was not reaching the LLM despite 317K+ vectors of knowledge.
+**Status:** COMPLETE (Feb 16, 2026)
+**Root cause:** 8 compounding issues across retriever, classifier, compiler, reasoner, and ingestion pipeline.
+
+#### Fix 1: Text Search OR Semantics ✅
+- [x] Qdrant `match.text` uses AND semantics — multi-word queries returned 0 results
+- [x] Changed to `should` clauses (OR semantics) with term overlap fraction scoring
+- [x] Queries like "why did we switch from chilloutmix" now return relevant results
+
+#### Fix 2: Garbage Vector Filtering ✅
+- [x] ~12% of echo_memory was base64/binary from Claude JSONL tool results
+- [x] Added `_is_readable_text()` runtime filter in vector search (space ratio, alphanumeric density, base64 regex)
+- [x] Purged 43,523 garbage vectors (360,745 → 317,222) via cleanup script
+- [x] Added readability filter to ingestion pipeline (`scripts/ingest_claude_conversations.py`) at message + chunk level
+
+#### Fix 3: Time Decay Formula ✅
+- [x] Removed `stored_confidence` multiplier (default 0.7 penalized all results by 30%+)
+- [x] New formula: `score × (0.85 + 0.15 × decay_factor)` — max 15% penalty for old content
+
+#### Fix 4: Domain Classifier Expansion ✅
+- [x] ANIME facts_filter expanded from 2 to 20+ keywords
+- [x] All domain filters (TECHNICAL, PERSONAL, SYSTEM) similarly expanded
+- [x] Lowered min_scores, increased max_sources
+
+#### Fix 5: Context Compiler Fact Prioritization ✅
+- [x] ALL facts included first (authoritative, compact)
+- [x] Hybrid/vector sources limited to 5 when facts exist (prevents noise drowning signal)
+- [x] Model token limits fixed to actual context windows (mistral:7b was 4096, actual 32K)
+
+#### Fix 6: System Prompt Strengthened ✅
+- [x] Added CRITICAL INSTRUCTION to use KNOWN FACTS when present
+- [x] LLM no longer ignores retrieved context in favor of general knowledge
+
+#### Fix 7: Multi-hop Trigger Fixed ✅
+- [x] Changed from quantity check (`total_returned < 3`) to quality check (`best_score < 0.5`)
+- [x] Now triggers second retrieval pass when initial results are low confidence
+
+#### Fix 8: Adaptive Text Weight Fallback ✅
+- [x] When 0 vector results survive garbage filter, text search gets full weight (1.0)
+- [x] Prevents total retrieval failure when vector search is degraded
+
+#### Remaining v0.6.x items
 
 | # | Milestone | Priority | Details |
 |---|-----------|----------|---------|
@@ -191,8 +235,7 @@ Echo Brain uses semantic versioning: **MAJOR.MINOR.PATCH**
 | 9 | Multi-turn conversation context | MEDIUM | Carry conversation history between turns |
 | 10 | Response streaming | LOW | SSE/streaming for better UX |
 | 11 | Chain-of-thought extraction | HIGH | Extract `<think>` blocks from deepseek-r1 |
-| 12 | Multi-hop reasoning | HIGH | Retrieve → reason → retrieve again → synthesize |
-| 15 | LLM-assisted classification | MEDIUM | Replace regex-only domain classifier |
+| 15 | Dead code cleanup | MEDIUM | Remove `reasoning_router.py` dead `/ask` endpoint, consolidate reasoning paths |
 | 17 | Model availability verification | HIGH | Runtime model check + fallback chain |
 
 ---

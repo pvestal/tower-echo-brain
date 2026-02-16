@@ -53,14 +53,15 @@ class ReasoningEngine:
             self.knowledge = get_unified_knowledge()
 
     async def process(self, query: str, allow_actions: bool = False,
-                     context: Dict[str, Any] = None) -> Response:
+                     context: Dict[str, Any] = None,
+                     session_id: Optional[str] = None) -> Response:
         """
         Main entry point for all queries.
 
         1. Classify query type
         2. Gather context based on type
         3. If action needed and allowed: plan and execute
-        4. Generate response using LLM
+        4. Generate response using LLM (with conversation history if session_id provided)
         5. Learn from interaction
         """
         start_time = datetime.now()
@@ -75,6 +76,18 @@ class ReasoningEngine:
 
             # 2. Gather context based on type
             relevant_context = await self._gather_context(query, query_type, context)
+
+            # 2b. Load conversation history if session_id provided
+            if session_id:
+                try:
+                    from src.services.conversation_service import get_conversation_service
+                    conv_service = get_conversation_service()
+                    turns = await conv_service.get_session_turns(session_id, limit=10)
+                    if turns:
+                        relevant_context['conversation_history'] = turns
+                        logger.info(f"Loaded {len(turns)} conversation turns for session {session_id}")
+                except Exception as e:
+                    logger.warning(f"Failed to load conversation history: {e}")
 
             # 3. Plan actions if needed
             action_plan = None
@@ -123,7 +136,7 @@ class ReasoningEngine:
 
             # 4. Generate response using LLM
             response_text = await self._generate_response(
-                query, query_type, relevant_context, actions_taken
+                query, query_type, relevant_context, actions_taken, session_id=session_id
             )
 
             # 5. Calculate execution time
@@ -236,6 +249,33 @@ class ReasoningEngine:
                 # Retrieve domain-appropriate context
                 retrieval_result = await self._retriever.retrieve(query, max_results=15)
 
+                # Multi-hop: if best score is weak or domain confidence is low, expand and re-retrieve
+                multi_hop = False
+                if (retrieval_result.get('best_score', 0) < 0.5 or
+                        retrieval_result['domain_confidence'] < 0.5 or
+                        not retrieval_result.get('retrieval_confident', True)):
+                    try:
+                        expanded_terms = await self._extract_expansion_terms(query, retrieval_result)
+                        if expanded_terms:
+                            expanded_query = f"{query} {' '.join(expanded_terms)}"
+                            second_pass = await self._retriever.retrieve(expanded_query, max_results=10)
+
+                            # Merge: keep highest score per source content
+                            existing_contents = {s.get('content', '')[:100] for s in retrieval_result['sources']}
+                            for source in second_pass['sources']:
+                                if source.get('content', '')[:100] not in existing_contents:
+                                    retrieval_result['sources'].append(source)
+                                    existing_contents.add(source.get('content', '')[:100])
+
+                            retrieval_result['total_returned'] = len(retrieval_result['sources'])
+                            retrieval_result['total_found'] = max(
+                                retrieval_result['total_found'], second_pass['total_found']
+                            )
+                            multi_hop = True
+                            logger.info(f"Multi-hop: expanded with {expanded_terms}, now {retrieval_result['total_returned']} sources")
+                    except Exception as e:
+                        logger.debug(f"Multi-hop expansion failed (non-blocking): {e}")
+
                 # Compile context for the model
                 model_name = self._get_model_for_query_type(query_type)
                 compiled = self._compiler.compile(
@@ -251,7 +291,8 @@ class ReasoningEngine:
                     'prompt_context': compiled['formatted_context'],
                     'confidence': retrieval_result['domain_confidence'],
                     'token_usage': f"{compiled['estimated_tokens']}/{compiled['token_limit']}",
-                    'source_breakdown': compiled['source_breakdown']
+                    'source_breakdown': compiled['source_breakdown'],
+                    'multi_hop': multi_hop
                 }
 
                 # Also store system prompt for the domain
@@ -743,39 +784,166 @@ class ReasoningEngine:
             return {'success': False, 'error': str(e)}
 
     async def _generate_response(self, query: str, query_type: QueryType,
-                                context: Dict[str, Any], actions_taken: List[Dict[str, Any]]) -> str:
-        """Generate response using LLM with structured context"""
+                                context: Dict[str, Any], actions_taken: List[Dict[str, Any]],
+                                session_id: Optional[str] = None) -> str:
+        """Generate response using LLM with structured context.
+        Uses chat mode with message history when conversation_history is available."""
         try:
-            # Build context for LLM
             system_prompt = self._build_system_prompt(query_type)
             context_text = self._build_context_text(context, actions_taken)
-            user_prompt = f"{context_text}\n\nUser Query: {query}"
 
-            # Call LLM
-            async with httpx.AsyncClient(timeout=30) as client:
-                response = await client.post(
-                    "http://localhost:11434/api/generate",
-                    json={
-                        "model": "mistral:7b",
-                        "prompt": f"{system_prompt}\n\n{user_prompt}",
-                        "stream": False,
-                        "options": {
-                            "temperature": 0.3,
-                            "top_p": 0.9
+            conversation_history = context.get('conversation_history', [])
+
+            if conversation_history:
+                # Multi-turn: use chat API with message history
+                from src.services.llm_service import get_llm_service
+                llm = get_llm_service()
+
+                messages = [
+                    {"role": "system", "content": f"{system_prompt}\n\n{context_text}"}
+                ]
+
+                # Add conversation history
+                for turn in conversation_history:
+                    messages.append({
+                        "role": turn["role"],
+                        "content": turn["content"]
+                    })
+
+                # Add current query
+                messages.append({"role": "user", "content": query})
+
+                result = await llm.chat(messages=messages, model="mistral:7b", temperature=0.3)
+                response_text = self._clean_response(result.content)
+
+            else:
+                # Single-turn: use generate API (original behavior)
+                user_prompt = f"{context_text}\n\nUser Query: {query}"
+
+                async with httpx.AsyncClient(timeout=30) as client:
+                    response = await client.post(
+                        "http://localhost:11434/api/generate",
+                        json={
+                            "model": "mistral:7b",
+                            "prompt": f"{system_prompt}\n\n{user_prompt}",
+                            "stream": False,
+                            "options": {
+                                "temperature": 0.3,
+                                "top_p": 0.9
+                            }
                         }
-                    }
-                )
+                    )
 
-                if response.status_code == 200:
-                    result = response.json()
-                    raw = result.get('response', 'No response generated')
-                    return self._clean_response(raw)
-                else:
-                    return f"Error generating response: {response.status_code}"
+                    if response.status_code == 200:
+                        result = response.json()
+                        raw = result.get('response', 'No response generated')
+                        response_text = self._clean_response(raw)
+                    else:
+                        return f"Error generating response: {response.status_code}"
+
+            # Store turns if session_id provided (fire-and-forget)
+            if session_id:
+                asyncio.create_task(self._store_session_turns(session_id, query, response_text))
+
+            return response_text
 
         except Exception as e:
             logger.error(f"Error generating response: {e}")
             return f"I encountered an error generating a response: {str(e)}"
+
+    async def process_stream(self, query: str, allow_actions: bool = False,
+                            context: Dict[str, Any] = None,
+                            session_id: Optional[str] = None):
+        """
+        Streaming version of process(). Yields SSE-formatted events.
+        Events: status, context, token, done
+        """
+        import json as _json
+        start_time = datetime.now()
+        context = context or {}
+
+        self._get_components()
+
+        def sse_event(event_type: str, data: dict) -> str:
+            return f"data: {_json.dumps({'type': event_type, 'data': data})}\n\n"
+
+        try:
+            # Phase 1: Classification
+            query_type = await self._classify_query(query)
+            yield sse_event("status", {"phase": "classifying", "query_type": query_type.value})
+
+            # Phase 2: Context gathering
+            yield sse_event("status", {"phase": "retrieving"})
+            relevant_context = await self._gather_context(query, query_type, context)
+
+            # Load conversation history
+            if session_id:
+                try:
+                    from src.services.conversation_service import get_conversation_service
+                    conv_service = get_conversation_service()
+                    turns = await conv_service.get_session_turns(session_id, limit=10)
+                    if turns:
+                        relevant_context['conversation_history'] = turns
+                except Exception:
+                    pass
+
+            domain = relevant_context.get('knowledge_context', {}).get('domain', 'general')
+            sources_count = relevant_context.get('knowledge_context', {}).get('sources_found', 0)
+            yield sse_event("context", {"sources": sources_count, "domain": domain})
+
+            # Phase 3: Stream LLM tokens
+            yield sse_event("status", {"phase": "generating"})
+
+            system_prompt = self._build_system_prompt(query_type)
+            context_text = self._build_context_text(relevant_context, [])
+            conversation_history = relevant_context.get('conversation_history', [])
+
+            from src.services.llm_service import get_llm_service
+            llm = get_llm_service()
+
+            full_response = []
+
+            if conversation_history:
+                # Multi-turn: build messages, but stream via generate (Ollama chat doesn't have great streaming)
+                history_text = "\n".join([f"{t['role']}: {t['content']}" for t in conversation_history[-6:]])
+                prompt = f"{system_prompt}\n\n{context_text}\n\nConversation history:\n{history_text}\n\nUser: {query}\nAssistant:"
+            else:
+                prompt = f"{system_prompt}\n\n{context_text}\n\nUser Query: {query}"
+
+            async for token in llm.generate_stream(prompt=prompt, model="mistral:7b", temperature=0.3):
+                full_response.append(token)
+                yield sse_event("token", {"text": token})
+
+            response_text = self._clean_response("".join(full_response))
+
+            # Store turns if session
+            if session_id:
+                asyncio.create_task(self._store_session_turns(session_id, query, response_text))
+
+            # Phase 4: Done
+            execution_time_ms = int((datetime.now() - start_time).total_seconds() * 1000)
+            confidence = self._calculate_confidence(relevant_context, [])
+
+            yield sse_event("done", {
+                "confidence": confidence,
+                "sources": self._extract_sources(relevant_context),
+                "query_type": query_type.value,
+                "execution_time_ms": execution_time_ms
+            })
+
+        except Exception as e:
+            logger.error(f"Streaming error: {e}")
+            yield sse_event("error", {"message": str(e)})
+
+    async def _store_session_turns(self, session_id: str, query: str, response: str):
+        """Fire-and-forget: store user query and assistant response as conversation turns."""
+        try:
+            from src.services.conversation_service import get_conversation_service
+            conv_service = get_conversation_service()
+            await conv_service.store_turn(session_id, "user", query)
+            await conv_service.store_turn(session_id, "assistant", response)
+        except Exception as e:
+            logger.debug(f"Failed to store session turns (non-blocking): {e}")
 
     def _clean_response(self, text: str) -> str:
         """Strip hallucinated trailing instructions and clean up LLM output."""
@@ -808,11 +976,10 @@ class ReasoningEngine:
     def _build_system_prompt(self, query_type: QueryType) -> str:
         """Build system prompt based on query type"""
         base_prompt = """You are Echo Brain, Patrick's intelligent AI assistant for the Tower system.
-You run on the Tower server (192.168.50.135) alongside 27+ services including anime production, knowledge base, voice chat, Apple Music, and financial tools.
 
-When RELEVANT KNOWLEDGE is provided in the context, prioritize it — but you may also use your general knowledge to give helpful, accurate answers. If context is provided but irrelevant to the question, ignore it and answer from your own knowledge. Be honest about what you know vs what you found in context.
+CRITICAL INSTRUCTION: When KNOWN FACTS are provided in the context below, you MUST use them to answer. These facts come from Patrick's verified knowledge base and are authoritative. Do NOT contradict or ignore them. If the facts directly answer the question, state the answer from the facts.
 
-Keep responses concise and conversational. Stop after answering — do not add internal notes or meta-commentary."""
+If no relevant context is provided, you may use general knowledge but say so. Keep responses concise and direct — answer the question first, then add details."""
 
         if query_type == QueryType.SELF_INTROSPECTION:
             return f"""{base_prompt}
@@ -1138,6 +1305,38 @@ Be specific about what you can actually do."""
         except Exception as e:
             logger.error(f"Error explaining symbol {symbol_name}: {e}")
             return f"Error analyzing symbol: {str(e)}"
+
+    async def _extract_expansion_terms(self, query: str, retrieval_result: Dict) -> List[str]:
+        """Extract expansion terms for multi-hop re-retrieval using a fast LLM."""
+        from src.services.llm_service import get_llm_service
+        llm = get_llm_service()
+
+        # Build a brief summary of what was found
+        found_snippets = []
+        for s in retrieval_result.get('sources', [])[:3]:
+            found_snippets.append(s.get('content', '')[:100])
+        found_text = "\n".join(found_snippets) if found_snippets else "No results found."
+
+        prompt = (
+            f"Given this query and its initial search results, suggest 2-3 additional search terms "
+            f"that could find related information.\n\n"
+            f"Query: {query}\n"
+            f"Domain: {retrieval_result.get('domain', 'general')}\n"
+            f"Initial results:\n{found_text}\n\n"
+            f"Return ONLY valid JSON: {{\"terms\": [\"term1\", \"term2\"]}}"
+        )
+
+        result = await asyncio.wait_for(
+            llm.generate(prompt=prompt, model="mistral:7b", temperature=0.1, max_tokens=50),
+            timeout=3.0
+        )
+
+        text = result.content.strip()
+        json_match = re.search(r'\{[^}]+\}', text)
+        if json_match:
+            data = json.loads(json_match.group())
+            return data.get("terms", [])[:3]
+        return []
 
     async def diagnose(self, issue: str) -> Diagnosis:
         """Systematic diagnosis using procedures"""

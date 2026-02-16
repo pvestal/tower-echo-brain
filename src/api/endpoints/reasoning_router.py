@@ -39,26 +39,35 @@ async def ask_question(request: AskRequest):
         # Use ParallelRetriever to search all sources
         retrieval_result = await retriever.retrieve(
             query=request.question,
-            max_results=10
+            max_results=20
         )
 
         # Extract sources for context
         sources = retrieval_result.get("sources", [])
 
-        # Build context from retrieved sources
+        # Build context from retrieved sources — use up to 15 sources
+        # Token budget: ~6000 tokens of context is safe for mistral:7b's 32K window
         context_pieces = []
-        for source in sources[:5]:  # Use top 5 sources
+        total_chars = 0
+        max_context_chars = 24000  # ~6000 tokens at 4 chars/token
+
+        for source in sources:
             content = source.get("content", "")
             source_type = source.get("source", "unknown")
             score = source.get("score", 0)
 
+            piece = f"[{source_type} - score: {score:.2f}]: {content}"
+
             # Prioritize authoritative sources
             metadata = source.get("metadata", {})
             if metadata.get("authoritative", False):
-                # Put authoritative sources first
                 context_pieces.insert(0, f"[AUTHORITATIVE - {source_type}]: {content}")
             else:
-                context_pieces.append(f"[{source_type} - score: {score:.2f}]: {content}")
+                context_pieces.append(piece)
+
+            total_chars += len(piece)
+            if total_chars >= max_context_chars:
+                break
 
         context = "\n\n".join(context_pieces)
 
@@ -94,7 +103,7 @@ Provide a specific, accurate answer based on the context. If the context contain
 
         # Format sources for response
         source_list = []
-        for source in sources[:5]:
+        for source in sources[:15]:
             source_info = source.get("source", "unknown")
             if source.get("metadata", {}).get("source_path"):
                 source_info = source["metadata"]["source_path"]

@@ -1,7 +1,7 @@
 # Echo Brain Architecture
 
-Version: 0.6.0
-Last Updated: 2026-02-15
+Version: 0.6.1
+Last Updated: 2026-02-16
 
 ---
 
@@ -33,7 +33,7 @@ PostgreSQL (echo_brain)                    Qdrant (echo_memory)
 ┌────────────────────────────┐             ┌─────────────────────────┐
 │ KNOWLEDGE                  │             │ 768D vectors            │
 │  knowledge_facts (2,558)   │◄───────────►│ nomic-embed-text        │
-│  facts (6,129 SPO triples) │             │ 194,921 points          │
+│  facts (6,129 SPO triples) │             │ 317,222 points          │
 │  conversations             │             │                         │
 │  documents                 │             │ Payload indexes:        │
 │  graph_edges               │             │  content (full-text)    │
@@ -145,14 +145,25 @@ User Query
     ▼
 Query Classifier (src/context_assembly/classifier.py)
     │  Classifies into 7 domains: TECHNICAL, ANIME, PERSONAL, SYSTEM,
-    │  GENERAL, CREATIVE, FINANCIAL (regex-based, not LLM)
+    │  GENERAL, CREATIVE, FINANCIAL
+    │  Method: regex fast path + embedding cosine similarity fallback
+    │  Score fusion: 0.4 × regex + 0.6 × embedding
+    │  Expanded keyword filters (20+ per domain as of v0.6.1)
     ▼
 Context Assembly (src/context_assembly/retriever.py)
     │  ParallelRetriever runs in parallel:
-    │  ├─ Qdrant HYBRID SEARCH (vector + full-text, 70/30 fusion)
+    │  ├─ Qdrant HYBRID SEARCH (vector + text, adaptive weighting)
+    │  │    ├─ Vector: cosine similarity, garbage-filtered (readability check)
+    │  │    └─ Text: OR-semantics `should` clauses, scored by term overlap
     │  ├─ PostgreSQL FTS (claude_conversations)
     │  └─ PostgreSQL facts (subject/predicate/object triples)
     │  Domain filters prevent cross-contamination
+    ▼
+Context Compiler (src/context_assembly/compiler.py)
+    │  Token budget management per model (actual context windows)
+    │  ALL facts included first (authoritative, compact)
+    │  Hybrid/vector sources limited to 5 when facts exist (reduce noise)
+    │  Emergency trim if over budget
     ▼
 LLM Reasoning (Ollama — model selected by intent)
     │  CODING → qwen2.5-coder:7b
@@ -160,27 +171,41 @@ LLM Reasoning (Ollama — model selected by intent)
     │  PERSONAL → llama3.1:8b
     │  FACTUAL → mistral:7b
     │  CREATIVE → gemma2:9b
-    │  System prompt + assembled context + user query
+    │  System prompt with CRITICAL INSTRUCTION to use KNOWN FACTS
+    │  + compiled context + user query
     ▼
 Response (with confidence, sources, reasoning_time_ms)
 ```
 
-#### Hybrid Search (v0.5.1, 2026-02-12)
+**Multi-hop reasoning** triggers when `best_score < 0.5` or domain confidence is low — performs a second retrieval pass with refined query.
 
-Inspired by OpenClaw's memory architecture. The Qdrant search now combines two retrieval methods:
+#### Hybrid Search (v0.5.1, overhauled v0.6.1)
+
+Inspired by OpenClaw's memory architecture. The Qdrant search combines two retrieval methods:
 
 ```
 Query → [Parallel]
-         ├─ Vector similarity (cosine, 30 results, threshold 0.3)
-         └─ Full-text keyword match (Qdrant text index, 30 results)
+         ├─ Vector similarity (cosine, 50 fetched, garbage-filtered to 30)
+         │    └─ Readability filter: space ratio, alphanumeric density, base64 detection
+         └─ Full-text keyword match (OR semantics via `should` clauses)
+         │    └─ Score by term overlap fraction (not AND — partial matches surface)
          ↓
-Weighted Score Fusion
-    score = 0.7 × vector_score + 0.3 × text_score
+Adaptive Weighted Score Fusion (weights vary by query type)
+    KEYWORD:    score = 0.4 × vector + 0.6 × text
+    CONCEPTUAL: score = 0.85 × vector + 0.15 × text
+    MIXED:      score = 0.7 × vector + 0.3 × text
          ↓
-Dedup by point_id → Authoritative boosting → Top K
+Fallback: If 0 vector results survive garbage filter, text gets full weight (1.0)
+         ↓
+Dedup by point_id → Time decay (max 15% penalty) → Top K
 ```
 
-This solves the "exact identifier miss" problem — queries for `cyberrealistic_v9.safetensors` or `dataset_approval_api.py` now return relevant results that pure vector similarity missed.
+**v0.6.1 fixes (2026-02-16):**
+- Text search changed from AND semantics (`match.text`) to OR semantics (`should` clauses) — queries with 5+ terms no longer return 0 results
+- Vector search garbage filter (`_is_readable_text()`) — rejects base64, binary, dense file paths before scoring
+- Time decay formula fixed: removed `stored_confidence` multiplier that penalized all results by 30%+
+- 43,523 garbage vectors (12.1%) purged from collection (360,745 → 317,222)
+- Ingestion pipeline readability filter prevents re-ingestion of non-readable content
 
 #### Adaptive Search Weighting (v0.6.0)
 
@@ -192,17 +217,19 @@ Queries are classified as KEYWORD, CONCEPTUAL, or MIXED, and weights are adjuste
 "echo brain architecture"   → MIXED      (vector=0.7, text=0.3)
 ```
 
-#### Temporal Decay + Confidence (v0.6.0)
+#### Temporal Decay + Confidence (v0.6.0, fixed v0.6.1)
 
 Every vector now carries `confidence` (0.2–1.0), `last_accessed`, and `access_count`. Retrieval scoring:
 
 ```
-score = base_score × stored_confidence × (0.8 + 0.2 × decay_factor)
+score = base_score × (0.85 + 0.15 × decay_factor)
 ```
 
 - Logarithmic decay: `decay = 1 / (1 + ln(1 + age_days/halflife))`
+- Maximum penalty: 15% (old formula penalized 20%+ and multiplied by stored_confidence)
 - Vectors with `access_count > 5` are exempt (usage-validated)
 - After retrieval, `last_accessed` and `access_count` are updated (fire-and-forget)
+- **v0.6.1 fix:** Removed `stored_confidence` multiplier from decay formula — was penalizing all results by 30%+ (default confidence 0.7)
 
 #### Graph Enrichment (v0.6.0)
 
@@ -402,30 +429,35 @@ Echo Brain and Tower Anime Production originally shared database tables and Qdra
 ## Known Architectural Weaknesses
 
 ### Retrieval & Memory
-1. **No retrieval confidence gate** — When vector search returns low-similarity results, the LLM falls back to general knowledge and generates plausible-sounding but incorrect answers. No threshold triggers "I don't have specific information about that."
+1. ~~**No retrieval confidence gate**~~ — **PARTIALLY RESOLVED v0.6.1**: Multi-hop trigger fires when `best_score < 0.5`. Compiler prioritizes authoritative facts over noisy hybrid results. System prompt instructs LLM to use KNOWN FACTS. Still no hard "I don't know" gate.
 2. ~~**No temporal ordering in vectors**~~ — **RESOLVED v0.6.0**: Vectors now carry `confidence`, `last_accessed`, `access_count`. Logarithmic time decay in retriever.
 3. ~~**No memory decay**~~ — **RESOLVED v0.6.0**: Logarithmic decay with usage-validated exemptions. Daily DecayWorker.
 4. ~~**No memory consolidation**~~ — **RESOLVED v0.6.0**: Semantic dedup (0.97 inline, 0.98 background) with metadata merge.
 5. ~~**No SHA-256 dedup on ingestion**~~ — **RESOLVED v0.6.0**: All ingestion paths check for near-duplicates before upsert.
+6. ~~**Garbage vectors in collection**~~ — **RESOLVED v0.6.1**: 43,523 base64/binary garbage vectors purged (12.1% of collection). Ingestion pipeline now filters non-readable content before embedding. Runtime readability filter in vector search as safety net.
+7. ~~**Text search AND semantics**~~ — **RESOLVED v0.6.1**: `match.text` required ALL tokens present, so multi-word queries returned 0 results. Changed to `should` clauses (OR semantics) with term overlap scoring.
+8. ~~**Time decay destroying scores**~~ — **RESOLVED v0.6.1**: Formula multiplied by `stored_confidence` (default 0.7), penalizing ALL results by 30%+. Removed confidence multiplier; now max 15% penalty.
 
 ### Reasoning & Intelligence
-6. **No true reasoning** — "Reasoning" is retrieval + single LLM call. No chain-of-thought extraction, no multi-hop reasoning, no iterative refinement.
-7. ~~**No conflict detection**~~ — **RESOLVED v0.6.0**: Governor worker resolves conflicting facts; retriever detects contradictions in search results.
-8. ~~**No fact verification**~~ — **RESOLVED v0.6.0**: FactScrubber verifies facts against source vectors (cosine + LLM).
-9. **Orphaned reasoning implementations** — `ReasoningEngine`, `IntelligenceEngine`, `UnifiedKnowledgeLayer` exist in `src/core/` but are NOT connected to the main pipeline. Creates confusion about "where does reasoning happen."
-10. **Chain-of-thought placeholder** — `thinking_steps=[]` in reasoning_layer.py is never populated, even when using deepseek-r1.
+9. **No true reasoning** — "Reasoning" is retrieval + single LLM call. No chain-of-thought extraction, no iterative refinement. Multi-hop retrieval now triggers on low-confidence results (v0.6.1).
+10. ~~**No conflict detection**~~ — **RESOLVED v0.6.0**: Governor worker resolves conflicting facts; retriever detects contradictions in search results.
+11. ~~**No fact verification**~~ — **RESOLVED v0.6.0**: FactScrubber verifies facts against source vectors (cosine + LLM).
+12. **Orphaned reasoning implementations** — `ReasoningEngine`, `IntelligenceEngine`, `UnifiedKnowledgeLayer` exist in `src/core/` but are NOT connected to the main pipeline. Creates confusion about "where does reasoning happen."
+13. **Chain-of-thought placeholder** — `thinking_steps=[]` in reasoning_layer.py is never populated, even when using deepseek-r1.
+14. ~~**LLM ignoring retrieved context**~~ — **RESOLVED v0.6.1**: System prompt now has CRITICAL INSTRUCTION to use KNOWN FACTS. Compiler limits noisy hybrid sources to 5 when facts exist, preventing signal drowning.
+15. **Two competing `/ask` endpoints** — `echo_main_router.py` (mounted first) shadows `reasoning_router.py` at the same path. The latter is dead code. Should be removed or consolidated.
 
 ### Routing & Classification
-11. **Regex-only domain classification** — No LLM-based intent detection. Classification is brittle pattern matching.
-12. **No multi-intent support** — Complex queries like "search my anime conversations and compare to tower architecture" get classified as one domain only.
+16. ~~**Regex-only domain classification**~~ — **PARTIALLY RESOLVED v0.6.1**: Now uses regex fast path + embedding cosine similarity fallback (0.4 regex + 0.6 embedding fusion). Not LLM-based but significantly more robust. Keyword filters expanded to 20+ per domain.
+17. **No multi-intent support** — Complex queries like "search my anime conversations and compare to tower architecture" get classified as one domain only.
 
 ### Infrastructure
-13. **Embedding model mismatch** — Pipeline uses `mxbai-embed-large` (1024D) but EmbeddingService defaults to `nomic-embed-text` (768D). Fallback would break Qdrant searches since collection is 768D.
-14. **Model availability unverified** — Code assumes 5+ Ollama models loaded, but RTX 3060 12GB can only hold ~1-2 at a time. No runtime fallback chain.
-15. **19 unmounted routers** — Dead code in `src/api/` — routers implemented but never mounted in main.py.
-16. **Agent system is mock** — `src/services/agent_service.py` returns hardcoded responses. Not functional.
-17. **No authentication** — Open API with no access control, rate limiting, or API keys.
-18. **Credentials in source** — Database password embedded as env var default in 11+ files.
+18. ~~**Embedding model mismatch**~~ — **RESOLVED**: All paths now use `nomic-embed-text` (768D). Qdrant collection is 768D. Old references to `mxbai-embed-large` (1024D) have been cleaned up.
+19. **Model availability unverified** — Code assumes 5+ Ollama models loaded, but RTX 3060 12GB can only hold ~1-2 at a time. No runtime fallback chain.
+20. **19 unmounted routers** — Dead code in `src/api/` — routers implemented but never mounted in main.py.
+21. **Agent system is mock** — `src/services/agent_service.py` returns hardcoded responses. Not functional.
+22. **No authentication** — Open API with no access control, rate limiting, or API keys.
+23. **Credentials in source** — Database password embedded as env var default in 11+ files.
 
 ---
 
@@ -462,7 +494,12 @@ Source Document (markdown, code, conversation, JSON)
 Chunking (segments < 6,000 chars with overlap)
     │
     ▼
-Deduplication (SHA-256 hash check)
+Readability Filter (v0.6.1)
+    │  Rejects: base64 blobs, binary content, dense file paths
+    │  Checks: space ratio (>2%), alphanumeric density (<85%), base64 regex
+    │  Applied at message level AND chunk level
+    ▼
+Deduplication (semantic cosine similarity, threshold 0.97)
     │
     ▼
 Embedding (768D via nomic-embed-text / Ollama)
@@ -478,4 +515,5 @@ Logging (domain_ingestion_log table)
 - Orchestrator: `src/ingestion/orchestrator.py`
 - Chunking: `src/ingestion/chunker.py`
 - Embedding: `src/services/embedding_service.py`
-- Conversation ingestion: `scripts/ingest_conversations.py`
+- Conversation ingestion: `scripts/ingest_claude_conversations.py`
+- Readability filter: `is_readable_text()` in `scripts/ingest_claude_conversations.py` and `_is_readable_text()` in `src/context_assembly/retriever.py`

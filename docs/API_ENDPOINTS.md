@@ -1,8 +1,8 @@
 # Echo Brain API Endpoints
 
-Version: 0.5.0
-Generated from live OpenAPI spec: 2026-02-11
-Total: **85 endpoints** across 81 paths
+Version: 0.6.1
+Last Updated: 2026-02-16
+Total: **90+ endpoints** across 85+ paths
 
 ---
 
@@ -41,7 +41,7 @@ Total: **85 endpoints** across 81 paths
 
 | Method | Path | Description |
 |--------|------|-------------|
-| POST | `/api/echo/memory/search` | Semantic vector search across echo_memory (176,566 vectors, 768D) |
+| POST | `/api/echo/memory/search` | Semantic vector search across echo_memory (317,222 vectors, 768D) |
 | GET | `/api/echo/memory/status` | Vector store connection status and collection info |
 | GET | `/api/echo/memory/health` | Memory subsystem health |
 | POST | `/api/echo/memory/ingest` | Trigger manual ingestion |
@@ -56,6 +56,18 @@ Total: **85 endpoints** across 81 paths
 |--------|------|-------------|
 | GET | `/api/echo/knowledge/facts` | List extracted facts (2,558 knowledge triples) |
 | GET | `/api/echo/knowledge/stats` | Knowledge base statistics |
+
+---
+
+## Knowledge Graph (v0.6.0+)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/echo/graph/related/{entity}` | BFS traversal — find entities related to a given entity |
+| GET | `/api/echo/graph/path` | Shortest path between two entities |
+| GET | `/api/echo/graph/neighborhood/{entity}` | Ego subgraph around an entity |
+| GET | `/api/echo/graph/stats` | Graph statistics (node count, edge count, density) |
+| POST | `/api/echo/graph/refresh` | Trigger incremental graph reload |
 
 ---
 
@@ -241,7 +253,7 @@ All voice endpoints support Whisper large-v3 STT and Piper TTS.
 
 | Method | Path | Description |
 |--------|------|-------------|
-| POST | `/mcp` | MCP tool handler — exposes `search_memory` and `get_facts` tools for Claude Code |
+| POST | `/mcp` | MCP tool handler — exposes `search_memory`, `get_facts`, `store_fact`, `explore_graph`, `manage_ollama` tools for Claude Code |
 | GET | `/mcp/health` | MCP server health |
 
 ---

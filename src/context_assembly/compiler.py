@@ -16,20 +16,20 @@ class ContextCompiler:
     """
 
     def __init__(self):
-        # Token limits for different models
+        # Token limits for different models (actual context windows)
         self.model_limits = {
-            "mistral:7b": 4096,
-            "llama3.1:8b": 8192,
-            "deepseek-r1:8b": 8192,
+            "mistral:7b": 32768,
+            "llama3.1:8b": 131072,
+            "deepseek-r1:8b": 65536,
             "gemma2:9b": 8192,
-            "qwen2.5-coder:7b": 8192,
-            "default": 4096
+            "qwen2.5-coder:7b": 32768,
+            "default": 32768
         }
 
         # Reserved tokens for system prompt and response
         self.reserved_tokens = {
-            "system_prompt": 500,
-            "user_query": 100,
+            "system_prompt": 800,
+            "user_query": 200,
             "response_buffer": 2000
         }
 
@@ -138,50 +138,55 @@ class ContextCompiler:
     ) -> List[Dict]:
         """
         Select sources that fit within token budget.
-        Prioritizes by score and diversity of types.
+        Prioritizes facts first (authoritative), then fills with other types.
+        When facts are present, limit noisy hybrid/vector sources to reduce distraction.
         """
         selected = []
         tokens_used = 0
 
-        # Priority order for source types
-        type_priority = ["fact", "vector", "conversation", "other"]
-
-        # First pass: take top item from each type
-        for source_type in type_priority:
-            if source_type in grouped_sources and grouped_sources[source_type]:
-                source = grouped_sources[source_type][0]
+        # Include ALL facts first — they're authoritative and compact
+        fact_count = 0
+        if "fact" in grouped_sources:
+            for source in grouped_sources["fact"]:
                 source_tokens = self._estimate_tokens(source.get("content", ""))
-
                 if tokens_used + source_tokens <= token_budget:
                     selected.append(source)
                     tokens_used += source_tokens
-                    grouped_sources[source_type] = grouped_sources[source_type][1:]
+                    fact_count += 1
+            grouped_sources["fact"] = []
 
-        # Second pass: fill remaining budget with highest scoring sources
+        # Second pass: fill with remaining types, prioritizing by score
+        # When facts exist, limit hybrid/vector to 5 (prevent noise drowning signal)
+        max_non_fact = 5 if fact_count > 0 else 15
+        non_fact_count = 0
+
         all_remaining = []
         for sources in grouped_sources.values():
             all_remaining.extend(sources)
 
-        # Sort by score
         all_remaining.sort(key=lambda x: x.get("score", 0), reverse=True)
 
         for source in all_remaining:
+            if non_fact_count >= max_non_fact:
+                break
+
             source_tokens = self._estimate_tokens(source.get("content", ""))
 
             if tokens_used + source_tokens <= token_budget:
                 selected.append(source)
                 tokens_used += source_tokens
+                non_fact_count += 1
             else:
-                # Try to fit a truncated version
                 available = token_budget - tokens_used
-                if available > 100:  # At least 100 tokens worth
+                if available > 100:
                     truncated_source = source.copy()
                     max_chars = available * self.chars_per_token
                     truncated_source["content"] = source["content"][:max_chars] + "..."
                     selected.append(truncated_source)
-                    break
+                    non_fact_count += 1
+                break
 
-        logger.info(f"Selected {len(selected)} sources using {tokens_used} tokens")
+        logger.info(f"Selected {len(selected)} sources ({fact_count} facts + {non_fact_count} other) using {tokens_used} tokens")
         return selected
 
     def _format_structured(self, sources: List[Dict], domain: str) -> str:

@@ -4,8 +4,10 @@ Consolidated ALL Echo Brain endpoints - NO DUPLICATION
 All endpoints under /api/echo/*
 """
 from fastapi import APIRouter, HTTPException
-from typing import Dict, Any, Optional
+from fastapi.responses import StreamingResponse
+from typing import Dict, Any, Optional, List
 from pydantic import BaseModel
+import json
 import logging
 from datetime import datetime
 import psutil
@@ -19,10 +21,20 @@ logger = logging.getLogger(__name__)
 class AskRequest(BaseModel):
     question: str
     allow_actions: bool = False
+    session_id: Optional[str] = None
 
 class QueryRequest(BaseModel):
     query: str
     allow_actions: bool = False
+    session_id: Optional[str] = None
+
+class SessionSaveRequest(BaseModel):
+    session_id: str
+    summary: str
+    topics: List[str] = []
+    key_decisions: List[str] = []
+    files_modified: List[str] = []
+    project_path: Optional[str] = None
 
 # Main router - will be mounted at /api/echo
 router = APIRouter(tags=["echo-brain"])
@@ -254,6 +266,162 @@ async def memory_ingest(request: Dict[str, Any]):
         "message": "Memory ingestion is not currently running"
     }
 
+# ============= SESSION PERSISTENCE =============
+@router.post("/session/save")
+async def save_session(request: SessionSaveRequest):
+    """Save a session summary for pre-compaction persistence"""
+    import asyncpg
+
+    try:
+        password = os.environ.get('PGPASSWORD', os.environ.get('DB_PASSWORD', ''))
+        conn = await asyncpg.connect(
+            host='localhost', database='echo_brain',
+            user='patrick', password=password, timeout=5
+        )
+
+        # Generate embedding for the summary
+        embedding = None
+        try:
+            async with httpx.AsyncClient(timeout=10) as client:
+                resp = await client.post(
+                    "http://localhost:11434/api/embed",
+                    json={"model": "nomic-embed-text", "input": request.summary}
+                )
+                if resp.status_code == 200:
+                    embeddings = resp.json().get("embeddings", [])
+                    if embeddings:
+                        embedding = embeddings[0]
+        except Exception as e:
+            logger.warning(f"Embedding generation failed for session: {e}")
+
+        # Insert into PostgreSQL
+        row_id = await conn.fetchval("""
+            INSERT INTO session_summaries (session_id, summary, topics, key_decisions, files_modified, project_path, embedding)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            RETURNING id
+        """, request.session_id, request.summary, request.topics,
+            request.key_decisions, request.files_modified, request.project_path,
+            str(embedding) if embedding else None)
+
+        await conn.close()
+
+        # Also store in Qdrant for semantic search
+        if embedding:
+            try:
+                import uuid
+                point_id = str(uuid.uuid4())
+                async with httpx.AsyncClient(timeout=10) as client:
+                    await client.put(
+                        "http://localhost:6333/collections/echo_memory/points",
+                        json={
+                            "points": [{
+                                "id": point_id,
+                                "vector": embedding,
+                                "payload": {
+                                    "content": request.summary,
+                                    "type": "session_summary",
+                                    "session_id": request.session_id,
+                                    "topics": request.topics,
+                                    "project_path": request.project_path,
+                                    "ingested_at": datetime.now().isoformat(),
+                                }
+                            }]
+                        }
+                    )
+            except Exception as e:
+                logger.warning(f"Qdrant session storage failed: {e}")
+
+        return {"id": str(row_id), "stored": True}
+
+    except Exception as e:
+        logger.error(f"Session save failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/session/recent")
+async def get_recent_sessions(limit: int = 5):
+    """Get recent session summaries"""
+    import asyncpg
+
+    try:
+        password = os.environ.get('PGPASSWORD', os.environ.get('DB_PASSWORD', ''))
+        conn = await asyncpg.connect(
+            host='localhost', database='echo_brain',
+            user='patrick', password=password, timeout=5
+        )
+
+        rows = await conn.fetch("""
+            SELECT id, session_id, summary, topics, key_decisions, files_modified, project_path, created_at
+            FROM session_summaries
+            ORDER BY created_at DESC
+            LIMIT $1
+        """, limit)
+
+        await conn.close()
+
+        return {
+            "sessions": [
+                {
+                    "id": str(row["id"]),
+                    "session_id": row["session_id"],
+                    "summary": row["summary"][:200],
+                    "topics": row["topics"],
+                    "project_path": row["project_path"],
+                    "created_at": row["created_at"].isoformat() if row["created_at"] else None
+                }
+                for row in rows
+            ],
+            "count": len(rows)
+        }
+
+    except Exception as e:
+        logger.error(f"Recent sessions retrieval failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/session/{session_id}")
+async def get_session(session_id: str):
+    """Retrieve a session summary by session_id"""
+    import asyncpg
+
+    try:
+        password = os.environ.get('PGPASSWORD', os.environ.get('DB_PASSWORD', ''))
+        conn = await asyncpg.connect(
+            host='localhost', database='echo_brain',
+            user='patrick', password=password, timeout=5
+        )
+
+        row = await conn.fetchrow("""
+            SELECT id, session_id, summary, topics, key_decisions, files_modified, project_path, created_at
+            FROM session_summaries
+            WHERE session_id = $1
+            ORDER BY created_at DESC
+            LIMIT 1
+        """, session_id)
+
+        await conn.close()
+
+        if not row:
+            raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
+
+        return {
+            "id": str(row["id"]),
+            "session_id": row["session_id"],
+            "summary": row["summary"],
+            "topics": row["topics"],
+            "key_decisions": row["key_decisions"],
+            "files_modified": row["files_modified"],
+            "project_path": row["project_path"],
+            "created_at": row["created_at"].isoformat() if row["created_at"] else None
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Session retrieval failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ============= INTELLIGENCE =============
 @router.get("/intelligence/map")
 async def knowledge_map():
@@ -413,7 +581,8 @@ async def ask(request: AskRequest):
     try:
         result = await reasoner.process(
             query=question,
-            allow_actions=allow_actions
+            allow_actions=allow_actions,
+            session_id=request.session_id
         )
 
         return {
@@ -424,6 +593,7 @@ async def ask(request: AskRequest):
             "sources": result.sources,
             "actions_taken": result.actions_taken,
             "execution_time_ms": result.execution_time_ms,
+            "session_id": request.session_id,
             "timestamp": datetime.now().isoformat()
         }
 
@@ -450,7 +620,8 @@ async def query(request: QueryRequest):
     try:
         result = await reasoner.process(
             query=request.query,
-            allow_actions=request.allow_actions
+            allow_actions=request.allow_actions,
+            session_id=request.session_id
         )
 
         return {
@@ -461,6 +632,7 @@ async def query(request: QueryRequest):
             "confidence": result.confidence,
             "sources": result.sources,
             "execution_time_ms": result.execution_time_ms,
+            "session_id": request.session_id,
             "timestamp": datetime.now().isoformat()
         }
 
@@ -476,6 +648,56 @@ async def query(request: QueryRequest):
             "execution_time_ms": 0,
             "timestamp": datetime.now().isoformat()
         }
+
+@router.post("/ask/stream")
+async def ask_stream(request: AskRequest):
+    """Streaming version of /ask — returns SSE events with retrieval progress + LLM tokens"""
+    from src.intelligence.reasoner import get_reasoning_engine
+    reasoner = get_reasoning_engine()
+
+    async def generate():
+        async for event in reasoner.process_stream(
+            query=request.question,
+            allow_actions=request.allow_actions,
+            session_id=request.session_id
+        ):
+            yield event
+
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no"
+        }
+    )
+
+
+@router.post("/query/stream")
+async def query_stream(request: QueryRequest):
+    """Streaming version of /query — returns SSE events with retrieval progress + LLM tokens"""
+    from src.intelligence.reasoner import get_reasoning_engine
+    reasoner = get_reasoning_engine()
+
+    async def generate():
+        async for event in reasoner.process_stream(
+            query=request.query,
+            allow_actions=request.allow_actions,
+            session_id=request.session_id
+        ):
+            yield event
+
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no"
+        }
+    )
+
 
 @router.get("/search")
 async def search(q: str, limit: int = 10):

@@ -2,8 +2,8 @@
 
 **Personal AI Assistant System — Self-Hosted Knowledge Layer & Agent Orchestrator**
 
-Version: **0.5.0** (Voice Interface, Frontend Dashboard, Test Infrastructure)
-Last Updated: 2026-02-11
+Version: **0.6.1** (Retrieval Quality Overhaul + Garbage Cleanup)
+Last Updated: 2026-02-16
 
 ---
 
@@ -21,9 +21,10 @@ The long-term vision is a system that:
 
 | Capability | Status | Details |
 |-----------|--------|---------|
-| Vector search over personal data | ✅ Working | 176,566 vectors in Qdrant (768D nomic-embed-text) |
+| Vector search over personal data | ✅ Working | 317,222 vectors in Qdrant (768D nomic-embed-text) |
+| Hybrid search (vector + text) | ✅ Working | Adaptive weighting, OR-semantics text search, garbage filtering |
 | Fact extraction from vectors | ✅ Running | 2,558 structured facts in PostgreSQL |
-| Conversation ingestion | ✅ Running | Watches `~/.claude/projects/`, 10 min cycles |
+| Conversation ingestion | ✅ Running | Watches `~/.claude/projects/`, 10 min cycles, readability filter |
 | Knowledge graph building | ✅ Running | Connections between facts, conflict detection (daily) |
 | Domain knowledge ingestion | ✅ Running | Anime production, ComfyUI workflows, models (60 min) |
 | Reasoning pipeline | ✅ Working | CLASSIFY → RETRIEVE → REASON → RESPOND |
@@ -34,8 +35,12 @@ The long-term vision is a system that:
 | Voice interface (STT + TTS) | ✅ Working | Whisper large-v3 (CUDA) + Piper TTS, WebSocket streaming |
 | Web dashboard (Vue 3) | ✅ Working | Voice panel, system view, memory search, endpoint tester |
 | MCP server | ✅ Working | Model Context Protocol at `/mcp` for Claude integration |
-| Intelligence layer (ask/query) | ✅ Working | `/api/echo/ask` with context retrieval and LLM reasoning |
+| Intelligence layer (ask/query) | ✅ Working | `/api/echo/ask` with fact-prioritized context and strengthened prompts |
 | Contract test suite | ✅ Running | Pact V4 consumer contracts + pytest smoke tests |
+| Temporal decay + confidence | ✅ Running | Logarithmic decay, usage-validated exemptions, daily worker |
+| Semantic deduplication | ✅ Running | Inline (0.97) + background (0.98) with metadata merge |
+| Knowledge graph traversal | ✅ Working | NetworkX DiGraph, BFS, shortest path, MCP integration |
+| HMLR fact verification | ✅ Running | FactScrubber (2h) + Governor (12h) conflict resolution |
 | Home Assistant integration | -- Planned | Phase 4+ |
 
 ## Architecture Overview
@@ -87,9 +92,10 @@ The long-term vision is a system that:
 │  │  └── WebSocket: Real-time bidirectional streaming          │   │
 │  │                                                            │   │
 │  │  Intelligence Layer                                        │   │
-│  │  ├── Query Classification                                  │   │
-│  │  ├── Context Assembly (ParallelRetriever)                  │   │
-│  │  ├── LLM Reasoning (Ollama mistral:7b)                    │   │
+│  │  ├── Query Classification (regex + embedding)              │   │
+│  │  ├── Hybrid Retrieval (vector + text, OR-semantics)        │   │
+│  │  ├── Context Compiler (fact-prioritized, budget-managed)   │   │
+│  │  ├── LLM Reasoning (Ollama, model-per-intent)             │   │
 │  │  └── Response Synthesis                                    │   │
 │  │                                                            │   │
 │  │  Frontend (Vue 3 + TypeScript, port 8311)                  │   │
@@ -105,9 +111,9 @@ The long-term vision is a system that:
 │  │  (echo_brain)  │  │  (6333)       │  │    (11434)       │     │
 │  │  - knowledge   │  │  echo_memory  │  │  mistral:7b      │     │
 │  │    facts       │  │  768D vecs    │  │  nomic-embed-text│     │
-│  │  - autonomous  │  │  176,566 pts  │  │  gemma2:9b       │     │
-│  │  - self-aware  │  │               │  │  deepseek-r1:8b  │     │
-│  │  - proposals   │  │  story_bible  │  │  deepseek-coder  │     │
+│  │  - autonomous  │  │  317,222 pts  │  │  gemma2:9b       │     │
+│  │  - self-aware  │  │  text+keyword │  │  deepseek-r1:8b  │     │
+│  │  - proposals   │  │  indexes      │  │  deepseek-coder  │     │
 │  └───────────────┘  └───────────────┘  └──────────────────┘     │
 └──────────────────────────────────────────────────────────────────┘
 ```
@@ -281,7 +287,8 @@ See [tests/TEST_INVENTORY.md](./tests/TEST_INVENTORY.md) for the full test file 
 | QDRANT_URL | `http://localhost:6333` | Hardcoded in workers |
 | OLLAMA_URL | `http://localhost:11434` | Hardcoded in workers |
 | EMBEDDING_MODEL | `nomic-embed-text` (768D) | workers + retriever |
-| REASONING_MODEL | `mistral:7b` | intelligence/reasoner.py |
+| EMBEDDING_DIM | `768` | echo_memory Qdrant collection |
+| REASONING_MODEL | `mistral:7b` (default) | intelligence/reasoner.py (model-per-intent routing) |
 | EXTRACTION_MODEL | `gemma2:9b` | fact_extraction_worker.py |
 | SERVICE_PORT | `8309` | systemd service |
 | FRONTEND_PORT | `8311` | Vite dev / nginx |
@@ -296,7 +303,7 @@ Echo Brain uses a **microservices database architecture** with dedicated databas
 | **tower_auth** | Authentication and service registry |
 | **tower_kb** | Knowledge base (documents, articles) |
 | **anime_production** | Animation production data |
-| **Qdrant** | Vector embeddings: echo_memory (176,566 pts), story_bible |
+| **Qdrant** | Vector embeddings: echo_memory (317,222 pts), story_bible |
 
 Database separation from tower_consolidated is complete. See `MIGRATION_COMPLETE.md` for details.
 

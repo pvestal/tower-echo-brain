@@ -5,6 +5,46 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ---
 
+## [0.6.1] - 2026-02-16 (Retrieval Quality Overhaul + Garbage Cleanup)
+
+### Fixed
+- Text search AND→OR semantics: Qdrant `match.text` required ALL tokens present, so multi-word queries returned 0 results. Changed to `should` clauses with term overlap fraction scoring.
+- Time decay formula: removed `stored_confidence` multiplier that penalized all results by 30%+ (default confidence 0.7). New formula: `score × (0.85 + 0.15 × decay_factor)` — max 15% penalty.
+- Context compiler model limits: mistral:7b was set to 4096 tokens (actual: 32,768), leaving only 1,496 tokens for context. Fixed all models to actual context windows.
+- Multi-hop reasoning trigger: changed from quantity check (`total_returned < 3`, never fires) to quality check (`best_score < 0.5`).
+- LLM ignoring retrieved context: system prompt now has CRITICAL INSTRUCTION to use KNOWN FACTS. Compiler limits noisy hybrid sources to 5 when authoritative facts exist.
+
+### Added
+- Garbage vector filtering: `_is_readable_text()` in retriever rejects base64, binary, dense file paths before scoring. Checks space ratio (<2% = garbage), alphanumeric density (>85% = garbage), base64 regex.
+- Ingestion pipeline readability filter: `is_readable_text()` in `scripts/ingest_claude_conversations.py` prevents non-readable content from being embedded. Applied at both message and chunk level.
+- Adaptive text weight fallback: when 0 vector results survive garbage filter, text search gets full weight (1.0) instead of 0.15.
+- Context compiler fact prioritization: ALL facts included first (authoritative), then hybrid/vector limited to 5 when facts present.
+
+### Changed
+- Domain classifier keyword filters expanded from 2 to 20+ per domain (ANIME, TECHNICAL, PERSONAL, SYSTEM).
+- Domain classifier min_scores lowered, max_sources increased for better recall.
+- Qdrant echo_memory: 360,745 → 317,222 vectors (43,523 garbage purged, 12.1% of collection).
+
+---
+
+## [0.6.0] - 2026-02-15 (Semantic Memory Architecture)
+
+### Added
+- Temporal decay + confidence scoring: `confidence`, `last_accessed`, `access_count` on all Qdrant payloads
+- Logarithmic decay in retriever with usage-validated exemptions (access_count > 5)
+- Daily DecayWorker for background confidence decay
+- Semantic deduplication: inline (0.97 threshold) + background DedupWorker (0.98, every 6h)
+- `src/core/dedup.py` — shared module for check_duplicate, merge_metadata, bump_existing_point
+- Adaptive search weighting: KEYWORD (0.4/0.6), CONCEPTUAL (0.85/0.15), MIXED (0.7/0.3)
+- Knowledge graph engine: NetworkX DiGraph over facts + graph_edges
+- Graph API: `/api/echo/graph/related/{entity}`, `/path`, `/neighborhood/{entity}`, `/stats`, `POST /refresh`
+- `explore_graph` MCP tool for Claude Code integration
+- FactScrubber worker: cosine similarity + LLM verification (every 2h)
+- Governor worker: conflict resolution via effective_score ranking (every 12h)
+- `governor_decisions` audit table
+
+---
+
 ## [0.5.1] - 2026-02-15 (Ollama Model Management)
 
 ### Added

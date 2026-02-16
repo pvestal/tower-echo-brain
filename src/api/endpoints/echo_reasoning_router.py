@@ -193,6 +193,85 @@ Provide analysis:
             }) + "\n"
             initial_analysis = "Analysis failed"
 
+        # Stage 4.5: Re-Retrieval (Multi-Hop)
+        re_retrieval_context = []
+        if max_depth > 1 and initial_analysis and initial_analysis != "Analysis failed":
+            yield json.dumps({
+                "stage": 4.5,
+                "name": "Re-Retrieval",
+                "status": "starting",
+                "details": "Extracting new search terms from analysis..."
+            }) + "\n"
+
+            try:
+                # Ask LLM to extract new search terms from the analysis
+                extraction_prompt = (
+                    f"Extract 2-3 key search terms from this analysis that weren't in the original query.\n"
+                    f"Original query: {query}\n\n"
+                    f"Analysis:\n{initial_analysis[:500]}\n\n"
+                    f"Return ONLY valid JSON: {{\"terms\": [\"term1\", \"term2\"]}}"
+                )
+
+                async with httpx.AsyncClient(timeout=5) as client:
+                    extract_resp = await client.post(
+                        "http://localhost:11434/api/generate",
+                        json={"model": "mistral:7b", "prompt": extraction_prompt, "stream": False,
+                              "options": {"temperature": 0.1, "num_predict": 60}}
+                    )
+                    extract_text = extract_resp.json().get("response", "")
+
+                    # Parse terms from JSON
+                    import re as _re
+                    json_match = _re.search(r'\{[^}]+\}', extract_text)
+                    new_terms = []
+                    if json_match:
+                        terms_data = json.loads(json_match.group())
+                        new_terms = terms_data.get("terms", [])[:3]
+
+                    if new_terms:
+                        # Run second retrieval pass with extracted terms
+                        combined_query = " ".join(new_terms)
+                        from src.integrations.mcp_service import mcp_service
+                        re_results = await mcp_service.search_memory(combined_query, limit=5)
+
+                        if re_results and "results" in re_results:
+                            # Deduplicate against first-pass results
+                            existing_ids = {m.get("source", "") + m.get("content", "")[:50]
+                                            for m in memory_context}
+                            for mem in re_results["results"]:
+                                key = mem.get("source", "") + mem.get("content", "")[:50]
+                                if key not in existing_ids:
+                                    re_retrieval_context.append({
+                                        "content": mem.get("content", "")[:200],
+                                        "score": mem.get("score", 0),
+                                        "source": mem.get("source", "re-retrieval")
+                                    })
+
+                        yield json.dumps({
+                            "stage": 4.5,
+                            "name": "Re-Retrieval",
+                            "status": "complete",
+                            "result": {
+                                "new_terms": new_terms,
+                                "additional_sources": len(re_retrieval_context)
+                            }
+                        }) + "\n"
+                    else:
+                        yield json.dumps({
+                            "stage": 4.5,
+                            "name": "Re-Retrieval",
+                            "status": "complete",
+                            "result": {"new_terms": [], "additional_sources": 0, "note": "No new terms extracted"}
+                        }) + "\n"
+
+            except Exception as e:
+                yield json.dumps({
+                    "stage": 4.5,
+                    "name": "Re-Retrieval",
+                    "status": "skipped",
+                    "error": str(e)
+                }) + "\n"
+
         # Stage 5: Deep Reasoning
         if max_depth > 1:
             yield json.dumps({
@@ -202,6 +281,11 @@ Provide analysis:
                 "details": "Synthesizing comprehensive answer..."
             }) + "\n"
 
+            re_retrieval_section = ""
+            if re_retrieval_context:
+                re_items = chr(10).join([f"- [Score: {r['score']:.2f}] {r['content']}" for r in re_retrieval_context[:3]])
+                re_retrieval_section = f"\nAdditional Context from Re-Retrieval ({len(re_retrieval_context)} items):\n{re_items}"
+
             synthesis_prompt = f"""Based on the analysis:
 {initial_analysis}
 
@@ -210,7 +294,7 @@ Original Query: {query}
 Context Summary:
 - Memory vectors searched: {len(memory_context)} relevant items
 - Conversation history: {total_count if 'total_count' in locals() else 0} total matches
-- Time range: Recent to historical
+- Time range: Recent to historical{re_retrieval_section}
 
 Provide comprehensive reasoning:
 1. Synthesize all information

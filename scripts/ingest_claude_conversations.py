@@ -12,6 +12,7 @@ from datetime import datetime
 from pathlib import Path
 import hashlib
 import logging
+import re
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -35,6 +36,26 @@ if not DB_PASS:
 QDRANT_URL = "http://localhost:6333"
 OLLAMA_URL = "http://localhost:11434"
 CLAUDE_CONVERSATIONS_DIR = Path.home() / ".claude" / "projects"
+
+def is_readable_text(text: str) -> bool:
+    """Filter out base64, binary, dense file paths, and other non-readable content."""
+    if not text or len(text) < 10:
+        return False
+    # Check space ratio — readable text has spaces between words
+    space_ratio = text.count(' ') / len(text)
+    if space_ratio < 0.02:
+        return False
+    # Check alphanumeric density — base64/binary is nearly all alnum with no spaces
+    sample = text[:200]
+    if sample:
+        alnum_count = sum(1 for c in sample if c.isalnum())
+        if alnum_count / len(sample) > 0.85:
+            return False
+    # Check for base64 patterns (long strings without spaces)
+    if re.search(r'[A-Za-z0-9+/=]{100,}', text[:500]):
+        return False
+    return True
+
 
 async def get_embedding(text: str, session: httpx.AsyncClient) -> list:
     """Get embedding from Ollama"""
@@ -101,7 +122,7 @@ async def process_jsonl_file(filepath: Path, db_conn, qdrant_client, session):
                         # Fallback - sometimes content is directly in the message
                         content = str(message.get('content', ''))
 
-                    if content:
+                    if content and is_readable_text(content):
                         conversation_content.append(f"[{role}]: {content}")
 
                         # Create chunks for long messages
@@ -109,6 +130,8 @@ async def process_jsonl_file(filepath: Path, db_conn, qdrant_client, session):
                             chunks = [content[i:i+1000] for i in range(0, len(content), 800)]
                             logger.debug(f"Processing {len(chunks)} chunks for message {line_num}")
                             for chunk_idx, chunk in enumerate(chunks):
+                                if not is_readable_text(chunk):
+                                    continue
                                 logger.debug(f"Getting embedding for chunk {chunk_idx}: {chunk[:50]}...")
                                 embedding = await get_embedding(chunk, session)
                                 if embedding:
