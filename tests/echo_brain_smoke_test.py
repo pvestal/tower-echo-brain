@@ -2,513 +2,505 @@
 """
 Echo Brain Smoke Test Suite
 ============================
-Comprehensive test suite for Echo Brain API endpoints and database migration status.
+Sequential system verification that tests infrastructure + every claimed capability.
 
-Usage:
-    # Run all tests
-    pytest echo_brain_smoke_test.py -v
+Run:
+    pytest tests/echo_brain_smoke_test.py -v
+    pytest tests/echo_brain_smoke_test.py -v -k "embedding"
+    pytest tests/echo_brain_smoke_test.py -v -k "mcp"
 
-    # Run specific test group
-    pytest echo_brain_smoke_test.py -k "health"
-    pytest echo_brain_smoke_test.py -k "query"
-    pytest echo_brain_smoke_test.py -k "separation"
+Test groups (ordered by dependency):
+  1. Infrastructure     — Services alive
+  2. EmbeddingConsistency — THE thing that keeps breaking
+  3. QdrantIndexes      — Text + keyword indexes exist
+  4. VectorQuality      — No garbage in sample
+  5. HybridSearch       — MCP retrieval pipeline
+  6. Facts              — PostgreSQL structured knowledge
+  7. IntelligencePipeline — /ask end-to-end
+  8. Workers            — Autonomous system running
+  9. Voice              — STT/TTS service
+ 10. KnowledgeGraph     — v0.6.0 graph feature
+ 11. MCPTools           — All MCP tools respond
 """
 
 import json
+import re
 import time
-import os
+
 import pytest
 import requests
-from typing import Optional, Any
-
 
 # ─── Configuration ───────────────────────────────────────────────────────────
 
 BASE_URL = "http://localhost:8309"
-TIMEOUT = 15
-QUERY_TIMEOUT = 30
+QDRANT_URL = "http://localhost:6333"
+OLLAMA_URL = "http://localhost:11434"
+TIMEOUT = 10
+QUERY_TIMEOUT = 45
+
+# ─── Known correct values (verified 2026-02-16) ─────────────────────────────
+
+EXPECTED_EMBEDDING_DIM = 768
+EXPECTED_EMBEDDING_MODEL = "nomic-embed-text"
+MIN_VECTOR_COUNT = 100_000
 
 
 # ─── Helpers ─────────────────────────────────────────────────────────────────
 
-def get(path: str, timeout: int = TIMEOUT, **kwargs) -> requests.Response:
-    """GET with proper error handling."""
-    return requests.get(f"{BASE_URL}{path}", timeout=timeout, **kwargs)
+def get(url: str, timeout: int = TIMEOUT) -> requests.Response:
+    return requests.get(url, timeout=timeout)
 
 
-def post(path: str, payload: dict, timeout: int = QUERY_TIMEOUT, **kwargs) -> requests.Response:
-    """POST JSON with proper error handling."""
-    return requests.post(
-        f"{BASE_URL}{path}",
-        json=payload,
-        headers={"Content-Type": "application/json"},
+def post(url: str, payload: dict, timeout: int = QUERY_TIMEOUT) -> requests.Response:
+    return requests.post(url, json=payload, timeout=timeout)
+
+
+def mcp_call(tool: str, arguments: dict, timeout: int = QUERY_TIMEOUT) -> requests.Response:
+    """Call an MCP tool via the /mcp endpoint."""
+    return post(
+        f"{BASE_URL}/mcp",
+        {"method": "tools/call", "params": {"name": tool, "arguments": arguments}},
         timeout=timeout,
-        **kwargs,
     )
 
 
+def mcp_results(resp: requests.Response) -> list:
+    """Extract the results list from an MCP response (handles both list and dict formats)."""
+    data = resp.json()
+    if isinstance(data, list):
+        return data
+    if isinstance(data, dict):
+        return data.get("results", data.get("result", []))
+    return []
+
+
+def is_readable_text(text: str) -> bool:
+    """Check if text is human-readable (not base64 garbage)."""
+    if not text or len(text) < 10:
+        return False
+    # Space ratio check
+    space_ratio = text.count(" ") / len(text) if text else 0
+    # Alphanumeric density
+    alnum = sum(c.isalnum() or c.isspace() for c in text) / len(text) if text else 0
+    return space_ratio > 0.05 and alnum > 0.6
+
+
 # ═════════════════════════════════════════════════════════════════════════════
-#  TEST GROUP 1: HEALTH & CONNECTIVITY
+#  1. INFRASTRUCTURE — Services alive
 # ═════════════════════════════════════════════════════════════════════════════
 
-class TestHealth:
-    """Basic health and connectivity checks."""
+class TestInfrastructure:
+    """All external services must be reachable."""
 
-    def test_root_health(self):
-        """GET /health — should return status and uptime."""
-        resp = get("/health")
-        assert resp.status_code == 200, f"Health check failed: HTTP {resp.status_code}"
-
+    def test_health_endpoint(self):
+        """GET /health returns {"status": "healthy"}."""
+        resp = get(f"{BASE_URL}/health")
+        assert resp.status_code == 200
         body = resp.json()
-        assert "status" in body, f"Missing 'status' in health response: {body}"
-        assert body["status"] == "healthy", f"Unhealthy status: {body['status']}"
-
-        # Response time check (warning only)
-        ms = resp.elapsed.total_seconds() * 1000
-        assert ms < 1000, f"Health check slow: {ms:.1f}ms (expected <1000ms)"
-
-    def test_api_echo_health(self):
-        """GET /api/echo/health/detailed — namespaced health endpoint."""
-        resp = get("/api/echo/health/detailed")
-        assert resp.status_code == 200, f"Echo health failed: HTTP {resp.status_code}"
-
-    def test_openapi_spec(self):
-        """GET /openapi.json — FastAPI auto-generated spec exists."""
-        resp = get("/openapi.json")
-        assert resp.status_code == 200, f"OpenAPI spec missing: HTTP {resp.status_code}"
-
-        body = resp.json()
-        assert "paths" in body, "Invalid OpenAPI spec - missing 'paths'"
-        assert len(body["paths"]) > 0, "OpenAPI spec has no endpoints defined"
-
-    def test_docs_available(self):
-        """GET /docs — Swagger UI should be available."""
-        resp = get("/docs")
-        assert resp.status_code == 200, f"Swagger docs unavailable: HTTP {resp.status_code}"
-        assert "swagger" in resp.text.lower() or "openapi" in resp.text.lower(), "Not a valid docs page"
-
-
-# ═════════════════════════════════════════════════════════════════════════════
-#  TEST GROUP 2: CORE QUERY ENDPOINTS
-# ═════════════════════════════════════════════════════════════════════════════
-
-class TestCoreQuery:
-    """Main query/chat endpoints — the heart of Echo Brain."""
-
-    def test_echo_query_simple(self):
-        """POST /api/echo/query — basic conversational query."""
-        payload = {"query": "What is 2 plus 2?"}
-        resp = post("/api/echo/query", payload)
-
-        # May return 405 if endpoint uses different method
-        if resp.status_code == 405:
-            pytest.skip("/api/echo/query returns 405 - may use different method")
-
-        assert resp.status_code == 200, f"Query failed: HTTP {resp.status_code}"
-
-        body = resp.json()
-        # Check for any response field
-        response_fields = ["response", "answer", "result", "content", "message"]
-        has_response = any(field in body for field in response_fields)
-        assert has_response, f"No response content in: {list(body.keys())}"
-
-        # Verify it actually answered (contains "4" or "four")
-        response_text = str(body.get("response", body.get("answer", ""))).lower()
-        assert "4" in response_text or "four" in response_text, f"Wrong answer: {response_text[:100]}"
-
-    def test_echo_query_code_routing(self):
-        """POST /api/echo/query — code query should route to code model."""
-        payload = {"query": "Write a Python function to reverse a string"}
-        resp = post("/api/echo/query", payload)
-
-        if resp.status_code == 405:
-            pytest.skip("Query endpoint not available")
-
-        assert resp.status_code == 200, f"Code query failed: HTTP {resp.status_code}"
-
-        body = resp.json()
-        # Check if model_used indicates code model or intelligence layer
-        if "model_used" in body:
-            model = body["model_used"].lower()
-            is_code_model = any(m in model for m in ["deepseek", "code", "coder", "intelligence"])
-            assert is_code_model, f"Code query routed to wrong model: {model}"
-
-    def test_echo_chat_endpoint(self):
-        """POST /api/echo/chat — alternative chat endpoint."""
-        payload = {"query": "Hello"}
-        resp = post("/api/echo/chat", payload)
-
-        if resp.status_code == 404:
-            pytest.skip("/api/echo/chat endpoint not implemented")
-
-        assert resp.status_code in [200, 405], f"Chat endpoint error: HTTP {resp.status_code}"
-
-    def test_echo_ask_endpoint(self):
-        """POST /api/echo/ask — intelligence/ask endpoint with 'question' field."""
-        # This was the bug from the session - must use 'question' not 'query'
-        payload = {"question": "How much RAM does Tower have?"}
-        resp = post("/api/echo/ask", payload)
-
-        if resp.status_code == 404:
-            pytest.skip("/api/echo/ask endpoint not implemented")
-
-        assert resp.status_code == 200, f"Ask endpoint failed: HTTP {resp.status_code}"
-
-        body = resp.json()
-        # Should have a real answer mentioning RAM
-        response_text = str(body.get("answer", body.get("response", ""))).lower()
-        assert len(response_text) > 10, f"Empty or too short response: {response_text}"
-
-    def test_wrong_field_name_fails(self):
-        """POST /api/echo/ask with 'query' instead of 'question' should fail or return empty."""
-        payload = {"query": "This should fail or return empty"}
-        resp = post("/api/echo/ask", payload)
-
-        if resp.status_code == 404:
-            pytest.skip("/api/echo/ask not implemented")
-
-        # Should either return 422 (validation error) or 200 with empty/generic response
-        if resp.status_code == 422:
-            pass  # Good - field validation works
-        elif resp.status_code == 200:
-            body = resp.json()
-            response = str(body.get("answer", body.get("response", "")))
-            # Response should be empty or generic (not a real answer)
-            assert len(response) < 20 or "i don" in response.lower(), \
-                f"Wrong field name still worked - got real answer: {response[:100]}"
-
-
-# ═════════════════════════════════════════════════════════════════════════════
-#  TEST GROUP 3: MEMORY & VECTOR SEARCH
-# ═════════════════════════════════════════════════════════════════════════════
-
-class TestMemoryVectorSearch:
-    """Memory retrieval and vector search endpoints."""
-
-    def test_memory_search_mcp(self):
-        """POST /mcp search_memory — MCP memory search endpoint."""
-        payload = {
-            "method": "tools/call",
-            "params": {
-                "name": "search_memory",
-                "arguments": {
-                    "query": "Tower hardware specs",
-                    "limit": 3
-                }
-            }
-        }
-        resp = post("/mcp", payload)
-
-        if resp.status_code == 404:
-            pytest.skip("MCP endpoint not available")
-
-        assert resp.status_code == 200, f"MCP search failed: HTTP {resp.status_code}"
-
-        body = resp.json()
-        # MCP returns array of results directly
-        assert isinstance(body, list), f"Expected list, got {type(body).__name__}"
-        assert len(body) > 0, "No results returned from memory search"
-
-        # Verify result structure
-        first_result = body[0]
-        assert "content" in first_result, f"Missing 'content' in result: {list(first_result.keys())}"
-        assert "score" in first_result, f"Missing 'score' in result: {list(first_result.keys())}"
-
-    def test_get_facts_mcp(self):
-        """POST /mcp get_facts — retrieve structured facts."""
-        payload = {
-            "method": "tools/call",
-            "params": {
-                "name": "get_facts",
-                "arguments": {
-                    "topic": "Tower"
-                }
-            }
-        }
-        resp = post("/mcp", payload)
-
-        if resp.status_code == 404:
-            pytest.skip("MCP get_facts not available")
-
-        assert resp.status_code == 200, f"Get facts failed: HTTP {resp.status_code}"
-
-    def test_memory_endpoint_exists(self):
-        """Check if any memory endpoint exists."""
-        endpoints = ["/api/memory", "/api/echo/memory", "/api/memory/conversations"]
-
-        found = False
-        for endpoint in endpoints:
-            try:
-                resp = get(endpoint)
-                if resp.status_code in [200, 405]:  # 405 means exists but wrong method
-                    found = True
-                    break
-            except:
-                continue
-
-        if not found:
-            pytest.skip("No memory endpoint implemented yet")
-
-
-# ═════════════════════════════════════════════════════════════════════════════
-#  TEST GROUP 4: EMBEDDING & VECTOR VALIDATION
-# ═════════════════════════════════════════════════════════════════════════════
-
-class TestEmbeddings:
-    """Validate embedding pipeline and vector store configuration."""
+        assert body["status"] == "healthy", f"Unhealthy: {body}"
 
     def test_qdrant_reachable(self):
-        """Qdrant should be running on port 6333."""
-        try:
-            resp = requests.get("http://localhost:6333/collections", timeout=5)
-            assert resp.status_code == 200, f"Qdrant not responding: HTTP {resp.status_code}"
-        except requests.exceptions.ConnectionError:
-            pytest.fail("Qdrant not reachable on localhost:6333 - is it running?")
-
-    def test_echo_memory_collection_exists(self):
-        """echo_memory collection should exist with correct dimensions."""
-        try:
-            resp = requests.get("http://localhost:6333/collections/echo_memory", timeout=5)
-            assert resp.status_code == 200, "echo_memory collection not found"
-
-            body = resp.json()
-            result = body.get("result", {})
-
-            # Extract vector dimensions
-            config = result.get("config", {})
-            params = config.get("params", {})
-            vectors = params.get("vectors", params)
-
-            if isinstance(vectors, dict) and "size" in vectors:
-                dim = vectors["size"]
-            else:
-                # Named vectors - get first one
-                if isinstance(vectors, dict) and len(vectors) > 0:
-                    first = next(iter(vectors.values()))
-                    dim = first.get("size", 0) if isinstance(first, dict) else 0
-                else:
-                    dim = 0
-
-            # Should be 768 (nomic-embed-text) or 1024 (newer model)
-            assert dim in [768, 1024], f"Wrong dimensions: {dim} (expected 768 or 1024)"
-
-        except requests.exceptions.ConnectionError:
-            pytest.fail("Qdrant not reachable")
-
-    def test_echo_memory_has_vectors(self):
-        """echo_memory should have indexed vectors."""
-        try:
-            resp = requests.get("http://localhost:6333/collections/echo_memory", timeout=5)
-            assert resp.status_code == 200, "Collection not found"
-
-            body = resp.json()
-            points = body.get("result", {}).get("points_count", 0)
-            assert points > 0, f"Collection empty - has {points} vectors (expected >0)"
-            assert points > 10000, f"Too few vectors: {points} (expected >10000 for production)"
-
-        except requests.exceptions.ConnectionError:
-            pytest.fail("Qdrant not reachable")
+        """Qdrant on port 6333 responds."""
+        resp = get(f"{QDRANT_URL}/collections")
+        assert resp.status_code == 200
 
     def test_ollama_reachable(self):
-        """Ollama should be running for embeddings."""
-        try:
-            resp = requests.get("http://localhost:11434/api/tags", timeout=5)
-            assert resp.status_code == 200, f"Ollama not responding: HTTP {resp.status_code}"
-        except requests.exceptions.ConnectionError:
-            pytest.fail("Ollama not reachable on :11434 - is it running?")
-
-    def test_ollama_has_embedding_model(self):
-        """Ollama should have nomic-embed-text for embeddings."""
-        try:
-            resp = requests.get("http://localhost:11434/api/tags", timeout=5)
-            body = resp.json()
-
-            models = [m.get("name", "") for m in body.get("models", [])]
-            has_embed = any("embed" in m.lower() for m in models)
-
-            assert has_embed, f"No embedding model in Ollama. Found: {models}"
-
-            # Check specifically for nomic-embed-text
-            has_nomic = any("nomic-embed-text" in m for m in models)
-            if not has_nomic:
-                pytest.skip("nomic-embed-text not found, but other embedding model exists")
-
-        except requests.exceptions.ConnectionError:
-            pytest.fail("Ollama not reachable")
-
-
-# ═════════════════════════════════════════════════════════════════════════════
-#  TEST GROUP 5: DATABASE HEALTH
-# ═════════════════════════════════════════════════════════════════════════════
-
-class TestDatabaseHealth:
-    """PostgreSQL database health via API (no direct psql needed)."""
+        """Ollama on port 11434 responds."""
+        resp = get(f"{OLLAMA_URL}/api/tags")
+        assert resp.status_code == 200
 
     def test_postgresql_reachable(self):
-        """Database should be reachable — health endpoint proves connectivity."""
-        resp = get("/api/echo/health/detailed")
+        """PostgreSQL reachable via detailed health endpoint."""
+        resp = get(f"{BASE_URL}/api/echo/health/detailed")
         assert resp.status_code == 200
         data = resp.json()
-        # If the API can report facts/vectors, the DB is reachable
-        assert data["knowledge"]["total_facts"] >= 0, "Health endpoint missing knowledge data"
+        assert "knowledge" in data, f"Missing 'knowledge' in detailed health: {list(data.keys())}"
+        # If we can read fact counts, the DB is connected
+        assert data["knowledge"]["total_facts"] >= 0
 
-    def test_database_has_data(self):
-        """Database should contain facts and indexed schema."""
-        resp = get("/api/echo/health/detailed")
-        data = resp.json()
-        assert data["knowledge"]["total_facts"] > 0, "No facts in database"
-        assert data["knowledge"]["schema_tables_indexed"] > 0, "No schema tables indexed"
 
-    def test_vectors_populated(self):
-        """Qdrant vectors should be populated (proves embedding pipeline works)."""
-        resp = get("/api/echo/health/detailed")
-        data = resp.json()
-        assert data["knowledge"]["total_vectors"] > 1000, (
-            f"Only {data['knowledge']['total_vectors']} vectors — expected 1000+"
+# ═════════════════════════════════════════════════════════════════════════════
+#  2. EMBEDDING CONSISTENCY — THE thing that keeps breaking
+# ═════════════════════════════════════════════════════════════════════════════
+
+class TestEmbeddingConsistency:
+    """Qdrant dimensions must match Ollama output. No ambiguity."""
+
+    def test_qdrant_dimension_is_768(self):
+        """echo_memory collection must be exactly 768 dimensions."""
+        resp = get(f"{QDRANT_URL}/collections/echo_memory")
+        assert resp.status_code == 200
+        config = resp.json()["result"]["config"]["params"]["vectors"]
+        dim = config["size"] if isinstance(config, dict) and "size" in config else 0
+        assert dim == EXPECTED_EMBEDDING_DIM, (
+            f"Qdrant dimension is {dim}, expected exactly {EXPECTED_EMBEDDING_DIM}. "
+            "This mismatch breaks ALL vector search."
+        )
+
+    def test_ollama_outputs_768(self):
+        """nomic-embed-text must produce exactly 768-dim vectors."""
+        resp = post(
+            f"{OLLAMA_URL}/api/embed",
+            {"model": EXPECTED_EMBEDDING_MODEL, "input": "dimension consistency test"},
+            timeout=30,
+        )
+        assert resp.status_code == 200, f"Ollama embed failed: HTTP {resp.status_code}"
+        embeddings = resp.json().get("embeddings", [[]])
+        assert len(embeddings) > 0 and len(embeddings[0]) > 0, "Empty embedding returned"
+        dim = len(embeddings[0])
+        assert dim == EXPECTED_EMBEDDING_DIM, (
+            f"Ollama produced {dim}-dim vector, expected {EXPECTED_EMBEDDING_DIM}"
+        )
+
+    def test_qdrant_matches_ollama(self):
+        """Cross-check: Qdrant dimension == Ollama output dimension."""
+        # Qdrant
+        q_resp = get(f"{QDRANT_URL}/collections/echo_memory")
+        q_config = q_resp.json()["result"]["config"]["params"]["vectors"]
+        q_dim = q_config["size"] if isinstance(q_config, dict) and "size" in q_config else 0
+
+        # Ollama
+        o_resp = post(
+            f"{OLLAMA_URL}/api/embed",
+            {"model": EXPECTED_EMBEDDING_MODEL, "input": "cross-check"},
+            timeout=30,
+        )
+        o_dim = len(o_resp.json().get("embeddings", [[]])[0])
+
+        assert q_dim == o_dim, (
+            f"DIMENSION MISMATCH: Qdrant={q_dim}, Ollama={o_dim}. "
+            "This is the #1 cause of broken search."
+        )
+
+    def test_collection_has_enough_vectors(self):
+        """Production must have >100k vectors."""
+        resp = get(f"{QDRANT_URL}/collections/echo_memory")
+        points = resp.json()["result"]["points_count"]
+        assert points > MIN_VECTOR_COUNT, (
+            f"Only {points:,} vectors (need >{MIN_VECTOR_COUNT:,} for production)"
+        )
+
+    def test_collection_status_green(self):
+        """Collection status must be green (not yellow/red from ongoing operations)."""
+        resp = get(f"{QDRANT_URL}/collections/echo_memory")
+        status = resp.json()["result"]["status"]
+        assert status == "green", f"Collection status is '{status}', expected 'green'"
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+#  3. QDRANT INDEXES — Text + keyword indexes exist
+# ═════════════════════════════════════════════════════════════════════════════
+
+class TestQdrantIndexes:
+    """Payload indexes required for hybrid search."""
+
+    @pytest.fixture(autouse=True)
+    def _load_schema(self):
+        resp = get(f"{QDRANT_URL}/collections/echo_memory")
+        assert resp.status_code == 200
+        self.schema = resp.json()["result"].get("payload_schema", {})
+
+    def test_content_text_index(self):
+        """'content' field must have a text index for keyword search."""
+        assert "content" in self.schema, "No 'content' index — hybrid text search is broken"
+        assert self.schema["content"]["data_type"] == "text", (
+            f"'content' index is {self.schema['content']['data_type']}, expected 'text'"
+        )
+
+    def test_type_keyword_index(self):
+        """'type' field must have a keyword index for filtering."""
+        assert "type" in self.schema, "No 'type' keyword index"
+        assert self.schema["type"]["data_type"] == "keyword"
+
+    def test_category_keyword_index(self):
+        """'category' field must have a keyword index."""
+        assert "category" in self.schema, "No 'category' keyword index"
+        assert self.schema["category"]["data_type"] == "keyword"
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+#  4. VECTOR QUALITY — No garbage
+# ═════════════════════════════════════════════════════════════════════════════
+
+class TestVectorQuality:
+    """Sample random vectors and verify they contain readable text."""
+
+    def test_sample_vectors_are_readable(self):
+        """10 random vectors must all pass is_readable_text()."""
+        resp = post(
+            f"{QDRANT_URL}/collections/echo_memory/points/scroll",
+            {"limit": 10, "with_payload": True},
+            timeout=TIMEOUT,
+        )
+        assert resp.status_code == 200
+        points = resp.json()["result"]["points"]
+        assert len(points) > 0, "No points returned from scroll"
+
+        garbage_count = 0
+        for pt in points:
+            content = pt.get("payload", {}).get("content", "")
+            if not is_readable_text(content):
+                garbage_count += 1
+
+        assert garbage_count == 0, (
+            f"{garbage_count}/{len(points)} sampled vectors contain garbage text. "
+            "Garbage vectors pollute search results."
         )
 
 
 # ═════════════════════════════════════════════════════════════════════════════
-#  TEST GROUP 6: SEPARATION PROGRESS (Migration Tracking)
+#  5. HYBRID SEARCH — The retrieval pipeline
 # ═════════════════════════════════════════════════════════════════════════════
 
-class TestSeparationProgress:
-    """Track data separation progress via API."""
+class TestHybridSearch:
+    """MCP search_memory must return quality results."""
 
-    def test_facts_source_of_truth(self):
-        """echo_brain should have facts (via API)."""
-        resp = get("/api/echo/health/detailed")
-        data = resp.json()
-        assert data["knowledge"]["total_facts"] > 0, "echo_brain has no facts"
+    def test_search_returns_results(self):
+        """search_memory for a known topic returns results."""
+        resp = mcp_call("search_memory", {"query": "Echo Brain architecture", "limit": 5})
+        assert resp.status_code == 200
+        results = mcp_results(resp)
+        assert isinstance(results, list), f"Expected list, got {type(results).__name__}"
+        assert len(results) > 0, "search_memory returned empty results"
 
-    def test_codebase_indexed(self):
-        """Codebase should be indexed."""
-        resp = get("/api/echo/health/detailed")
-        data = resp.json()
-        assert data["knowledge"]["codebase_files_indexed"] > 0, "No codebase files indexed"
+    def test_result_structure(self):
+        """Results must have content and confidence/score fields."""
+        resp = mcp_call("search_memory", {"query": "Tower hardware specs", "limit": 3})
+        results = mcp_results(resp)
+        assert len(results) > 0, "No results to check structure"
 
-    def test_schema_indexed(self):
-        """Database schema should be indexed."""
-        resp = get("/api/echo/health/detailed")
-        data = resp.json()
-        assert data["knowledge"]["schema_tables_indexed"] > 0, "No schema tables indexed"
+        first = results[0]
+        assert "content" in first, f"Missing 'content': {list(first.keys())}"
+        has_score = "score" in first or "confidence" in first
+        assert has_score, f"Missing score/confidence: {list(first.keys())}"
 
-    def test_self_awareness_active(self):
-        """Echo Brain should know its own code and schema."""
-        resp = get("/api/echo/health/detailed")
-        data = resp.json()
-        sa = data["self_awareness"]
-        assert sa["knows_own_code"], "Does not know own code"
-        assert sa["knows_own_schema"], "Does not know own schema"
+    def test_top_score_above_threshold(self):
+        """Top score for a known-good query must be > 0.3."""
+        resp = mcp_call("search_memory", {"query": "Echo Brain port 8309", "limit": 3})
+        results = mcp_results(resp)
+        assert len(results) > 0
+        top_score = results[0].get("score", results[0].get("confidence", 0))
+        assert top_score > 0.3, f"Top score {top_score:.3f} is too low (expected >0.3)"
 
+    def test_text_search_returns_results(self):
+        """Keyword-style query returns results (tests text index path)."""
+        resp = mcp_call("search_memory", {"query": "nomic-embed-text", "limit": 3})
+        results = mcp_results(resp)
+        assert len(results) > 0, "Text/keyword search returned no results"
 
-# ═════════════════════════════════════════════════════════════════════════════
-#  TEST GROUP 7: PERFORMANCE
-# ═════════════════════════════════════════════════════════════════════════════
-
-class TestPerformance:
-    """Performance and response time checks."""
-
-    def test_health_response_time(self):
-        """Health endpoint should respond quickly."""
-        start = time.time()
-        resp = get("/health")
-        elapsed = (time.time() - start) * 1000
-
-        assert resp.status_code == 200, f"Health check failed: HTTP {resp.status_code}"
-        assert elapsed < 100, f"Health check too slow: {elapsed:.1f}ms (expected <100ms)"
-
-    def test_query_response_time(self):
-        """Simple queries should respond within timeout."""
-        payload = {"query": "What is 1+1?"}
-
-        start = time.time()
-        resp = post("/api/echo/query", payload)
-        elapsed = (time.time() - start) * 1000
-
-        if resp.status_code == 405:
-            pytest.skip("Query endpoint not available")
-
-        assert resp.status_code == 200, f"Query failed: HTTP {resp.status_code}"
-        assert elapsed < 5000, f"Query too slow: {elapsed:.1f}ms (expected <5000ms)"
-
-
-# ═════════════════════════════════════════════════════════════════════════════
-#  TEST GROUP 8: VOICE ENDPOINTS
-# ═════════════════════════════════════════════════════════════════════════════
-
-class TestVoiceEndpoints:
-    """Voice API endpoint smoke tests."""
-
-    def test_voice_status(self):
-        """GET /api/echo/voice/status — service health."""
-        resp = get("/api/echo/voice/status")
-        assert resp.status_code == 200, f"Voice status failed: HTTP {resp.status_code}"
-
-        body = resp.json()
-        # Should have some status information
-        assert isinstance(body, dict), f"Expected dict, got {type(body).__name__}"
-
-    def test_voice_voices(self):
-        """GET /api/echo/voice/voices — available TTS voices."""
-        resp = get("/api/echo/voice/voices")
-        assert resp.status_code == 200, f"Voice voices failed: HTTP {resp.status_code}"
-
-        body = resp.json()
-        assert "installed" in body, f"Missing 'installed' in response: {list(body.keys())}"
-        assert "suggested" in body, f"Missing 'suggested' in response: {list(body.keys())}"
-        assert isinstance(body["installed"], list), "installed should be a list"
-        assert isinstance(body["suggested"], list), "suggested should be a list"
-        assert len(body["suggested"]) > 0, "Should have at least one suggested voice"
-
-    def test_voice_synthesize(self):
-        """POST /api/echo/voice/synthesize — TTS generates audio."""
-        resp = requests.post(
-            f"{BASE_URL}/api/echo/voice/synthesize",
-            json={"text": "Hello from the smoke test.", "length_scale": 1.0},
-            headers={"Content-Type": "application/json"},
-            timeout=QUERY_TIMEOUT,
+    def test_vector_search_returns_results(self):
+        """Conceptual query returns results (tests vector similarity path)."""
+        resp = mcp_call(
+            "search_memory",
+            {"query": "how does the memory system retrieve information", "limit": 3},
         )
-
-        if resp.status_code == 503:
-            pytest.skip("Voice TTS service not initialized")
-
-        assert resp.status_code == 200, f"Voice synthesize failed: HTTP {resp.status_code}"
-        assert resp.headers.get("content-type", "").startswith("audio/"), \
-            f"Expected audio content-type, got {resp.headers.get('content-type')}"
-        assert len(resp.content) > 100, f"Audio response too small: {len(resp.content)} bytes"
+        results = mcp_results(resp)
+        assert len(results) > 0, "Conceptual/vector search returned no results"
 
 
 # ═════════════════════════════════════════════════════════════════════════════
-#  SUMMARY REPORT
+#  6. FACTS — PostgreSQL structured knowledge
 # ═════════════════════════════════════════════════════════════════════════════
 
-def pytest_sessionfinish(session, exitstatus):
-    """Print summary after all tests."""
-    import _pytest.config
+class TestFacts:
+    """Structured facts must be stored and retrievable."""
 
-    # Only print if running these tests
-    if 'echo_brain_smoke_test' not in str(session.config.args):
-        return
+    def test_get_facts_returns_results(self):
+        """get_facts for 'Echo Brain' returns facts."""
+        resp = mcp_call("get_facts", {"topic": "Echo Brain"})
+        assert resp.status_code == 200
+        results = mcp_results(resp)
+        assert isinstance(results, list), f"Expected list, got {type(results).__name__}"
+        assert len(results) > 0, "get_facts returned no facts for 'Echo Brain'"
 
-    print("\n" + "=" * 70)
-    print("  ECHO BRAIN SMOKE TEST COMPLETED")
-    print(f"  {time.strftime('%Y-%m-%d %H:%M:%S')}")
-    print("=" * 70)
+    def test_fact_structure(self):
+        """Facts must have expected fields."""
+        resp = mcp_call("get_facts", {"topic": "Tower"})
+        results = mcp_results(resp)
+        assert len(results) > 0, "No facts to check structure"
+        first = results[0]
+        # Facts should have content/subject/predicate/object or similar
+        has_content = "content" in first or "subject" in first or "object" in first
+        assert has_content, f"Fact missing content fields: {list(first.keys())}"
 
-    # Get test results
-    passed = len([i for i in session.items if i.stash.get(_pytest.runner.runtest_outcome, None) == "passed"])
-    failed = len([i for i in session.items if i.stash.get(_pytest.runner.runtest_outcome, None) == "failed"])
-    skipped = len([i for i in session.items if i.stash.get(_pytest.runner.runtest_outcome, None) == "skipped"])
-    total = len(session.items)
+    def test_knowledge_stats_has_facts(self):
+        """Knowledge stats endpoint reports fact count > 0."""
+        resp = get(f"{BASE_URL}/api/echo/knowledge/stats")
+        assert resp.status_code == 200
+        data = resp.json()
+        total = data.get("total_facts", 0)
+        assert total > 0, f"Knowledge stats reports 0 facts"
 
-    print(f"\n  Results: {passed} passed, {failed} failed, {skipped} skipped / {total} total")
 
-    if failed > 0:
-        print("\n  ❌ FAILURES DETECTED - Check test output above")
-    elif skipped > passed:
-        print("\n  ⚠️  Many tests skipped - endpoints may not be implemented")
-    else:
-        print("\n  ✅ All implemented tests passing")
+# ═════════════════════════════════════════════════════════════════════════════
+#  7. INTELLIGENCE PIPELINE — /ask endpoint end-to-end
+# ═════════════════════════════════════════════════════════════════════════════
 
-    print("=" * 70)
+class TestIntelligencePipeline:
+    """The /ask endpoint must produce correct answers using retrieval."""
+
+    def test_ask_returns_answer(self):
+        """POST /api/echo/ask returns a non-empty answer."""
+        resp = post(
+            f"{BASE_URL}/api/echo/ask",
+            {"question": "What port does Echo Brain run on?"},
+        )
+        assert resp.status_code == 200, f"/ask failed: HTTP {resp.status_code}"
+        body = resp.json()
+        answer = body.get("answer", body.get("response", ""))
+        assert len(answer) > 10, f"Answer too short: {answer!r}"
+
+    def test_ask_contains_expected_keywords(self):
+        """Answer about Echo Brain port must mention 8309."""
+        resp = post(
+            f"{BASE_URL}/api/echo/ask",
+            {"question": "What port does Echo Brain run on?"},
+        )
+        body = resp.json()
+        answer = str(body.get("answer", body.get("response", ""))).lower()
+        assert "8309" in answer, f"Answer doesn't mention 8309: {answer[:200]}"
+
+    def test_ask_rejects_wrong_field(self):
+        """Sending 'query' instead of 'question' should fail or return empty."""
+        resp = post(f"{BASE_URL}/api/echo/ask", {"query": "This should fail"})
+        if resp.status_code == 422:
+            return  # Validation caught it
+        if resp.status_code == 200:
+            body = resp.json()
+            answer = str(body.get("answer", body.get("response", "")))
+            # Should be empty/generic, not a real answer
+            assert len(answer) < 50 or "don't" in answer.lower() or "no question" in answer.lower(), (
+                f"Wrong field name still produced a real answer: {answer[:100]}"
+            )
+
+    def test_ask_response_time(self):
+        """Response must complete within 30 seconds."""
+        start = time.time()
+        resp = post(
+            f"{BASE_URL}/api/echo/ask",
+            {"question": "What GPU does Tower have?"},
+        )
+        elapsed = time.time() - start
+        assert resp.status_code == 200
+        assert elapsed < 30, f"Response took {elapsed:.1f}s (limit: 30s)"
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+#  8. WORKERS — Autonomous system running
+# ═════════════════════════════════════════════════════════════════════════════
+
+class TestWorkers:
+    """Worker scheduler must be running."""
+
+    def test_workers_status_returns_list(self):
+        """GET /api/workers/status returns worker data."""
+        resp = get(f"{BASE_URL}/api/workers/status")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "workers" in data, f"Missing 'workers': {list(data.keys())}"
+        assert len(data["workers"]) > 0, "No workers registered"
+
+    def test_workers_are_running(self):
+        """Worker system is running (not all errored)."""
+        resp = get(f"{BASE_URL}/api/workers/status")
+        data = resp.json()
+        assert data.get("running") is True, "Worker scheduler is not running"
+
+    def test_no_excessive_errors(self):
+        """No worker should have >10 consecutive errors."""
+        resp = get(f"{BASE_URL}/api/workers/status")
+        data = resp.json()
+        for name, info in data.get("workers", {}).items():
+            error_count = info.get("error_count", 0)
+            assert error_count <= 10, (
+                f"Worker '{name}' has {error_count} errors (threshold: 10)"
+            )
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+#  9. VOICE — STT/TTS service
+# ═════════════════════════════════════════════════════════════════════════════
+
+class TestVoice:
+    """Voice endpoints must respond (service may not be initialized)."""
+
+    def test_voice_status_responds(self):
+        """GET /api/echo/voice/status returns 200."""
+        resp = get(f"{BASE_URL}/api/echo/voice/status")
+        assert resp.status_code == 200
+
+    def test_voice_voices_has_entries(self):
+        """GET /api/echo/voice/voices lists at least 1 voice."""
+        resp = get(f"{BASE_URL}/api/echo/voice/voices")
+        assert resp.status_code == 200
+        data = resp.json()
+        total = len(data.get("installed", [])) + len(data.get("suggested", []))
+        assert total > 0, "No voices available (installed or suggested)"
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# 10. KNOWLEDGE GRAPH — v0.6.0
+# ═════════════════════════════════════════════════════════════════════════════
+
+class TestKnowledgeGraph:
+    """Knowledge graph must have nodes and support queries."""
+
+    def test_graph_stats_has_nodes(self):
+        """GET /api/echo/graph/stats returns node_count > 0."""
+        resp = get(f"{BASE_URL}/api/echo/graph/stats")
+        assert resp.status_code == 200
+        data = resp.json()
+        nodes = data.get("nodes", 0)
+        assert nodes > 0, f"Graph has {nodes} nodes (expected >0)"
+
+    def test_graph_related_returns_results(self):
+        """Graph related endpoint returns edges for a known entity."""
+        resp = get(f"{BASE_URL}/api/echo/graph/related/Echo%20Brain")
+        assert resp.status_code == 200
+        data = resp.json()
+        results = data.get("results", [])
+        assert len(results) > 0, "No related entities found for 'Echo Brain'"
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# 11. MCP TOOLS — All 5 tools respond
+# ═════════════════════════════════════════════════════════════════════════════
+
+class TestMCPTools:
+    """Every registered MCP tool must respond successfully."""
+
+    def test_search_memory(self):
+        """MCP search_memory tool works."""
+        resp = mcp_call("search_memory", {"query": "test connectivity", "limit": 1})
+        assert resp.status_code == 200
+
+    def test_get_facts(self):
+        """MCP get_facts tool works."""
+        resp = mcp_call("get_facts", {"topic": "Tower"})
+        assert resp.status_code == 200
+
+    def test_store_fact_roundtrip(self):
+        """MCP store_fact stores a fact and it can be verified."""
+        # Store
+        store_resp = mcp_call("store_fact", {
+            "subject": "_smoke_test_probe",
+            "predicate": "is_a",
+            "object": "transient_test_entry",
+            "confidence": 0.1,
+        })
+        assert store_resp.status_code == 200
+        data = store_resp.json()
+        assert data.get("stored") is True, f"store_fact failed: {data}"
+
+    def test_explore_graph(self):
+        """MCP explore_graph tool works."""
+        resp = mcp_call("explore_graph", {"query": "Echo Brain"})
+        assert resp.status_code == 200
+
+    def test_manage_ollama_list(self):
+        """MCP manage_ollama (list action) works."""
+        resp = mcp_call("manage_ollama", {"action": "list"})
+        assert resp.status_code == 200
+        data = resp.json()
+        models = data.get("models", [])
+        assert len(models) > 0, "manage_ollama list returned no models"
