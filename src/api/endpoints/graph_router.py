@@ -4,7 +4,6 @@ Exposes graph traversal, path finding, and statistics.
 """
 from fastapi import APIRouter, Query
 from pydantic import BaseModel
-from typing import Optional
 
 router = APIRouter(prefix="/graph", tags=["graph"])
 

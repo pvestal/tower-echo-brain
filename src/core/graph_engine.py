@@ -4,11 +4,10 @@ Lazy-loaded: graph is built on first query, then cached.
 Incremental refresh: only new facts are added; full rebuild every 24h.
 """
 import logging
-import os
 import asyncpg
 import networkx as nx
 from datetime import datetime, timezone, timedelta
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Optional
 
 logger = logging.getLogger("echo.core.graph_engine")
 

@@ -7,7 +7,6 @@ import logging
 import os
 import httpx
 import asyncpg
-from datetime import datetime, timezone
 from pathlib import Path
 
 logger = logging.getLogger("echo.workers.fact_scrubber")
