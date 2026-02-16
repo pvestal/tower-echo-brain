@@ -32,12 +32,21 @@ class Governor:
                 subject TEXT,
                 predicate TEXT,
                 conflicting_facts JSONB,
-                winner_fact_id INTEGER,
+                winner_fact_id TEXT,
                 reasoning TEXT,
                 outcome VARCHAR(50),
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
             )
         """)
+        # Migrate winner_fact_id from INTEGER to TEXT if needed
+        col_type = await conn.fetchval("""
+            SELECT data_type FROM information_schema.columns
+            WHERE table_name = 'governor_decisions' AND column_name = 'winner_fact_id'
+        """)
+        if col_type and col_type != "text":
+            await conn.execute(
+                "ALTER TABLE governor_decisions ALTER COLUMN winner_fact_id TYPE TEXT USING winner_fact_id::TEXT"
+            )
 
     def _recency_score(self, created_at, now) -> float:
         """Compute recency score: 1.0 for brand-new, 0.1 for 90+ days old."""
@@ -97,7 +106,7 @@ class Governor:
                         eff = conf * 0.6 + recency * 0.4
                         effective_scores.append(eff)
                         fact_details.append({
-                            "fact_id": fid,
+                            "fact_id": str(fid),
                             "object": objects[i],
                             "confidence": conf,
                             "recency": round(recency, 3),
@@ -165,7 +174,7 @@ class Governor:
                         subject,
                         predicate,
                         json.dumps([d for _, d, _ in ranked]),
-                        winner_id,
+                        str(winner_id),
                         "; ".join(reasoning_parts),
                         "resolved",
                     )

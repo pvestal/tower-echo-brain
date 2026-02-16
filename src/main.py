@@ -329,13 +329,6 @@ async def mcp_handler(request: dict):
                 query = arguments.get("query", "")
                 limit = arguments.get("limit", 10)
                 results = await mcp_service.search_memory(query, limit)
-                # Enrich with retriever metadata (query_type, weights, confidence)
-                if isinstance(results, list):
-                    # Add per-result confidence from payload
-                    for r in results:
-                        payload = r.get("payload", {})
-                        if "confidence" in payload:
-                            r["confidence"] = payload["confidence"]
                 return results
 
             elif tool_name == "explore_graph":
