@@ -53,6 +53,13 @@ INGESTION_SOURCES = {
         ],
         "extensions": [".py", ".ts", ".vue"],
     },
+    "anime:lora-studio": {
+        "paths": [
+            "/opt/tower-anime-production/training/lora-studio/src/",
+            "/opt/tower-anime-production/training/lora-studio/packages/",
+        ],
+        "extensions": [".py", ".ts", ".vue", ".json", ".md"],
+    },
     "tower:architecture": {
         "paths": [
             "/opt/tower-echo-brain/docs/",
