@@ -68,7 +68,7 @@ async def get_db_connection():
 
 app = FastAPI(
     title="Tower Echo Brain",
-    version="0.4.0",
+    version="0.6.0",
     docs_url="/docs",
     redoc_url="/redoc",
 )
@@ -78,7 +78,7 @@ app = FastAPI(
 async def api_root():
     return {
         "service": "Echo Brain",
-        "version": "0.4.0",
+        "version": "0.6.0",
         "status": "running",
         "timestamp": datetime.now().isoformat()
     }
@@ -208,7 +208,7 @@ _optional_routers = [
     ("src.api.models_manager", "router", None, "Models manager (/api/models)"),
     ("src.api.knowledge", "router", None, "Knowledge (/api/knowledge)"),
     ("src.api.solutions", "router", None, "Solutions (/api/echo/solutions)"),
-    ("src.api.codebase", "router", None, "Codebase (/api/echo/codebase)"),
+    # ("src.api.codebase", "router", None, "Codebase (/api/echo/codebase)"),  # Disabled — indexer not implemented
     ("src.api.preferences", "router", "/api/echo/preferences", "Preferences"),
     ("src.api.integrations", "router", "/api/echo/integrations", "Integrations"),
     ("src.api.claude_bridge", "router", None, "Claude bridge (/api/echo)"),
@@ -1579,24 +1579,27 @@ async def startup_event():
         except Exception as e:
             logger.error(f"❌ Failed to register conversation_watcher: {e}")
 
-        try:
-            from src.autonomous.workers.knowledge_graph_builder import KnowledgeGraphBuilder
-            worker = KnowledgeGraphBuilder()
-            worker_scheduler.register_worker("knowledge_graph", worker.run_cycle, interval_minutes=1440)  # daily
-            workers_registered += 1
-            logger.info("✅ Registered knowledge_graph worker (daily)")
-        except Exception as e:
-            logger.error(f"❌ Failed to register knowledge_graph: {e}")
+        # knowledge_graph_builder disabled — superseded by graph_engine.py (v0.6.0)
+        # The old worker requires a graph_edges table; the new GraphEngine reads facts directly.
+        # try:
+        #     from src.autonomous.workers.knowledge_graph_builder import KnowledgeGraphBuilder
+        #     worker = KnowledgeGraphBuilder()
+        #     worker_scheduler.register_worker("knowledge_graph", worker.run_cycle, interval_minutes=1440)
+        #     workers_registered += 1
+        #     logger.info("✅ Registered knowledge_graph worker (daily)")
+        # except Exception as e:
+        #     logger.error(f"❌ Failed to register knowledge_graph: {e}")
 
         # Register new Phase 2a self-awareness workers
-        try:
-            from src.autonomous.workers.codebase_indexer import CodebaseIndexer
-            worker = CodebaseIndexer()
-            worker_scheduler.register_worker("codebase_indexer", worker.run_cycle, interval_minutes=360)  # Every 6 hours
-            workers_registered += 1
-            logger.info("✅ Registered codebase_indexer worker (6 hours)")
-        except Exception as e:
-            logger.error(f"❌ Failed to register codebase_indexer: {e}")
+        # codebase_indexer disabled — file doesn't exist, graph_engine.py handles code-related graph traversal
+        # try:
+        #     from src.autonomous.workers.codebase_indexer import CodebaseIndexer
+        #     worker = CodebaseIndexer()
+        #     worker_scheduler.register_worker("codebase_indexer", worker.run_cycle, interval_minutes=360)
+        #     workers_registered += 1
+        #     logger.info("✅ Registered codebase_indexer worker (6 hours)")
+        # except Exception as e:
+        #     logger.error(f"❌ Failed to register codebase_indexer: {e}")
 
         try:
             from src.autonomous.workers.schema_indexer import SchemaIndexer
