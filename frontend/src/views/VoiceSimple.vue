@@ -1,7 +1,7 @@
 <template>
   <div class="voice-simple">
     <div class="voice-header">
-      <h2>🎤 Echo Brain Voice</h2>
+      <h2>Echo Brain Voice</h2>
       <div class="status-bar">
         <span :class="['status', statusClass]">{{ status }}</span>
         <span v-if="latency" class="latency">{{ latency }}ms</span>
@@ -41,7 +41,7 @@
             <div class="message-meta">
               <span v-if="msg.duration">{{ msg.duration }}ms</span>
               <button v-if="msg.audio" @click="playAudio(msg.audio)" class="replay-btn">
-                🔊 Replay
+                Replay
               </button>
             </div>
           </div>

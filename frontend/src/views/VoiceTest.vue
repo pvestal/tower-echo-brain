@@ -1,6 +1,6 @@
 <template>
   <div class="voice-test-container">
-    <h2>🎤 Echo Brain Voice System Test</h2>
+    <h2>Echo Brain Voice System Test</h2>
 
     <!-- Status Overview -->
     <div class="test-section">
@@ -9,7 +9,7 @@
         <div class="status-item">
           <span class="label">Voice Service:</span>
           <span :class="['value', voiceStatus.initialized ? 'success' : 'error']">
-            {{ voiceStatus.initialized ? '✅ Initialized' : '❌ Not Initialized' }}
+            {{ voiceStatus.initialized ? 'OK - Initialized' : 'ERR - Not Initialized' }}
           </span>
         </div>
         <div class="status-item">
@@ -27,7 +27,7 @@
         <div class="status-item">
           <span class="label">WebSocket:</span>
           <span :class="['value', wsConnected ? 'success' : 'error']">
-            {{ wsConnected ? '✅ Connected' : '❌ Disconnected' }}
+            {{ wsConnected ? 'OK - Connected' : 'ERR - Disconnected' }}
           </span>
         </div>
       </div>
@@ -107,7 +107,7 @@
           @click="toggleRecording"
           :class="['record-btn', { recording: isRecording }]"
         >
-          {{ isRecording ? '⏹ Stop Recording' : '🎤 Start Recording' }}
+          {{ isRecording ? 'Stop Recording' : 'Start Recording' }}
         </button>
         <div v-if="audioBlob" class="audio-preview">
           <audio :src="audioUrl" controls></audio>
@@ -219,10 +219,10 @@ async function testStatus() {
     const time = performance.now() - start
 
     voiceStatus.value = data
-    testResults.value.status = `✅ ${time.toFixed(0)}ms`
+    testResults.value.status = `OK ${time.toFixed(0)}ms`
     log(`Status check successful (${time.toFixed(0)}ms)`, 'success', data)
   } catch (err) {
-    testResults.value.status = '❌ Failed'
+    testResults.value.status = 'FAIL'
     log(`Status check failed: ${err}`, 'error')
   } finally {
     testing.value.status = false
@@ -240,10 +240,10 @@ async function testVoices() {
     const time = performance.now() - start
 
     const voiceCount = data.installed.length + data.suggested.length
-    testResults.value.voices = `✅ ${voiceCount} voices (${time.toFixed(0)}ms)`
+    testResults.value.voices = `OK ${voiceCount} voices (${time.toFixed(0)}ms)`
     log(`Found ${voiceCount} voices (${time.toFixed(0)}ms)`, 'success', data)
   } catch (err) {
-    testResults.value.voices = '❌ Failed'
+    testResults.value.voices = 'FAIL'
     log(`Voices check failed: ${err}`, 'error')
   } finally {
     testing.value.voices = false
@@ -274,7 +274,7 @@ async function testTTS() {
     metrics.value.avgTTS = ((metrics.value.avgTTS * metrics.value.totalTests + time) / (metrics.value.totalTests + 1))
     metrics.value.totalTests++
 
-    testResults.value.tts = `✅ ${(blob.size/1024).toFixed(1)}KB (${time.toFixed(0)}ms)`
+    testResults.value.tts = `OK ${(blob.size/1024).toFixed(1)}KB (${time.toFixed(0)}ms)`
     log(`TTS successful: ${(blob.size/1024).toFixed(1)}KB audio generated in ${time.toFixed(0)}ms`, 'success')
 
     // Play the audio
@@ -282,7 +282,7 @@ async function testTTS() {
     const audio = new Audio(url)
     audio.play()
   } catch (err) {
-    testResults.value.tts = '❌ Failed'
+    testResults.value.tts = 'FAIL'
     log(`TTS failed: ${err}`, 'error')
   } finally {
     testing.value.tts = false
@@ -315,10 +315,10 @@ async function testSTT() {
     metrics.value.avgSTT = ((metrics.value.avgSTT * metrics.value.totalTests + time) / (metrics.value.totalTests + 1))
     metrics.value.totalTests++
 
-    testResults.value.stt = `✅ "${data.text}" (${time.toFixed(0)}ms)`
+    testResults.value.stt = `OK "${data.text}" (${time.toFixed(0)}ms)`
     log(`STT successful in ${time.toFixed(0)}ms`, 'success', data)
   } catch (err) {
-    testResults.value.stt = '❌ Failed'
+    testResults.value.stt = 'FAIL'
     log(`STT failed: ${err}`, 'error')
   } finally {
     testing.value.stt = false
@@ -351,7 +351,7 @@ async function testChatLoop() {
     metrics.value.avgChat = ((metrics.value.avgChat * metrics.value.totalTests + time) / (metrics.value.totalTests + 1))
     metrics.value.totalTests++
 
-    testResults.value.chat = `✅ Complete (${time.toFixed(0)}ms)`
+    testResults.value.chat = `OK Complete (${time.toFixed(0)}ms)`
     log(`Chat loop successful in ${time.toFixed(0)}ms`, 'success', {
       transcript: data.transcript,
       response: data.response_text,
@@ -372,7 +372,7 @@ async function testChatLoop() {
       audio.play()
     }
   } catch (err) {
-    testResults.value.chat = '❌ Failed'
+    testResults.value.chat = 'FAIL'
     log(`Chat loop failed: ${err}`, 'error')
   } finally {
     testing.value.chat = false
@@ -404,7 +404,7 @@ async function testWebSocket() {
       ws.onmessage = (event) => {
         const msg = JSON.parse(event.data)
         if (msg.type === 'pong') {
-          testResults.value.ws = '✅ Connected & responding'
+          testResults.value.ws = 'OK Connected & responding'
           log('WebSocket ping/pong successful', 'success')
           ws.close()
           resolve(true)
@@ -417,7 +417,7 @@ async function testWebSocket() {
       }
     })
   } catch (err) {
-    testResults.value.ws = '❌ Failed'
+    testResults.value.ws = 'FAIL'
     wsConnected.value = false
     log(`WebSocket test failed: ${err}`, 'error')
   } finally {
