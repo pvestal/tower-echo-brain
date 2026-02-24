@@ -132,9 +132,15 @@ class GoogleCalendarBridge:
             return []
 
         try:
-            # Set time bounds for the full day
-            start_of_day = date.replace(hour=0, minute=0, second=0, microsecond=0)
-            end_of_day = date.replace(hour=23, minute=59, second=59, microsecond=999999)
+            # Set time bounds for the full day.
+            # Convert to UTC so the isoformat+Z pattern stays valid even
+            # when the caller passes a tz-aware datetime (e.g. Pacific).
+            from zoneinfo import ZoneInfo
+            utc = ZoneInfo("UTC")
+            if date.tzinfo is not None:
+                date = date.astimezone(utc)
+            start_of_day = date.replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=None)
+            end_of_day = date.replace(hour=23, minute=59, second=59, microsecond=999999, tzinfo=None)
 
             events_result = self.service.events().list(
                 calendarId=calendar_id,

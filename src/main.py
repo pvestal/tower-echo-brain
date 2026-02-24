@@ -277,9 +277,56 @@ async def mcp_handler(request: dict):
     if method == "tools/list":
         return {
             "tools": [
-                {"name": "search_memory", "description": "Search Echo Brain memories"},
-                {"name": "get_facts", "description": "Get facts from Echo Brain"},
-                {"name": "store_fact", "description": "Store a fact in Echo Brain"},
+                {
+                    "name": "search_memory",
+                    "description": "Search Echo Brain memories using semantic similarity. Returns relevant memories with confidence scores.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "query": {"type": "string", "description": "Search query"},
+                            "limit": {"type": "integer", "description": "Max results (default 5)", "default": 5},
+                            "after": {"type": "string", "description": "Only return memories after this ISO datetime (e.g. 2026-02-01T00:00:00)"},
+                            "before": {"type": "string", "description": "Only return memories before this ISO datetime"}
+                        },
+                        "required": ["query"]
+                    }
+                },
+                {
+                    "name": "get_facts",
+                    "description": "Get structured facts from Echo Brain about a topic.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "topic": {"type": "string", "description": "Topic to get facts about"}
+                        },
+                        "required": ["topic"]
+                    }
+                },
+                {
+                    "name": "store_fact",
+                    "description": "Store a new fact in Echo Brain as a subject-predicate-object triple.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "subject": {"type": "string", "description": "Fact subject"},
+                            "predicate": {"type": "string", "description": "Fact predicate/relationship"},
+                            "object": {"type": "string", "description": "Fact object/value"}
+                        },
+                        "required": ["subject", "predicate", "object"]
+                    }
+                },
+                {
+                    "name": "store_memory",
+                    "description": "Store free-form text memory in Echo Brain (not a structured triple).",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "content": {"type": "string", "description": "The text content to store"},
+                            "type": {"type": "string", "description": "Memory type (default: memory)", "default": "memory"}
+                        },
+                        "required": ["content"]
+                    }
+                },
                 {
                     "name": "explore_graph",
                     "description": "Explore the knowledge graph: find related entities, paths, and neighborhood stats",
@@ -317,6 +364,103 @@ async def mcp_handler(request: dict):
                         },
                         "required": ["action"]
                     }
+                },
+                {
+                    "name": "search_photos",
+                    "description": "Search personal photos and videos by semantic query, with optional filters",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "query": {"type": "string", "description": "Natural language search query"},
+                            "media_type": {"type": "string", "description": "Filter: photo or video"},
+                            "year": {"type": "string", "description": "Filter by year (e.g. 2024)"},
+                            "category": {"type": "string", "description": "Filter by category"},
+                            "person": {"type": "string", "description": "Filter by person name"},
+                            "limit": {"type": "integer", "description": "Max results", "default": 10}
+                        },
+                        "required": ["query"]
+                    }
+                },
+                {
+                    "name": "send_notification",
+                    "description": "Send a notification via Telegram, ntfy, or email",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "message": {"type": "string", "description": "The message to send"},
+                            "title": {"type": "string", "description": "Optional title"},
+                            "channels": {
+                                "type": "array",
+                                "items": {"type": "string", "enum": ["telegram", "ntfy", "email"]},
+                                "description": "Channels to send to (default: [\"telegram\"])"
+                            },
+                            "priority": {
+                                "type": "string",
+                                "enum": ["low", "normal", "high", "urgent"],
+                                "description": "Notification priority (default: normal)"
+                            }
+                        },
+                        "required": ["message"]
+                    }
+                },
+                {
+                    "name": "check_services",
+                    "description": "Check health status of all Tower services (postgres, ollama, qdrant, mcp, comfyui)",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {}
+                    }
+                },
+                {
+                    "name": "schedule_reminder",
+                    "description": "Schedule a reminder notification for a future time",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "message": {"type": "string", "description": "The reminder message"},
+                            "remind_at": {"type": "string", "description": "ISO 8601 datetime (e.g. 2026-02-24T15:30:00)"},
+                            "title": {"type": "string", "description": "Optional title"},
+                            "channel": {
+                                "type": "string",
+                                "enum": ["telegram", "ntfy", "email"],
+                                "description": "Channel to send reminder to (default: telegram)"
+                            }
+                        },
+                        "required": ["message", "remind_at"]
+                    }
+                },
+                {
+                    "name": "trigger_generation",
+                    "description": "Trigger image generation for a character via Anime Studio",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "character_slug": {"type": "string", "description": "Character slug (e.g. mario, goblin_slayer)"},
+                            "count": {"type": "integer", "description": "Number of images (1-5, default: 1)"},
+                            "prompt_override": {"type": "string", "description": "Optional prompt override"}
+                        },
+                        "required": ["character_slug"]
+                    }
+                },
+                {
+                    "name": "web_fetch",
+                    "description": "Fetch a URL and return its text content (HTML tags stripped)",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "url": {"type": "string", "description": "The URL to fetch"},
+                            "max_length": {"type": "integer", "description": "Max characters to return (default: 5000)"}
+                        },
+                        "required": ["url"]
+                    }
+                },
+                {
+                    "name": "telegram_bot_status",
+                    "description": "Get Telegram bot listener status (running, offset, configured)",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {}
+                    }
                 }
             ]
         }
@@ -328,7 +472,9 @@ async def mcp_handler(request: dict):
             if tool_name == "search_memory":
                 query = arguments.get("query", "")
                 limit = arguments.get("limit", 10)
-                results = await mcp_service.search_memory(query, limit)
+                after = arguments.get("after", "")
+                before = arguments.get("before", "")
+                results = await mcp_service.search_memory(query, limit, after=after, before=before)
                 return results
 
             elif tool_name == "explore_graph":
@@ -364,8 +510,64 @@ async def mcp_handler(request: dict):
                 fact_id = await mcp_service.store_fact(subject, predicate, object_, confidence)
                 return {"fact_id": fact_id, "stored": True}
 
+            elif tool_name == "store_memory":
+                content = arguments.get("content", "")
+                type_ = arguments.get("type", "memory")
+                if not content:
+                    return {"error": "content is required"}
+                memory_id = await mcp_service.store_memory(content, type_=type_)
+                return {"memory_id": memory_id, "stored": bool(memory_id)}
+
             elif tool_name == "manage_ollama":
                 return await _handle_ollama_mcp(arguments)
+
+            elif tool_name == "search_photos":
+                from src.services.photo_dedup_service import PhotoDedupService
+                svc = PhotoDedupService()
+                results = await svc.search_media(
+                    query=arguments.get("query", ""),
+                    media_type=arguments.get("media_type"),
+                    year=arguments.get("year"),
+                    category=arguments.get("category"),
+                    person=arguments.get("person"),
+                    limit=arguments.get("limit", 10),
+                )
+                return {"results": results, "count": len(results)}
+
+            elif tool_name == "send_notification":
+                return await mcp_service.send_notification(
+                    message=arguments.get("message", ""),
+                    title=arguments.get("title"),
+                    channels=arguments.get("channels"),
+                    priority=arguments.get("priority", "normal"),
+                )
+
+            elif tool_name == "check_services":
+                return await mcp_service.check_services()
+
+            elif tool_name == "schedule_reminder":
+                return await mcp_service.schedule_reminder(
+                    message=arguments.get("message", ""),
+                    remind_at=arguments.get("remind_at", ""),
+                    title=arguments.get("title"),
+                    channel=arguments.get("channel", "telegram"),
+                )
+
+            elif tool_name == "trigger_generation":
+                return await mcp_service.trigger_generation(
+                    character_slug=arguments.get("character_slug", ""),
+                    count=arguments.get("count", 1),
+                    prompt_override=arguments.get("prompt_override"),
+                )
+
+            elif tool_name == "web_fetch":
+                return await mcp_service.web_fetch(
+                    url=arguments.get("url", ""),
+                    max_length=arguments.get("max_length", 5000),
+                )
+
+            elif tool_name == "telegram_bot_status":
+                return await mcp_service.telegram_bot_status()
 
             else:
                 return {"error": f"Unknown tool: {tool_name}"}
@@ -1503,6 +1705,7 @@ else:
 # Global database pool for contract monitor
 db_pool = None
 contract_monitor = None
+telegram_bot = None
 
 # Initialize Worker Scheduler on startup
 @app.on_event("startup")
@@ -1667,9 +1870,9 @@ async def startup_event():
         try:
             from src.autonomous.workers.photo_dedup_worker import PhotoDedupWorker
             worker = PhotoDedupWorker()
-            worker_scheduler.register_worker("photo_dedup", worker.run_cycle, interval_minutes=120)
+            worker_scheduler.register_worker("photo_dedup", worker.run_cycle, interval_minutes=30)
             workers_registered += 1
-            logger.info("✅ Registered photo_dedup worker (120 min)")
+            logger.info("✅ Registered photo_dedup worker (30 min)")
         except Exception as e:
             logger.error(f"❌ Failed to register photo_dedup: {e}")
 
@@ -1681,6 +1884,24 @@ async def startup_event():
             logger.info("✅ Registered google_ingest worker (60 min)")
         except Exception as e:
             logger.error(f"❌ Failed to register google_ingest: {e}")
+
+        try:
+            from src.autonomous.workers.reminder_worker import ReminderWorker
+            worker = ReminderWorker()
+            worker_scheduler.register_worker("reminder", worker.run_cycle, interval_minutes=1)
+            workers_registered += 1
+            logger.info("✅ Registered reminder worker (1 min)")
+        except Exception as e:
+            logger.error(f"❌ Failed to register reminder: {e}")
+
+        try:
+            from src.autonomous.workers.daily_briefing_worker import DailyBriefingWorker
+            worker = DailyBriefingWorker()
+            worker_scheduler.register_worker("daily_briefing", worker.run_cycle, interval_minutes=1)
+            workers_registered += 1
+            logger.info("✅ Registered daily_briefing worker (1 min, fires at 06:30 Pacific)")
+        except Exception as e:
+            logger.error(f"❌ Failed to register daily_briefing: {e}")
 
         # v0.6.0 workers: temporal decay, dedup, fact scrubber, governor
         try:
@@ -1755,10 +1976,26 @@ async def startup_event():
     except Exception as e:
         logger.error(f"❌ Failed to start worker scheduler: {e}")
 
+    # Start Telegram bot listener
+    try:
+        from src.integrations.telegram_bot import TelegramBot
+        global telegram_bot
+        telegram_bot = TelegramBot()
+        await telegram_bot.start()
+    except Exception as e:
+        logger.error(f"❌ Failed to start Telegram bot: {e}")
+
 @app.on_event("shutdown")
 async def shutdown_event():
     """Stop worker scheduler on shutdown."""
-    global db_pool, contract_monitor
+    global db_pool, contract_monitor, telegram_bot
+
+    # Stop Telegram bot listener
+    if telegram_bot:
+        try:
+            await telegram_bot.stop()
+        except Exception as e:
+            logger.error(f"❌ Error stopping Telegram bot: {e}")
 
     try:
         from src.autonomous.worker_scheduler import worker_scheduler
