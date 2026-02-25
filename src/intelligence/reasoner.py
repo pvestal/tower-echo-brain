@@ -81,9 +81,13 @@ class ReasoningEngine:
             if session_id:
                 try:
                     from src.services.conversation_service import get_conversation_service
+                    from src.core.compactor import get_compactor
                     conv_service = get_conversation_service()
-                    turns = await conv_service.get_session_turns(session_id, limit=10)
+                    turns = await conv_service.get_session_turns(session_id, limit=100)
                     if turns:
+                        compactor = get_compactor()
+                        turns = await compactor.maybe_compact(session_id, turns)
+                        turns = turns[-10:] if len(turns) > 10 else turns
                         relevant_context['conversation_history'] = turns
                         logger.info(f"Loaded {len(turns)} conversation turns for session {session_id}")
                 except Exception as e:
@@ -515,15 +519,20 @@ class ReasoningEngine:
             return {'error': str(e)}
 
     def _get_model_for_query_type(self, query_type: QueryType) -> str:
-        """Map query type to appropriate model"""
-        model_map = {
-            QueryType.CODE_QUERY: "qwen2.5-coder:7b",
-            QueryType.ACTION_REQUEST: "mistral:7b",
-            QueryType.GENERAL_KNOWLEDGE: "llama3.1:8b",
-            QueryType.SELF_INTROSPECTION: "llama3.1:8b",
-            QueryType.SYSTEM_QUERY: "mistral:7b"
-        }
-        return model_map.get(query_type, "llama3.1:8b")
+        """Map query type to appropriate model via agent registry"""
+        try:
+            from src.core.agent_registry import get_agent_registry
+            return get_agent_registry().select(query_type.value).token_budget_model
+        except Exception:
+            # Fallback to hardcoded map if registry unavailable
+            model_map = {
+                QueryType.CODE_QUERY: "qwen2.5-coder:7b",
+                QueryType.ACTION_REQUEST: "mistral:7b",
+                QueryType.GENERAL_KNOWLEDGE: "mistral:7b",
+                QueryType.SELF_INTROSPECTION: "deepseek-r1:8b",
+                QueryType.SYSTEM_QUERY: "mistral:7b"
+            }
+            return model_map.get(query_type, "mistral:7b")
 
     def _extract_service_name(self, query: str) -> Optional[str]:
         """Extract service name from query"""
@@ -787,9 +796,27 @@ class ReasoningEngine:
                                 context: Dict[str, Any], actions_taken: List[Dict[str, Any]],
                                 session_id: Optional[str] = None) -> str:
         """Generate response using LLM with structured context.
-        Uses chat mode with message history when conversation_history is available."""
+        Uses chat mode with message history when conversation_history is available.
+        Model and system prompt are selected via the agent registry."""
         try:
-            system_prompt = self._build_system_prompt(query_type)
+            # Resolve agent, model, and system prompt via registry
+            from src.core.agent_registry import get_agent_registry
+            registry = get_agent_registry()
+            agent = registry.select(query_type.value)
+            model = await registry.resolve_model(agent)
+            system_prompt = agent.system_prompt
+            agent_options = agent.options
+
+            # Append domain-specific addendum from context if available
+            domain_addendum = context.get('domain_system_prompt', '')
+            if domain_addendum:
+                system_prompt = f"{system_prompt}\n\n{domain_addendum}"
+
+            temperature = agent_options.get("temperature", 0.3)
+            top_p = agent_options.get("top_p", 0.9)
+
+            logger.info(f"Agent '{agent.name}' selected for {query_type.value} -> model={model}")
+
             context_text = self._build_context_text(context, actions_taken)
 
             conversation_history = context.get('conversation_history', [])
@@ -813,7 +840,7 @@ class ReasoningEngine:
                 # Add current query
                 messages.append({"role": "user", "content": query})
 
-                result = await llm.chat(messages=messages, model="mistral:7b", temperature=0.3)
+                result = await llm.chat(messages=messages, model=model, temperature=temperature)
                 response_text = self._clean_response(result.content)
 
             else:
@@ -824,12 +851,12 @@ class ReasoningEngine:
                     response = await client.post(
                         "http://localhost:11434/api/generate",
                         json={
-                            "model": "mistral:7b",
+                            "model": model,
                             "prompt": f"{system_prompt}\n\n{user_prompt}",
                             "stream": False,
                             "options": {
-                                "temperature": 0.3,
-                                "top_p": 0.9
+                                "temperature": temperature,
+                                "top_p": top_p
                             }
                         }
                     )
@@ -880,9 +907,13 @@ class ReasoningEngine:
             if session_id:
                 try:
                     from src.services.conversation_service import get_conversation_service
+                    from src.core.compactor import get_compactor
                     conv_service = get_conversation_service()
-                    turns = await conv_service.get_session_turns(session_id, limit=10)
+                    turns = await conv_service.get_session_turns(session_id, limit=100)
                     if turns:
+                        compactor = get_compactor()
+                        turns = await compactor.maybe_compact(session_id, turns)
+                        turns = turns[-10:] if len(turns) > 10 else turns
                         relevant_context['conversation_history'] = turns
                 except Exception:
                     pass
@@ -894,7 +925,20 @@ class ReasoningEngine:
             # Phase 3: Stream LLM tokens
             yield sse_event("status", {"phase": "generating"})
 
-            system_prompt = self._build_system_prompt(query_type)
+            # Resolve agent, model, and system prompt via registry
+            from src.core.agent_registry import get_agent_registry
+            registry = get_agent_registry()
+            agent = registry.select(query_type.value)
+            model = await registry.resolve_model(agent)
+            system_prompt = agent.system_prompt
+            temperature = agent.options.get("temperature", 0.3)
+
+            domain_addendum = relevant_context.get('domain_system_prompt', '')
+            if domain_addendum:
+                system_prompt = f"{system_prompt}\n\n{domain_addendum}"
+
+            logger.info(f"Stream: agent '{agent.name}' -> model={model}")
+
             context_text = self._build_context_text(relevant_context, [])
             conversation_history = relevant_context.get('conversation_history', [])
 
@@ -910,7 +954,7 @@ class ReasoningEngine:
             else:
                 prompt = f"{system_prompt}\n\n{context_text}\n\nUser Query: {query}"
 
-            async for token in llm.generate_stream(prompt=prompt, model="mistral:7b", temperature=0.3):
+            async for token in llm.generate_stream(prompt=prompt, model=model, temperature=temperature):
                 full_response.append(token)
                 yield sse_event("token", {"text": token})
 

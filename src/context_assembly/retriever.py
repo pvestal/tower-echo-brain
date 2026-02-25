@@ -56,7 +56,9 @@ class ParallelRetriever:
         self,
         query: str,
         max_results: int = 10,
-        override_domain: Optional[Domain] = None
+        override_domain: Optional[Domain] = None,
+        after: Optional[str] = None,
+        before: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Main retrieval method. Classifies query and fetches from appropriate sources.
@@ -85,6 +87,9 @@ class ParallelRetriever:
 
         logger.info(f"Query classified as {primary_domain} (confidence: {confidence:.2f})")
 
+        # Build temporal filter from after/before params
+        time_filter = self._build_time_filter(after, before)
+
         # Step 2: Get allowed sources for this domain
         allowed_sources = self.classifier.get_allowed_sources(primary_domain)
 
@@ -104,6 +109,7 @@ class ParallelRetriever:
                         tasks.append(self._search_qdrant(
                             query, embedding, collection, primary_domain,
                             query_type=query_type,
+                            time_filter=time_filter,
                         ))
 
         # Search PostgreSQL tables
@@ -198,12 +204,12 @@ class ParallelRetriever:
         """Get embedding vector from Ollama"""
         try:
             resp = await self.http_client.post(
-                f"{self.ollama_url}/api/embed",
-                json={"model": self.embedding_model, "input": text}
+                f"{self.ollama_url}/api/embeddings",
+                json={"model": self.embedding_model, "prompt": text}
             )
             resp.raise_for_status()
-            embeddings = resp.json().get("embeddings", [])
-            return embeddings[0] if embeddings else []
+            embedding = resp.json().get("embedding", None)
+            return embedding if embedding else []
         except Exception as e:
             logger.error(f"Embedding generation failed: {e}")
             return None
@@ -240,6 +246,23 @@ class ParallelRetriever:
     # Time-decay: halve the recency boost after this many days
     TIME_DECAY_HALFLIFE_DAYS = 30
 
+    @staticmethod
+    def _build_time_filter(after: Optional[str], before: Optional[str]) -> Optional[List[Dict]]:
+        """Build Qdrant filter conditions for temporal range filtering.
+        Returns a list of conditions suitable for a 'must' clause, or None."""
+        if not after and not before:
+            return None
+        range_spec = {}
+        if after:
+            range_spec["gte"] = after
+        if before:
+            range_spec["lte"] = before
+        # Match on either common timestamp field (points may use one or the other)
+        return [{"should": [
+            {"key": "timestamp", "range": range_spec},
+            {"key": "ingested_at", "range": range_spec},
+        ]}]
+
     async def _search_qdrant(
         self,
         query: str,
@@ -247,6 +270,7 @@ class ParallelRetriever:
         collection: str,
         domain: Domain,
         query_type: Optional['ParallelRetriever.QueryType'] = None,
+        time_filter: Optional[List[Dict]] = None,
     ) -> List[Dict]:
         """Hybrid search: vector similarity + full-text keyword matching, fused with weighted scores"""
         try:
@@ -254,8 +278,8 @@ class ParallelRetriever:
             min_score = sources.get("min_score", 0.3)
 
             # Run vector search and text search in parallel
-            vector_task = self._qdrant_vector_search(embedding, collection, min_score)
-            text_task = self._qdrant_text_search(query, collection)
+            vector_task = self._qdrant_vector_search(embedding, collection, min_score, time_filter=time_filter)
+            text_task = self._qdrant_text_search(query, collection, time_filter=time_filter)
 
             vector_results, text_results = await asyncio.gather(
                 vector_task, text_task, return_exceptions=True
@@ -326,17 +350,21 @@ class ParallelRetriever:
         return True
 
     async def _qdrant_vector_search(
-        self, embedding: List[float], collection: str, min_score: float
+        self, embedding: List[float], collection: str, min_score: float,
+        time_filter: Optional[List[Dict]] = None,
     ) -> List[Dict]:
         """Pure vector similarity search against Qdrant"""
+        body = {
+            "vector": embedding,
+            "limit": 50,  # Fetch more to compensate for garbage filtering
+            "score_threshold": min_score,
+            "with_payload": True
+        }
+        if time_filter:
+            body["filter"] = {"must": time_filter}
         resp = await self.http_client.post(
             f"{self.qdrant_url}/collections/{collection}/points/search",
-            json={
-                "vector": embedding,
-                "limit": 50,  # Fetch more to compensate for garbage filtering
-                "score_threshold": min_score,
-                "with_payload": True
-            }
+            json=body
         )
         resp.raise_for_status()
         results = []
@@ -361,7 +389,10 @@ class ParallelRetriever:
             logger.info(f"Filtered {garbage_count} non-readable vectors from {collection}")
         return results
 
-    async def _qdrant_text_search(self, query: str, collection: str) -> List[Dict]:
+    async def _qdrant_text_search(
+        self, query: str, collection: str,
+        time_filter: Optional[List[Dict]] = None,
+    ) -> List[Dict]:
         """Full-text keyword search against Qdrant's text index on content field.
         Uses OR semantics (should clauses) so documents matching ANY term are returned.
         Documents matching more terms are ranked higher."""
@@ -381,14 +412,18 @@ class ParallelRetriever:
             for term in terms
         ]
 
+        if time_filter:
+            # Combine: must match time range AND should match text terms
+            filter_body = {"must": time_filter, "should": should_clauses}
+        else:
+            filter_body = {"should": should_clauses}
+
         resp = await self.http_client.post(
             f"{self.qdrant_url}/collections/{collection}/points/scroll",
             json={
                 "limit": 30,
                 "with_payload": True,
-                "filter": {
-                    "should": should_clauses
-                }
+                "filter": filter_body
             }
         )
         resp.raise_for_status()
@@ -959,6 +994,7 @@ class ParallelRetriever:
         try:
             from src.core.graph_engine import get_graph_engine
             engine = get_graph_engine()
+            await engine._ensure_loaded()
             if not engine._graph:
                 return []
 

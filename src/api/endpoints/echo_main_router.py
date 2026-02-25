@@ -7,7 +7,6 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from typing import Dict, Any, Optional, List
 from pydantic import BaseModel
-import json
 import logging
 from datetime import datetime
 import psutil
@@ -757,6 +756,55 @@ async def list_models():
     except:
         return {"models": [], "error": "Ollama not available"}
 
+# ============= AGENT REGISTRY =============
+@router.get("/agents")
+async def list_agents():
+    """List all loaded agent definitions from the registry"""
+    try:
+        from src.core.agent_registry import get_agent_registry
+        registry = get_agent_registry()
+        agents = registry.get_all()
+        return {
+            "agents": [
+                {
+                    "name": a.name,
+                    "model": a.model,
+                    "fallback_model": a.fallback_model,
+                    "intents": a.intents,
+                    "token_budget_model": a.token_budget_model,
+                    "options": a.options,
+                    "source_file": a.source_file,
+                    "system_prompt_preview": a.system_prompt[:200] + "..." if len(a.system_prompt) > 200 else a.system_prompt,
+                }
+                for a in agents
+            ],
+            "count": len(agents),
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Failed to list agents: {e}")
+        return {"agents": [], "count": 0, "error": str(e)}
+
+
+@router.post("/agents/reload")
+async def reload_agents():
+    """Force hot-reload of all agent definitions"""
+    try:
+        from src.core.agent_registry import get_agent_registry
+        registry = get_agent_registry()
+        registry.force_reload()
+        agents = registry.get_all()
+        return {
+            "status": "reloaded",
+            "agents": [{"name": a.name, "model": a.model, "intents": a.intents} for a in agents],
+            "count": len(agents),
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Failed to reload agents: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ============= MCP PROTOCOL =============
 @router.post("/mcp")
 async def mcp_protocol(request: dict):
@@ -771,7 +819,8 @@ async def mcp_protocol(request: dict):
                 {"name": "search_memory", "description": "Search Echo Brain memories"},
                 {"name": "get_facts", "description": "Get structured facts"},
                 {"name": "store_fact", "description": "Store new fact"},
-                {"name": "manage_ollama", "description": "Manage Ollama models: list, pull, delete, refresh, show running"}
+                {"name": "manage_ollama", "description": "Manage Ollama models: list, pull, delete, refresh, show running"},
+                {"name": "search_photos", "description": "Search personal photos and videos by semantic query, with optional filters for media_type, year, category, person"}
             ]
         }
 
@@ -787,6 +836,18 @@ async def mcp_protocol(request: dict):
         # Delegate to the main app's handler
         from src.main import _handle_ollama_mcp
         return await _handle_ollama_mcp(args)
+    elif tool_name == "search_photos":
+        from src.services.photo_dedup_service import PhotoDedupService
+        svc = PhotoDedupService()
+        results = await svc.search_media(
+            query=args.get("query", ""),
+            media_type=args.get("media_type"),
+            year=args.get("year"),
+            category=args.get("category"),
+            person=args.get("person"),
+            limit=args.get("limit", 10),
+        )
+        return {"results": results, "count": len(results)}
 
     return {"error": f"Unknown tool: {tool_name}"}
 

@@ -27,6 +27,7 @@ class GoogleDataIngestor:
 
     async def _ensure_schema(self, conn: asyncpg.Connection):
         """Create tracking table if it doesn't exist."""
+        await conn.execute("SET search_path TO public")
         await conn.execute("""
             CREATE TABLE IF NOT EXISTS google_ingested_items (
                 id              SERIAL PRIMARY KEY,

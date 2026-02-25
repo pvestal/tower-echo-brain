@@ -21,6 +21,7 @@ class ContextCompiler:
             "mistral:7b": 32768,
             "llama3.1:8b": 131072,
             "deepseek-r1:8b": 65536,
+            "gemma3:12b": 131072,
             "gemma2:9b": 8192,
             "qwen2.5-coder:7b": 32768,
             "default": 32768

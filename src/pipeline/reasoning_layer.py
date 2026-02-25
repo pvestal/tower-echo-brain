@@ -18,15 +18,15 @@ logger = logging.getLogger("echo.pipeline.reasoning")
 
 OLLAMA_URL = "http://localhost:11434"
 
-# Model selection - USING ACTUAL AVAILABLE MODELS (RTX 3060 12GB)
-# Available: mistral:7b, deepseek-r1:8b, llama3.1:8b, gemma2:9b, qwen2.5-coder:7b
+# Model selection - USING ACTUAL AVAILABLE MODELS (AMD RX 9070 XT 16GB via Vulkan)
+# Available: mistral:7b, deepseek-r1:8b, llama3.2:3b, gemma2:9b, qwen2.5-coder:7b, gemma3:12b
 MODEL_MAP = {
     QueryIntent.CODING: "qwen2.5-coder:7b",      # Specialized for code
     QueryIntent.REASONING: "deepseek-r1:8b",      # Good at step-by-step reasoning
-    QueryIntent.PERSONAL: "llama3.1:8b",          # Good general model
+    QueryIntent.PERSONAL: "gemma3:12b",           # Strong general model
     QueryIntent.FACTUAL: "mistral:7b",            # Fast and accurate
     QueryIntent.CREATIVE: "gemma2:9b",            # Creative tasks
-    QueryIntent.CONVERSATIONAL: "llama3.1:8b",    # General conversation
+    QueryIntent.CONVERSATIONAL: "gemma3:12b",     # General conversation
 }
 
 # System prompts per intent
@@ -75,7 +75,7 @@ class ReasoningLayer:
     """
 
     # Fallback chain: if the preferred model isn't loaded, try these in order
-    FALLBACK_CHAIN = ["mistral:7b", "llama3.1:8b", "gemma2:9b"]
+    FALLBACK_CHAIN = ["mistral:7b", "gemma3:12b", "gemma2:9b"]
 
     def __init__(self):
         self.http_client: httpx.AsyncClient = None
@@ -221,8 +221,32 @@ class ReasoningLayer:
 
         return answer, thinking_steps
 
+    # Map QueryIntent enum values to agent registry intent strings
+    _INTENT_TO_REGISTRY = {
+        QueryIntent.CODING: "code_query",
+        QueryIntent.REASONING: "self_introspection",
+        QueryIntent.PERSONAL: "general_knowledge",
+        QueryIntent.FACTUAL: "general_knowledge",
+        QueryIntent.CREATIVE: "anime_production",
+        QueryIntent.CONVERSATIONAL: "general_knowledge",
+    }
+
     async def _select_model_with_fallback(self, intent: QueryIntent) -> str:
-        """Select model with fallback chain if preferred model isn't available."""
+        """Select model with fallback chain if preferred model isn't available.
+        Tries the agent registry first, then falls back to MODULE_MAP."""
+        # Try agent registry first
+        try:
+            from src.core.agent_registry import get_agent_registry
+            registry = get_agent_registry()
+            registry_intent = self._INTENT_TO_REGISTRY.get(intent, "general_knowledge")
+            agent = registry.select(registry_intent)
+            model = await registry.resolve_model(agent)
+            logger.info(f"Registry selected model {model} for {intent.value} via agent '{agent.name}'")
+            return model
+        except Exception as e:
+            logger.warning(f"Agent registry unavailable, using MODEL_MAP fallback: {e}")
+
+        # Original fallback logic
         preferred = MODEL_MAP.get(intent, "llama3.1:8b")
 
         if self._is_model_available(preferred):

@@ -266,6 +266,14 @@ except Exception as e:
 
 # Health endpoints are now in the consolidated echo_main_router
 
+# Initialize Agent Registry at startup
+try:
+    from src.core.agent_registry import get_agent_registry
+    _agent_registry = get_agent_registry()
+    logger.info(f"✅ Agent registry initialized: {len(_agent_registry.get_all())} agents loaded")
+except Exception as e:
+    logger.warning(f"⚠️ Agent registry not available: {e}")
+
 # Create minimal MCP endpoints inline for now
 @app.post("/mcp")
 async def mcp_handler(request: dict):
