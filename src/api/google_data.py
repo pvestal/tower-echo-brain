@@ -18,14 +18,28 @@ GOOGLE_SCOPES = [
 ]
 
 async def get_google_credentials_from_tower_auth():
-    """Get Google OAuth credentials via tower-auth SSO"""
+    """Get Google OAuth credentials via tower-auth SSO.
+
+    Always fetches a fresh token from tower-auth (which handles refresh
+    internally via Vault-backed refresh tokens).  The returned Credentials
+    object carries an expiry so that googleapiclient never silently uses a
+    stale token.
+    """
     try:
         from src.integrations.tower_auth_bridge import tower_auth
         token = await tower_auth.get_valid_token('google')
         if not token:
             logger.warning("No Google token available from tower-auth")
             return None
-        return Credentials(token=token, scopes=GOOGLE_SCOPES)
+
+        # Pull expiry from the cached token info (set by tower-auth after
+        # refresh).  Default to 55 min from now — Google access tokens live
+        # 60 min, and this avoids the edge-case where the token expires
+        # between credential creation and the API call.
+        token_info = tower_auth.cached_tokens.get('google', {})
+        expiry = token_info.get('expires_at', datetime.utcnow() + timedelta(minutes=55))
+
+        return Credentials(token=token, expiry=expiry, scopes=GOOGLE_SCOPES)
     except Exception as e:
         logger.error(f"Error getting credentials from tower-auth: {e}")
         return None
@@ -72,26 +86,30 @@ async def get_photos_count():
             cache_discovery=False,
         )
 
-        # Get media items count
-        # Note: Google Photos API doesn't provide direct count, so we estimate
-        results = service.mediaItems().list(pageSize=50).execute()
+        # Google Photos API has no "total count" endpoint — we can only
+        # enumerate pages.  Fetch one page of 100 as a sample.
+        results = service.mediaItems().list(pageSize=100).execute()
         items = results.get('mediaItems', [])
-
-        # For a rough count, we could paginate through all items
-        # For now, return a sample count
-        estimated_count = len(items) * 10  # Very rough estimate
+        has_more = 'nextPageToken' in results
 
         return {
-            "count": estimated_count,
-            "sample_items": len(items),
+            "sample_count": len(items),
+            "has_more": has_more,
             "timestamp": datetime.now().isoformat(),
-            "note": "Estimated count - Google Photos API requires full enumeration"
+            "note": "Google Photos API does not expose a total count; this is one page of results"
         }
 
     except HttpError as e:
         if e.resp.status in (403, 401):
+            detail_msg = str(e)
+            if "insufficient authentication scopes" in detail_msg.lower():
+                hint = ("Google Photos Library API may not be enabled in the "
+                        "Cloud Console project.  Enable it at: "
+                        "https://console.cloud.google.com/apis/library/photoslibrary.googleapis.com")
+            else:
+                hint = "OAuth scope may not include photoslibrary.readonly"
             logger.warning(f"Google Photos API access denied: {e}")
-            raise HTTPException(status_code=503, detail="Google Photos API access denied — OAuth scope may not include Photos")
+            raise HTTPException(status_code=503, detail=f"Google Photos API access denied — {hint}")
         raise HTTPException(status_code=500, detail=f"Failed to get photos count: {str(e)}")
     except Exception as e:
         logger.error(f"Error getting photos count: {e}")
@@ -161,9 +179,9 @@ async def get_google_summary():
 
         try:
             photos_data = await get_photos_count()
-            summary["photos"] = {"estimated_total": photos_data["count"], "note": photos_data["note"]}
-        except HTTPException:
-            summary["photos"] = {"error": "unavailable — OAuth scope may not include Photos"}
+            summary["photos"] = {"sample_count": photos_data["sample_count"], "has_more": photos_data["has_more"], "note": photos_data["note"]}
+        except HTTPException as exc:
+            summary["photos"] = {"error": exc.detail}
 
         try:
             calendar_data = await get_calendar_count()

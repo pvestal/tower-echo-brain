@@ -26,7 +26,7 @@ except ImportError:
 class CodingTaskRequest(BaseModel):
     task: str
     language: str = "python"
-    validate: bool = True
+    run_validation: bool = True
     files: Optional[List[str]] = None
     requirements: Optional[str] = None
 
@@ -49,7 +49,7 @@ async def run_coding_task(request: CodingTaskRequest):
             task=request.task,
             context={
                 "language": request.language,
-                "validate": request.validate,
+                "validate": request.run_validation,
                 "files": request.files,
                 "requirements": request.requirements
             }
