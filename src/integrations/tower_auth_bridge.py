@@ -21,6 +21,7 @@ class TowerAuthBridge:
         self.vault_url = "http://localhost:8200"
         self.session = None
         self.cached_tokens = {}
+        self._provider_disabled: Dict[str, str] = {}  # provider -> reason (skip refresh until re-auth)
 
     async def initialize(self):
         """Initialize connection to Tower Auth service"""
@@ -127,6 +128,10 @@ class TowerAuthBridge:
 
     async def get_valid_token(self, provider: str) -> Optional[str]:
         """Get valid access token, refreshing if necessary"""
+        # If provider was marked disabled (e.g. no refresh token), don't spam retries
+        if provider in self._provider_disabled:
+            return None
+
         if provider not in self.cached_tokens:
             # Try to load from Tower Auth database
             await self.load_existing_tokens()
@@ -213,10 +218,17 @@ class TowerAuthBridge:
                         'access_token': data['access_token'],
                         'expires_at': datetime.now() + timedelta(seconds=data.get('expires_in', 3600)),
                     }
-                    logger.info("✅ Google token refreshed via tower-auth")
+                    self._provider_disabled.pop('google', None)
+                    logger.info("Google token refreshed via tower-auth")
                     return True
                 else:
-                    logger.error(f"Google refresh returned {response.status_code}: {response.text[:200]}")
+                    body = response.text[:200]
+                    if "No refresh token stored" in body or "re-authenticate" in body:
+                        # No refresh token on server — stop retrying until manual re-auth
+                        self._provider_disabled['google'] = "No refresh token — re-authenticate via /api/auth/oauth/google/login"
+                        logger.warning("Google OAuth disabled: no refresh token stored. Re-authenticate to re-enable.")
+                    else:
+                        logger.error(f"Google refresh returned {response.status_code}: {body}")
         except Exception as e:
             logger.error(f"Google token refresh failed: {e}")
         return False
@@ -246,7 +258,7 @@ class TowerAuthBridge:
         """Get authenticated Google Calendar service"""
         token = await self.get_valid_token('google')
         if not token:
-            logger.error("No valid Google token available")
+            logger.debug("No valid Google token available")
             return None
 
         from googleapiclient.discovery import build
@@ -297,7 +309,7 @@ class TowerAuthBridge:
         """Get authenticated Gmail service with full access"""
         token = await self.get_valid_token('google')
         if not token:
-            logger.error("No valid Google token available")
+            logger.debug("No valid Google token available")
             return None
 
         from googleapiclient.discovery import build
@@ -488,47 +500,278 @@ class TowerAuthBridge:
             logger.error(f"Apple Music playlists failed: {e}")
             return {"error": str(e)}
 
-    # Plaid financial integration via tower-auth
-    async def get_plaid_accounts(self) -> Dict[str, Any]:
-        """Get linked Plaid accounts via tower-auth"""
+    async def get_apple_music_playlist_tracks(self, playlist_id: str, user_id: str = "patrick") -> Dict[str, Any]:
+        """Get tracks from a user's Apple Music library playlist, enriched with catalog preview URLs.
+
+        Uses batch catalog lookups (up to 10 concurrent) for speed.
+        """
+        developer_token = await self.get_apple_music_developer_token()
+        user_token = await self.get_apple_music_user_token(user_id)
+
+        if not developer_token:
+            return {"error": "No Apple Music developer token available"}
+        if not user_token:
+            return {"error": "No Apple Music user token - user must authorize via /apple-music-auth"}
+
+        headers = {
+            "Authorization": f"Bearer {developer_token}",
+            "Music-User-Token": user_token,
+        }
+
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.get(f"{self.auth_service_url}/api/auth/plaid/accounts")
-                if response.status_code == 200:
-                    return response.json()
+            async with httpx.AsyncClient(timeout=30) as client:
+                resp = await client.get(
+                    f"https://api.music.apple.com/v1/me/library/playlists/{playlist_id}/tracks",
+                    headers=headers,
+                )
+                if resp.status_code != 200:
+                    return {"error": f"Apple Music API returned {resp.status_code}: {resp.text[:200]}"}
+
+                library_data = resp.json()
+
+                # Build track list from library data
+                tracks = []
+                catalog_ids = []
+                for item in library_data.get("data", []):
+                    attrs = item.get("attributes", {})
+                    play_params = attrs.get("playParams", {})
+                    catalog_id = play_params.get("catalogId")
+
+                    artwork = attrs.get("artwork", {})
+                    artwork_url = None
+                    if artwork.get("url"):
+                        artwork_url = artwork["url"].replace("{w}", "300").replace("{h}", "300")
+
+                    tracks.append({
+                        "library_id": item.get("id"),
+                        "catalog_id": catalog_id,
+                        "name": attrs.get("name"),
+                        "artist": attrs.get("artistName"),
+                        "album": attrs.get("albumName"),
+                        "duration_ms": attrs.get("durationInMillis"),
+                        "artwork_url": artwork_url,
+                        "preview_url": None,
+                    })
+                    if catalog_id:
+                        catalog_ids.append(catalog_id)
+
+                # Batch catalog lookups — Apple allows up to 300 IDs per request
+                if catalog_ids:
+                    catalog_map = {}
+                    for i in range(0, len(catalog_ids), 25):
+                        batch = catalog_ids[i:i + 25]
+                        ids_param = ",".join(batch)
+                        try:
+                            cat_resp = await client.get(
+                                f"https://api.music.apple.com/v1/catalog/us/songs",
+                                headers={"Authorization": f"Bearer {developer_token}"},
+                                params={"ids": ids_param},
+                            )
+                            if cat_resp.status_code == 200:
+                                for song in cat_resp.json().get("data", []):
+                                    sid = song.get("id")
+                                    sa = song.get("attributes", {})
+                                    previews = sa.get("previews", [])
+                                    art = sa.get("artwork", {})
+                                    catalog_map[sid] = {
+                                        "preview_url": previews[0].get("url") if previews else None,
+                                        "artwork_url": art["url"].replace("{w}", "300").replace("{h}", "300") if art.get("url") else None,
+                                    }
+                        except Exception as batch_err:
+                            logger.warning(f"Catalog batch lookup failed: {batch_err}")
+
+                    # Enrich tracks with catalog data
+                    for track in tracks:
+                        cid = track.get("catalog_id")
+                        if cid and cid in catalog_map:
+                            cat = catalog_map[cid]
+                            track["preview_url"] = cat.get("preview_url")
+                            if not track["artwork_url"] and cat.get("artwork_url"):
+                                track["artwork_url"] = cat["artwork_url"]
+
+                return {
+                    "playlist_id": playlist_id,
+                    "tracks": tracks,
+                    "total": len(tracks),
+                }
+
         except Exception as e:
-            logger.error(f"Failed to get Plaid accounts: {e}")
-        return {"error": "tower-auth unreachable", "accounts": []}
+            logger.error(f"Apple Music playlist tracks failed: {e}")
+            return {"error": str(e)}
+
+    async def get_apple_music_catalog_track(self, catalog_id: str) -> Dict[str, Any]:
+        """Look up a single track in the Apple Music catalog to get preview URL and metadata."""
+        developer_token = await self.get_apple_music_developer_token()
+        if not developer_token:
+            return {"error": "No Apple Music developer token available"}
+
+        try:
+            async with httpx.AsyncClient(timeout=10) as client:
+                resp = await client.get(
+                    f"https://api.music.apple.com/v1/catalog/us/songs/{catalog_id}",
+                    headers={"Authorization": f"Bearer {developer_token}"},
+                )
+                if resp.status_code != 200:
+                    return {"error": f"Catalog lookup returned {resp.status_code}"}
+
+                data = resp.json()
+                items = data.get("data", [])
+                if not items:
+                    return {"error": "Track not found in catalog"}
+
+                attrs = items[0].get("attributes", {})
+                previews = attrs.get("previews", [])
+                preview_url = previews[0].get("url") if previews else None
+
+                artwork = attrs.get("artwork", {})
+                artwork_url = None
+                if artwork.get("url"):
+                    artwork_url = artwork["url"].replace("{w}", "300").replace("{h}", "300")
+
+                return {
+                    "catalog_id": catalog_id,
+                    "name": attrs.get("name"),
+                    "artist": attrs.get("artistName"),
+                    "album": attrs.get("albumName"),
+                    "duration_ms": attrs.get("durationInMillis"),
+                    "genre": (attrs.get("genreNames") or [None])[0],
+                    "preview_url": preview_url,
+                    "artwork_url": artwork_url,
+                    "release_date": attrs.get("releaseDate"),
+                    "isrc": attrs.get("isrc"),
+                }
+
+        except Exception as e:
+            logger.error(f"Apple Music catalog lookup failed: {e}")
+            return {"error": str(e)}
+
+    # Plaid financial integration — direct Vault + Plaid API (bypasses tower-auth session requirement)
+
+    async def _get_plaid_credentials(self) -> Optional[Dict[str, str]]:
+        """Read Plaid credentials and access token from Vault."""
+        import os
+        try:
+            import hvac
+            token = os.getenv("VAULT_TOKEN")
+            if not token:
+                # Fall back to ~/.vault-token file
+                token_file = os.path.expanduser("~/.vault-token")
+                if os.path.exists(token_file):
+                    with open(token_file) as f:
+                        token = f.read().strip()
+            vault = hvac.Client(
+                url=self.vault_url,
+                token=token,
+            )
+            # Client credentials
+            creds = vault.secrets.kv.v2.read_secret_version(path="plaid")
+            creds_data = creds["data"]["data"]
+            # Access token + item_id
+            tokens = vault.secrets.kv.v2.read_secret_version(path="tokens/plaid")
+            tokens_data = tokens["data"]["data"]
+
+            return {
+                "client_id": creds_data["client_id"],
+                "secret": creds_data["secret"],
+                "access_token": tokens_data["access_token"],
+                "item_id": tokens_data.get("item_id", ""),
+                "environment": creds_data.get("environment", "production"),
+            }
+        except Exception as e:
+            logger.error(f"Failed to read Plaid credentials from Vault: {e}")
+            return None
+
+    def _plaid_base_url(self, env: str) -> str:
+        urls = {
+            "sandbox": "https://sandbox.plaid.com",
+            "development": "https://development.plaid.com",
+            "production": "https://production.plaid.com",
+        }
+        return urls.get(env, "https://production.plaid.com")
+
+    async def get_plaid_accounts(self) -> Dict[str, Any]:
+        """Get linked Plaid accounts directly via Plaid API."""
+        creds = await self._get_plaid_credentials()
+        if not creds:
+            return {"error": "Plaid credentials unavailable", "accounts": []}
+        try:
+            base = self._plaid_base_url(creds["environment"])
+            async with httpx.AsyncClient(timeout=15) as client:
+                resp = await client.post(
+                    f"{base}/accounts/get",
+                    json={
+                        "client_id": creds["client_id"],
+                        "secret": creds["secret"],
+                        "access_token": creds["access_token"],
+                    },
+                )
+                if resp.status_code == 200:
+                    return resp.json()
+                logger.error(f"Plaid accounts/get: {resp.status_code} {resp.text[:200]}")
+                return {"error": f"Plaid API {resp.status_code}", "accounts": []}
+        except Exception as e:
+            logger.error(f"Plaid accounts failed: {e}")
+            return {"error": str(e), "accounts": []}
 
     async def get_plaid_transactions(self, start_date: str = None, end_date: str = None) -> Dict[str, Any]:
-        """Get Plaid transactions via tower-auth"""
+        """Get Plaid transactions directly via Plaid API."""
+        creds = await self._get_plaid_credentials()
+        if not creds:
+            return {"error": "Plaid credentials unavailable", "transactions": []}
+        from datetime import datetime, timedelta
+        if not start_date:
+            start_date = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
+        if not end_date:
+            end_date = datetime.now().strftime("%Y-%m-%d")
         try:
-            params = {}
-            if start_date:
-                params["start_date"] = start_date
-            if end_date:
-                params["end_date"] = end_date
+            base = self._plaid_base_url(creds["environment"])
             async with httpx.AsyncClient(timeout=30) as client:
-                response = await client.get(
-                    f"{self.auth_service_url}/api/auth/plaid/transactions",
-                    params=params
+                resp = await client.post(
+                    f"{base}/transactions/get",
+                    json={
+                        "client_id": creds["client_id"],
+                        "secret": creds["secret"],
+                        "access_token": creds["access_token"],
+                        "start_date": start_date,
+                        "end_date": end_date,
+                    },
                 )
-                if response.status_code == 200:
-                    return response.json()
+                if resp.status_code == 200:
+                    data = resp.json()
+                    return {
+                        "transactions": data.get("transactions", []),
+                        "total_transactions": data.get("total_transactions", 0),
+                    }
+                logger.error(f"Plaid transactions/get: {resp.status_code} {resp.text[:200]}")
+                return {"error": f"Plaid API {resp.status_code}", "transactions": []}
         except Exception as e:
-            logger.error(f"Failed to get Plaid transactions: {e}")
-        return {"error": "tower-auth unreachable", "transactions": []}
+            logger.error(f"Plaid transactions failed: {e}")
+            return {"error": str(e), "transactions": []}
 
     async def get_plaid_balances(self) -> Dict[str, Any]:
-        """Get Plaid account balances via tower-auth"""
+        """Get Plaid account balances directly via Plaid API."""
+        creds = await self._get_plaid_credentials()
+        if not creds:
+            return {"error": "Plaid credentials unavailable", "balances": []}
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.get(f"{self.auth_service_url}/api/auth/plaid/balances")
-                if response.status_code == 200:
-                    return response.json()
+            base = self._plaid_base_url(creds["environment"])
+            async with httpx.AsyncClient(timeout=15) as client:
+                resp = await client.post(
+                    f"{base}/accounts/balance/get",
+                    json={
+                        "client_id": creds["client_id"],
+                        "secret": creds["secret"],
+                        "access_token": creds["access_token"],
+                    },
+                )
+                if resp.status_code == 200:
+                    data = resp.json()
+                    return {"accounts": data.get("accounts", [])}
+                logger.error(f"Plaid balance/get: {resp.status_code} {resp.text[:200]}")
+                return {"error": f"Plaid API {resp.status_code}", "balances": []}
         except Exception as e:
-            logger.error(f"Failed to get Plaid balances: {e}")
-        return {"error": "tower-auth unreachable", "balances": []}
+            logger.error(f"Plaid balances failed: {e}")
+            return {"error": str(e), "balances": []}
 
     # Apple SSO implementation
     async def initiate_apple_sso(self) -> Dict[str, Any]:
