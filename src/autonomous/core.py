@@ -282,7 +282,7 @@ class AutonomousCore:
         """
         cycle_start = datetime.now()
         cycle_results = {
-            'timestamp': cycle_start,
+            'timestamp': cycle_start.isoformat(),
             'tasks_processed': 0,
             'events_processed': 0,
             'goals_updated': 0,
@@ -357,8 +357,27 @@ class AutonomousCore:
                 # Check if goal needs more tasks (autonomous task generation)
                 await self._generate_tasks_for_goal(goal)
 
-                # Check if goal is completed
-                if goal['progress_percent'] >= 100.0:
+                # Re-read progress after update to check completion
+                async with self.get_connection() as conn:
+                    current_progress = await conn.fetchval(
+                        "SELECT progress_percent FROM autonomous_goals WHERE id = $1",
+                        goal['id']
+                    )
+
+                # Recurring goals (maintenance, monitoring, learning) keep cycling
+                # Non-recurring goals complete when all tasks are done
+                goal_meta = goal.get('metadata') or {}
+                if isinstance(goal_meta, str):
+                    try:
+                        goal_meta = json.loads(goal_meta)
+                    except (json.JSONDecodeError, TypeError):
+                        goal_meta = {}
+                is_recurring = (
+                    goal_meta.get('recurring', False)
+                    or goal['goal_type'] in ('maintenance', 'monitoring', 'learning')
+                )
+
+                if current_progress is not None and float(current_progress) >= 100.0 and not is_recurring:
                     await self.goal_manager.update_goal_status(goal['id'], 'completed')
                     await self.audit_logger.log(
                         "goal_completed",
@@ -447,7 +466,13 @@ class AutonomousCore:
                     )
 
                     # Handle recurring tasks
-                    if task.metadata and task.metadata.get('recurring'):
+                    task_meta = task.metadata
+                    if isinstance(task_meta, str):
+                        try:
+                            task_meta = json.loads(task_meta)
+                        except (json.JSONDecodeError, TypeError):
+                            task_meta = {}
+                    if task_meta and isinstance(task_meta, dict) and task_meta.get('recurring'):
                         await self.scheduler.handle_recurring_task_completion(task.id)
 
                 else:
@@ -789,11 +814,11 @@ class AutonomousCore:
             goal: Goal dictionary from database
         """
         try:
-            # Check how many tasks this goal already has
+            # Check how many non-completed tasks this goal already has
             async with self.get_connection() as conn:
                 task_count = await conn.fetchval("""
                     SELECT COUNT(*) FROM autonomous_tasks
-                    WHERE goal_id = $1
+                    WHERE goal_id = $1 AND status NOT IN ('completed', 'failed')
                 """, goal['id'])
 
             goal_type = goal['goal_type']
@@ -854,6 +879,56 @@ class AutonomousCore:
                         "description": "Analyze codebase for potential improvements and optimizations",
                         "safety_level": "notify",
                         "priority": 8
+                    }
+                ]
+            elif goal_type == 'maintenance' and task_count < 2:
+                new_tasks = [
+                    {
+                        "name": f"Maintenance check: {goal['name']}",
+                        "task_type": "monitoring",
+                        "description": f"Run maintenance routine for goal '{goal['name']}': check system health, review logs for anomalies, verify services are operating correctly.",
+                        "safety_level": "auto",
+                        "priority": 6
+                    }
+                ]
+            elif goal_type == 'monitoring' and task_count < 2:
+                new_tasks = [
+                    {
+                        "name": f"Monitor: {goal['name']}",
+                        "task_type": "monitoring",
+                        "description": f"Execute monitoring routine for goal '{goal['name']}': check for new data, index recent changes, report findings.",
+                        "safety_level": "auto",
+                        "priority": 5
+                    }
+                ]
+            elif goal_type == 'learning' and task_count < 2:
+                new_tasks = [
+                    {
+                        "name": f"Learning cycle: {goal['name']}",
+                        "task_type": "analysis",
+                        "description": f"Execute learning routine for goal '{goal['name']}': extract patterns from recent activity, identify new facts, update knowledge base.",
+                        "safety_level": "auto",
+                        "priority": 7
+                    }
+                ]
+            elif goal_type == 'improvement' and task_count < 2:
+                new_tasks = [
+                    {
+                        "name": f"Improvement cycle: {goal['name']}",
+                        "task_type": "analysis",
+                        "description": f"Execute improvement routine for goal '{goal['name']}': analyze recent performance, identify bottlenecks, propose optimizations.",
+                        "safety_level": "notify",
+                        "priority": 7
+                    }
+                ]
+            elif goal_type == 'knowledge_processing' and task_count < 2:
+                new_tasks = [
+                    {
+                        "name": f"Knowledge processing: {goal['name']}",
+                        "task_type": "analysis",
+                        "description": f"Execute knowledge processing for goal '{goal['name']}': extract facts from recent conversations, deduplicate, store in knowledge graph.",
+                        "safety_level": "auto",
+                        "priority": 5
                     }
                 ]
 
