@@ -115,10 +115,6 @@ class AutonomousService:
             # Create autonomous core with configuration
             self.core = AutonomousCore(config=self.config)
 
-            # Initialize the core
-            self.logger.info("Initializing autonomous core components...")
-            await self.core.initialize()
-
             self.logger.info("✅ Autonomous Core Service initialized successfully")
             return True
 
@@ -185,10 +181,6 @@ class AutonomousService:
                 # Stop autonomous operations
                 self.logger.info("Stopping autonomous operations...")
                 await self.core.stop()
-
-                # Close database connections and cleanup
-                self.logger.info("Cleaning up resources...")
-                await self.core.cleanup()
 
             except Exception as e:
                 self.logger.error(f"Error during shutdown: {e}")

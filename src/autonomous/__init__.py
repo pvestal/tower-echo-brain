@@ -24,17 +24,9 @@ from .goals import GoalManager
 from .scheduler import Scheduler
 from .safety import SafetyController
 from .audit import AuditLogger
+from .executor import Executor
+from .models import TaskResult
 from .core import AutonomousCore, AutonomousState, SystemStatus
-
-# Create placeholder classes for missing modules
-class Executor:
-    """Placeholder executor until proper implementation"""
-    async def execute_task(self, *args, **kwargs):
-        return {"status": "not_implemented"}
-
-class TaskResult:
-    """Placeholder task result"""
-    pass
 
 __all__ = [
     "GoalManager",

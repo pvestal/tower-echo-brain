@@ -579,3 +579,8 @@ class AuditLogger:
         if self._pool:
             await self._pool.close()
             logger.debug("Closed AuditLogger database pool")
+
+    async def cleanup(self):
+        """Cleanup resources (alias for close)."""
+        await self.close()
+        logger.info("AuditLogger cleaned up")
