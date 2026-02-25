@@ -93,7 +93,7 @@ export const mcpApi = {
       params: { name: 'get_facts', arguments: { topic } },
       id: Date.now(),
     }),
-  health: () => api.get('/mcp/health'),
+  health: () => axios.get('/mcp/health'),
 };
 
 // Self-test

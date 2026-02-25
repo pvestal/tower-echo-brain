@@ -171,29 +171,31 @@ class DailyBriefingWorker:
         return []
 
     async def _get_finance(self) -> tuple[list[dict], list[dict]]:
+        """Get financial data from tower-auth DB endpoints (no live Plaid API calls)."""
         balances_list: list[dict] = []
         transactions_list: list[dict] = []
-        from src.integrations.tower_auth_bridge import tower_auth
+        import httpx
 
-        # Balances and transactions fetched independently so one failure
-        # doesn't hide the other (transactions needs Plaid re-consent).
         try:
-            bal_data = await tower_auth.get_plaid_balances()
-            if not bal_data.get("error"):
-                balances_list = bal_data.get("balances", bal_data.get("accounts", []))
+            async with httpx.AsyncClient(timeout=15) as client:
+                resp = await client.get("http://127.0.0.1:8088/api/auth/plaid/db/accounts")
+                if resp.status_code == 200:
+                    balances_list = resp.json().get("accounts", [])
         except Exception as e:
-            logger.warning(f"[DailyBriefing] Plaid balances unavailable: {e}")
+            logger.warning(f"[DailyBriefing] DB accounts unavailable: {e}")
 
         try:
-            today = datetime.now(LOCAL_TZ).strftime("%Y-%m-%d")
             yesterday = (datetime.now(LOCAL_TZ) - timedelta(days=1)).strftime("%Y-%m-%d")
-            txn_data = await tower_auth.get_plaid_transactions(
-                start_date=yesterday, end_date=today
-            )
-            if not txn_data.get("error"):
-                transactions_list = txn_data.get("transactions", [])
+            today = datetime.now(LOCAL_TZ).strftime("%Y-%m-%d")
+            async with httpx.AsyncClient(timeout=15) as client:
+                resp = await client.get(
+                    "http://127.0.0.1:8088/api/auth/plaid/db/transactions",
+                    params={"start_date": yesterday, "end_date": today, "limit": 50},
+                )
+                if resp.status_code == 200:
+                    transactions_list = resp.json().get("transactions", [])
         except Exception as e:
-            logger.warning(f"[DailyBriefing] Plaid transactions unavailable: {e}")
+            logger.warning(f"[DailyBriefing] DB transactions unavailable: {e}")
 
         return balances_list, transactions_list
 

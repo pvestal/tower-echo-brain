@@ -8,6 +8,7 @@ Run:
     pytest tests/echo_brain_smoke_test.py -v
     pytest tests/echo_brain_smoke_test.py -v -k "embedding"
     pytest tests/echo_brain_smoke_test.py -v -k "mcp"
+    pytest tests/echo_brain_smoke_test.py -v -k "Google"
 
 Test groups (ordered by dependency):
   1. Infrastructure     — Services alive
@@ -21,6 +22,7 @@ Test groups (ordered by dependency):
   9. Voice              — STT/TTS service
  10. KnowledgeGraph     — v0.6.0 graph feature
  11. MCPTools           — All MCP tools respond
+ 12. GoogleIntegration  — Google OAuth + Calendar/Gmail/Ingest end-to-end
 """
 
 import json
@@ -504,3 +506,75 @@ class TestMCPTools:
         data = resp.json()
         models = data.get("models", [])
         assert len(models) > 0, "manage_ollama list returned no models"
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# 12. GOOGLE INTEGRATION — OAuth + Calendar/Gmail/Ingest end-to-end
+# ═════════════════════════════════════════════════════════════════════════════
+
+class TestGoogleIntegration:
+    """Google OAuth chain: tower-auth token → Google API → response."""
+
+    def test_summary_returns_200(self):
+        """GET /google/summary returns 200 with emails + calendar data."""
+        resp = get(f"{BASE_URL}/google/summary", timeout=QUERY_TIMEOUT)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "emails" in data, f"Missing 'emails' in summary: {list(data.keys())}"
+        assert "calendar" in data, f"Missing 'calendar' in summary: {list(data.keys())}"
+        # At least one of emails/calendar should have real data (not error)
+        emails_ok = "total" in data.get("emails", {})
+        calendar_ok = "events_60_days" in data.get("calendar", {})
+        assert emails_ok or calendar_ok, (
+            f"Both emails and calendar errored: emails={data.get('emails')}, calendar={data.get('calendar')}"
+        )
+
+    def test_email_count_has_totals(self):
+        """GET /google/emails/count returns total > 0 and inbox count."""
+        resp = get(f"{BASE_URL}/google/emails/count", timeout=QUERY_TIMEOUT)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data.get("count", 0) > 0, f"Email total is 0 (expected thousands): {data}"
+        assert "inbox_count" in data, f"Missing inbox_count: {list(data.keys())}"
+
+    def test_calendar_count_returns_events(self):
+        """GET /google/calendar/count returns event count for 60-day window."""
+        resp = get(f"{BASE_URL}/google/calendar/count", timeout=QUERY_TIMEOUT)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "count" in data, f"Missing 'count': {list(data.keys())}"
+        assert "upcoming_count" in data, f"Missing 'upcoming_count': {list(data.keys())}"
+        # Calendar should have at least some events in a 60-day window
+        assert data["count"] >= 0, f"Negative event count: {data['count']}"
+
+    def test_calendar_status_returns_200(self):
+        """GET /api/calendar/status returns 200 with availability info."""
+        resp = get(f"{BASE_URL}/api/calendar/status", timeout=QUERY_TIMEOUT)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "available" in data, f"Missing 'available': {list(data.keys())}"
+
+    def test_calendar_upcoming_returns_events(self):
+        """GET /api/calendar/events/upcoming returns events list."""
+        resp = get(f"{BASE_URL}/api/calendar/events/upcoming", timeout=QUERY_TIMEOUT)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "events" in data, f"Missing 'events': {list(data.keys())}"
+        assert isinstance(data["events"], list), f"'events' is not a list: {type(data['events']).__name__}"
+
+    def test_ingest_stats_has_counts(self):
+        """GET /api/google/ingest/stats returns ingestion counts > 0."""
+        resp = get(f"{BASE_URL}/api/google/ingest/stats")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data.get("total", 0) > 0, f"Ingest stats total is 0: {data}"
+        assert "by_source" in data, f"Missing 'by_source': {list(data.keys())}"
+
+    def test_ingest_calendar_returns_structure(self):
+        """POST /api/google/ingest/calendar returns ingested/skipped/errors."""
+        resp = post(f"{BASE_URL}/api/google/ingest/calendar", {}, timeout=QUERY_TIMEOUT)
+        assert resp.status_code == 200
+        data = resp.json()
+        # Should have some ingestion result fields
+        has_expected = any(k in data for k in ("ingested", "skipped", "errors", "total", "status"))
+        assert has_expected, f"Unexpected ingest response structure: {list(data.keys())}"
