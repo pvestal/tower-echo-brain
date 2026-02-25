@@ -5,6 +5,7 @@ Runs daily. Vectors with access_count > 5 are exempt (usage-validated).
 import math
 import logging
 import httpx
+import networkx as nx
 from datetime import datetime, timezone
 
 logger = logging.getLogger("echo.workers.decay")
@@ -20,10 +21,47 @@ BATCH_SIZE = 100
 class DecayWorker:
     """Periodically decays confidence on stale, unused vectors."""
 
+    def __init__(self):
+        self._graph_hub_entities: set = set()
+        self._graph_loaded = False
+
+    async def _load_graph_hubs(self):
+        """Cache hub entities (top 10% by centrality) to shield from decay."""
+        if self._graph_loaded:
+            return
+        try:
+            from src.core.graph_engine import get_graph_engine
+            engine = get_graph_engine()
+            await engine._ensure_loaded()
+            if engine._graph and engine._graph.number_of_nodes() > 0:
+                centrality = nx.degree_centrality(engine._graph)
+                if centrality:
+                    threshold = sorted(centrality.values(), reverse=True)[
+                        max(0, len(centrality) // 10)
+                    ]
+                    self._graph_hub_entities = {
+                        node for node, score in centrality.items()
+                        if score >= threshold
+                    }
+                    logger.info(f"Decay worker: shielding {len(self._graph_hub_entities)} hub entities")
+        except Exception as e:
+            logger.debug(f"Decay worker: graph hubs unavailable: {e}")
+        self._graph_loaded = True
+
+    def _is_hub_content(self, payload: dict) -> bool:
+        """Check if vector content mentions a hub entity."""
+        if not self._graph_hub_entities:
+            return False
+        text = (payload.get("text", "") + " " + payload.get("content", "")).lower()
+        return any(hub in text for hub in self._graph_hub_entities)
+
     async def run_cycle(self):
         updated = 0
         skipped = 0
+        hub_shielded = 0
         now = datetime.now(timezone.utc)
+
+        await self._load_graph_hubs()
 
         try:
             async with httpx.AsyncClient(timeout=30) as client:
@@ -56,6 +94,11 @@ class DecayWorker:
                         # Exempt usage-validated vectors
                         if access_count > ACCESS_EXEMPT_THRESHOLD:
                             skipped += 1
+                            continue
+
+                        # Exempt vectors about hub entities (graph-important)
+                        if self._is_hub_content(payload):
+                            hub_shielded += 1
                             continue
 
                         # Need a timestamp to compute age
@@ -102,4 +145,4 @@ class DecayWorker:
         except Exception as e:
             logger.error(f"Decay worker error: {e}")
 
-        logger.info(f"Decay cycle: updated={updated}, exempt={skipped}")
+        logger.info(f"Decay cycle: updated={updated}, exempt={skipped}, hub_shielded={hub_shielded}")

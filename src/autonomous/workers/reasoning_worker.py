@@ -208,28 +208,77 @@ Output ONLY the JSON array, no other text."""
     # ============================================================
 
     async def _find_connections(self, conn, fact: dict) -> List[dict]:
-        """Search existing knowledge_facts for related information."""
+        """Search existing knowledge for related information using graph + text.
+
+        Uses two strategies:
+        1. Graph traversal: find entities connected via the knowledge graph
+        2. Text matching: fallback ILIKE search for entities not yet in graph
+        """
         connections = []
         fact_text = fact.get("text", "")
         if not fact_text:
             return connections
 
-        # Search existing facts by entity overlap
         entities = fact.get("entities", [])
-        if entities:
-            for entity in entities[:3]:  # Limit entity searches
-                existing = await conn.fetch("""
-                    SELECT id, fact_text, fact_type, entities, category
-                    FROM knowledge_facts
-                    WHERE valid_until IS NULL
-                      AND (fact_text ILIKE $1 OR entities::text ILIKE $1)
-                    LIMIT 5
-                """, f"%{entity}%")
+        if not entities:
+            self.stats["connections_found"] += len(connections)
+            return connections
 
-                for row in existing:
+        # Strategy 1: Graph traversal for multi-hop relationships
+        graph_entities = set()
+        try:
+            from src.core.graph_engine import get_graph_engine
+            engine = get_graph_engine()
+            await engine._ensure_loaded()
+            if engine._graph:
+                for entity in entities[:3]:
+                    connected = engine.get_connected_entities(entity, max_hops=2)
+                    for item in connected:
+                        graph_entities.add(item["entity"])
+
+                # Fetch facts for graph-connected entities
+                if graph_entities:
+                    placeholders = ", ".join(f"${i+1}" for i in range(len(graph_entities)))
+                    like_clauses = " OR ".join(
+                        f"fact_text ILIKE '%' || ${i+1} || '%'" for i in range(len(graph_entities))
+                    )
+                    existing = await conn.fetch(f"""
+                        SELECT id, fact_text, fact_type, entities, category
+                        FROM knowledge_facts
+                        WHERE valid_until IS NULL
+                          AND ({like_clauses})
+                        LIMIT 10
+                    """, *list(graph_entities))
+
+                    for row in existing:
+                        connections.append({
+                            "new_fact": fact,
+                            "existing_fact_id": str(row["id"]),
+                            "existing_fact_text": row["fact_text"],
+                            "existing_category": row["category"],
+                            "matched_entity": "(graph traversal)",
+                        })
+        except Exception as e:
+            print(f"[ReasoningWorker] Graph connection search failed, falling back: {e}")
+
+        # Strategy 2: Direct text match (fallback / complement)
+        seen_ids = {c["existing_fact_id"] for c in connections}
+        for entity in entities[:3]:
+            existing = await conn.fetch("""
+                SELECT id, fact_text, fact_type, entities, category
+                FROM knowledge_facts
+                WHERE valid_until IS NULL
+                  AND (fact_text ILIKE $1 OR entities::text ILIKE $1)
+                LIMIT 5
+            """, f"%{entity}%")
+
+            for row in existing:
+                row_id = str(row["id"])
+                if row_id not in seen_ids:
+                    seen_ids.add(row_id)
                     connections.append({
                         "new_fact": fact,
-                        "existing_fact_id": str(row["id"]),
+                        "existing_fact_id": row_id,
                         "existing_fact_text": row["fact_text"],
                         "existing_category": row["category"],
                         "matched_entity": entity,

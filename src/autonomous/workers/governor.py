@@ -25,6 +25,8 @@ class Governor:
 
     async def _ensure_table(self, conn):
         """Create governor_decisions table if it doesn't exist."""
+        # AGE puts ag_catalog first in search_path; pin DDL to public
+        await conn.execute("SET search_path TO public")
         await conn.execute("""
             CREATE TABLE IF NOT EXISTS governor_decisions (
                 id SERIAL PRIMARY KEY,
@@ -47,6 +49,35 @@ class Governor:
             await conn.execute(
                 "ALTER TABLE governor_decisions ALTER COLUMN winner_fact_id TYPE TEXT USING winner_fact_id::TEXT"
             )
+
+    async def _break_tie_with_graph(self, ranked: list, subject: str) -> list:
+        """Use graph centrality of fact objects to break ambiguous ties.
+
+        When two facts about the same subject have similar effective scores,
+        prefer the one whose object is more central in the knowledge graph
+        (i.e., more connected to other known entities).
+        """
+        try:
+            from src.core.graph_engine import get_graph_engine
+            engine = get_graph_engine()
+            await engine._ensure_loaded()
+            if not engine._graph:
+                return ranked
+
+            # Boost effective scores based on object entity importance
+            boosted = []
+            for eff, detail, fid in ranked:
+                obj_value = detail.get("object", "")
+                importance = engine.get_entity_importance(obj_value)
+                # Small boost (max 0.15) to avoid overwhelming confidence/recency
+                boost = importance * 0.15
+                detail["graph_boost"] = round(boost, 4)
+                boosted.append((eff + boost, detail, fid))
+
+            boosted.sort(key=lambda x: x[0], reverse=True)
+            return boosted
+        except Exception:
+            return ranked
 
     def _recency_score(self, created_at, now) -> float:
         """Compute recency score: 1.0 for brand-new, 0.1 for 90+ days old."""
@@ -124,6 +155,12 @@ class Governor:
                     second_score = ranked[1][0] if len(ranked) > 1 else 0
 
                     if best_score - second_score < AMBIGUITY_THRESHOLD:
+                        # Try to break the tie using graph centrality
+                        ranked = await self._break_tie_with_graph(ranked, subject)
+                        best_score = ranked[0][0]
+                        second_score = ranked[1][0] if len(ranked) > 1 else 0
+
+                    if best_score - second_score < AMBIGUITY_THRESHOLD:
                         # Ambiguous — flag for human review
                         await conn.execute("""
                             INSERT INTO governor_decisions
@@ -154,14 +191,18 @@ class Governor:
                         )
 
                     # Build reasoning string
+                    graph_note = ""
+                    if winner_detail.get("graph_boost"):
+                        graph_note = f", graph_boost={winner_detail['graph_boost']}"
                     reasoning_parts = [
                         f"kept fact_id {winner_id} (eff={winner_detail['effective_score']}, "
-                        f"conf={winner_detail['confidence']}, recency={winner_detail['recency']})"
+                        f"conf={winner_detail['confidence']}, recency={winner_detail['recency']}{graph_note})"
                     ]
                     for _, detail, fid in ranked[1:]:
+                        gb = f", graph_boost={detail['graph_boost']}" if detail.get("graph_boost") else ""
                         reasoning_parts.append(
                             f"demoted fact_id {fid} (eff={detail['effective_score']}, "
-                            f"conf={detail['confidence']}, recency={detail['recency']})"
+                            f"conf={detail['confidence']}, recency={detail['recency']}{gb})"
                         )
 
                     await conn.execute("""

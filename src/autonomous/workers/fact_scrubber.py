@@ -86,6 +86,47 @@ class FactScrubber:
             pass
         return False
 
+    async def _get_graph_support(self, conn, subject: str, predicate: str, obj: str) -> float:
+        """Check if graph-connected facts corroborate this fact.
+
+        Returns a support score:
+          > 0 means corroborating facts found (boosts confidence)
+          0 means no graph data available
+          < 0 means contradicting facts found (weakens confidence)
+        """
+        try:
+            from src.core.graph_engine import get_graph_engine
+            engine = get_graph_engine()
+            await engine._ensure_loaded()
+            if not engine._graph:
+                return 0.0
+
+            # Find entities connected to this fact's subject
+            connected = engine.get_connected_entities(subject, max_hops=1)
+            if not connected:
+                return 0.0
+
+            # Check if any connected entities have facts with same predicate
+            connected_entities = [c["entity"] for c in connected[:10]]
+            support_score = 0.0
+
+            for entity in connected_entities:
+                rows = await conn.fetch("""
+                    SELECT object, confidence FROM facts
+                    WHERE LOWER(subject) = $1 AND LOWER(predicate) = $2
+                    LIMIT 3
+                """, entity.lower(), predicate.lower())
+
+                for row in rows:
+                    if row["object"].lower().strip() == obj.lower().strip():
+                        support_score += float(row["confidence"]) * 0.1
+                    # Different object for same predicate on connected entity
+                    # isn't necessarily contradicting (different entity)
+
+            return min(support_score, 0.3)  # Cap bonus
+        except Exception:
+            return 0.0
+
     async def _llm_verify(self, fact_text: str, source_text: str) -> bool:
         """Ask LLM whether the fact is supported by the source text."""
         prompt = (
@@ -173,7 +214,15 @@ class FactScrubber:
 
                     sim = self._cosine_similarity(fact_emb, source_vec)
 
-                    if sim < 0.5:
+                    # Get graph corroboration (shifts thresholds)
+                    graph_support = await self._get_graph_support(
+                        conn, row["subject"], row["predicate"], row["object"]
+                    )
+                    # Graph-corroborated facts get more lenient thresholds
+                    auto_demote_threshold = 0.5 - graph_support
+                    borderline_threshold = 0.7 - graph_support
+
+                    if sim < auto_demote_threshold:
                         # Auto-demote: very low similarity
                         new_conf = max(0.2, min(0.3, old_conf * 0.4))
                         await conn.execute("""
@@ -183,7 +232,7 @@ class FactScrubber:
                         """, new_conf, fact_id)
                         demoted += 1
 
-                    elif sim < 0.7 and not self._gpu_busy():
+                    elif sim < borderline_threshold and not self._gpu_busy():
                         # Borderline — use LLM
                         # Get source content for LLM
                         async with httpx.AsyncClient(timeout=10) as client:

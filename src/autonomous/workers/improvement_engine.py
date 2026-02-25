@@ -67,26 +67,29 @@ class ImprovementEngine:
                         logger.warning(f"No related code found for issue {issue['id']}")
                         continue
 
-                    # 4. Build analysis prompt with issue + code context
-                    prompt = self._build_analysis_prompt(issue, code_context)
+                    # 4. Enrich with graph context (impact analysis)
+                    graph_context = await self._get_graph_context(issue, code_context)
 
-                    # 5. Send to Ollama, parse response
+                    # 5. Build analysis prompt with issue + code + graph context
+                    prompt = self._build_analysis_prompt(issue, code_context, graph_context)
+
+                    # 6. Send to Ollama, parse response
                     analysis = await self._analyze_with_llm(prompt)
 
                     if not analysis:
                         logger.error(f"Failed to analyze issue {issue['id']}")
                         continue
 
-                    # 6. Store proposal in self_improvement_proposals
+                    # 7. Store proposal in self_improvement_proposals
                     proposal_id = await self._store_proposal(conn, issue, analysis)
 
                     if proposal_id:
                         proposals_generated += 1
 
-                        # 7. Create notification for Patrick
+                        # 8. Create notification for Patrick
                         await self._create_notification(conn, issue, analysis, proposal_id)
 
-                # 8. Log summary
+                # 9. Log summary
                 logger.info(f"✅ Improvement Engine cycle complete: "
                           f"Analyzed {analyzed} issues, generated {proposals_generated} proposals")
 
@@ -164,22 +167,23 @@ class ImprovementEngine:
             if not embedding:
                 return None
 
-            # Search Qdrant
-            results = self.qdrant_client.search(
+            # Search Qdrant (query_points replaces deprecated .search)
+            results = self.qdrant_client.query_points(
                 collection_name=self.collection,
-                query_vector=embedding,
+                query=embedding,
                 query_filter=filter_condition,
-                limit=3
+                limit=3,
+                with_payload=True,
             )
 
-            if not results:
+            if not results.points:
                 return None
 
             # Extract code chunks and metadata
             code_chunks = []
             file_paths = set()
 
-            for hit in results:
+            for hit in results.points:
                 payload = hit.payload or {}
                 code_chunks.append(payload.get('text', ''))
                 if 'file_path' in payload:
@@ -219,7 +223,62 @@ class ImprovementEngine:
             logger.error(f"Error getting embedding: {e}")
             return None
 
-    def _build_analysis_prompt(self, issue: Dict, code_context: Dict) -> str:
+    async def _get_graph_context(self, issue: Dict, code_context: Dict) -> List[Dict]:
+        """Query the knowledge graph for entities related to the issue.
+
+        Extracts entity names from the issue title, related file, and code
+        context, then traverses 1-hop in the graph to find connected components.
+        This powers impact analysis in the LLM prompt.
+        """
+        try:
+            from src.core.graph_engine import get_graph_engine
+            engine = get_graph_engine()
+            await engine._ensure_loaded()
+            if not engine._graph:
+                return []
+
+            # Extract candidate entities from issue + code
+            candidates = set()
+            title = issue.get("title", "")
+            for word in title.split():
+                clean = word.strip(".:;,()").lower()
+                if len(clean) > 3 and clean not in ("error", "failed", "issue", "warning"):
+                    candidates.add(clean)
+            if issue.get("related_file"):
+                # Use filename stem as entity
+                fname = issue["related_file"].rsplit("/", 1)[-1].replace(".py", "")
+                candidates.add(fname.lower())
+            if issue.get("related_worker"):
+                candidates.add(issue["related_worker"].lower())
+
+            # Query graph for each candidate
+            all_connected = []
+            seen = set()
+            for entity in list(candidates)[:5]:
+                connected = engine.get_connected_entities(entity, max_hops=1)
+                for item in connected:
+                    key = (item["entity"], item["predicate"])
+                    if key not in seen:
+                        seen.add(key)
+                        all_connected.append(item)
+
+            return all_connected[:15]
+        except Exception as e:
+            logger.debug(f"Graph context unavailable: {e}")
+            return []
+
+    def _format_graph_section(self, graph_context: List[Dict] = None) -> str:
+        """Format graph context into a prompt section."""
+        if not graph_context:
+            return ""
+        lines = ["RELATED COMPONENTS (from knowledge graph):"]
+        for item in graph_context:
+            direction = "->" if item["direction"] == "out" else "<-"
+            lines.append(f"  {direction} {item['entity']} ({item['predicate']})")
+        lines.append("")
+        return "\n".join(lines) + "\n"
+
+    def _build_analysis_prompt(self, issue: Dict, code_context: Dict, graph_context: List[Dict] = None) -> str:
         """Build the analysis prompt for LLM"""
         code_chunks = "\n\n".join(code_context.get('chunks', ['No code found']))
         related_file = code_context.get('related_file', 'Unknown')
@@ -239,7 +298,7 @@ File: {related_file}
 {code_chunks}
 ```
 
-TASK:
+{self._format_graph_section(graph_context)}TASK:
 1. What is the root cause of this issue?
 2. What specific code change would fix it?
 3. Show the EXACT current code that needs changing and the EXACT replacement code.
