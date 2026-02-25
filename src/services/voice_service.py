@@ -102,53 +102,34 @@ class VoiceService:
         from faster_whisper import WhisperModel
 
         # Try NVIDIA first with int8_float16
+        # Try auto-detect (prefers AMD RX 9070 XT via ROCm, falls back to NVIDIA/CPU)
         try:
-            logger.info(f"Loading STT model: {STT_MODEL_SIZE} on NVIDIA GPU (cuda)")
+            logger.info(f"Loading STT model: {STT_MODEL_SIZE} with auto device detection")
             loop = asyncio.get_event_loop()
             self._stt_model = await loop.run_in_executor(
                 None,
                 lambda: WhisperModel(
                     STT_MODEL_SIZE,
-                    device="cuda",
-                    device_index=0,  # RTX 3060
-                    compute_type="int8_float16",  # Best for RTX 3060
+                    device="auto",
+                    compute_type="default",
                     download_root=str(VOICE_MODELS_DIR / "whisper"),
                 )
             )
-            logger.info("✅ STT model loaded on NVIDIA RTX 3060")
+            logger.info("STT model loaded (auto device)")
             return
         except Exception as e:
-            logger.warning(f"NVIDIA GPU with int8_float16 failed: {e}, trying int8...")
+            logger.warning(f"Auto device detection failed: {e}, trying CPU...")
 
-        # Try NVIDIA with int8
+        # CPU fallback
         try:
-            logger.info(f"Loading STT model: {STT_MODEL_SIZE} on NVIDIA GPU with int8")
+            logger.info(f"Loading STT model: {STT_MODEL_SIZE} on CPU")
             loop = asyncio.get_event_loop()
             self._stt_model = await loop.run_in_executor(
                 None,
                 lambda: WhisperModel(
                     STT_MODEL_SIZE,
-                    device="cuda",
-                    device_index=0,  # RTX 3060
+                    device="cpu",
                     compute_type="int8",
-                    download_root=str(VOICE_MODELS_DIR / "whisper"),
-                )
-            )
-            logger.info("✅ STT model loaded on NVIDIA RTX 3060 (int8)")
-            return
-        except Exception as e:
-            logger.warning(f"NVIDIA GPU failed completely: {e}, trying AMD...")
-
-        # Try AMD ROCm
-        try:
-            logger.info(f"Loading STT model: {STT_MODEL_SIZE} on AMD GPU")
-            loop = asyncio.get_event_loop()
-            self._stt_model = await loop.run_in_executor(
-                None,
-                lambda: WhisperModel(
-                    STT_MODEL_SIZE,
-                    device="auto",  # Will detect available device
-                    compute_type="default",  # Let it choose
                     download_root=str(VOICE_MODELS_DIR / "whisper"),
                 )
             )

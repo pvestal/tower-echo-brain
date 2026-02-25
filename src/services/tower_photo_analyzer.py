@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Tower Photo Analyzer - Runs on Tower with LLaVA
+Tower Photo Analyzer - Runs on Tower with Gemma 3 vision
 Analyzes Google Photos from /mnt/10TB2/Google_Takeout_2025
 """
 
@@ -52,15 +52,15 @@ class TowerPhotoAnalyzer:
         self.conn.commit()
         return total
     
-    async def analyze_with_llava(self, photo_path: str):
+    async def analyze_with_vision(self, photo_path: str):
         with open(photo_path, 'rb') as f:
             image_base64 = base64.b64encode(f.read()).decode()
-        
+
         async with aiohttp.ClientSession() as session:
             async with session.post(
                 f'{self.ollama_url}/api/generate',
                 json={
-                    'model': 'llava:7b',
+                    'model': 'gemma3:12b',
                     'prompt': 'Describe this photo. What do you see? Rate quality 1-10.',
                     'images': [image_base64],
                     'stream': False
