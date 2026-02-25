@@ -269,6 +269,72 @@ class GraphEngine:
         except Exception:
             return {"entity": entity, "found": False}
 
+    def get_entity_importance(self, entity: str) -> float:
+        """Return a 0-1 importance score based on degree centrality.
+
+        Hub entities (many connections) score higher. Returns 0 if entity
+        is not in the graph or graph is not loaded.
+        """
+        if not self._graph:
+            return 0.0
+        entity_lower = entity.lower().strip()
+        if entity_lower not in self._graph:
+            # Try partial match
+            candidates = [n for n in self._graph.nodes if entity_lower in n]
+            if not candidates:
+                return 0.0
+            entity_lower = candidates[0]
+        # Degree centrality: fraction of nodes this entity connects to
+        try:
+            centrality = nx.degree_centrality(self._graph)
+            return centrality.get(entity_lower, 0.0)
+        except Exception:
+            return 0.0
+
+    def get_connected_entities(self, entity: str, max_hops: int = 1) -> List[Dict]:
+        """Lightweight wrapper: get directly connected entities with predicates.
+
+        Returns list of {"entity": str, "predicate": str, "direction": "out"|"in"}.
+        """
+        if not self._graph:
+            return []
+        entity_lower = entity.lower().strip()
+        if entity_lower not in self._graph:
+            candidates = [n for n in self._graph.nodes if entity_lower in n]
+            if not candidates:
+                return []
+            entity_lower = candidates[0]
+
+        results = []
+        visited = {entity_lower}
+        queue = [(entity_lower, 0)]
+
+        while queue:
+            node, depth = queue.pop(0)
+            if depth >= max_hops:
+                continue
+            for _, neighbor, data in self._graph.edges(node, data=True):
+                if neighbor not in visited:
+                    visited.add(neighbor)
+                    results.append({
+                        "entity": neighbor,
+                        "predicate": data.get("predicate", "related_to"),
+                        "direction": "out",
+                    })
+                    if depth + 1 < max_hops:
+                        queue.append((neighbor, depth + 1))
+            for predecessor, _, data in self._graph.in_edges(node, data=True):
+                if predecessor not in visited:
+                    visited.add(predecessor)
+                    results.append({
+                        "entity": predecessor,
+                        "predicate": data.get("predicate", "related_to"),
+                        "direction": "in",
+                    })
+                    if depth + 1 < max_hops:
+                        queue.append((predecessor, depth + 1))
+        return results
+
     def get_stats(self) -> Dict:
         """Graph-level statistics."""
         if not self._graph:
