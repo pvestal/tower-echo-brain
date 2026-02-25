@@ -12,8 +12,8 @@ import httpx
 logger = logging.getLogger("echo-brain.telegram")
 
 # Load from env → vault fallback
-BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "7724816025:AAGX7SpZCvlsvZNaXbiM1jpk1qsVhGM5Rfk")
-CHAT_ID = os.getenv("TELEGRAM_ADMIN_CHAT_ID", "605288143")
+BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
+CHAT_ID = os.getenv("TELEGRAM_ADMIN_CHAT_ID", "")
 
 
 class TelegramClient:
