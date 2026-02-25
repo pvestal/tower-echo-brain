@@ -170,7 +170,7 @@ class DomainIngestor:
             chunks = self._chunk_content(content, filepath, category)
             vector_ids = []
             for chunk in chunks:
-                vid = await self._embed_and_store(chunk, category, str(filepath))
+                vid = await self._embed_and_store(chunk, category, str(filepath), "domain_code")
                 if vid:
                     vector_ids.append(vid)
 
@@ -301,7 +301,7 @@ class DomainIngestor:
                 await self._delete_vectors(r["vector_ids"])
         await conn.execute("DELETE FROM domain_ingestion_log WHERE source_path = $1", source_path)
 
-        vid = await self._embed_and_store({"text": text, "metadata": metadata}, category, source_path)
+        vid = await self._embed_and_store({"text": text, "metadata": metadata}, category, source_path, "domain_record")
         if vid:
             await conn.execute("""
                 INSERT INTO domain_ingestion_log
@@ -348,7 +348,7 @@ class DomainIngestor:
                     content_hash = hashlib.sha256(text.encode()).hexdigest()
                     vid = await self._embed_and_store(
                         {"text": text, "metadata": {"commit": commit_hash[:8]}},
-                        category, source_path)
+                        category, source_path, "domain_git")
                     if vid:
                         await conn.execute("""
                             INSERT INTO domain_ingestion_log
@@ -450,23 +450,25 @@ class DomainIngestor:
 
     # --- Embedding and storage ---
 
-    async def _embed_and_store(self, chunk: dict, category: str, source_path: str) -> Optional[str]:
+    async def _embed_and_store(self, chunk: dict, category: str, source_path: str,
+                              source_type: str = "domain_code") -> Optional[str]:
         text = chunk["text"]
         metadata = chunk.get("metadata", {})
         try:
             async with httpx.AsyncClient(timeout=60.0) as client:
-                resp = await client.post(f"{OLLAMA_URL}/api/embed",
-                                        json={"model": EMBED_MODEL, "input": text})
+                resp = await client.post(f"{OLLAMA_URL}/api/embeddings",
+                                        json={"model": EMBED_MODEL, "prompt": text})
                 if resp.status_code != 200:
                     return None
                 data = resp.json()
-                embedding = (data.get("embeddings") or [[]])[0] or data.get("embedding", [])
+                embedding = data.get("embedding", [])
                 if not embedding:
                     return None
 
             point_id = str(uuid4())
-            payload = {"text": text[:10000], "category": category, "source": source_path,
-                       "ingested_at": datetime.now().isoformat(), **metadata}
+            payload = {"text": text[:10000], "type": source_type, "category": category,
+                       "source": source_path, "ingested_at": datetime.now().isoformat(),
+                       **metadata}
 
             async with httpx.AsyncClient(timeout=30.0) as client:
                 resp = await client.put(f"{QDRANT_URL}/collections/{COLLECTION}/points",
@@ -500,3 +502,183 @@ class DomainIngestor:
                     total_documents=$2, total_vectors=$3, total_bytes=$4,
                     last_ingested_at=$5, last_refreshed_at=NOW()
             """, r["category"], r["docs"], r["vecs"] or 0, r["bytes"] or 0, r["last"])
+
+    # --- Backfill: add type field to existing untyped points ---
+
+    async def backfill_type_field(self):
+        """One-time backfill: set 'type' on domain ingestor points that lack it.
+
+        Scrolls all points with a 'source' field (domain ingestor signature),
+        skips those already typed, and sets 'type' based on source pattern:
+          - source starts with 'git:' → domain_git
+          - source starts with 'db:'  → domain_record
+          - otherwise                 → domain_code
+        """
+        print("[DomainIngestor] Starting type field backfill...")
+        batch_size = 250
+        updated = 0
+        skipped = 0
+        errors = 0
+        offset = None
+
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            while True:
+                scroll_body = {
+                    "limit": batch_size,
+                    "with_payload": {"include": ["source", "type"]},
+                    "with_vector": False,
+                    "filter": {
+                        "must": [
+                            {"is_empty": {"key": "type"}},
+                        ],
+                        "must_not": [
+                            {"is_empty": {"key": "source"}},
+                        ],
+                    },
+                }
+                if offset:
+                    scroll_body["offset"] = offset
+
+                resp = await client.post(
+                    f"{QDRANT_URL}/collections/{COLLECTION}/points/scroll",
+                    json=scroll_body,
+                )
+                if resp.status_code != 200:
+                    # Fallback: if is_empty filter not supported, scroll without filter
+                    print(f"[DomainIngestor] Filter scroll failed ({resp.status_code}), trying unfiltered...")
+                    return await self._backfill_unfiltered(client)
+
+                result = resp.json().get("result", {})
+                points = result.get("points", [])
+                next_offset = result.get("next_page_offset")
+
+                if not points:
+                    break
+
+                # Group by derived type
+                type_groups = {"domain_code": [], "domain_record": [], "domain_git": []}
+                for pt in points:
+                    payload = pt.get("payload") or {}
+                    source = payload.get("source", "")
+                    if not source:
+                        skipped += 1
+                        continue
+                    if payload.get("type"):
+                        skipped += 1
+                        continue
+                    if source.startswith("git:"):
+                        dtype = "domain_git"
+                    elif source.startswith("db:"):
+                        dtype = "domain_record"
+                    else:
+                        dtype = "domain_code"
+                    type_groups[dtype].append(pt["id"])
+
+                # Batch set_payload per type
+                for dtype, ids in type_groups.items():
+                    if not ids:
+                        continue
+                    set_resp = await client.post(
+                        f"{QDRANT_URL}/collections/{COLLECTION}/points/payload",
+                        json={"payload": {"type": dtype}, "points": ids},
+                    )
+                    if set_resp.status_code in (200, 201):
+                        updated += len(ids)
+                    else:
+                        errors += len(ids)
+                        print(f"[DomainIngestor] set_payload error: {set_resp.status_code}")
+
+                if updated % 5000 < batch_size:
+                    print(f"[DomainIngestor] Backfill progress: {updated} updated, {skipped} skipped, {errors} errors")
+
+                if not next_offset:
+                    break
+                offset = next_offset
+
+        print(f"[DomainIngestor] Backfill complete: {updated} updated, {skipped} skipped, {errors} errors")
+        return {"updated": updated, "skipped": skipped, "errors": errors}
+
+    async def _backfill_unfiltered(self, client):
+        """Fallback backfill that scrolls all points and filters client-side."""
+        batch_size = 250
+        updated = 0
+        skipped = 0
+        errors = 0
+        offset = None
+
+        while True:
+            scroll_body = {
+                "limit": batch_size,
+                "with_payload": {"include": ["source", "type"]},
+                "with_vector": False,
+            }
+            if offset:
+                scroll_body["offset"] = offset
+
+            resp = await client.post(
+                f"{QDRANT_URL}/collections/{COLLECTION}/points/scroll",
+                json=scroll_body,
+            )
+            if resp.status_code != 200:
+                print(f"[DomainIngestor] Scroll error: {resp.status_code}")
+                break
+
+            result = resp.json().get("result", {})
+            points = result.get("points", [])
+            next_offset = result.get("next_page_offset")
+
+            if not points:
+                break
+
+            type_groups = {"domain_code": [], "domain_record": [], "domain_git": []}
+            for pt in points:
+                payload = pt.get("payload") or {}
+                source = payload.get("source", "")
+                if not source or payload.get("type"):
+                    skipped += 1
+                    continue
+                if source.startswith("git:"):
+                    dtype = "domain_git"
+                elif source.startswith("db:"):
+                    dtype = "domain_record"
+                else:
+                    dtype = "domain_code"
+                type_groups[dtype].append(pt["id"])
+
+            for dtype, ids in type_groups.items():
+                if not ids:
+                    continue
+                set_resp = await client.post(
+                    f"{QDRANT_URL}/collections/{COLLECTION}/points/payload",
+                    json={"payload": {"type": dtype}, "points": ids},
+                )
+                if set_resp.status_code in (200, 201):
+                    updated += len(ids)
+                else:
+                    errors += len(ids)
+
+            if updated % 10000 < batch_size:
+                print(f"[DomainIngestor] Backfill progress: {updated} updated, {skipped} skipped, {errors} errors")
+
+            if not next_offset:
+                break
+            offset = next_offset
+
+        print(f"[DomainIngestor] Backfill complete: {updated} updated, {skipped} skipped, {errors} errors")
+        return {"updated": updated, "skipped": skipped, "errors": errors}
+
+
+# --- Standalone runner ---
+if __name__ == "__main__":
+    import asyncio
+    import sys
+
+    async def main():
+        ingestor = DomainIngestor()
+        if len(sys.argv) > 1 and sys.argv[1] == "backfill":
+            result = await ingestor.backfill_type_field()
+            print(f"Result: {result}")
+        else:
+            await ingestor.run_cycle()
+
+    asyncio.run(main())

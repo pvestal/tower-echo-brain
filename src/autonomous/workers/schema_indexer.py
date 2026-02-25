@@ -305,10 +305,10 @@ class SchemaIndexer:
             async with httpx.AsyncClient(timeout=30.0) as client:
                 # Get embedding from Ollama
                 embed_response = await client.post(
-                    f"{self.ollama_url}/api/embed",
+                    f"{self.ollama_url}/api/embeddings",
                     json={
                         "model": "nomic-embed-text",
-                        "input": description
+                        "prompt": description
                     }
                 )
 
@@ -316,13 +316,16 @@ class SchemaIndexer:
                     logger.error(f"Embedding failed: {embed_response.text}")
                     return ""
 
-                embedding = embed_response.json()["embeddings"][0]
+                embedding = embed_response.json().get("embedding", [])
+                if not embedding:
+                    return ""
 
                 # Generate unique point ID
                 point_id = str(uuid.uuid4())
 
                 # Store in Qdrant
                 payload = {
+                    "type": "schema",
                     "source": "self_schema",
                     "table_name": table_name,
                     "content_type": "database_schema",

@@ -1802,15 +1802,14 @@ async def startup_event():
         #     logger.error(f"❌ Failed to register knowledge_graph: {e}")
 
         # Register new Phase 2a self-awareness workers
-        # codebase_indexer disabled — file doesn't exist, graph_engine.py handles code-related graph traversal
-        # try:
-        #     from src.autonomous.workers.codebase_indexer import CodebaseIndexer
-        #     worker = CodebaseIndexer()
-        #     worker_scheduler.register_worker("codebase_indexer", worker.run_cycle, interval_minutes=360)
-        #     workers_registered += 1
-        #     logger.info("✅ Registered codebase_indexer worker (6 hours)")
-        # except Exception as e:
-        #     logger.error(f"❌ Failed to register codebase_indexer: {e}")
+        try:
+            from src.autonomous.workers.codebase_indexer import CodebaseIndexer
+            worker = CodebaseIndexer()
+            worker_scheduler.register_worker("codebase_indexer", worker.run_cycle, interval_minutes=360)
+            workers_registered += 1
+            logger.info("✅ Registered codebase_indexer worker (6 hours)")
+        except Exception as e:
+            logger.error(f"❌ Failed to register codebase_indexer: {e}")
 
         try:
             from src.autonomous.workers.schema_indexer import SchemaIndexer
@@ -1957,6 +1956,24 @@ async def startup_event():
             logger.info("✅ Graph engine initialized (lazy)")
         except Exception as e:
             logger.error(f"❌ Failed to init graph engine: {e}")
+
+        # Run vector health contract test at startup
+        try:
+            from src.monitoring.vector_health import get_vector_health_contract
+            contract = get_vector_health_contract()
+            contract_result = await contract.run_all()
+            if contract_result["passed"]:
+                logger.info(f"✅ Vector health contract: {contract_result['tests_passed']}/{contract_result['tests_run']} passed")
+            else:
+                logger.warning(
+                    f"⚠️ Vector health contract: {contract_result['tests_failed']} FAILED "
+                    f"({contract_result['tests_passed']}/{contract_result['tests_run']} passed)"
+                )
+                for r in contract_result["results"]:
+                    if r["status"] == "FAIL":
+                        logger.warning(f"  FAIL: {r['test']} — {r['detail']}")
+        except Exception as e:
+            logger.error(f"❌ Vector health contract test failed: {e}")
 
         # Register contract monitor worker if available
         if contract_monitor:

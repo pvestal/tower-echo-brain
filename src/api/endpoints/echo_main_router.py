@@ -283,13 +283,13 @@ async def save_session(request: SessionSaveRequest):
         try:
             async with httpx.AsyncClient(timeout=10) as client:
                 resp = await client.post(
-                    "http://localhost:11434/api/embed",
-                    json={"model": "nomic-embed-text", "input": request.summary}
+                    "http://localhost:11434/api/embeddings",
+                    json={"model": "nomic-embed-text", "prompt": request.summary}
                 )
                 if resp.status_code == 200:
-                    embeddings = resp.json().get("embeddings", [])
-                    if embeddings:
-                        embedding = embeddings[0]
+                    embedding = resp.json().get("embedding", [])
+                    if not embedding:
+                        embedding = None
         except Exception as e:
             logger.warning(f"Embedding generation failed for session: {e}")
 
@@ -904,6 +904,22 @@ async def _get_gpu_info():
     except:
         pass
     return None
+# ============= VECTOR HEALTH =============
+@router.get("/vector-health")
+async def vector_health():
+    """Live vector pipeline health — per-type counts, missing types, required field coverage."""
+    from src.monitoring.vector_health import get_vector_health
+    return await get_vector_health()
+
+
+@router.post("/vector-health/contract")
+async def run_vector_contract():
+    """Run the full vector health contract test on demand."""
+    from src.monitoring.vector_health import get_vector_health_contract
+    contract = get_vector_health_contract()
+    return await contract.run_all()
+
+
 # ============= SELF-DIAGNOSTIC =============
 @router.get("/diagnostic")
 async def run_self_diagnostic():

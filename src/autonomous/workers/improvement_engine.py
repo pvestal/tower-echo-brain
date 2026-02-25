@@ -204,17 +204,17 @@ class ImprovementEngine:
         try:
             async with httpx.AsyncClient(timeout=30.0) as client:
                 response = await client.post(
-                    f"{self.ollama_url}/api/embed",
+                    f"{self.ollama_url}/api/embeddings",
                     json={
                         "model": "nomic-embed-text",
-                        "input": text
+                        "prompt": text
                     }
                 )
 
                 if response.status_code == 200:
                     data = response.json()
-                    embeddings = data.get("embeddings", [])
-                    return embeddings[0] if embeddings else None
+                    embedding = data.get("embedding", [])
+                    return embedding if embedding else None
                 else:
                     logger.error(f"Embedding failed: {response.status_code}")
                     return None
@@ -414,7 +414,7 @@ REASONING: <why this fix works and what to watch for>
             }
 
     async def _store_proposal(self, conn, issue: Dict, analysis: Dict) -> Optional[str]:
-        """Store improvement proposal in database"""
+        """Store improvement proposal in database and vectorize to Qdrant."""
         try:
             query = """
                 INSERT INTO self_improvement_proposals (
@@ -442,11 +442,62 @@ REASONING: <why this fix works and what to watch for>
             )
 
             logger.info(f"Created proposal {proposal_id} for issue {issue['id']}")
+
+            # Vectorize proposal to Qdrant for future semantic retrieval
+            await self._vectorize_proposal(str(proposal_id), title, issue, analysis, target_file)
+
             return str(proposal_id)
 
         except Exception as e:
             logger.error(f"Error storing proposal: {e}")
             return None
+
+    async def _vectorize_proposal(self, proposal_id: str, title: str,
+                                  issue: Dict, analysis: Dict, target_file: str):
+        """Embed and store proposal in Qdrant so it's discoverable via semantic search."""
+        try:
+            # Build a rich text representation for embedding
+            text = (
+                f"Improvement Proposal: {title}\n"
+                f"Issue: {issue.get('title', '')}\n"
+                f"Severity: {issue.get('severity', 'unknown')}\n"
+                f"Target: {target_file}\n"
+                f"Root cause: {analysis.get('root_cause', '')}\n"
+                f"Risk: {analysis.get('risk', 'medium')}\n"
+                f"Fix: {analysis.get('reasoning', '')}"
+            )
+
+            embedding = await self._get_embedding(text)
+            if not embedding:
+                return
+
+            import uuid
+            from datetime import datetime
+            point_id = str(uuid.uuid4())
+            payload = {
+                "type": "improvement_proposal",
+                "source": "improvement_engine",
+                "proposal_id": proposal_id,
+                "issue_type": issue.get("issue_type", ""),
+                "severity": issue.get("severity", ""),
+                "risk": analysis.get("risk", "medium"),
+                "target_file": target_file,
+                "text": text[:5000],
+                "created_at": datetime.now().isoformat(),
+            }
+
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                resp = await client.put(
+                    f"{self.qdrant_url}/collections/{self.collection}/points",
+                    json={"points": [{"id": point_id, "vector": embedding, "payload": payload}]},
+                )
+                if resp.status_code in (200, 201):
+                    logger.info(f"Vectorized proposal {proposal_id} to Qdrant")
+                else:
+                    logger.warning(f"Failed to vectorize proposal: {resp.status_code}")
+
+        except Exception as e:
+            logger.warning(f"Error vectorizing proposal {proposal_id}: {e}")
 
     async def _create_notification(self, conn, issue: Dict, analysis: Dict, proposal_id: str):
         """Create notification for Patrick about new proposal"""

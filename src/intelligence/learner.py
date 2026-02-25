@@ -8,9 +8,13 @@ and using that to improve future responses.
 import asyncpg
 import json
 import logging
+import os
 import subprocess
 from datetime import datetime
 from typing import Dict, List
+from uuid import uuid4
+
+import httpx
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +34,45 @@ class LearningLoop:
             "password": ""
         }
         self._pool = None
+
+    # ── Qdrant vectorization ─────────────────────────────────────
+
+    async def _vectorize_learning(self, text: str, learning_type: str, tags: list):
+        """Embed a learning fact and store in Qdrant for semantic retrieval."""
+        try:
+            ollama_url = os.getenv("OLLAMA_URL", "http://localhost:11434")
+            qdrant_url = os.getenv("QDRANT_URL", "http://localhost:6333")
+            collection = os.getenv("QDRANT_COLLECTION", "echo_memory")
+
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                resp = await client.post(
+                    f"{ollama_url}/api/embeddings",
+                    json={"model": "nomic-embed-text", "prompt": text},
+                )
+                if resp.status_code != 200:
+                    return
+                embedding = resp.json().get("embedding", [])
+                if not embedding:
+                    return
+
+                point_id = str(uuid4())
+                payload = {
+                    "type": "learning",
+                    "text": text,
+                    "learning_type": learning_type,
+                    "tags": tags,
+                    "source": "learning_loop",
+                    "created_at": datetime.now().isoformat(),
+                }
+
+                await client.put(
+                    f"{qdrant_url}/collections/{collection}/points",
+                    json={"points": [{"id": point_id, "vector": embedding, "payload": payload}]},
+                )
+        except Exception as e:
+            logger.debug(f"Error vectorizing learning: {e}")
+
+    # ── DB pool ──────────────────────────────────────────────────
 
     async def get_db_pool(self):
         """Get or create database connection pool"""
@@ -283,10 +326,10 @@ class LearningLoop:
         """Create a fact about a failing command pattern"""
         try:
             pool = await self.get_db_pool()
+            fact_content = f"Command '{command}' ({action_type}) has failed {failure_count} times in 24 hours"
+            tags = ['failure', 'pattern', action_type]
 
             async with pool.acquire() as conn:
-                fact_content = f"Command '{command}' ({action_type}) has failed {failure_count} times in 24 hours"
-
                 await conn.execute(
                     """INSERT INTO facts (content, source_type, source_id, confidence, tags, timestamp)
                        VALUES ($1, $2, $3, $4, $5, $6)
@@ -294,8 +337,10 @@ class LearningLoop:
                        confidence = EXCLUDED.confidence,
                        timestamp = EXCLUDED.timestamp""",
                     fact_content, 'learning_loop', 'failure_pattern', 0.9,
-                    json.dumps(['failure', 'pattern', action_type]), datetime.now()
+                    json.dumps(tags), datetime.now()
                 )
+
+            await self._vectorize_learning(fact_content, "failure_pattern", tags)
 
         except Exception as e:
             logger.error(f"Error creating failure pattern fact: {e}")
@@ -304,10 +349,10 @@ class LearningLoop:
         """Create a fact about an unstable service"""
         try:
             pool = await self.get_db_pool()
+            fact_content = f"Service '{service}' has failed {failure_count} times in 24 hours, indicating instability"
+            tags = ['service', 'instability', service]
 
             async with pool.acquire() as conn:
-                fact_content = f"Service '{service}' has failed {failure_count} times in 24 hours, indicating instability"
-
                 await conn.execute(
                     """INSERT INTO facts (content, source_type, source_id, confidence, tags, timestamp)
                        VALUES ($1, $2, $3, $4, $5, $6)
@@ -315,8 +360,10 @@ class LearningLoop:
                        confidence = EXCLUDED.confidence,
                        timestamp = EXCLUDED.timestamp""",
                     fact_content, 'learning_loop', f'service_instability_{service}', 0.85,
-                    json.dumps(['service', 'instability', service]), datetime.now()
+                    json.dumps(tags), datetime.now()
                 )
+
+            await self._vectorize_learning(fact_content, "service_instability", tags)
 
         except Exception as e:
             logger.error(f"Error creating service instability fact: {e}")
@@ -325,10 +372,10 @@ class LearningLoop:
         """Create a fact about a successful solution"""
         try:
             pool = await self.get_db_pool()
+            fact_content = f"Command '{command}' successfully resolved issue: {issue}"
+            tags = ['solution', 'success']
 
             async with pool.acquire() as conn:
-                fact_content = f"Command '{command}' successfully resolved issue: {issue}"
-
                 await conn.execute(
                     """INSERT INTO facts (content, source_type, source_id, confidence, tags, timestamp)
                        VALUES ($1, $2, $3, $4, $5, $6)
@@ -336,8 +383,10 @@ class LearningLoop:
                        confidence = EXCLUDED.confidence + 0.1,
                        timestamp = EXCLUDED.timestamp""",
                     fact_content, 'learning_loop', 'solution', 0.8,
-                    json.dumps(['solution', 'success']), datetime.now()
+                    json.dumps(tags), datetime.now()
                 )
+
+            await self._vectorize_learning(fact_content, "solution", tags)
 
         except Exception as e:
             logger.error(f"Error creating solution fact: {e}")

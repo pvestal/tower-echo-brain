@@ -339,10 +339,11 @@ Output ONLY the JSON array."""
                              conflicts: list, source_path: str, category: str):
         """Store extracted facts, connections, and create notifications."""
 
-        # Store each fact
+        # Store each fact in DB and vectorize to Qdrant
         fact_ids = {}
         for fact in facts:
             try:
+                fact_text = fact.get("text", "")
                 fact_id = await conn.fetchval("""
                     INSERT INTO knowledge_facts
                         (fact_text, fact_type, category, confidence, entities,
@@ -350,7 +351,7 @@ Output ONLY the JSON array."""
                     VALUES ($1, $2, $3, $4, $5, $6, $7)
                     RETURNING id
                 """,
-                    fact.get("text", ""),
+                    fact_text,
                     fact.get("type", "technical"),
                     category,
                     fact.get("confidence", "medium"),
@@ -358,8 +359,12 @@ Output ONLY the JSON array."""
                     source_path,
                     f"Extracted by reasoning worker from {source_path}",
                 )
-                fact_ids[fact.get("text", "")] = fact_id
+                fact_ids[fact_text] = fact_id
                 self.stats["facts_extracted"] += 1
+
+                # Vectorize to Qdrant for semantic retrieval
+                await self._vectorize_fact(fact, str(fact_id), category, source_path)
+
             except Exception as e:
                 print(f"[ReasoningWorker] Error storing fact: {e}")
 
@@ -400,6 +405,61 @@ Output ONLY the JSON array."""
                     self.stats["notifications_created"] += 1
                 except Exception as e:
                     print(f"[ReasoningWorker] Error creating notification: {e}")
+
+    # ============================================================
+    # Vectorization — store learnings in Qdrant for retrieval
+    # ============================================================
+
+    async def _vectorize_fact(self, fact: dict, fact_id: str, category: str, source_path: str):
+        """Embed a knowledge fact and store in Qdrant for semantic retrieval."""
+        try:
+            from uuid import uuid4
+
+            fact_text = fact.get("text", "")
+            if not fact_text:
+                return
+
+            embedding = await self._get_embedding(fact_text)
+            if not embedding:
+                return
+
+            point_id = str(uuid4())
+            payload = {
+                "type": "knowledge_fact",
+                "text": fact_text,
+                "fact_id": fact_id,
+                "fact_type": fact.get("type", "technical"),
+                "category": category,
+                "confidence": fact.get("confidence", "medium"),
+                "entities": fact.get("entities", []),
+                "source": source_path,
+                "created_at": datetime.now().isoformat(),
+            }
+
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                resp = await client.put(
+                    f"{QDRANT_URL}/collections/{COLLECTION}/points",
+                    json={"points": [{"id": point_id, "vector": embedding, "payload": payload}]},
+                )
+                if resp.status_code not in (200, 201):
+                    print(f"[ReasoningWorker] Qdrant store failed: {resp.status_code}")
+
+        except Exception as e:
+            print(f"[ReasoningWorker] Error vectorizing fact: {e}")
+
+    async def _get_embedding(self, text: str) -> list:
+        """Get embedding from Ollama."""
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                resp = await client.post(
+                    f"{OLLAMA_URL}/api/embeddings",
+                    json={"model": "nomic-embed-text", "prompt": text},
+                )
+                if resp.status_code == 200:
+                    return resp.json().get("embedding", [])
+                return []
+        except Exception:
+            return []
 
     # ============================================================
     # LLM and utility methods

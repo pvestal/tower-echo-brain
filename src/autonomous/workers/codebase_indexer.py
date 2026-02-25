@@ -248,10 +248,10 @@ class CodebaseIndexer:
             async with httpx.AsyncClient(timeout=30.0) as client:
                 # Get embedding from Ollama
                 embed_response = await client.post(
-                    f"{self.ollama_url}/api/embed",
+                    f"{self.ollama_url}/api/embeddings",
                     json={
                         "model": "nomic-embed-text",
-                        "input": chunk["text"]
+                        "prompt": chunk["text"]
                     }
                 )
 
@@ -259,7 +259,9 @@ class CodebaseIndexer:
                     logger.error(f"Embedding failed: {embed_response.text}")
                     return None
 
-                embedding = embed_response.json()["embeddings"][0]
+                embedding = embed_response.json().get("embedding", [])
+                if not embedding:
+                    return None
 
                 # Generate unique point ID
                 point_id = str(uuid.uuid4())
@@ -268,6 +270,7 @@ class CodebaseIndexer:
                 relative_path = str(file_path.relative_to(self.src_root) if file_path.is_relative_to(self.src_root) else file_path)
 
                 payload = {
+                    "type": "code",
                     "source": "self_codebase",
                     "file_path": relative_path,
                     "chunk_type": "code",
