@@ -586,7 +586,8 @@ async def ask(request: AskRequest):
 
         return {
             "answer": result.response,
-            "model": "intelligence-layer",
+            "model": result.model_used or "intelligence-layer",
+            "agent": result.agent_name or "unknown",
             "query_type": result.query_type.value,
             "confidence": result.confidence,
             "sources": result.sources,
@@ -626,7 +627,8 @@ async def query(request: QueryRequest):
         return {
             "response": result.response,
             "answer": result.response,  # Include both for compatibility
-            "model_used": "intelligence-layer",
+            "model_used": result.model_used or "intelligence-layer",
+            "agent": result.agent_name or "unknown",
             "query_type": result.query_type.value,
             "confidence": result.confidence,
             "sources": result.sources,

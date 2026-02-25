@@ -6,6 +6,7 @@ persists the summary to session_summaries, and replaces old turns with a compact
 system message so the LLM stays within its context window.
 """
 import asyncpg
+import json
 import logging
 import os
 from datetime import datetime
@@ -120,22 +121,26 @@ class ConversationCompactor:
                     # Delete old turns from conversation_messages
                     oldest_kept_ts = to_keep[0].get("timestamp")
                     if oldest_kept_ts:
+                        # Parse ISO string to datetime if needed
+                        if isinstance(oldest_kept_ts, str):
+                            oldest_kept_ts = datetime.fromisoformat(oldest_kept_ts)
                         await conn.execute("""
                             DELETE FROM conversation_messages
                             WHERE conversation_id = $1
-                              AND timestamp < $2::timestamp
+                              AND timestamp < $2
                         """, session_id, oldest_kept_ts)
 
                     # Insert summary as a system message
-                    await conn.execute("""
-                        INSERT INTO conversation_messages
-                            (conversation_id, role, content, metadata)
-                        VALUES ($1, 'system', $2, $3)
-                    """, session_id, summary_text, {
+                    metadata = json.dumps({
                         "type": "compaction_summary",
                         "compacted_at": compacted_at.isoformat(),
                         "turns_summarized": turns_summarized
                     })
+                    await conn.execute("""
+                        INSERT INTO conversation_messages
+                            (conversation_id, role, content, metadata)
+                        VALUES ($1, 'system', $2, $3::jsonb)
+                    """, session_id, summary_text, metadata)
 
                     # Insert into session_summaries
                     await conn.execute("""

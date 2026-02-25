@@ -215,7 +215,7 @@ class VectorHealthContract:
     async def _test_cross_retrieval(self):
         """Verify semantic search can find domain_ingestor content from a query."""
         try:
-            async with httpx.AsyncClient(timeout=15.0) as c:
+            async with httpx.AsyncClient(timeout=30.0) as c:
                 # Embed a query about Echo Brain code
                 r = await c.post(
                     f"{OLLAMA_URL}/api/embeddings",
@@ -244,7 +244,7 @@ class VectorHealthContract:
                     if ok else "Semantic search returned 0 results for domain_code",
                 )
         except Exception as e:
-            self._record("cross_retrieval", False, str(e))
+            self._record("cross_retrieval", False, f"{type(e).__name__}: {e}")
 
     async def _test_required_fields_sample(self):
         """Sample 50 recent points and verify required fields are present."""

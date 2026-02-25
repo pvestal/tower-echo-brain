@@ -290,6 +290,8 @@ class Response(BaseModel):
     confidence: float = 1.0
     sources: List[str] = []
     execution_time_ms: int
+    model_used: str = ""
+    agent_name: str = ""
 
 
 class Diagnosis(BaseModel):

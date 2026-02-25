@@ -156,7 +156,9 @@ class ReasoningEngine:
                 actions_taken=actions_taken,
                 confidence=self._calculate_confidence(relevant_context, actions_taken),
                 sources=self._extract_sources(relevant_context),
-                execution_time_ms=execution_time_ms
+                execution_time_ms=execution_time_ms,
+                model_used=relevant_context.get('_model_used', ''),
+                agent_name=relevant_context.get('_agent_name', ''),
             )
 
         except Exception as e:
@@ -816,6 +818,10 @@ class ReasoningEngine:
             top_p = agent_options.get("top_p", 0.9)
 
             logger.info(f"Agent '{agent.name}' selected for {query_type.value} -> model={model}")
+
+            # Expose selection to caller via context dict
+            context['_model_used'] = model
+            context['_agent_name'] = agent.name
 
             context_text = self._build_context_text(context, actions_taken)
 
