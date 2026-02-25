@@ -94,11 +94,17 @@ class ContextLayer:
             sources.extend(fact_results)
             total_searched += 1
 
-        # Step 3: Rank, deduplicate, and trim
+        # Step 3: Enrich with graph traversal
+        graph_sources = await self._enrich_with_graph(sources, query)
+        if graph_sources:
+            sources.extend(graph_sources)
+            total_searched += 1
+
+        # Step 4: Rank, deduplicate, and trim
         sources = self._rank_and_deduplicate(sources)
         sources = self._trim_to_token_budget(sources)
 
-        # Step 4: Assemble context string
+        # Step 5: Assemble context string
         assembled = self._assemble_context(sources, intent)
 
         latency = int((time.time() - start) * 1000)
@@ -340,6 +346,63 @@ class ContextLayer:
 
         except Exception as e:
             logger.error(f"Facts search failed: {e}")
+            return []
+
+    async def _enrich_with_graph(
+        self, sources: List[ContextSource], query: str
+    ) -> List[ContextSource]:
+        """Extract entities from top results and query graph for related context.
+
+        Finds entities mentioned in existing sources, traverses 1-hop in the
+        knowledge graph, and returns graph-derived context sources. This
+        surfaces related information that pure semantic search would miss.
+        """
+        try:
+            from src.core.graph_engine import get_graph_engine
+            engine = get_graph_engine()
+            await engine._ensure_loaded()
+            if not engine._graph:
+                return []
+
+            # Collect entity candidates from query + top sources
+            candidates = set()
+            for word in query.lower().split():
+                clean = word.strip("?.,!:;'\"()").lower()
+                if len(clean) > 3:
+                    candidates.add(clean)
+            for src in sources[:3]:
+                if src.metadata:
+                    if "subject" in src.metadata:
+                        candidates.add(src.metadata["subject"].lower())
+                    if "object" in src.metadata:
+                        candidates.add(src.metadata["object"].lower())
+
+            # Query graph for connected entities
+            graph_facts = []
+            seen = set()
+            for entity in list(candidates)[:5]:
+                connected = engine.get_connected_entities(entity, max_hops=1)
+                for item in connected:
+                    fact_text = f"{entity} {item['predicate']} {item['entity']}"
+                    if fact_text not in seen:
+                        seen.add(fact_text)
+                        graph_facts.append(
+                            ContextSource(
+                                text=fact_text,
+                                source_type="knowledge_graph",
+                                collection="graph_traversal",
+                                relevance_score=0.5,
+                                metadata={
+                                    "from_entity": entity,
+                                    "predicate": item["predicate"],
+                                    "to_entity": item["entity"],
+                                },
+                            )
+                        )
+
+            return graph_facts[:8]
+        except Exception as e:
+            logger.debug(f"Graph enrichment skipped: {e}")
             return []
 
     def _rank_and_deduplicate(self, sources: List[ContextSource]) -> List[ContextSource]:

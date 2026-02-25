@@ -489,6 +489,8 @@ class ContractMonitor:
     async def setup_schema(self):
         """Create monitoring tables if they don't exist"""
         async with self.db_pool.acquire() as conn:
+            # AGE puts ag_catalog first in search_path; pin DDL to public
+            await conn.execute("SET search_path TO public")
             await conn.execute(SCHEMA_SQL)
         logger.info("[ContractMonitor] Schema ready")
 
