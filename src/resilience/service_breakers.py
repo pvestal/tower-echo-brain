@@ -1,5 +1,4 @@
 """Service-level circuit breakers for Tower infrastructure."""
-import asyncio
 import logging
 import time
 from datetime import datetime

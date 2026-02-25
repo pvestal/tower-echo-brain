@@ -1,7 +1,6 @@
 """Circuit breaker monitoring, event log, Prometheus metrics."""
 import asyncio
 import logging
-import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional

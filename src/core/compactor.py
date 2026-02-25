@@ -5,7 +5,6 @@ Summarizes old conversation turns when a session exceeds a character threshold,
 persists the summary to session_summaries, and replaces old turns with a compact
 system message so the LLM stays within its context window.
 """
-import asyncio
 import asyncpg
 import logging
 import os
