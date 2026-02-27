@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, reactive } from 'vue';
-import axios from 'axios';
+import { calendarApi } from '@/api/echoApi';
 
 // ─── Types ───────────────────────────────────────────────────────────
 interface CalendarMeta {
@@ -18,15 +18,6 @@ interface CalendarEvent {
   calendar_id: string;
   calendar_name: string;
   calendar_color: string;
-}
-
-interface MonthResponse {
-  calendars: CalendarMeta[];
-  events: CalendarEvent[];
-  year: number;
-  month: number;
-  grid_start?: string;
-  grid_end?: string;
 }
 
 interface ProcessedEvent extends CalendarEvent {
@@ -59,8 +50,6 @@ interface WeekRow {
 }
 
 // ─── State ───────────────────────────────────────────────────────────
-const calApi = axios.create({ baseURL: '/api/calendar', timeout: 30000 });
-
 const now = new Date();
 const year = ref(now.getFullYear());
 const month = ref(now.getMonth() + 1);
@@ -320,9 +309,7 @@ async function fetchMonth() {
   loading.value = true;
   error.value = '';
   try {
-    const resp = await calApi.get<MonthResponse>('/events/month', {
-      params: { year: year.value, month: month.value },
-    });
+    const resp = await calendarApi.getMonthEvents(year.value, month.value) as any;
     calendars.value = resp.data.calendars || [];
     events.value = resp.data.events || [];
   } catch (e: any) {

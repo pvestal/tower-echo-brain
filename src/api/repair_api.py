@@ -41,13 +41,14 @@ async def get_repair_system_status():
     """Get autonomous repair system status"""
     try:
         sr = _get_repair()
+        from src.autonomous.self_repair import REPAIR_PLAYBOOK
         return {
             "status": "available",
             "auto_repair_enabled": sr.auto_repair_enabled,
             "max_risk_level": sr.max_risk_level,
             "history_count": len(sr.repair_history),
             "last_repair": sr.repair_history[-1] if sr.repair_history else None,
-            "playbook_count": len(sr.repair_playbook),
+            "playbook_count": len(REPAIR_PLAYBOOK),
         }
     except HTTPException:
         raise

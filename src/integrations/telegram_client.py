@@ -15,6 +15,19 @@ logger = logging.getLogger("echo-brain.telegram")
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 CHAT_ID = os.getenv("TELEGRAM_ADMIN_CHAT_ID", "")
 
+if not BOT_TOKEN or not CHAT_ID:
+    try:
+        import hvac
+        _vault = hvac.Client(url=os.getenv("VAULT_ADDR", "http://127.0.0.1:8200"))
+        _resp = _vault.secrets.kv.v2.read_secret_version(path="telegram")
+        _data = _resp["data"]["data"]
+        BOT_TOKEN = BOT_TOKEN or _data.get("bot_token", "")
+        CHAT_ID = CHAT_ID or _data.get("patrick_chat_id", "")
+        if BOT_TOKEN:
+            logger.info("Loaded Telegram credentials from Vault")
+    except Exception as e:
+        logger.debug(f"Vault telegram lookup skipped: {e}")
+
 
 class TelegramClient:
     """Telegram Bot API client for sending messages and photos."""

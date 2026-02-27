@@ -135,7 +135,9 @@ const ingestMemory = async () => {
       timestamp: new Date().toISOString()
     });
     lastResponse.value = response.data;
-    ingestContent.value = '';
+    if (response.data?.status !== 'disabled') {
+      ingestContent.value = '';
+    }
   } catch (error: any) {
     lastResponse.value = {
       error: error.response?.data?.detail || error.message

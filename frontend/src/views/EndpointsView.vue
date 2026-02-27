@@ -18,7 +18,7 @@
           <label class="text-xs text-muted">Endpoint Path</label>
           <input
             v-model="endpointPath"
-            placeholder="/api/health/"
+            placeholder="/health"
             class="w-full"
           />
         </div>
@@ -148,12 +148,12 @@ const testHistory = ref<any[]>([]);
 const allEndpoints = ref<any[]>([]);
 
 const quickEndpoints = [
-  { method: 'GET', path: '/api/health/', desc: 'Health' },
-  { method: 'GET', path: '/api/system/status', desc: 'System' },
-  { method: 'GET', path: '/api/memory/status', desc: 'Memory' },
-  { method: 'GET', path: '/api/echo/status', desc: 'Echo' },
-  { method: 'GET', path: '/mcp/health', desc: 'MCP' },
-  { method: 'GET', path: '/api/self-test/quick', desc: 'Self-Test' }
+  { method: 'GET', path: '/health', desc: 'Health' },
+  { method: 'GET', path: '/intelligence/status', desc: 'System' },
+  { method: 'GET', path: '/memory/status', desc: 'Memory' },
+  { method: 'GET', path: '/status', desc: 'Echo' },
+  { method: 'GET', path: '/memory/health', desc: 'DB Health' },
+  { method: 'GET', path: '/self-test/quick', desc: 'Self-Test' }
 ];
 
 onMounted(() => {
@@ -239,9 +239,9 @@ const testPreset = (endpoint: any) => {
 
 const loadPreset = () => {
   const presets = [
-    { method: 'POST', path: '/api/memory/search', body: '{"query": "test", "limit": 5}' },
-    { method: 'POST', path: '/api/ask', body: '{"question": "What is Echo Brain?"}' },
-    { method: 'POST', path: '/api/intelligence/think', body: '{"query": "test query"}' }
+    { method: 'POST', path: '/memory/search', body: '{"query": "test", "limit": 5}' },
+    { method: 'POST', path: '/ask', body: '{"question": "What is Echo Brain?"}' },
+    { method: 'POST', path: '/intelligence/think', body: '{"query": "test query"}' }
   ];
   const preset = presets[Math.floor(Math.random() * presets.length)];
   if (preset) {
