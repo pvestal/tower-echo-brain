@@ -13,7 +13,7 @@ from mcp.server.fastmcp import FastMCP
 
 ECHO_BRAIN_URL = "http://localhost:8309"
 
-mcp = FastMCP("echo-brain", instructions="Echo Brain memory system — search memories, get/store facts, explore knowledge graph, manage Ollama models, search photos/videos. Telegram bot listener accepts messages and answers questions via reasoning engine.")
+mcp = FastMCP("echo-brain", instructions="Echo Brain memory system — search memories, get/store facts, explore knowledge graph, manage Ollama models, search photos/videos. Telegram bot listener accepts messages and answers questions via reasoning engine. Web search via SearXNG, deep research engine (decompose→search→synthesize with citations), and credit monitoring bridge.")
 
 
 async def _call_echo_brain(tool_name: str, arguments: dict) -> dict:

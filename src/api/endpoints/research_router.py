@@ -77,6 +77,12 @@ async def get_research_job(job_id: str):
                  "snippet": s.snippet, "url": s.url}
                 for s in job.report.sources
             ],
+            "connections": [
+                {"entity_a": c.entity_a, "entity_b": c.entity_b,
+                 "relationship": c.relationship, "strength": c.strength}
+                for c in (job.report.connections or [])
+            ],
+            "entities_discovered": job.report.entities_discovered or [],
             "sub_questions": job.report.sub_questions,
             "iterations": job.report.iterations,
             "total_sources_consulted": job.report.total_sources_consulted,
