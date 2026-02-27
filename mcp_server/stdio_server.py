@@ -277,6 +277,53 @@ async def trigger_generation(character_slug: str, count: int = 1,
 
 
 @mcp.tool()
+async def web_search(
+    query: str,
+    num_results: int = 10,
+    categories: str = "",
+    time_range: str = "",
+) -> str:
+    """Search the web using self-hosted SearXNG. Returns titles, URLs, and snippets.
+
+    Args:
+        query: Search query
+        num_results: Max results (default 10)
+        categories: Comma-separated categories (general, science, it, news)
+        time_range: Filter by time: day, week, month, year (empty = all time)
+    """
+    cats = [c.strip() for c in categories.split(",") if c.strip()] or None
+    payload: dict = {
+        "query": query,
+        "num_results": num_results,
+    }
+    if cats:
+        payload["categories"] = cats
+    if time_range:
+        payload["time_range"] = time_range
+
+    async with httpx.AsyncClient(timeout=30) as client:
+        resp = await client.post(
+            f"{ECHO_BRAIN_URL}/api/echo/search/web",
+            json=payload,
+        )
+        if resp.status_code != 200:
+            return f"Search failed: {resp.status_code} - {resp.text[:200]}"
+        data = resp.json()
+
+    lines = [f"Web search results for: {query}\n"]
+    for r in data.get("results", []):
+        lines.append(f"[{r['position']}] {r['title']}")
+        lines.append(f"    URL: {r['url']}")
+        lines.append(f"    {r['snippet']}")
+        lines.append("")
+
+    lines.append(f"\nSource: {data.get('source', '?')} | {data.get('search_time_ms', 0):.0f}ms | {data.get('total_results', 0)} total")
+    if data.get("cached"):
+        lines.append("(cached)")
+    return "\n".join(lines)
+
+
+@mcp.tool()
 async def web_fetch(url: str, max_length: int = 5000) -> str:
     """Fetch a URL and return its text content (HTML tags stripped).
 
@@ -309,6 +356,191 @@ async def telegram_bot_status() -> str:
         )
     error = data.get("error", "")
     return f"Telegram bot: STOPPED{' — ' + error if error else ''}"
+
+
+@mcp.tool()
+async def deep_research(question: str, depth: str = "standard") -> str:
+    """Run deep research on a complex question. Decomposes into sub-questions,
+    searches web + memory + facts in parallel, evaluates sufficiency, and
+    synthesizes a cited report.
+
+    Args:
+        question: The research question to investigate
+        depth: Research depth: quick (1 iteration), standard (up to 2), deep (up to 3)
+    """
+    import asyncio
+
+    # Start the research job
+    async with httpx.AsyncClient(timeout=10) as client:
+        resp = await client.post(
+            f"{ECHO_BRAIN_URL}/api/echo/research",
+            json={"question": question, "depth": depth},
+        )
+        if resp.status_code != 200:
+            return f"Failed to start research: {resp.status_code} - {resp.text[:200]}"
+        job_data = resp.json()
+        job_id = job_data["job_id"]
+
+    # Poll until complete (up to 120s)
+    for _ in range(60):
+        await asyncio.sleep(2)
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.get(f"{ECHO_BRAIN_URL}/api/echo/research/{job_id}")
+            if resp.status_code != 200:
+                continue
+            data = resp.json()
+            status = data.get("status", "")
+            if status in ("complete", "failed"):
+                break
+
+    if status == "failed":
+        return f"Research failed: {data.get('error_message', 'unknown error')}"
+
+    if status != "complete":
+        return f"Research timed out (status: {status}). Job ID: {job_id}"
+
+    # Format the report
+    report = data.get("report", {})
+    lines = [f"Deep Research Report\n{'=' * 40}\n"]
+    lines.append(f"Question: {question}")
+    lines.append(f"Depth: {depth} | Iterations: {data.get('iterations', 0)} | "
+                 f"Sources: {data.get('sources_consulted', 0)} | "
+                 f"Time: {data.get('total_time_ms', 0):.0f}ms\n")
+
+    lines.append(report.get("answer", "No answer generated."))
+
+    sources = report.get("sources", [])
+    if sources:
+        lines.append(f"\n{'=' * 40}\nSources ({len(sources)}):\n")
+        for s in sources:
+            ref = s.get("ref", "?")
+            stype = s.get("type", "?")
+            title = s.get("title", "")
+            url = s.get("url", "")
+            line = f"[{ref}] ({stype}) {title}"
+            if url:
+                line += f"\n    {url}"
+            lines.append(line)
+
+    sub_qs = report.get("sub_questions", [])
+    if sub_qs:
+        lines.append(f"\nSub-questions explored:")
+        for sq in sub_qs:
+            lines.append(f"  - {sq}")
+
+    return "\n".join(lines)
+
+
+CREDIT_MONITOR_URL = "http://localhost:8400"
+
+
+@mcp.tool()
+async def credit_dashboard() -> str:
+    """Get credit monitoring dashboard: accounts, alerts, scores, and Treasury rates."""
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.get(f"{CREDIT_MONITOR_URL}/api/internal/dashboard")
+            if resp.status_code != 200:
+                return f"Credit monitor unavailable: {resp.status_code}"
+            data = resp.json()
+
+        lines = ["Credit Monitor Dashboard\n"]
+
+        # Accounts
+        accounts = data.get("accounts", [])
+        if accounts:
+            lines.append(f"Accounts ({len(accounts)}):")
+            for acc in accounts[:10]:
+                bal = acc.get("current_balance", "?")
+                lines.append(f"  {acc['name']} ({acc.get('type','')}/{acc.get('subtype','')}) — ${bal}")
+
+        # Credit scores
+        scores = data.get("creditScores", [])
+        if scores:
+            lines.append(f"\nCredit Scores:")
+            for s in scores:
+                lines.append(f"  {s['source']}: {s['credit_score']} ({s.get('score_model','')}) — {s['created_at']}")
+
+        # Alerts
+        alerts = data.get("alerts", [])
+        if alerts:
+            lines.append(f"\nAlerts ({len(alerts)}):")
+            for a in alerts[:5]:
+                lines.append(f"  [{a.get('severity','?')}] {a.get('title','')}: {a.get('description','')[:80]}")
+
+        # Treasury rates
+        rates = data.get("treasuryRates")
+        if rates:
+            avg = rates.get("averageRate", {})
+            lines.append(f"\nTreasury Rates: trend={rates.get('trend','?')}, avg={avg.get('current','?')}%")
+
+        return "\n".join(lines) if len(lines) > 1 else "Credit monitor returned no data"
+    except Exception as e:
+        return f"Credit monitor error: {e}"
+
+
+@mcp.tool()
+async def credit_alerts(severity: str = "") -> str:
+    """Get credit and financial alerts. Filter by severity: critical, high, medium, low.
+
+    Args:
+        severity: Filter by severity level (empty = all)
+    """
+    try:
+        params = {}
+        if severity:
+            params["severity"] = severity
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.get(f"{CREDIT_MONITOR_URL}/api/internal/alerts", params=params)
+            if resp.status_code != 200:
+                return f"Failed to get alerts: {resp.status_code}"
+            alerts = resp.json()
+
+        if not alerts:
+            return f"No alerts{' with severity ' + severity if severity else ''}"
+
+        lines = [f"Credit Alerts ({len(alerts)}):\n"]
+        for a in alerts:
+            lines.append(f"[{a.get('severity','?')}] {a.get('alert_type','')}: {a.get('title','')}")
+            desc = a.get("description", "")
+            if desc:
+                lines.append(f"  {desc[:120]}")
+            lines.append(f"  Created: {a.get('created_at','')}")
+            lines.append("")
+
+        return "\n".join(lines)
+    except Exception as e:
+        return f"Credit alerts error: {e}"
+
+
+@mcp.tool()
+async def treasury_rates() -> str:
+    """Get current US Treasury interest rates and trends."""
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            resp = await client.get(f"{CREDIT_MONITOR_URL}/api/internal/treasury-rates")
+            if resp.status_code != 200:
+                return f"Failed to get Treasury rates: {resp.status_code}"
+            data = resp.json()
+
+        if "error" in data:
+            return f"Treasury rates unavailable: {data['error']}"
+
+        lines = ["US Treasury Interest Rates\n"]
+
+        avg = data.get("averageRate", {})
+        lines.append(f"Average Rate: {avg.get('current', '?')}% (previous: {avg.get('previous', '?')}%, change: {avg.get('change', '?')}%)")
+        lines.append(f"Trend: {data.get('trend', '?')}")
+
+        marketable = data.get("marketableSecurities", [])
+        if marketable:
+            lines.append(f"\nMarketable Securities ({len(marketable)} records)")
+            for s in marketable[:5]:
+                lines.append(f"  {s.get('security_desc', '?')}: {s.get('avg_interest_rate_amt', '?')}%")
+
+        return "\n".join(lines)
+    except Exception as e:
+        return f"Treasury rates error: {e}"
 
 
 if __name__ == "__main__":

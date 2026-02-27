@@ -116,6 +116,7 @@ _SERVICE_CONFIGS = {
     "qdrant": {"failure_threshold": 3, "recovery_timeout_seconds": 30.0},
     "ollama": {"failure_threshold": 3, "recovery_timeout_seconds": 90.0},
     "postgresql": {"failure_threshold": 2, "recovery_timeout_seconds": 30.0},
+    "searxng": {"failure_threshold": 3, "recovery_timeout_seconds": 60.0},
 }
 
 

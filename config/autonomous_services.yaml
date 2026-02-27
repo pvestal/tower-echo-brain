@@ -71,6 +71,24 @@ services:
     gpu_device: "NVIDIA GeForce RTX 3060"
     vram_total: "12GB"
 
+  searxng:
+    enabled: true
+    port: 8890
+    health_endpoint: "/healthz"
+    restart_command: "docker restart tower-searxng"
+    max_retries: 3
+    backoff_base: 30
+    critical: false
+
+  family-credit-monitor:
+    enabled: true
+    port: 8400
+    health_endpoint: "/health"
+    restart_command: "sudo systemctl restart family-credit-monitor"
+    max_retries: 3
+    backoff_base: 30
+    critical: false
+
   qdrant:
     enabled: true
     port: 6333

@@ -193,6 +193,26 @@ except ImportError as e:
 except Exception as e:
     logger.error(f"❌ Search router failed: {e}")
 
+# Mount Web Search API - SearXNG + Brave fallback
+try:
+    from src.api.endpoints.web_search_router import router as web_search_router
+    app.include_router(web_search_router, prefix="/api/echo")
+    logger.info("✅ Web search router mounted at /api/echo/search/web")
+except ImportError as e:
+    logger.warning(f"⚠️ Web search router not available: {e}")
+except Exception as e:
+    logger.error(f"❌ Web search router failed: {e}")
+
+# Mount Deep Research API - Decompose → Search → Evaluate → Synthesize
+try:
+    from src.api.endpoints.research_router import router as research_router
+    app.include_router(research_router, prefix="/api/echo")
+    logger.info("✅ Research router mounted at /api/echo/research")
+except ImportError as e:
+    logger.warning(f"⚠️ Research router not available: {e}")
+except Exception as e:
+    logger.error(f"❌ Research router failed: {e}")
+
 # Mount Echo Reasoning API - Transparent multi-stage reasoning (/analyze, /debug)
 # NOTE: Uses distinct variable name to avoid shadowing the reasoning_router above
 try:
@@ -453,6 +473,20 @@ async def mcp_handler(request: dict):
                     }
                 },
                 {
+                    "name": "web_search",
+                    "description": "Search the web using self-hosted SearXNG. Returns titles, URLs, and snippets.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "query": {"type": "string", "description": "Search query"},
+                            "num_results": {"type": "integer", "description": "Max results (default 10)"},
+                            "categories": {"type": "string", "description": "Comma-separated categories (general, science, it, news)"},
+                            "time_range": {"type": "string", "description": "Filter by time: day, week, month, year"}
+                        },
+                        "required": ["query"]
+                    }
+                },
+                {
                     "name": "web_fetch",
                     "description": "Fetch a URL and return its text content (HTML tags stripped)",
                     "inputSchema": {
@@ -470,6 +504,48 @@ async def mcp_handler(request: dict):
                     "inputSchema": {
                         "type": "object",
                         "properties": {}
+                    }
+                },
+                {
+                    "name": "credit_dashboard",
+                    "description": "Get credit monitoring dashboard: accounts, alerts, credit scores, and Treasury rates from Family Credit Monitor.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {}
+                    }
+                },
+                {
+                    "name": "credit_alerts",
+                    "description": "Get credit and financial alerts. Filter by severity: critical, high, medium, low.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "severity": {"type": "string", "description": "Filter by severity level (empty = all)"}
+                        }
+                    }
+                },
+                {
+                    "name": "treasury_rates",
+                    "description": "Get current US Treasury interest rates and trends.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {}
+                    }
+                },
+                {
+                    "name": "deep_research",
+                    "description": "Run deep research on a complex question. Decomposes into sub-questions, searches web + memory + facts in parallel, evaluates sufficiency, and synthesizes a cited report.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "question": {"type": "string", "description": "The research question"},
+                            "depth": {
+                                "type": "string",
+                                "enum": ["quick", "standard", "deep"],
+                                "description": "Research depth: quick (1 iteration), standard (up to 2), deep (up to 3). Default: standard"
+                            }
+                        },
+                        "required": ["question"]
                     }
                 }
             ]
@@ -570,6 +646,30 @@ async def mcp_handler(request: dict):
                     prompt_override=arguments.get("prompt_override"),
                 )
 
+            elif tool_name == "web_search":
+                from src.services.search_service import get_search_service
+                search_svc = get_search_service()
+                cats_str = arguments.get("categories", "")
+                cats = [c.strip() for c in cats_str.split(",") if c.strip()] if cats_str else None
+                search_resp = await search_svc.search(
+                    query=arguments.get("query", ""),
+                    num_results=arguments.get("num_results", 10),
+                    categories=cats,
+                    time_range=arguments.get("time_range") or None,
+                )
+                return {
+                    "query": search_resp.query,
+                    "results": [
+                        {"title": r.title, "url": r.url, "snippet": r.snippet,
+                         "source_engine": r.source_engine, "position": r.position}
+                        for r in search_resp.results
+                    ],
+                    "total_results": search_resp.total_results,
+                    "search_time_ms": search_resp.search_time_ms,
+                    "source": search_resp.source,
+                    "cached": search_resp.cached,
+                }
+
             elif tool_name == "web_fetch":
                 return await mcp_service.web_fetch(
                     url=arguments.get("url", ""),
@@ -578,6 +678,57 @@ async def mcp_handler(request: dict):
 
             elif tool_name == "telegram_bot_status":
                 return await mcp_service.telegram_bot_status()
+
+            elif tool_name == "credit_dashboard":
+                from src.services.credit_service import get_credit_service
+                credit_svc = get_credit_service()
+                return await credit_svc.get_dashboard()
+
+            elif tool_name == "credit_alerts":
+                from src.services.credit_service import get_credit_service
+                credit_svc = get_credit_service()
+                severity = arguments.get("severity") or None
+                return await credit_svc.get_alerts(severity)
+
+            elif tool_name == "treasury_rates":
+                from src.services.credit_service import get_credit_service
+                credit_svc = get_credit_service()
+                return await credit_svc.get_treasury_rates()
+
+            elif tool_name == "deep_research":
+                import asyncio as _asyncio
+                from src.services.research_engine import get_research_engine
+                engine = get_research_engine()
+                question = arguments.get("question", "")
+                depth = arguments.get("depth", "standard")
+                if not question:
+                    return {"error": "question is required"}
+                job = engine.start_research(question, depth)
+                # Poll until complete or timeout (120s)
+                for _ in range(60):
+                    await _asyncio.sleep(2)
+                    current = await engine.get_job(job.id)
+                    if current and current.status in ("complete", "failed"):
+                        break
+                current = await engine.get_job(job.id)
+                if not current:
+                    return {"error": "Job lost"}
+                if current.status == "failed":
+                    return {"error": current.error_message or "Research failed"}
+                if current.report:
+                    return {
+                        "answer": current.report.answer,
+                        "sources": [
+                            {"ref": s.ref, "type": s.source_type, "title": s.title,
+                             "snippet": s.snippet[:200], "url": s.url}
+                            for s in current.report.sources
+                        ],
+                        "sub_questions": current.report.sub_questions,
+                        "iterations": current.report.iterations,
+                        "total_sources_consulted": current.report.total_sources_consulted,
+                        "total_time_ms": current.total_time_ms,
+                    }
+                return {"status": current.status, "message": "Research still in progress"}
 
             else:
                 return {"error": f"Unknown tool: {tool_name}"}

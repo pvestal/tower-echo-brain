@@ -260,6 +260,32 @@ class HealthService:
                 error=str(e)[:200]
             )
 
+    async def check_credit_monitor(self) -> ServiceHealth:
+        """Check Family Credit Monitor service health"""
+        start = datetime.now()
+        try:
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                resp = await client.get("http://localhost:8400/health")
+                data = resp.json()
+
+            latency = (datetime.now() - start).total_seconds() * 1000
+            return ServiceHealth(
+                name="credit-monitor",
+                status="healthy" if data.get("status") == "ok" else "degraded",
+                latency_ms=round(latency, 2),
+                last_check=datetime.now(),
+                details=data
+            )
+        except Exception as e:
+            return ServiceHealth(
+                name="credit-monitor",
+                status="down",
+                latency_ms=0,
+                last_check=datetime.now(),
+                details={},
+                error=str(e)[:200]
+            )
+
     async def check_all(self) -> SystemHealth:
         """Run all health checks and compile system health"""
         # Run all checks in parallel
@@ -269,6 +295,7 @@ class HealthService:
             self.check_qdrant(),
             self.check_mcp(),
             self.check_comfyui(),
+            self.check_credit_monitor(),
             return_exceptions=True  # Don't fail if one check fails
         )
 
