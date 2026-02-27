@@ -81,24 +81,27 @@
         <div>
           <h4 class="text-xs text-muted mb-2">Recent API Calls</h4>
           <div class="history-list">
-            <div v-for="call in recentCalls" :key="call.id" class="history-item">
+            <div v-for="call in recentCalls" :key="call.request_id" class="history-item">
               <span class="text-mono text-xs">{{ call.method }} {{ call.path }}</span>
               <span :class="['status', 'text-xs', statusClass(call.status)]">
                 {{ call.status }}
               </span>
+              <span class="text-xs text-muted">{{ call.duration_ms }}ms</span>
               <span class="text-xs text-muted">{{ formatTime(call.timestamp) }}</span>
             </div>
           </div>
         </div>
 
         <div>
-          <h4 class="text-xs text-muted mb-2">Recent Questions</h4>
+          <h4 class="text-xs text-muted mb-2">Recent Questions / Think</h4>
           <div class="history-list">
-            <div v-for="q in recentQuestions" :key="q.id" class="history-item">
-              <div class="text-sm">{{ q.question.substring(0, 50) }}...</div>
-              <div class="text-xs text-muted">
-                {{ formatTime(q.timestamp) }} - {{ q.response_time }}ms
-              </div>
+            <div v-for="q in recentQuestions" :key="q.request_id" class="history-item">
+              <span class="text-mono text-xs">{{ q.method }} {{ q.path }}</span>
+              <span :class="['status', 'text-xs', statusClass(q.status)]">
+                {{ q.status }}
+              </span>
+              <span class="text-xs text-muted">{{ q.duration_ms }}ms</span>
+              <span class="text-xs text-muted">{{ formatTime(q.timestamp) }}</span>
             </div>
           </div>
         </div>
@@ -125,16 +128,23 @@ let realtimeInterval: number | null = null;
 const refreshLogs = async () => {
   loading.value = true;
   try {
-    const response = await systemApi.logs();
+    const params: Record<string, string> = {};
+    if (selectedLevel.value) params.level = selectedLevel.value;
+    if (selectedService.value) params.service = selectedService.value;
+
+    const response = await systemApi.logs(params);
     logs.value = response.data.logs || [];
 
-    // Extract recent activity from logs
-    recentCalls.value = logs.value
-      .filter(log => log.message.includes('POST /api/echo'))
-      .slice(0, 5);
-    recentQuestions.value = logs.value
-      .filter(log => log.message.includes('/ask'))
-      .slice(0, 5);
+    // Use structured recent_requests from middleware (real API activity)
+    const requests = response.data.recent_requests || [];
+    recentCalls.value = requests
+      .filter((r: any) => !r.path.includes('/system/logs'))
+      .slice(-10)
+      .reverse();
+    recentQuestions.value = requests
+      .filter((r: any) => r.path.includes('/ask') || r.path.includes('/intelligence/think'))
+      .slice(-10)
+      .reverse();
   } catch (error) {
     console.error('Failed to fetch logs:', error);
     logs.value = [{

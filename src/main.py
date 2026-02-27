@@ -35,7 +35,8 @@ REQUEST_METRICS = {
     "response_times": deque(maxlen=1000),  # Keep last 1000 response times
     "requests_by_endpoint": defaultdict(int),
     "errors_by_endpoint": defaultdict(int),
-    "slowest_requests": deque(maxlen=10)  # Keep 10 slowest requests
+    "slowest_requests": deque(maxlen=10),  # Keep 10 slowest requests
+    "recent_requests": deque(maxlen=200),  # Keep last 200 requests for activity log
 }
 
 # Error log for dashboard
@@ -222,6 +223,7 @@ _optional_routers = [
     ("src.api.google_data", "router", None, "Google Data (/google)"),
     ("src.api.google_ingest_api", "router", None, "Google Ingest (/api/google/ingest)"),
     ("src.api.apple_music_api", "router", None, "Apple Music (/api/music)"),
+    ("src.api.music_generation_pipeline", "router", None, "Music Generation Pipeline (/api/music)"),
     ("src.api.plaid_api", "router", None, "Plaid Finance (/api/finance)"),
     ("src.api.services_api", "router", "/api/echo", "Services Status (/api/echo/services)"),
     ("src.api.home_assistant_api", "router", None, "Home Assistant (/api/home)"),
@@ -2100,6 +2102,17 @@ async def log_requests(request: Request, call_next):
                 "timestamp": datetime.now().isoformat(),
                 "request_id": request_id
             })
+
+        # Record to recent requests log
+        REQUEST_METRICS["recent_requests"].append({
+            "method": request.method,
+            "path": request.url.path,
+            "status": response.status_code,
+            "duration_ms": round(duration_ms, 1),
+            "timestamp": datetime.now().isoformat(),
+            "client": client_ip,
+            "request_id": request_id,
+        })
 
         # Log response
         logger.info(f"[{request_id}] ← {response.status_code} ({duration_ms:.2f}ms)")

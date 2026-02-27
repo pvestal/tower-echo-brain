@@ -7,10 +7,15 @@ const api = axios.create({
   timeout: 60000,
 });
 
-// Health (existing)
+const workersApi = axios.create({
+  baseURL: '/api/workers',
+  timeout: 30000,
+});
+
+// Health — all calls go through `api` so nginx proxies to /api/echo/*
 export const healthApi = {
-  getFull: () => axios.get<EchoHealthResponse>('/health'),  // Use basic health endpoint that works
-  getQuick: () => axios.get<{ status: string; services: Record<string, string> }>('/health'),
+  getFull: () => api.get<EchoHealthResponse>('/health'),
+  getQuick: () => api.get<{ status: string; services: Record<string, string> }>('/health'),
   getResources: () => api.get('/memory/status'),
   getService: (name: string) => api.get(`/intelligence/service/${name}`),
   getMetrics: () => api.get('/memory/status'),
@@ -50,20 +55,20 @@ export const conversationsApi = {
     api.post('/conversations/search', { query, limit }),
 };
 
-// System
+// System — each button calls a distinct endpoint
 export const systemApi = {
   status: () => api.get('/intelligence/status'),
-  ready: () => axios.get('/health'),
-  alive: () => axios.get('/health'),
+  ready: () => api.get('/health'),
+  alive: () => api.get('/status'),
   metrics: () => api.get('/memory/status'),
-  metricsHistory: () => api.get('/memory/status'),
-  diagnostics: () => api.get('/intelligence/status'),
+  diagnostics: () => api.get('/diagnostic'),
   diagnosticsDatabase: () => api.get('/memory/health'),
-  diagnosticsServices: () => api.get('/intelligence/status'),
-  logs: () => api.get('/system/logs'),
-  operationsStatus: () => api.get('/intelligence/status'),
-  operationsJobs: () => axios.get('/api/workers/status'),
-  healthDetailed: () => api.get('/memory/health'),
+  diagnosticsServices: () => api.get('/diagnostic/quick'),
+  logs: (params?: { level?: string; service?: string }) =>
+    api.get('/system/logs', { params }),
+  operationsStatus: () => api.get('/system/dashboard'),
+  operationsJobs: () => workersApi.get('/status'),
+  healthDetailed: () => api.get('/system/resources'),
 };
 
 // Echo
@@ -93,7 +98,7 @@ export const mcpApi = {
       params: { name: 'get_facts', arguments: { topic } },
       id: Date.now(),
     }),
-  health: () => axios.get('/mcp/health'),
+  health: () => api.get('/health'),
 };
 
 // Self-test
@@ -102,13 +107,10 @@ export const selfTestApi = {
   full: () => api.get('/self-test/run'),
 };
 
-// Reasoning
-// Backend routes: /reasoning/ask, /reasoning/analyze
-export const reasoningApi = {
-  ask: (query: string) => api.post('/reasoning/ask', { query }),
-  analyze: (query: string) => api.post('/reasoning/analyze', { query }),
+// Search
+export const searchApi = {
   search: (query: string, limit = 10) =>
-    api.post('/search', { query, limit }),
+    api.get('/search', { params: { q: query, limit } }),
 };
 
 // Calendar (separate base URL — /api/calendar)
@@ -178,16 +180,12 @@ export const getAllEndpoints = () => {
     { method: 'GET', path: '/system/resources', desc: 'System resources' },
     { method: 'GET', path: '/system/dashboard', desc: 'System dashboard' },
 
-    // Reasoning
-    { method: 'POST', path: '/reasoning/ask', desc: 'Reasoning ask', body: '{"query":"test"}' },
-    { method: 'POST', path: '/reasoning/analyze', desc: 'Reasoning analyze', body: '{"query":"test"}' },
-
     // Diagnostic
-    { method: 'GET', path: '/diagnostic', desc: 'Diagnostic' },
+    { method: 'GET', path: '/diagnostic', desc: 'Full diagnostic' },
     { method: 'GET', path: '/diagnostic/quick', desc: 'Quick diagnostic' },
 
     // Search
-    { method: 'GET', path: '/search', desc: 'Search', params: '?q=test&limit=5' },
+    { method: 'GET', path: '/search?q=test&limit=5', desc: 'Search' },
 
     // Voice
     { method: 'GET', path: '/voice/status', desc: 'Voice service status' },

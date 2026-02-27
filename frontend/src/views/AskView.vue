@@ -26,7 +26,12 @@
       <h3>Conversation</h3>
       <div class="space-y-4">
         <div v-for="(item, index) in history" :key="index" class="conversation-item">
-          <div class="text-xs text-muted mb-1">{{ formatTime(item.timestamp) }}</div>
+          <div class="text-xs text-muted mb-1">
+            {{ formatTime(item.timestamp) }}
+            <span v-if="item.model" class="ml-2">{{ item.model }}</span>
+            <span v-if="item.responseTime" class="ml-2">{{ item.responseTime }}ms</span>
+            <span v-if="item.confidence" class="ml-2">{{ (item.confidence * 100).toFixed(0) }}%</span>
+          </div>
           <div class="mb-2">
             <strong>Q:</strong> {{ item.question }}
           </div>
@@ -124,8 +129,8 @@ const submitQuestion = async () => {
     entry.answer = response.data.answer || response.data.response || JSON.stringify(response.data);
     entry.confidence = response.data.confidence;
     entry.sources = response.data.sources;
-    entry.model = response.data.model_used;
-    entry.responseTime = response.data.reasoning_time_ms;
+    entry.model = response.data.model;
+    entry.responseTime = response.data.execution_time_ms;
 
     // Search for related memories
     try {

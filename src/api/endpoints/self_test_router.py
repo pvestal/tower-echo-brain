@@ -57,11 +57,12 @@ async def quick_health_check():
     # Quick PostgreSQL check
     try:
         import asyncpg
+        import os
         conn = await asyncpg.connect(
             host='localhost',
             database='echo_brain',
             user='patrick',
-            password='',
+            password=os.getenv('DB_PASSWORD', ''),
             timeout=5
         )
         conv_count = await conn.fetchval("SELECT COUNT(*) FROM conversations")

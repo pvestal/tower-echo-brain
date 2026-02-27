@@ -39,13 +39,13 @@ onUnmounted(() => healthStore.stopAutoRefresh());
         <ResourceBar
           label="memory"
           :value="(healthStore.resources?.memory_mb || 0) / 1024"
-          :max="8"
+          :max="93"
           unit="gb"
         />
         <ResourceBar
           label="vectors"
           :value="healthStore.resources?.vectors || 0"
-          :max="100000"
+          :max="600000"
           unit=""
         />
       </div>
@@ -79,6 +79,9 @@ onUnmounted(() => healthStore.stopAutoRefresh());
       <div v-if="healthStore.health">
         status: {{ healthStore.health.status }}
         | services: {{ healthStore.services.length }}
+        <span v-if="healthStore.resources?.requests"> | requests: {{ healthStore.resources.requests }}</span>
+        <span v-if="healthStore.resources?.avg_response_ms"> | avg: {{ healthStore.resources.avg_response_ms.toFixed(0) }}ms</span>
+        <span v-if="healthStore.resources?.error_rate"> | errors: {{ healthStore.resources.error_rate }}</span>
       </div>
     </div>
   </div>

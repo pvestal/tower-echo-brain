@@ -119,12 +119,19 @@ async def system_resources():
     }
 
 @router.get("/system/logs")
-async def system_logs(lines: int = 100, level: Optional[str] = None):
-    """Get system logs"""
+async def system_logs(lines: int = 100, level: Optional[str] = None, service: Optional[str] = None):
+    """Get system logs with structured activity history"""
     import subprocess
     import json
+    from src.main import REQUEST_METRICS
 
-    cmd = ["sudo", "journalctl", "-u", "tower-echo-brain", "-n", str(lines), "--no-pager", "-o", "json"]
+    # Filter journald logs by service if requested
+    unit = "tower-echo-brain"
+    if service:
+        service_map = {"postgres": "postgresql", "ollama": "ollama", "qdrant": "qdrant", "comfyui": "tower-comfyui"}
+        unit = service_map.get(service.lower(), "tower-echo-brain")
+
+    cmd = ["sudo", "journalctl", "-u", unit, "-n", str(lines), "--no-pager", "-o", "json"]
     if level:
         priority_map = {"DEBUG": "7", "INFO": "6", "WARNING": "4", "ERROR": "3"}
         if level.upper() in priority_map:
@@ -148,11 +155,19 @@ async def system_logs(lines: int = 100, level: Optional[str] = None):
                         "timestamp": timestamp,
                         "message": log_entry.get("MESSAGE", ""),
                         "level": level_map.get(str(priority), "INFO"),
-                        "service": "echo-brain"
+                        "service": unit
                     })
                 except:
                     continue
-        return {"logs": logs, "count": len(logs)}
+
+        # Structured activity: recent API requests from middleware
+        recent_requests = list(REQUEST_METRICS.get("recent_requests", []))
+
+        return {
+            "logs": logs,
+            "count": len(logs),
+            "recent_requests": recent_requests[-50:],
+        }
     except Exception as e:
         return {"error": str(e)}
 
@@ -424,20 +439,50 @@ async def get_session(session_id: str):
 # ============= INTELLIGENCE =============
 @router.get("/intelligence/map")
 async def knowledge_map():
-    """Knowledge domain mapping"""
+    """Knowledge domain mapping — real counts from Qdrant by vector type"""
     from src.integrations.mcp_service import mcp_service
 
-    # Simplified knowledge map from vector analysis
-    domains = {
-        "Tower System": {"vectors": 5000, "confidence": 0.8},
-        "Anime Production": {"vectors": 3000, "confidence": 0.7},
-        "Echo Brain": {"vectors": 10000, "confidence": 0.9},
-        "Programming": {"vectors": 6657, "confidence": 0.85}
+    # Domain groupings: map vector types to human-readable domains
+    domain_types = {
+        "Conversations": ["conversation"],
+        "Codebase": ["code", "domain_code"],
+        "Knowledge & Facts": ["fact", "knowledge_fact", "kb_article", "documentation"],
+        "Media": ["photo", "video", "generation"],
+        "Personal": ["email", "calendar_event", "memory"],
+        "Infrastructure": ["domain_record", "domain_git", "schema"],
     }
+
+    domains = {}
+    counted_total = 0
+
+    try:
+        import httpx
+        async with httpx.AsyncClient(timeout=10) as client:
+            for domain_name, type_list in domain_types.items():
+                domain_count = 0
+                for vtype in type_list:
+                    resp = await client.post(
+                        "http://localhost:6333/collections/echo_memory/points/count",
+                        json={"filter": {"must": [{"key": "type", "match": {"value": vtype}}]}}
+                    )
+                    if resp.status_code == 200:
+                        domain_count += resp.json().get("result", {}).get("count", 0)
+                counted_total += domain_count
+                if domain_count > 0:
+                    domains[domain_name] = {"vectors": domain_count, "types": type_list}
+    except Exception as e:
+        logger.error(f"Knowledge map failed: {e}")
+
+    total = mcp_service.get_vector_count()
+
+    # Add uncategorized if counts don't add up
+    uncategorized = total - counted_total
+    if uncategorized > 0:
+        domains["Other"] = {"vectors": uncategorized, "types": []}
 
     return {
         "domains": domains,
-        "total_vectors": mcp_service.get_vector_count(),  # Not async
+        "total_vectors": total,
         "timestamp": datetime.now().isoformat()
     }
 
@@ -450,10 +495,12 @@ async def think(request: Dict[str, Any]):
     # Stage 1: Gather context from all sources
     from src.integrations.mcp_service import mcp_service
 
-    # Get memory context
+    # Get memory context — search_memory returns list OR dict with "results" key
     memory_results = await mcp_service.search_memory(query, limit=5)
+    if isinstance(memory_results, dict):
+        memory_results = memory_results.get("results", [])
     memory_context = []
-    if memory_results:  # memory_results is already a list
+    if memory_results:
         for mem in memory_results[:5]:
             memory_context.append(mem.get("content", "")[:300])
 
@@ -476,7 +523,7 @@ Memory Context:
 {chr(10).join(memory_context[:3])}
 
 Known Facts:
-{chr(10).join([f"- {f}" for f in facts[:5]])}
+{chr(10).join([f"- {f.get('content', str(f)) if isinstance(f, dict) else str(f)}" for f in facts[:5]])}
 
 Provide a structured analysis:
 1. What is being asked
