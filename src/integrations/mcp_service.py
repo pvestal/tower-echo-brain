@@ -123,7 +123,7 @@ class MCPService:
                 # Generate embedding using Ollama (matching unified memory system)
                 import httpx
                 try:
-                    with httpx.Client(timeout=30) as client:
+                    with httpx.Client(timeout=120) as client:
                         response = client.post(
                             f"{self.ollama_url}/api/embed",
                             json={"model": self.embedding_model, "input": query}
@@ -179,10 +179,10 @@ class MCPService:
                 logger.error(f"Fallback search failed: {e2}")
                 return []
 
-    async def store_fact(self, subject: str, predicate: str, object_: str, confidence: float = 1.0) -> str:
-        """Store a fact in vector database"""
+    async def store_fact(self, subject: str, predicate: str, object_: str, confidence: float = 1.0) -> dict | str:
+        """Store a fact in vector database. Returns point_id string on success, or error dict on failure."""
         if not self.qdrant_client:
-            return ""
+            return {"fact_id": "", "stored": False, "error": "Qdrant client not initialized"}
 
         try:
             # Create text representation
@@ -191,7 +191,7 @@ class MCPService:
             # Get embedding via Ollama
             import httpx
             try:
-                with httpx.Client(timeout=30) as client:
+                with httpx.Client(timeout=120) as client:
                     resp = client.post(
                         f"{self.ollama_url}/api/embed",
                         json={"model": self.embedding_model, "input": text}
@@ -200,10 +200,10 @@ class MCPService:
                     embedding = (resp_data.get("embeddings") or [[]])[0] or resp_data.get("embedding", [])
                     if not embedding:
                         logger.warning("Empty embedding from Ollama for store_fact")
-                        return ""
+                        return {"fact_id": "", "stored": False, "error": "Ollama returned empty embedding"}
             except Exception as embed_err:
                 logger.error(f"Failed to embed fact: {embed_err}")
-                return ""
+                return {"fact_id": "", "stored": False, "error": f"Embedding failed: {embed_err}"}
 
             # Store in Qdrant
             from qdrant_client.models import PointStruct
@@ -253,7 +253,7 @@ class MCPService:
 
         except Exception as e:
             logger.error(f"Failed to store fact: {e}")
-            return ""
+            return {"fact_id": "", "stored": False, "error": f"Storage failed: {e}"}
 
     async def get_facts(self, topic: Optional[str] = None, limit: int = 100) -> List[Dict[str, Any]]:
         """Get facts from PostgreSQL facts table via unified knowledge layer"""
@@ -286,17 +286,17 @@ class MCPService:
             logger.error(f"Failed to get facts: {e}")
             return []
 
-    async def store_memory(self, content: str, type_: str = "memory", metadata: Optional[Dict] = None) -> str:
+    async def store_memory(self, content: str, type_: str = "memory", metadata: Optional[Dict] = None) -> dict | str:
         """Store free-form text memory in Qdrant (not a structured SPO triple).
-        Returns the point ID on success, empty string on failure."""
+        Returns the point ID string on success, or error dict on failure."""
         if not self.qdrant_client:
-            return ""
+            return {"memory_id": "", "stored": False, "error": "Qdrant client not initialized"}
 
         try:
             # Generate embedding
             import httpx
             try:
-                with httpx.Client(timeout=30) as client:
+                with httpx.Client(timeout=120) as client:
                     resp = client.post(
                         f"{self.ollama_url}/api/embed",
                         json={"model": self.embedding_model, "input": content}
@@ -305,10 +305,10 @@ class MCPService:
                     embedding = (resp_data.get("embeddings") or [[]])[0] or resp_data.get("embedding", [])
                     if not embedding:
                         logger.warning("Empty embedding from Ollama for store_memory")
-                        return ""
+                        return {"memory_id": "", "stored": False, "error": "Ollama returned empty embedding"}
             except Exception as embed_err:
                 logger.error(f"Failed to embed memory: {embed_err}")
-                return ""
+                return {"memory_id": "", "stored": False, "error": f"Embedding failed: {embed_err}"}
 
             from qdrant_client.models import PointStruct
             import uuid
@@ -338,7 +338,7 @@ class MCPService:
 
         except Exception as e:
             logger.error(f"Failed to store memory: {e}")
-            return ""
+            return {"memory_id": "", "stored": False, "error": f"Storage failed: {e}"}
 
     # ── New MCP action tools ───────────────────────────────────────────
 

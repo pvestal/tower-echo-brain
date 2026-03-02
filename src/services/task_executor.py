@@ -19,10 +19,10 @@ MODEL_MAP = {
     "coding": "deepseek-coder-v2:16b",
     "analysis": "mistral:7b",
     # Anime tasks
-    "scene_description": "gemma2:9b",      # Narration agent's model
-    "comfyui_prompt": "gemma2:9b",         # Generate ComfyUI prompts
+    "scene_description": "gemma3:12b",      # Narration agent's model
+    "comfyui_prompt": "gemma3:12b",         # Generate ComfyUI prompts
     "story_development": "deepseek-r1:8b", # Plot and narrative
-    "character_description": "gemma2:9b"   # Character details for LoRA
+    "character_description": "gemma3:12b"   # Character details for LoRA
 }
 
 async def execute_task(task: Dict[str, Any]) -> Dict[str, Any]:

@@ -1,0 +1,64 @@
+use_default_settings: true
+
+server:
+  secret_key: "6f5bb7aa22fdd352932aa7c3c479e4e939f0770be3e4a04d9461e176756c930c"
+  limiter: false
+  image_proxy: false
+
+search:
+  safe_search: 0
+  autocomplete: ""
+  default_lang: "en"
+  formats:
+    - html
+    - json
+
+engines:
+  - name: google
+    engine: google
+    shortcut: g
+    weight: 1.5
+
+  - name: duckduckgo
+    engine: duckduckgo
+    shortcut: ddg
+    weight: 1.0
+
+  - name: bing
+    engine: bing
+    shortcut: b
+    weight: 1.0
+
+  - name: wikipedia
+    engine: wikipedia
+    shortcut: wp
+    weight: 1.2
+
+  - name: github
+    engine: github
+    shortcut: gh
+    weight: 0.8
+    categories: [it]
+
+  - name: stackoverflow
+    engine: stackoverflow
+    shortcut: so
+    weight: 1.0
+    categories: [it]
+
+  - name: arxiv
+    engine: arxiv
+    shortcut: ar
+    weight: 0.8
+    categories: [science]
+
+  - name: brave
+    disabled: true
+
+  - name: yahoo
+    disabled: true
+
+outgoing:
+  request_timeout: 5.0
+  max_request_timeout: 10.0
+  useragent_suffix: "EchoBrain/0.6"

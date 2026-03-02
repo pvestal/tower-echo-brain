@@ -874,6 +874,9 @@ class PhotoDedupService:
             analyzed = 0
             errors = 0
 
+            # Free VRAM: evict mistral:7b so gemma3:12b has headroom
+            await self._prepare_gpu_for_vision()
+
             for photo in photos:
                 try:
                     is_video = photo.get("media_type") == "video"
@@ -917,6 +920,9 @@ class PhotoDedupService:
                     logger.error(f"Vision analysis error for {photo['file_path']}: {e}")
                     errors += 1
 
+            # Let gemma3:12b unload after 5min idle, freeing VRAM for mistral
+            await self._release_vision_model()
+
             await conn.execute("""
                 UPDATE photo_dedup_runs
                 SET finished_at = NOW(), items_processed = $2, items_new = $3, items_error = $4
@@ -930,6 +936,40 @@ class PhotoDedupService:
 
         finally:
             await conn.close()
+
+    async def _prepare_gpu_for_vision(self):
+        """Evict mistral:7b from VRAM to make room for gemma3:12b vision model.
+        nomic-embed-text (0.3GB) stays pinned; freeing mistral (5.1GB) gives
+        gemma3 ~15.7GB of headroom on the 16GB AMD RX 9070 XT.
+        """
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                resp = await client.post(
+                    f"{OLLAMA_URL}/api/generate",
+                    json={"model": "mistral:7b", "keep_alive": 0, "prompt": "", "stream": False},
+                )
+                if resp.status_code == 200:
+                    logger.info("[PhotoDedup] Unloading mistral:7b for vision analysis")
+                else:
+                    logger.warning(f"[PhotoDedup] Failed to unload mistral:7b: {resp.status_code}")
+        except Exception as e:
+            logger.warning(f"[PhotoDedup] Could not unload mistral:7b: {e}")
+
+    async def _release_vision_model(self):
+        """Set gemma3:12b to a 5-minute idle timeout so it unloads after the
+        vision batch completes, freeing VRAM for other models."""
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                resp = await client.post(
+                    f"{OLLAMA_URL}/api/generate",
+                    json={"model": VISION_MODEL, "keep_alive": "5m", "prompt": "", "stream": False},
+                )
+                if resp.status_code == 200:
+                    logger.info(f"[PhotoDedup] Set {VISION_MODEL} keep_alive=5m (will unload after idle)")
+                else:
+                    logger.warning(f"[PhotoDedup] Failed to set {VISION_MODEL} keep_alive: {resp.status_code}")
+        except Exception as e:
+            logger.warning(f"[PhotoDedup] Could not set {VISION_MODEL} keep_alive: {e}")
 
     async def _analyze_single_photo(self, file_path: str) -> Optional[Dict]:
         """Send a photo to Gemma 3 for vision analysis."""
@@ -945,7 +985,7 @@ class PhotoDedupService:
         if not image_b64:
             return None
 
-        async with httpx.AsyncClient(timeout=60.0) as client:
+        async with httpx.AsyncClient(timeout=120.0) as client:
             resp = await client.post(
                 f"{OLLAMA_URL}/api/generate",
                 json={
@@ -953,6 +993,7 @@ class PhotoDedupService:
                     "prompt": _VISION_PHOTO_PROMPT,
                     "images": [image_b64],
                     "stream": False,
+                    "keep_alive": "5m",
                     "options": {"temperature": 0.3},
                 }
             )
@@ -1041,7 +1082,7 @@ class PhotoDedupService:
         if not image_b64:
             return None
 
-        async with httpx.AsyncClient(timeout=60.0) as client:
+        async with httpx.AsyncClient(timeout=120.0) as client:
             resp = await client.post(
                 f"{OLLAMA_URL}/api/generate",
                 json={
@@ -1049,6 +1090,7 @@ class PhotoDedupService:
                     "prompt": _VISION_VIDEO_FRAME_PROMPT,
                     "images": [image_b64],
                     "stream": False,
+                    "keep_alive": "5m",
                     "options": {"temperature": 0.3},
                 }
             )
@@ -1980,7 +2022,7 @@ class PhotoDedupService:
                     return None
 
                 resp = await client.post(
-                    f"{AUTH_SERVICE_URL}/oauth/google/refresh",
+                    f"{AUTH_SERVICE_URL}/api/auth/oauth/google/refresh",
                     json={"refresh_token": refresh}
                 )
                 if resp.status_code == 200:

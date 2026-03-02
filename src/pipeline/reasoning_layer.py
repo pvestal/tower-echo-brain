@@ -25,7 +25,7 @@ MODEL_MAP = {
     QueryIntent.REASONING: "deepseek-r1:8b",      # Good at step-by-step reasoning
     QueryIntent.PERSONAL: "gemma3:12b",           # Strong general model
     QueryIntent.FACTUAL: "mistral:7b",            # Fast and accurate
-    QueryIntent.CREATIVE: "gemma2:9b",            # Creative tasks
+    QueryIntent.CREATIVE: "gemma3:12b",            # Creative tasks
     QueryIntent.CONVERSATIONAL: "gemma3:12b",     # General conversation
 }
 

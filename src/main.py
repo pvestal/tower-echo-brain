@@ -74,6 +74,15 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
+# Mount SSE MCP bridge at module level (must be before app starts serving)
+try:
+    from mcp_server.sse_bridge import get_sse_app
+    _sse_app = get_sse_app("/")
+    app.mount("/mcp-sse", _sse_app)
+    logger.info("SSE MCP app mounted at /mcp-sse (service will be injected at startup)")
+except Exception as e:
+    logger.warning(f"Could not mount SSE MCP app: {e}")
+
 # Basic health endpoint
 @app.get("/api")
 async def api_root():
@@ -547,6 +556,28 @@ async def mcp_handler(request: dict):
                         },
                         "required": ["question"]
                     }
+                },
+                {
+                    "name": "session_summary",
+                    "description": "Store a session summary at end of a Claude Code session. Captures what was done, decisions made, and topics covered as a high-quality memory.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "summary": {"type": "string", "description": "Summary of what was accomplished in this session"},
+                            "topics": {
+                                "type": "array",
+                                "items": {"type": "string"},
+                                "description": "Key topics covered (e.g. ['echo-brain', 'MCP', 'SSE transport'])"
+                            },
+                            "project": {"type": "string", "description": "Project name or path"},
+                            "decisions": {
+                                "type": "array",
+                                "items": {"type": "string"},
+                                "description": "Key decisions or preferences expressed (e.g. ['use SSE over stdio', 'pin embedding model'])"
+                            }
+                        },
+                        "required": ["summary"]
+                    }
                 }
             ]
         }
@@ -593,16 +624,26 @@ async def mcp_handler(request: dict):
                 predicate = arguments.get("predicate", "")
                 object_ = arguments.get("object", "")
                 confidence = arguments.get("confidence", 1.0)
-                fact_id = await mcp_service.store_fact(subject, predicate, object_, confidence)
-                return {"fact_id": fact_id, "stored": True}
+                if not subject or not predicate or not object_:
+                    return {"fact_id": "", "stored": False, "error": "subject, predicate, and object are all required"}
+                result = await mcp_service.store_fact(subject, predicate, object_, confidence)
+                if isinstance(result, dict):
+                    return result  # Already has error info
+                if result:
+                    return {"fact_id": result, "stored": True}
+                return {"fact_id": "", "stored": False, "error": "Embedding or storage failed — check Ollama/Qdrant"}
 
             elif tool_name == "store_memory":
                 content = arguments.get("content", "")
                 type_ = arguments.get("type", "memory")
                 if not content:
-                    return {"error": "content is required"}
-                memory_id = await mcp_service.store_memory(content, type_=type_)
-                return {"memory_id": memory_id, "stored": bool(memory_id)}
+                    return {"memory_id": "", "stored": False, "error": "content is required"}
+                result = await mcp_service.store_memory(content, type_=type_)
+                if isinstance(result, dict):
+                    return result  # Already has error info
+                if result:
+                    return {"memory_id": result, "stored": True}
+                return {"memory_id": "", "stored": False, "error": "Embedding or storage failed — check Ollama/Qdrant"}
 
             elif tool_name == "manage_ollama":
                 return await _handle_ollama_mcp(arguments)
@@ -729,6 +770,44 @@ async def mcp_handler(request: dict):
                         "total_time_ms": current.total_time_ms,
                     }
                 return {"status": current.status, "message": "Research still in progress"}
+
+            elif tool_name == "session_summary":
+                summary = arguments.get("summary", "")
+                topics = arguments.get("topics", [])
+                project = arguments.get("project", "")
+                decisions = arguments.get("decisions", [])
+                if not summary:
+                    return {"stored": False, "error": "summary is required"}
+
+                # Build rich content for storage
+                parts = [f"SESSION SUMMARY: {summary}"]
+                if project:
+                    parts.append(f"Project: {project}")
+                if topics:
+                    parts.append(f"Topics: {', '.join(topics)}")
+                if decisions:
+                    parts.append(f"Decisions: {'; '.join(decisions)}")
+                parts.append(f"Date: {datetime.now().isoformat()}")
+                content = "\n".join(parts)
+
+                result = await mcp_service.store_memory(
+                    content,
+                    type_="session_summary",
+                    metadata={
+                        "source": "claude_code_session",
+                        "topics": topics,
+                        "project": project,
+                        "decisions": decisions,
+                    },
+                )
+                if isinstance(result, dict):
+                    return result
+                if result:
+                    # Also store decisions as individual facts
+                    for decision in decisions:
+                        await mcp_service.store_fact("Patrick", "decided", decision)
+                    return {"stored": True, "memory_id": result, "facts_stored": len(decisions)}
+                return {"stored": False, "error": "Failed to store session summary"}
 
             else:
                 return {"error": f"Unknown tool: {tool_name}"}
@@ -2153,6 +2232,30 @@ async def startup_event():
         logger.info(f"✅ Worker scheduler started with {workers_registered} workers")
     except Exception as e:
         logger.error(f"❌ Failed to start worker scheduler: {e}")
+
+    # Pin nomic-embed-text in Ollama so embedding calls never wait for model swap
+    try:
+        import httpx
+        async with httpx.AsyncClient(timeout=120) as client:
+            resp = await client.post(
+                "http://localhost:11434/api/embed",
+                json={"model": "nomic-embed-text", "input": "warmup", "keep_alive": -1}
+            )
+            if resp.status_code == 200:
+                logger.info("✅ Pinned nomic-embed-text in Ollama (keep_alive=-1)")
+            else:
+                logger.warning(f"⚠️ Failed to pin nomic-embed-text: HTTP {resp.status_code}")
+    except Exception as e:
+        logger.warning(f"⚠️ Could not pin nomic-embed-text in Ollama: {e}")
+
+    # Inject mcp_service into SSE bridge (app mount was done at module level)
+    try:
+        from src.integrations.mcp_service import mcp_service as _mcp_svc
+        from mcp_server.sse_bridge import init_sse_bridge
+        init_sse_bridge(_mcp_svc, app)
+        logger.info("✅ SSE MCP bridge ready at /mcp-sse/sse")
+    except Exception as e:
+        logger.warning(f"⚠️ SSE MCP bridge service injection failed: {e}")
 
     # Start Telegram bot listener
     try:

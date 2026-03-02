@@ -18,7 +18,7 @@ mcp = FastMCP("echo-brain", instructions="Echo Brain memory system — search me
 
 async def _call_echo_brain(tool_name: str, arguments: dict) -> dict:
     """Forward a tool call to the Echo Brain HTTP MCP endpoint."""
-    async with httpx.AsyncClient(timeout=60) as client:
+    async with httpx.AsyncClient(timeout=180) as client:
         resp = await client.post(
             f"{ECHO_BRAIN_URL}/mcp",
             json={
@@ -429,6 +429,34 @@ async def deep_research(question: str, depth: str = "standard") -> str:
             lines.append(f"  - {sq}")
 
     return "\n".join(lines)
+
+
+@mcp.tool()
+async def session_summary(
+    summary: str,
+    topics: list[str] = [],
+    project: str = "",
+    decisions: list[str] = [],
+) -> str:
+    """Store a session summary at end of a Claude Code session. Captures what was done,
+    decisions made, and topics covered as a high-quality memory.
+
+    Args:
+        summary: Summary of what was accomplished in this session
+        topics: Key topics covered (e.g. ['echo-brain', 'MCP', 'SSE transport'])
+        project: Project name or path
+        decisions: Key decisions or preferences expressed (e.g. ['use SSE over stdio'])
+    """
+    data = await _call_echo_brain("session_summary", {
+        "summary": summary,
+        "topics": topics,
+        "project": project,
+        "decisions": decisions,
+    })
+    if data.get("stored"):
+        facts = data.get("facts_stored", 0)
+        return f"Session summary stored (memory_id: {data.get('memory_id', '?')}, {facts} decisions saved as facts)"
+    return f"Failed to store summary: {data.get('error', 'unknown error')}"
 
 
 CREDIT_MONITOR_URL = "http://localhost:8400"

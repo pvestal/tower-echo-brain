@@ -13,7 +13,7 @@ _MODEL_MAP = {
     "general": os.getenv("OLLAMA_MODEL_GENERAL", _DEFAULT_MODEL),
     "reasoning": os.getenv("OLLAMA_MODEL_REASONING", _DEFAULT_MODEL),
     "analysis": os.getenv("OLLAMA_MODEL_ANALYSIS", _DEFAULT_MODEL),
-    "extraction": os.getenv("OLLAMA_MODEL_EXTRACTION", os.getenv("EXTRACTION_MODEL", "gemma2:9b")),
+    "extraction": os.getenv("OLLAMA_MODEL_EXTRACTION", os.getenv("EXTRACTION_MODEL", "gemma3:12b")),
     "coding": os.getenv("OLLAMA_MODEL_CODING", "deepseek-coder-v2:16b"),
     "embedding": os.getenv("OLLAMA_MODEL_EMBEDDING", "nomic-embed-text"),
 }
