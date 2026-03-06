@@ -25,7 +25,7 @@ class ImprovementEngine:
         self.qdrant_url = "http://localhost:6333"
         self.ollama_url = "http://localhost:11434"
         self.collection = "echo_memory"
-        self.model = "gemma2:9b"  # Use extraction model for analysis
+        self.model = "mistral:7b"
         self.max_issues_per_cycle = 5
 
         # Initialize clients

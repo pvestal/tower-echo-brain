@@ -941,6 +941,7 @@ class PhotoDedupService:
         """Evict mistral:7b from VRAM to make room for gemma3:12b vision model.
         nomic-embed-text (0.3GB) stays pinned; freeing mistral (5.1GB) gives
         gemma3 ~15.7GB of headroom on the 16GB AMD RX 9070 XT.
+        Then warm up gemma3:12b so it's ready before the batch starts.
         """
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
@@ -954,6 +955,21 @@ class PhotoDedupService:
                     logger.warning(f"[PhotoDedup] Failed to unload mistral:7b: {resp.status_code}")
         except Exception as e:
             logger.warning(f"[PhotoDedup] Could not unload mistral:7b: {e}")
+
+        # Warm up gemma3:12b so it's loaded before the batch starts
+        try:
+            async with httpx.AsyncClient(timeout=120.0) as client:
+                logger.info(f"[PhotoDedup] Warming up {VISION_MODEL}...")
+                resp = await client.post(
+                    f"{OLLAMA_URL}/api/generate",
+                    json={"model": VISION_MODEL, "keep_alive": "5m", "prompt": "ready", "stream": False},
+                )
+                if resp.status_code == 200:
+                    logger.info(f"[PhotoDedup] {VISION_MODEL} warm and ready")
+                else:
+                    logger.warning(f"[PhotoDedup] {VISION_MODEL} warmup returned {resp.status_code}")
+        except Exception as e:
+            logger.warning(f"[PhotoDedup] {VISION_MODEL} warmup failed: {e}")
 
     async def _release_vision_model(self):
         """Set gemma3:12b to a 5-minute idle timeout so it unloads after the
@@ -998,7 +1014,7 @@ class PhotoDedupService:
                 }
             )
             if resp.status_code != 200:
-                logger.error(f"Vision API error: {resp.status_code}")
+                logger.error(f"Vision API error: {resp.status_code} — {resp.text[:200]}")
                 return None
 
             raw = resp.json().get("response", "")
@@ -1043,6 +1059,7 @@ class PhotoDedupService:
 
     def _extract_keyframes(self, video_path: Path, interval: int = 10) -> Tuple[List[Path], float]:
         """Extract keyframes using ffmpeg, 1 frame per interval seconds.
+        For short clips (<interval seconds), extracts 1 frame at the midpoint.
         Returns (list of frame paths, duration in seconds).
         """
         try:
@@ -1053,16 +1070,30 @@ class PhotoDedupService:
             # Create temp directory for frames
             tmp_dir = Path(tempfile.mkdtemp(prefix="echo_keyframes_"))
 
-            proc = subprocess.run(
-                [
-                    "ffmpeg", "-i", str(video_path),
-                    "-vf", f"fps=1/{interval}",
-                    "-frames:v", str(MAX_VIDEO_KEYFRAMES),
-                    "-q:v", "2",
-                    str(tmp_dir / "frame_%04d.jpg"),
-                ],
-                capture_output=True, timeout=120
-            )
+            # Short clips: extract a single frame at the midpoint
+            if duration < interval:
+                midpoint = max(0, duration / 2)
+                proc = subprocess.run(
+                    [
+                        "ffmpeg", "-i", str(video_path),
+                        "-ss", str(midpoint),
+                        "-frames:v", "1",
+                        "-q:v", "2",
+                        str(tmp_dir / "frame_0001.jpg"),
+                    ],
+                    capture_output=True, timeout=30
+                )
+            else:
+                proc = subprocess.run(
+                    [
+                        "ffmpeg", "-i", str(video_path),
+                        "-vf", f"fps=1/{interval}",
+                        "-frames:v", str(MAX_VIDEO_KEYFRAMES),
+                        "-q:v", "2",
+                        str(tmp_dir / "frame_%04d.jpg"),
+                    ],
+                    capture_output=True, timeout=120
+                )
 
             if proc.returncode != 0:
                 logger.warning(f"ffmpeg keyframe extraction failed for {video_path}")
@@ -1285,11 +1316,12 @@ class PhotoDedupService:
 
     @staticmethod
     def _load_image_as_jpeg_b64(path: Path) -> Optional[str]:
-        """Load any image format and return as JPEG base64 for Ollama.
-        Handles HEIC, TIFF, BMP, and other formats Ollama can't read natively.
+        """Load any image format and return as valid JPEG base64 for Ollama.
+        Always round-trips through PIL to ensure valid output.
         """
         try:
             from PIL import Image
+            import io
             # Register HEIC opener if available
             try:
                 from pillow_heif import register_heif_opener
@@ -1297,25 +1329,21 @@ class PhotoDedupService:
             except ImportError:
                 pass
 
-            suffix = path.suffix.lower()
-            # Formats Ollama handles natively
-            native_formats = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
-
-            if suffix in native_formats:
-                # Send as-is for native formats
-                return base64.b64encode(path.read_bytes()).decode("utf-8")
-
-            # Convert non-native formats (HEIC, TIFF, BMP, etc.) to JPEG
-            import io
             with Image.open(path) as img:
                 if img.mode in ("RGBA", "P"):
                     img = img.convert("RGB")
+                elif img.mode != "RGB":
+                    img = img.convert("RGB")
                 buf = io.BytesIO()
                 img.save(buf, format="JPEG", quality=85)
-                return base64.b64encode(buf.getvalue()).decode("utf-8")
+                data = buf.getvalue()
+                if len(data) < 100:
+                    logger.warning(f"Suspiciously small JPEG output for {path} ({len(data)} bytes)")
+                    return None
+                return base64.b64encode(data).decode("utf-8")
 
         except Exception as e:
-            logger.error(f"Failed to load image {path}: {e}")
+            logger.debug(f"Cannot load image {path}: {e}")
             return None
 
     # ------------------------------------------------------------------

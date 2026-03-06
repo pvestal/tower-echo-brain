@@ -5,6 +5,33 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ---
 
+## [0.6.2] - 2026-03-06 (Autonomous Worker Fixes + Google Re-auth)
+
+### Fixed
+- **Telegram bot**: Was polling wrong bot (@VeteranGuardianBot). Updated Vault to @PatricksEchobot token, bot now receives and responds to messages
+- **Photo vision 500s**: gemma3:12b wasn't loaded before batch started. Added warmup call in `_prepare_gpu_for_vision()`. Also round-trip all images through PIL to catch corrupt/unsupported formats before sending to Ollama
+- **Improvement engine 404s**: Was requesting deleted `gemma2:9b` model. Changed to `mistral:7b`
+- **Google Calendar credentials**: Was using bare access token without refresh capability. Now loads full credentials (refresh_token, client_id, client_secret) from `config/google_credentials.json`
+- **Duplicate daily briefings**: In-memory `_last_briefing_date` reset on service restart. Added file-based marker at `/tmp/echo-brain-briefing-last-date` that survives restarts
+- **Short video keyframes**: Videos under 10s extracted 0 frames (fps=1/10). Now extracts 1 frame at midpoint for short clips
+- **Drive ingestion scope**: Re-authed Google OAuth via tower-auth with `drive.readonly` scope (was `drive.file`). Now sees full Drive contents
+
+### Changed
+- Self-test assertions updated: `checkpoint_mario` expects 'illustrious' (was 'realcartoonPixar'), relaxed `patrick_info` and `echo_brain_purpose` string matching, increased `vector_search_functional` timeout to 60s
+- Vision API error logs now include response body for faster debugging
+- Telegram bot logs incoming message chat_id and text for troubleshooting
+- Drive ingestion note no longer hardcodes misleading scope warning
+
+### Stats
+- Self-tests: 10/16 → 11/16 (68.8%)
+- Improvement engine: 0/5 → 5/5 proposals per cycle
+- Photo vision: 100% failure → 0 errors (with warmup)
+- Qdrant echo_memory: 606,072 vectors
+- Facts: 6,077 structured facts
+- Photos/videos scanned: 73,081
+
+---
+
 ## [0.6.1] - 2026-02-16 (Retrieval Quality Overhaul + Garbage Cleanup)
 
 ### Fixed

@@ -89,8 +89,11 @@ class TelegramBot:
         chat_id = message.get("chat", {}).get("id")
         text = (message.get("text") or "").strip()
 
+        logger.info(f"Incoming message from chat_id={chat_id}: {text[:80]!r}")
+
         # Security gate — only respond to admin
         if chat_id != self._admin_chat_id:
+            logger.warning(f"Blocked message from non-admin chat_id={chat_id} (expected {self._admin_chat_id})")
             return
 
         if not text:

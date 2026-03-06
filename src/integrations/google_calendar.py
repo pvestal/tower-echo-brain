@@ -24,18 +24,34 @@ class GoogleCalendarBridge:
         self.connected = False
 
     async def initialize(self) -> bool:
-        """Initialize Google Calendar connection via tower-auth"""
+        """Initialize Google Calendar connection via stored credentials"""
         try:
-            from src.integrations.tower_auth_bridge import tower_auth
+            import os
+            creds_path = os.path.join(os.path.dirname(__file__), '..', '..', 'config', 'google_credentials.json')
+            creds_path = os.path.abspath(creds_path)
 
-            logger.info("Initializing Google Calendar integration via tower-auth...")
+            if os.path.exists(creds_path):
+                with open(creds_path) as f:
+                    creds_data = json.load(f)
 
-            token = await tower_auth.get_valid_token('google')
-            if not token:
-                logger.warning("No Google token available from tower-auth")
-                return False
+                self.credentials = google.oauth2.credentials.Credentials(
+                    token=creds_data.get("token"),
+                    refresh_token=creds_data.get("refresh_token"),
+                    token_uri=creds_data.get("token_uri", "https://oauth2.googleapis.com/token"),
+                    client_id=creds_data.get("client_id"),
+                    client_secret=creds_data.get("client_secret"),
+                )
+                logger.info("Loaded Google credentials from config/google_credentials.json")
+            else:
+                # Fallback to tower-auth
+                from src.integrations.tower_auth_bridge import tower_auth
+                logger.info("Initializing Google Calendar integration via tower-auth...")
+                token = await tower_auth.get_valid_token('google')
+                if not token:
+                    logger.warning("No Google token available from tower-auth")
+                    return False
+                self.credentials = google.oauth2.credentials.Credentials(token=token)
 
-            self.credentials = google.oauth2.credentials.Credentials(token=token)
             self.service = build('calendar', 'v3', credentials=self.credentials)
 
             # Test connection

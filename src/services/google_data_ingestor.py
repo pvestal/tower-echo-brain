@@ -476,7 +476,7 @@ class GoogleDataIngestor:
             "ingested": ingested,
             "skipped": skipped,
             "errors": errors,
-            "note": "drive.file scope — only app-created files visible. Re-auth with drive.readonly for full access.",
+            "note": f"Scanned {ingested + skipped} files from Google Drive.",
         }
 
     # ------------------------------------------------------------------

@@ -31,6 +31,25 @@ class DailyBriefingWorker:
             raise ValueError("DATABASE_URL environment variable required")
         self._last_briefing_date: date | None = None
 
+    _MARKER_FILE = "/tmp/echo-brain-briefing-last-date"
+
+    async def _already_sent_today(self, today: date) -> bool:
+        """Check file marker to see if briefing was already sent today (survives restarts)."""
+        try:
+            from pathlib import Path
+            marker = Path(self._MARKER_FILE)
+            if marker.exists():
+                stored = marker.read_text().strip()
+                return stored == today.isoformat()
+        except Exception as e:
+            logger.warning(f"[DailyBriefing] Dedup check failed: {e}")
+        return False
+
+    def _mark_sent(self, today: date):
+        """Write today's date to marker file."""
+        from pathlib import Path
+        Path(self._MARKER_FILE).write_text(today.isoformat())
+
     async def run_cycle(self):
         now_local = datetime.now(LOCAL_TZ)
 
@@ -38,6 +57,9 @@ class DailyBriefingWorker:
         if now_local.hour != BRIEFING_HOUR or now_local.minute != BRIEFING_MINUTE:
             return
         if self._last_briefing_date == now_local.date():
+            return
+        if await self._already_sent_today(now_local.date()):
+            self._last_briefing_date = now_local.date()
             return
 
         logger.info("[DailyBriefing] Building morning briefing...")
@@ -72,6 +94,7 @@ class DailyBriefingWorker:
         briefing = f"Good morning — {now.strftime('%A, %B %d')}\n\n" + "\n\n".join(s for s in sections if s)
 
         await self._send(briefing)
+        self._mark_sent(now_local.date())
         logger.info("[DailyBriefing] Briefing sent")
 
     # ── Data collectors ───────────────────────────────────────────

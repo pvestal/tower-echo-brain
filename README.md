@@ -2,8 +2,8 @@
 
 **Personal AI Assistant System — Self-Hosted Knowledge Layer & Agent Orchestrator**
 
-Version: **0.6.1** (Retrieval Quality Overhaul + Garbage Cleanup)
-Last Updated: 2026-02-16
+Version: **0.6.2** (Autonomous Worker Fixes + Google Re-auth)
+Last Updated: 2026-03-06
 
 ---
 
@@ -21,9 +21,9 @@ The long-term vision is a system that:
 
 | Capability | Status | Details |
 |-----------|--------|---------|
-| Vector search over personal data | ✅ Working | 317,222 vectors in Qdrant (768D nomic-embed-text) |
+| Vector search over personal data | ✅ Working | 606,072 vectors in Qdrant (768D nomic-embed-text) |
 | Hybrid search (vector + text) | ✅ Working | Adaptive weighting, OR-semantics text search, garbage filtering |
-| Fact extraction from vectors | ✅ Running | 2,558 structured facts in PostgreSQL |
+| Fact extraction from vectors | ✅ Running | 6,077 structured facts in PostgreSQL |
 | Conversation ingestion | ✅ Running | Watches `~/.claude/projects/`, 10 min cycles, readability filter |
 | Knowledge graph building | ✅ Running | Connections between facts, conflict detection (daily) |
 | Domain knowledge ingestion | ✅ Running | Anime production, ComfyUI workflows, models (60 min) |
@@ -41,6 +41,11 @@ The long-term vision is a system that:
 | Semantic deduplication | ✅ Running | Inline (0.97) + background (0.98) with metadata merge |
 | Knowledge graph traversal | ✅ Working | NetworkX DiGraph, BFS, shortest path, MCP integration |
 | HMLR fact verification | ✅ Running | FactScrubber (2h) + Governor (12h) conflict resolution |
+| Telegram bot listener | ✅ Working | @PatricksEchobot — commands + natural language via ReasoningEngine |
+| Photo/video vision analysis | ✅ Running | 73K+ media, gemma3:12b vision, VRAM-aware model scheduling |
+| Google Workspace ingestion | ✅ Running | Calendar (396), Gmail (535), Drive (1000+) via tower-auth OAuth |
+| Daily briefing | ✅ Working | 6:30 AM PT — weather, calendar, finance, email, reminders |
+| Deep research engine | ✅ Working | Decompose → parallel search → synthesize with citations |
 | Home Assistant integration | -- Planned | Phase 4+ |
 
 ## Architecture Overview
@@ -71,7 +76,7 @@ The long-term vision is a system that:
 │  │  ├── /api/workers/status        (worker monitoring)        │   │
 │  │  └── /api/pipeline/*            (pipeline health/query)    │   │
 │  │                                                            │   │
-│  │  Worker Scheduler (12 workers)                             │   │
+│  │  Worker Scheduler (18 workers)                             │   │
 │  │  ├── contract_monitor       (5 min)                        │   │
 │  │  ├── conversation_watcher   (10 min)                       │   │
 │  │  ├── file_watcher           (10 min)                       │   │
