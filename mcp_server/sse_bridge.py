@@ -13,8 +13,31 @@ import logging
 from typing import Optional
 
 from mcp.server.fastmcp import FastMCP
+from mcp.server.session import ServerSession, InitializationState
 
 logger = logging.getLogger("echo_brain.mcp_sse")
+
+# Monkey-patch ServerSession to auto-initialize on first non-init request.
+# Claude Code's SSE client sometimes sends tools/call before completing the
+# initialize handshake, causing -32602 "Received request before initialization
+# was complete". This makes the session lenient — it auto-marks as Initialized.
+_original_received_request = ServerSession._received_request
+
+
+async def _lenient_received_request(self, responder):
+    if self._initialization_state != InitializationState.Initialized:
+        # Check if this is NOT an initialize request — auto-init
+        import mcp.types as types
+        match responder.request.root:
+            case types.InitializeRequest() | types.PingRequest():
+                pass  # Let the original handler deal with these
+            case _:
+                logger.warning("Auto-initializing MCP session (client skipped handshake)")
+                self._initialization_state = InitializationState.Initialized
+    return await _original_received_request(self, responder)
+
+
+ServerSession._received_request = _lenient_received_request
 
 mcp = FastMCP(
     "echo-brain",
@@ -44,6 +67,12 @@ def init_sse_bridge(mcp_service, app=None):
 def get_sse_app(mount_path: str = "/mcp/sse"):
     """Return the Starlette SSE app for mounting in FastAPI."""
     return mcp.sse_app(mount_path)
+
+
+def get_streamable_http_app():
+    """Return the Starlette Streamable HTTP app for mounting in FastAPI.
+    This is the preferred transport for MCP SDK >= 1.26.0 / Claude Code."""
+    return mcp.streamable_http_app()
 
 
 # ── Core memory tools ────────────────────────────────────────────────
@@ -566,6 +595,65 @@ async def session_summary(
             await _mcp_service.store_fact("Patrick", "decided", decision)
         return json.dumps({"stored": True, "memory_id": result, "facts_stored": len(decisions)})
     return json.dumps({"stored": False, "error": "Failed to store session summary"})
+
+
+# ── Generation evaluation (CLIP scorer) ──────────────────────────────
+
+
+@mcp.tool()
+async def evaluate_generation(
+    image_path: str,
+    shot_id: str = "",
+    scene_id: str = "",
+    project_id: int = 0,
+    character_slugs: list[str] = [],
+    video_engine: str = "",
+    prompt_text: str = "",
+) -> str:
+    """Evaluate a generated image/frame using CLIP scoring.
+
+    Returns semantic, variety, and text alignment scores plus composite MHP bucket.
+    Stores the CLIP embedding in Qdrant for future variety checks.
+
+    Args:
+        image_path: Path to the generated image/frame
+        shot_id: Shot UUID
+        scene_id: Scene UUID
+        project_id: Project ID
+        character_slugs: Character slugs present in the shot
+        video_engine: Video engine used (e.g. wan22_14b)
+        prompt_text: Generation prompt text
+    """
+    try:
+        from src.services.clip_scorer import evaluate_generation as _evaluate
+
+        result = await _evaluate(
+            image_path=image_path,
+            prompt_text=prompt_text,
+            shot_id=shot_id,
+            scene_id=scene_id,
+            project_id=project_id,
+            character_slugs=character_slugs or None,
+            video_engine=video_engine,
+        )
+
+        lines = [
+            "Generation Evaluation",
+            "=" * 30,
+            f"Semantic Score:  {result['semantic_score']}/100",
+            f"Variety Score:   {result['variety_score']}/100",
+            f"Text Alignment:  {result['text_alignment']}/100",
+            f"MHP Bucket:      {result['mhp_bucket']}/100",
+            f"Embedding Stored: {result['embedding_stored']}",
+        ]
+        if result.get("too_similar_to"):
+            lines.append(f"Too Similar To:  {result['too_similar_to']}")
+        if result.get("suggestion"):
+            lines.append(f"Suggestion:      {result['suggestion']}")
+
+        return "\n".join(lines)
+    except Exception as e:
+        return f"Evaluation error: {e}"
 
 
 # ── Credit monitoring (external service proxy) ───────────────────────

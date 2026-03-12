@@ -74,14 +74,14 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
-# Mount SSE MCP bridge at module level (must be before app starts serving)
+# Mount MCP transports at module level (must be before app starts serving)
 try:
     from mcp_server.sse_bridge import get_sse_app
     _sse_app = get_sse_app("/")
     app.mount("/mcp-sse", _sse_app)
-    logger.info("SSE MCP app mounted at /mcp-sse (service will be injected at startup)")
+    logger.info("SSE MCP app mounted at /mcp-sse")
 except Exception as e:
-    logger.warning(f"Could not mount SSE MCP app: {e}")
+    logger.warning(f"Could not mount MCP apps: {e}")
 
 # Basic health endpoint
 @app.get("/api")
@@ -111,6 +111,16 @@ except ImportError as e:
     logger.error(f"❌ Echo main router not available: {e}")
 except Exception as e:
     logger.error(f"❌ Echo main router failed: {e}")
+
+# Mount Generation Evaluation API — CLIP-based quality scoring
+try:
+    from src.api.endpoints.generation_eval import router as generation_eval_router
+    app.include_router(generation_eval_router, prefix="/api/echo")
+    logger.info("✅ Generation eval router mounted at /api/echo/generation-eval")
+except ImportError as e:
+    logger.warning(f"⚠️ Generation eval router not available: {e}")
+except Exception as e:
+    logger.error(f"❌ Generation eval router failed: {e}")
 
 # Mount Voice API - Speech-to-Text and Text-to-Speech
 try:
@@ -1436,6 +1446,7 @@ async def list_proposals(status: Optional[str] = None):
                     SELECT
                         p.id, p.title, p.target_file, p.risk_assessment,
                         p.status, p.created_at,
+                        p.loop_iterations, p.critic_score, p.critic_verdict,
                         i.title as issue_title
                     FROM self_improvement_proposals p
                     LEFT JOIN self_detected_issues i ON p.issue_id = i.id
@@ -1447,6 +1458,7 @@ async def list_proposals(status: Optional[str] = None):
                     SELECT
                         p.id, p.title, p.target_file, p.risk_assessment,
                         p.status, p.created_at,
+                        p.loop_iterations, p.critic_score, p.critic_verdict,
                         i.title as issue_title
                     FROM self_improvement_proposals p
                     LEFT JOIN self_detected_issues i ON p.issue_id = i.id
@@ -1473,6 +1485,9 @@ async def list_proposals(status: Optional[str] = None):
                         "target_file": p['target_file'],
                         "risk_assessment": p['risk_assessment'],
                         "status": p['status'],
+                        "loop_iterations": p.get('loop_iterations', 0),
+                        "critic_score": p.get('critic_score', 0),
+                        "critic_verdict": p.get('critic_verdict', ''),
                         "created_at": p['created_at'].isoformat()
                     }
                     for p in proposals
@@ -1480,6 +1495,8 @@ async def list_proposals(status: Optional[str] = None):
                 "counts": {
                     "pending": count_dict.get('pending', 0),
                     "approved": count_dict.get('approved', 0),
+                    "critic_approved": count_dict.get('critic_approved', 0),
+                    "needs_review": count_dict.get('needs_review', 0),
                     "rejected": count_dict.get('rejected', 0),
                     "applied": count_dict.get('applied', 0)
                 }
@@ -1530,6 +1547,9 @@ async def get_proposal(proposal_id: str):
                 "reasoning": proposal['reasoning'],
                 "risk_assessment": proposal['risk_assessment'],
                 "status": proposal['status'],
+                "loop_iterations": proposal.get('loop_iterations', 0),
+                "critic_score": proposal.get('critic_score', 0),
+                "critic_verdict": proposal.get('critic_verdict', ''),
                 "reviewed_by": proposal['reviewed_by'],
                 "reviewed_at": proposal['reviewed_at'].isoformat() if proposal['reviewed_at'] else None,
                 "created_at": proposal['created_at'].isoformat(),
@@ -2257,6 +2277,14 @@ async def startup_event():
     except Exception as e:
         logger.warning(f"⚠️ SSE MCP bridge service injection failed: {e}")
 
+    # Initialize CLIP scorer Qdrant collection (generation_clip, 512D, cosine)
+    try:
+        from src.services.clip_scorer import ensure_collection as _ensure_clip_collection
+        _ensure_clip_collection()
+        logger.info("✅ CLIP scorer Qdrant collection ready")
+    except Exception as e:
+        logger.warning(f"⚠️ CLIP scorer collection init failed (non-critical): {e}")
+
     # Start Telegram bot listener
     try:
         from src.integrations.telegram_bot import TelegramBot
@@ -2309,98 +2337,113 @@ async def shutdown_event():
         except Exception as e:
             logger.error(f"❌ Error closing database pool: {e}")
 
-# Enhanced request logging with metrics
-@app.middleware("http")
-async def log_requests(request: Request, call_next):
-    # Skip logging for static assets
-    if request.url.path.startswith("/assets/") or request.url.path.endswith(".js") or request.url.path.endswith(".css"):
-        return await call_next(request)
+# Enhanced request logging with metrics — pure ASGI middleware
+# NOTE: @app.middleware("http") uses BaseHTTPMiddleware which breaks SSE streaming.
+# This raw ASGI middleware bypasses SSE routes entirely at the protocol level.
+class RequestLoggingMiddleware:
+    def __init__(self, app):
+        self.app = app
 
-    # Generate request ID
-    request_id = str(uuid.uuid4())[:8]
-    request.state.request_id = request_id
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            return await self.app(scope, receive, send)
 
-    # Track request start time
-    start_time = time.time()
+        path = scope.get("path", "")
 
-    # Log incoming request
-    client_ip = request.client.host if request.client else "unknown"
-    logger.info(f"[{request_id}] → {request.method} {request.url.path} from {client_ip}")
+        # Skip MCP transports — pass through raw ASGI, no wrapping
+        if path.startswith("/mcp-sse"):
+            return await self.app(scope, receive, send)
 
-    try:
-        # Process request
-        response = await call_next(request)
+        # Skip static assets
+        if path.startswith("/assets/") or path.endswith(".js") or path.endswith(".css"):
+            return await self.app(scope, receive, send)
 
-        # Calculate response time
-        duration_ms = (time.time() - start_time) * 1000
+        request_id = str(uuid.uuid4())[:8]
+        start_time = time.time()
 
-        # Update metrics
-        REQUEST_METRICS["total_requests"] += 1
-        REQUEST_METRICS["response_times"].append(duration_ms)
-        REQUEST_METRICS["requests_by_endpoint"][request.url.path] += 1
+        # Extract client IP
+        client = scope.get("client")
+        client_ip = client[0] if client else "unknown"
+        method = scope.get("method", "?")
 
-        # Track errors
-        if 400 <= response.status_code < 500:
-            REQUEST_METRICS["errors_4xx"] += 1
-            REQUEST_METRICS["errors_by_endpoint"][request.url.path] += 1
-        elif response.status_code >= 500:
-            REQUEST_METRICS["errors_5xx"] += 1
-            REQUEST_METRICS["errors_by_endpoint"][request.url.path] += 1
+        logger.info(f"[{request_id}] → {method} {path} from {client_ip}")
 
-        # Track slow requests
-        if duration_ms > 1000:  # Over 1 second
-            REQUEST_METRICS["slowest_requests"].append({
-                "path": request.url.path,
-                "method": request.method,
-                "duration_ms": duration_ms,
+        status_code = 0
+
+        async def send_wrapper(message):
+            nonlocal status_code
+            if message["type"] == "http.response.start":
+                status_code = message.get("status", 0)
+                # Inject request ID and response time headers
+                headers = list(message.get("headers", []))
+                duration_ms = (time.time() - start_time) * 1000
+                headers.append((b"x-request-id", request_id.encode()))
+                headers.append((b"x-response-time", f"{duration_ms:.2f}ms".encode()))
+                message = {**message, "headers": headers}
+            await send(message)
+
+        try:
+            await self.app(scope, receive, send_wrapper)
+
+            duration_ms = (time.time() - start_time) * 1000
+
+            # Update metrics
+            REQUEST_METRICS["total_requests"] += 1
+            REQUEST_METRICS["response_times"].append(duration_ms)
+            REQUEST_METRICS["requests_by_endpoint"][path] += 1
+
+            if 400 <= status_code < 500:
+                REQUEST_METRICS["errors_4xx"] += 1
+                REQUEST_METRICS["errors_by_endpoint"][path] += 1
+            elif status_code >= 500:
+                REQUEST_METRICS["errors_5xx"] += 1
+                REQUEST_METRICS["errors_by_endpoint"][path] += 1
+
+            if duration_ms > 1000:
+                REQUEST_METRICS["slowest_requests"].append({
+                    "path": path,
+                    "method": method,
+                    "duration_ms": duration_ms,
+                    "timestamp": datetime.now().isoformat(),
+                    "request_id": request_id
+                })
+
+            REQUEST_METRICS["recent_requests"].append({
+                "method": method,
+                "path": path,
+                "status": status_code,
+                "duration_ms": round(duration_ms, 1),
                 "timestamp": datetime.now().isoformat(),
-                "request_id": request_id
+                "client": client_ip,
+                "request_id": request_id,
             })
 
-        # Record to recent requests log
-        REQUEST_METRICS["recent_requests"].append({
-            "method": request.method,
-            "path": request.url.path,
-            "status": response.status_code,
-            "duration_ms": round(duration_ms, 1),
-            "timestamp": datetime.now().isoformat(),
-            "client": client_ip,
-            "request_id": request_id,
-        })
+            logger.info(f"[{request_id}] ← {status_code} ({duration_ms:.2f}ms)")
 
-        # Log response
-        logger.info(f"[{request_id}] ← {response.status_code} ({duration_ms:.2f}ms)")
+        except Exception as e:
+            duration_ms = (time.time() - start_time) * 1000
+            logger.error(f"[{request_id}] ❌ Exception after {duration_ms:.2f}ms: {str(e)}")
 
-        # Add request ID to response headers
-        response.headers["X-Request-ID"] = request_id
-        response.headers["X-Response-Time"] = f"{duration_ms:.2f}ms"
+            REQUEST_METRICS["errors_5xx"] += 1
+            REQUEST_METRICS["errors_by_endpoint"][path] += 1
 
-        return response
+            ERROR_LOG.append({
+                "timestamp": datetime.now().isoformat(),
+                "request_id": request_id,
+                "path": path,
+                "method": method,
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            })
 
-    except Exception as e:
-        # Log exception
-        duration_ms = (time.time() - start_time) * 1000
-        logger.error(f"[{request_id}] ❌ Exception after {duration_ms:.2f}ms: {str(e)}")
+            # Send error response
+            response = JSONResponse(
+                status_code=500,
+                content={"error": "Internal server error", "request_id": request_id}
+            )
+            await response(scope, receive, send)
 
-        # Track error
-        REQUEST_METRICS["errors_5xx"] += 1
-        REQUEST_METRICS["errors_by_endpoint"][request.url.path] += 1
-
-        # Store error for dashboard
-        ERROR_LOG.append({
-            "timestamp": datetime.now().isoformat(),
-            "request_id": request_id,
-            "path": request.url.path,
-            "method": request.method,
-            "error": str(e),
-            "traceback": traceback.format_exc()
-        })
-
-        # Return error response
-        return JSONResponse(
-            status_code=500,
-            content={"error": "Internal server error", "request_id": request_id}
-        )
+app.add_middleware(RequestLoggingMiddleware)
 
 if __name__ == "__main__":
     import uvicorn

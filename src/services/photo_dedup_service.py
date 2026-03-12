@@ -6,6 +6,7 @@ ingests everything into Qdrant for semantic search.
 
 PERSONAL MEDIA ONLY — no anime, ComfyUI, LoRA, or training content.
 """
+import asyncio
 import base64
 import hashlib
 import json
@@ -47,16 +48,16 @@ GOOGLE_PHOTOS_API = "https://photoslibrary.googleapis.com/v1"
 MAX_VIDEO_KEYFRAMES = 30  # Cap at 30 frames (5 min of video at 10s interval)
 
 # Vision prompt for personal photo analysis (Gemma 3) — enhanced
-_VISION_PHOTO_PROMPT = """Analyze this personal photo briefly:
-1. SCENE: What is the main subject or scene? (one sentence)
-2. PEOPLE: Are there people? How many? General description (no names).
-3. LOCATION: Where was this likely taken? (indoor/outdoor, type of place)
-4. MOOD: What mood or emotion does this photo convey? (one word)
-5. OBJECTS: List specific notable objects visible (e.g. dog, car, mountain, cake, guitar)
-6. ACTIVITY: What activity is happening? (e.g. cooking, hiking, eating, posing, swimming)
-7. TEXT: Any visible text or signs? Quote briefly or "none"
-8. TIME_OF_DAY: Estimated time of day and weather if outdoor (e.g. "sunny afternoon", "overcast evening", "indoor")
-9. CATEGORIES: List 2-4 categories from: family, friends, travel, nature, food, pets, celebration, selfie, architecture, sports, work, art, vehicles, documents, screenshot, beach, concert, wedding, holiday, garden, cityscape
+_VISION_PHOTO_PROMPT = """Analyze this personal photo in detail:
+1. SCENE: Describe the main subject and scene in 2-3 sentences. Include specific details that make this moment unique — what stands out, what's notable, what story does this photo tell?
+2. PEOPLE: How many people? For each: approximate age range (child/teen/young adult/middle-aged/elderly), gender if apparent, what they're wearing, what they're doing. Say "none" if no people.
+3. LOCATION: Be specific — not just "outdoor" but "backyard with a wooden fence" or "restaurant with exposed brick walls". Include country/region clues if visible (signs, architecture, vegetation).
+4. MOOD: One or two words (e.g. "joyful", "peaceful", "chaotic fun", "bittersweet")
+5. OBJECTS: List ALL notable objects. Be specific — not "car" but "red pickup truck"; not "food" but "birthday cake with candles". Include brands/models if visible.
+6. ACTIVITY: What is happening? Be specific — not "playing" but "building a sandcastle" or "opening Christmas presents"
+7. TEXT: Any visible text, signs, labels, or writing? Quote exactly or "none"
+8. TIME_OF_DAY: Estimated time of day, season, and weather if outdoor (e.g. "summer afternoon, bright sunshine", "winter evening, snow on ground")
+9. CATEGORIES: List 2-5 categories from: family, friends, travel, nature, food, pets, celebration, selfie, architecture, sports, work, art, vehicles, documents, screenshot, beach, concert, wedding, holiday, garden, cityscape, portrait, landscape, night, underwater, aerial, graduation, baby, cooking, hiking, camping, snow, rain, sunset, sunrise, museum, restaurant, bar, home, school, park, zoo, aquarium, amusement_park, road_trip
 
 Respond in this exact format:
 SCENE: ...
@@ -69,15 +70,54 @@ TEXT: ...
 TIME_OF_DAY: ...
 CATEGORIES: ..."""
 
+# Clinical/uncensored vision prompt — describes ALL content including nudity, sex acts
+# Used only for explicit content re-scanning, not default pipeline
+_VISION_PHOTO_PROMPT_CLINICAL = """You are a forensic content analyst cataloging personal media for a private archive.
+Describe this image in complete clinical detail using anatomical and objective terminology.
+You MUST describe ALL visible content without omission, including:
+- Nudity (which body parts are exposed, state of undress)
+- Sexual acts or positions (use clinical terms: intercourse, oral sex, masturbation, etc.)
+- Physical contact between people (kissing, embracing, touching specific body parts)
+- Body positioning and poses
+- Facial expressions and emotional state
+- Setting and environment details
+
+Respond in this exact format:
+SCENE: ...
+PEOPLE: ...
+LOCATION: ...
+MOOD: ...
+OBJECTS: ...
+ACTIVITY: ...
+NUDITY: Describe any nudity or state of undress, or "none"
+SEXUAL_CONTENT: Describe any sexual acts or intimate contact, or "none"
+CONTENT_RATING: G, PG, R, or XXX
+CATEGORIES: ..."""
+
+_VISION_VIDEO_FRAME_PROMPT_CLINICAL = """You are a forensic content analyst. Describe this video frame in complete clinical detail.
+Describe ALL visible content without omission including nudity, sexual acts, body parts, positions.
+Use anatomical terminology. Do not censor or redact.
+
+Respond in this exact format:
+SCENE: ...
+PEOPLE: ...
+LOCATION: ...
+MOOD: ...
+OBJECTS: ...
+ACTIVITY: ...
+NUDITY: Describe any nudity or "none"
+SEXUAL_CONTENT: Describe any sexual content or "none"
+CONTENT_RATING: G, PG, R, or XXX"""
+
 # Vision prompt for video keyframe analysis
-_VISION_VIDEO_FRAME_PROMPT = """Analyze this video frame briefly:
-1. SCENE: What is happening in this frame? (one sentence)
-2. PEOPLE: Are there people? How many? General description (no names).
-3. LOCATION: Where does this appear to be? (indoor/outdoor, type of place)
-4. MOOD: What mood does this frame convey? (one word)
-5. OBJECTS: List specific notable objects visible
-6. ACTIVITY: What activity is happening?
-7. TEXT: Any visible text or signs? Quote briefly or "none"
+_VISION_VIDEO_FRAME_PROMPT = """Analyze this video frame in detail:
+1. SCENE: What is happening in this frame? Describe in 2-3 sentences with specific details — what action is occurring, what's notable about this moment?
+2. PEOPLE: Are there people? How many? For each: approximate age, gender, clothing, posture/action. Say "none" if no people.
+3. LOCATION: Be specific about the setting — not just "outdoor" but "sandy beach with palm trees" or "kitchen with granite countertops". Include region/country clues if visible.
+4. MOOD: One or two words describing the mood/energy
+5. OBJECTS: List ALL notable objects with specifics — not "car" but "blue SUV", not "animal" but "golden retriever". Include brands if visible.
+6. ACTIVITY: What specific activity is happening? Be precise — not "playing" but "throwing a frisbee" or "splashing in waves"
+7. TEXT: Any visible text, signs, or writing? Quote exactly or "none"
 
 Respond in this exact format:
 SCENE: ...
@@ -548,15 +588,18 @@ class PhotoDedupService:
     # ------------------------------------------------------------------
     # Cloud metadata fetch
     # ------------------------------------------------------------------
-    async def fetch_cloud_metadata(self) -> Dict[str, Any]:
-        """Paginate Google Photos API, store metadata to google_photos_cloud."""
+    async def fetch_cloud_metadata(self, account: Optional[str] = None) -> Dict[str, Any]:
+        """Paginate Google Photos API, store metadata to google_photos_cloud.
+        Pass account=email to use a specific Google account's token.
+        """
         conn = await asyncpg.connect(DB_URL)
         try:
             await self._ensure_schema(conn)
 
-            token = await self._get_google_token()
+            token = await self._get_google_token(account=account)
             if not token:
-                return {"error": "No Google OAuth token. Complete OAuth first."}
+                hint = f"?login_hint={account}" if account else ""
+                return {"error": f"No Google OAuth token for {account or 'default'}. Authenticate at /api/auth/oauth/google/login{hint}"}
 
             run_id = await conn.fetchval(
                 "INSERT INTO photo_dedup_runs (run_type) VALUES ('cloud_fetch') RETURNING id")
@@ -581,9 +624,9 @@ class PhotoDedupService:
 
                         if resp.status_code == 401:
                             # Token expired, try refresh
-                            token = await self._refresh_google_token()
+                            token = await self._refresh_google_token(account=account)
                             if not token:
-                                logger.error("Google Photos 401 and refresh failed — need re-auth")
+                                logger.error(f"Google Photos 401 and refresh failed for {account or 'default'} — need re-auth")
                                 errors += 1
                                 break
                             continue
@@ -838,35 +881,158 @@ class PhotoDedupService:
             await conn.close()
 
     # ------------------------------------------------------------------
+    # Re-analysis queue — marks old media for re-processing with new prompts
+    # ------------------------------------------------------------------
+    async def queue_reanalysis(self, batch_size: int = 500,
+                                media_type: Optional[str] = None,
+                                year: Optional[str] = None) -> Dict[str, Any]:
+        """Queue a batch of already-analyzed media for re-analysis.
+        Deletes existing Qdrant points first, then clears DB fields so the
+        normal worker picks them up with the current (improved) prompts.
+
+        Returns count of items queued.
+        """
+        conn = await asyncpg.connect(DB_URL)
+        try:
+            conditions = ["llava_description IS NOT NULL",
+                          "match_type != 'sha256_dupe'",
+                          "llava_description NOT LIKE '%skipped%'",
+                          "llava_description != 'analysis_failed'"]
+            params = []
+            param_idx = 1
+
+            if media_type:
+                conditions.append(f"media_type = ${param_idx}")
+                params.append(media_type)
+                param_idx += 1
+
+            if year:
+                conditions.append(f"year_folder = ${param_idx}")
+                params.append(year)
+                param_idx += 1
+
+            where = " AND ".join(conditions)
+
+            # Select IDs and qdrant_point_ids to reset, oldest analysis first
+            rows = await conn.fetch(f"""
+                SELECT id, qdrant_point_id FROM photos
+                WHERE {where}
+                ORDER BY updated_at ASC NULLS FIRST
+                LIMIT ${param_idx}
+            """, *params, batch_size)
+
+            if not rows:
+                return {"queued": 0, "message": "No media eligible for re-analysis"}
+
+            ids = [r["id"] for r in rows]
+
+            # Delete existing Qdrant points before clearing DB references
+            qdrant_ids = [r["qdrant_point_id"] for r in rows if r["qdrant_point_id"]]
+            qdrant_deleted = 0
+            if qdrant_ids:
+                try:
+                    async with httpx.AsyncClient(timeout=30.0) as client:
+                        resp = await client.post(
+                            f"{QDRANT_URL}/collections/{COLLECTION}/points/delete",
+                            json={"points": qdrant_ids}
+                        )
+                        if resp.status_code in (200, 201):
+                            qdrant_deleted = len(qdrant_ids)
+                        else:
+                            logger.error(f"[PhotoDedup] Qdrant delete failed: {resp.status_code} {resp.text[:200]}")
+                except Exception as e:
+                    logger.error(f"[PhotoDedup] Qdrant delete error during reanalysis: {e}")
+
+            # Clear analysis fields so worker picks them up
+            updated = await conn.execute("""
+                UPDATE photos
+                SET llava_description = NULL,
+                    llava_analysis = NULL,
+                    qdrant_point_id = NULL,
+                    audio_transcript = NULL,
+                    has_audio = FALSE,
+                    updated_at = NOW()
+                WHERE id = ANY($1::int[])
+            """, ids)
+
+            count = int(updated.split()[-1]) if updated else 0
+            logger.info(f"[PhotoDedup] Queued {count} items for re-analysis "
+                        f"(type={media_type}, year={year}), "
+                        f"deleted {qdrant_deleted} Qdrant points")
+            return {
+                "queued": count,
+                "qdrant_deleted": qdrant_deleted,
+                "media_type": media_type or "all",
+                "year": year or "all",
+                "message": f"Queued {count} items — deleted {qdrant_deleted} old Qdrant points"
+            }
+        finally:
+            await conn.close()
+
+    async def reanalysis_stats(self) -> Dict[str, Any]:
+        """Return counts of media pending re-analysis vs already done."""
+        conn = await asyncpg.connect(DB_URL)
+        try:
+            row = await conn.fetchrow("""
+                SELECT
+                    COUNT(*) FILTER (WHERE llava_description IS NOT NULL
+                        AND llava_description NOT LIKE '%skipped%'
+                        AND llava_description != 'analysis_failed') as analyzed,
+                    COUNT(*) FILTER (WHERE llava_description IS NULL
+                        AND match_type != 'sha256_dupe') as pending,
+                    COUNT(*) FILTER (WHERE qdrant_point_id IS NOT NULL) as in_qdrant,
+                    COUNT(*) FILTER (WHERE audio_transcript IS NOT NULL) as with_transcript
+                FROM photos
+            """)
+            return dict(row)
+        finally:
+            await conn.close()
+
+    # ------------------------------------------------------------------
     # Vision analysis (Gemma 3) — photos and videos
     # ------------------------------------------------------------------
     async def analyze_photos_batch(self, batch_size: int = 50,
-                                   media_type: Optional[str] = None) -> Dict[str, Any]:
+                                   media_type: Optional[str] = None,
+                                   mode: str = "standard",
+                                   file_paths: Optional[List[str]] = None) -> Dict[str, Any]:
         """Run vision analysis on un-analyzed media, newest first.
         media_type: None (both), "photo", or "video"
+        mode: "standard" or "clinical" (uncensored, describes all content)
+        file_paths: Optional list of specific file paths to re-analyze (clinical mode)
         """
         conn = await asyncpg.connect(DB_URL)
         try:
             await self._ensure_schema(conn)
 
-            type_filter = ""
-            if media_type == "photo":
-                type_filter = "AND (media_type = 'photo' OR media_type IS NULL)"
-            elif media_type == "video":
-                type_filter = "AND media_type = 'video'"
+            # Clinical mode with specific files: re-analyze already-analyzed files
+            if file_paths and mode == "clinical":
+                photos = await conn.fetch("""
+                    SELECT id, file_path, filename, year_folder, media_type
+                    FROM photos
+                    WHERE file_path = ANY($1)
+                    ORDER BY id
+                """, file_paths)
+                if not photos:
+                    return {"analyzed": 0, "message": "No matching files found in database"}
+            else:
+                type_filter = ""
+                if media_type == "photo":
+                    type_filter = "AND (media_type = 'photo' OR media_type IS NULL)"
+                elif media_type == "video":
+                    type_filter = "AND media_type = 'video'"
 
-            photos = await conn.fetch(f"""
-                SELECT id, file_path, filename, year_folder, media_type
-                FROM photos
-                WHERE llava_description IS NULL
-                  AND match_type != 'sha256_dupe'
-                  {type_filter}
-                ORDER BY date_taken DESC NULLS LAST, id DESC
-                LIMIT $1
-            """, batch_size)
+                photos = await conn.fetch(f"""
+                    SELECT id, file_path, filename, year_folder, media_type
+                    FROM photos
+                    WHERE llava_description IS NULL
+                      AND match_type != 'sha256_dupe'
+                      {type_filter}
+                    ORDER BY date_taken DESC NULLS LAST, id DESC
+                    LIMIT $1
+                """, batch_size)
 
-            if not photos:
-                return {"analyzed": 0, "message": f"No {media_type or 'media'} pending analysis"}
+                if not photos:
+                    return {"analyzed": 0, "message": f"No {media_type or 'media'} pending analysis"}
 
             run_id = await conn.fetchval(
                 "INSERT INTO photo_dedup_runs (run_type) VALUES ('vision_analysis') RETURNING id")
@@ -881,28 +1047,34 @@ class PhotoDedupService:
                 try:
                     is_video = photo.get("media_type") == "video"
                     if is_video:
-                        result = await self._analyze_single_video(photo["file_path"])
+                        result = await self._analyze_single_video(photo["file_path"], mode=mode)
                     else:
-                        result = await self._analyze_single_photo(photo["file_path"])
+                        result = await self._analyze_single_photo(photo["file_path"], mode=mode)
 
                     if result:
                         update_fields = {
                             "llava_analysis": json.dumps(result),
-                            "llava_description": result.get("description", ""),
+                            "llava_description": result.get("description", result.get("skip_reason", "")),
                         }
-                        # For videos, also store keyframe_count
+                        # For videos, also store keyframe_count and transcript
                         if is_video and result.get("keyframe_count"):
+                            transcript = result.get("transcript") or None
+                            has_audio = bool(transcript)
                             await conn.execute("""
                                 UPDATE photos
                                 SET llava_analysis = $2::jsonb,
                                     llava_description = $3,
                                     keyframe_count = $4,
+                                    audio_transcript = $5,
+                                    has_audio = $6,
                                     updated_at = NOW()
                                 WHERE id = $1
                             """, photo["id"],
                                 update_fields["llava_analysis"],
                                 update_fields["llava_description"],
-                                result["keyframe_count"])
+                                result["keyframe_count"],
+                                transcript,
+                                has_audio)
                         else:
                             await conn.execute("""
                                 UPDATE photos
@@ -915,6 +1087,19 @@ class PhotoDedupService:
                                 update_fields["llava_description"])
                         analyzed += 1
                     else:
+                        # Mark as failed so it doesn't re-queue endlessly
+                        skip_data = json.dumps({
+                            "skipped": True,
+                            "skip_reason": "analysis_failed",
+                            "description": "Vision analysis returned no result"
+                        })
+                        await conn.execute("""
+                            UPDATE photos
+                            SET llava_analysis = $2::jsonb,
+                                llava_description = 'analysis_failed',
+                                updated_at = NOW()
+                            WHERE id = $1
+                        """, photo["id"], skip_data)
                         errors += 1
                 except Exception as e:
                     logger.error(f"Vision analysis error for {photo['file_path']}: {e}")
@@ -987,8 +1172,10 @@ class PhotoDedupService:
         except Exception as e:
             logger.warning(f"[PhotoDedup] Could not set {VISION_MODEL} keep_alive: {e}")
 
-    async def _analyze_single_photo(self, file_path: str) -> Optional[Dict]:
-        """Send a photo to Gemma 3 for vision analysis."""
+    async def _analyze_single_photo(self, file_path: str, mode: str = "standard") -> Optional[Dict]:
+        """Send a photo to Gemma 3 for vision analysis.
+        mode: "standard" (default) or "clinical" (uncensored, describes all content)
+        """
         path = Path(file_path)
         if not path.exists():
             return None
@@ -1006,7 +1193,7 @@ class PhotoDedupService:
                 f"{OLLAMA_URL}/api/generate",
                 json={
                     "model": VISION_MODEL,
-                    "prompt": _VISION_PHOTO_PROMPT,
+                    "prompt": _VISION_PHOTO_PROMPT_CLINICAL if mode == "clinical" else _VISION_PHOTO_PROMPT,
                     "images": [image_b64],
                     "stream": False,
                     "keep_alive": "5m",
@@ -1019,30 +1206,50 @@ class PhotoDedupService:
 
             raw = resp.json().get("response", "")
 
+        if mode == "clinical":
+            return self._parse_clinical_response(raw, path)
         return self._parse_vision_response(raw, path)
 
-    async def _analyze_single_video(self, file_path: str) -> Optional[Dict]:
-        """Extract keyframes from video, analyze each with Gemma 3, aggregate."""
+    async def _analyze_single_video(self, file_path: str, mode: str = "standard") -> Optional[Dict]:
+        """Extract keyframes from video, analyze each with Gemma 3, aggregate.
+        mode: "standard" or "clinical" (uncensored)
+        """
         path = Path(file_path)
         if not path.exists():
             return None
 
         frames, duration = self._extract_keyframes(path)
+
+        # Ultra-short videos (e.g. iPhone Live Photo MOV components) can't have
+        # frames extracted reliably. Return a skip result so they get marked in
+        # the DB and stop blocking the queue.
         if not frames:
+            if duration < 0.5:
+                return {
+                    "description": f"Ultra-short video ({duration:.2f}s), likely iPhone Live Photo component. Skipped.",
+                    "skipped": True,
+                    "skip_reason": "duration_too_short",
+                    "duration": duration,
+                }
             return None
 
         try:
             frame_analyses = []
             for frame_path in frames:
-                analysis = await self._analyze_video_frame(frame_path)
+                analysis = await self._analyze_video_frame(frame_path, mode=mode)
                 if analysis:
                     frame_analyses.append(analysis)
 
             if not frame_analyses:
                 return None
 
+            # Audio transcription — run in parallel with vision (non-blocking)
+            transcript = ""
+            if duration >= 1.0:  # Skip ultra-short clips
+                transcript = await self._transcribe_audio(path)
+
             return self._aggregate_video_analysis(
-                frame_analyses, duration, len(frames))
+                frame_analyses, duration, len(frames), transcript=transcript)
         finally:
             # Clean up temp frames
             for frame_path in frames:
@@ -1107,7 +1314,83 @@ class PhotoDedupService:
             logger.error(f"Keyframe extraction error for {video_path}: {e}")
             return [], 0
 
-    async def _analyze_video_frame(self, frame_path: Path) -> Optional[Dict]:
+    async def _transcribe_audio(self, video_path: Path) -> str:
+        """Extract audio from video and transcribe with faster-whisper.
+        Returns transcript text, or empty string if no speech detected.
+        Runs on CPU to avoid competing with Gemma3 for GPU.
+        """
+        tmp_wav = None
+        try:
+            # Check if video has an audio stream
+            probe_proc = subprocess.run(
+                ["ffprobe", "-v", "quiet", "-print_format", "json",
+                 "-show_streams", "-select_streams", "a", str(video_path)],
+                capture_output=True, text=True, timeout=10
+            )
+            if probe_proc.returncode != 0:
+                return ""
+            probe_data = json.loads(probe_proc.stdout)
+            if not probe_data.get("streams"):
+                return ""  # No audio stream
+
+            # Extract audio to temp WAV (16kHz mono for Whisper)
+            tmp_wav = Path(tempfile.mktemp(suffix=".wav", prefix="echo_audio_"))
+            proc = subprocess.run(
+                ["ffmpeg", "-y", "-i", str(video_path),
+                 "-vn", "-acodec", "pcm_s16le", "-ar", "16000", "-ac", "1",
+                 str(tmp_wav)],
+                capture_output=True, timeout=60
+            )
+            if proc.returncode != 0 or not tmp_wav.exists() or tmp_wav.stat().st_size < 1000:
+                return ""
+
+            # Run transcription in thread pool to not block event loop
+            loop = asyncio.get_event_loop()
+            transcript = await loop.run_in_executor(
+                None, self._run_whisper, str(tmp_wav))
+            return transcript
+
+        except Exception as e:
+            logger.debug(f"Audio transcription skipped for {video_path}: {e}")
+            return ""
+        finally:
+            if tmp_wav and tmp_wav.exists():
+                try:
+                    tmp_wav.unlink()
+                except Exception:
+                    pass
+
+    @staticmethod
+    def _run_whisper(wav_path: str) -> str:
+        """Run faster-whisper on a WAV file. Returns transcript or empty string.
+        Uses CPU + int8 to avoid GPU contention with vision model.
+        """
+        try:
+            from faster_whisper import WhisperModel
+            model = WhisperModel("base", device="cpu", compute_type="int8")
+            segments, info = model.transcribe(wav_path, beam_size=5)
+
+            # Filter low-confidence detections (ambient noise, not speech)
+            if info.language_probability < 0.5:
+                return ""
+
+            text_parts = []
+            for seg in segments:
+                text_parts.append(seg.text.strip())
+
+            transcript = " ".join(text_parts).strip()
+
+            # Ignore very short or hallucinated transcripts
+            if len(transcript) < 5:
+                return ""
+
+            return transcript[:2000]  # Cap at 2000 chars
+
+        except Exception as e:
+            logger.debug(f"Whisper transcription error: {e}")
+            return ""
+
+    async def _analyze_video_frame(self, frame_path: Path, mode: str = "standard") -> Optional[Dict]:
         """Analyze a single video keyframe with Gemma 3."""
         image_b64 = self._load_image_as_jpeg_b64(frame_path)
         if not image_b64:
@@ -1118,7 +1401,7 @@ class PhotoDedupService:
                 f"{OLLAMA_URL}/api/generate",
                 json={
                     "model": VISION_MODEL,
-                    "prompt": _VISION_VIDEO_FRAME_PROMPT,
+                    "prompt": _VISION_VIDEO_FRAME_PROMPT_CLINICAL if mode == "clinical" else _VISION_VIDEO_FRAME_PROMPT,
                     "images": [image_b64],
                     "stream": False,
                     "keep_alive": "5m",
@@ -1160,38 +1443,47 @@ class PhotoDedupService:
         return result
 
     def _aggregate_video_analysis(self, frame_analyses: List[Dict],
-                                   duration: float, keyframe_count: int) -> Dict:
-        """Combine frame analyses into a unified video analysis."""
+                                   duration: float, keyframe_count: int,
+                                   transcript: str = "") -> Dict:
+        """Combine frame analyses into a unified video analysis with deduplication."""
         all_scenes = []
         all_people = set()
         all_locations = set()
         all_moods = []
-        all_objects = set()
-        all_activities = set()
+        all_objects_raw = []  # Keep order for dedup
+        all_activities_raw = []
         all_text = set()
 
         for fa in frame_analyses:
             if fa.get("scene"):
                 all_scenes.append(fa["scene"])
-            if fa.get("people") and fa["people"].lower() not in ("none", "no", "no people"):
+            if fa.get("people") and fa["people"].lower() not in ("none", "no", "no people",
+                                                                    "none visible", "no people visible",
+                                                                    "no people are visible",
+                                                                    "no people are visible in this frame",
+                                                                    "no people are visible in the frame"):
                 all_people.add(fa["people"])
             if fa.get("location"):
                 all_locations.add(fa["location"])
             if fa.get("mood"):
-                all_moods.append(fa["mood"].lower())
+                all_moods.append(fa["mood"].lower().strip().rstrip("."))
             if fa.get("objects"):
                 for obj in fa["objects"].split(","):
-                    obj = obj.strip().lower()
-                    if obj and obj != "none":
-                        all_objects.add(obj)
+                    obj = obj.strip().rstrip(".").lower()
+                    if obj and obj not in ("none", "none."):
+                        all_objects_raw.append(obj)
             if fa.get("activity"):
-                act = fa["activity"].strip().lower()
-                if act and act != "none":
-                    all_activities.add(act)
+                act = fa["activity"].strip().rstrip(".").lower()
+                if act and act not in ("none", "none."):
+                    all_activities_raw.append(act)
             if fa.get("text"):
                 txt = fa["text"].strip()
-                if txt.lower() not in ("none", "no text", "no visible text"):
+                if txt.lower() not in ("none", "none.", "no text", "no visible text", "no text visible"):
                     all_text.add(txt)
+
+        # Deduplicate objects — merge near-duplicates like "car dashboard" and "car"
+        all_objects = self._deduplicate_terms(all_objects_raw)
+        all_activities = self._deduplicate_terms(all_activities_raw)
 
         # Dominant mood (most frequent)
         dominant_mood = ""
@@ -1201,18 +1493,36 @@ class PhotoDedupService:
                 mood_counts[m] += 1
             dominant_mood = max(mood_counts, key=mood_counts.get)
 
-        # Infer categories from content
+        # Infer categories from scene descriptions only (not objects/activities
+        # which cause false positives like "dark shorts" → "night")
         categories = set()
         combined_text = " ".join(all_scenes).lower()
         category_keywords = {
-            "travel": ["travel", "beach", "mountain", "tourist", "landmark", "hotel"],
-            "family": ["family", "children", "baby", "kid"],
-            "nature": ["nature", "forest", "lake", "river", "tree", "sunset", "ocean"],
-            "food": ["food", "restaurant", "cooking", "eating", "dinner", "lunch"],
-            "celebration": ["party", "celebration", "birthday", "wedding", "cake"],
-            "sports": ["sport", "running", "swimming", "game", "playing"],
-            "pets": ["dog", "cat", "pet", "animal"],
-            "cityscape": ["city", "building", "street", "downtown"],
+            "travel": ["travel", "tourist", "landmark", "hotel", "airport",
+                        "luggage", "passport", "flight", "vacation", "resort"],
+            "family": ["family", "children", "baby", "kid", "toddler", "son", "daughter",
+                        "parent", "mom", "dad"],
+            "nature": ["nature", "forest", "lake", "river", "sunset", "ocean",
+                        "waterfall", "meadow", "wilderness", "canyon"],
+            "food": ["food", "restaurant", "cooking", "eating", "dinner", "lunch", "breakfast",
+                      "baking", "grill", "bbq"],
+            "celebration": ["party", "celebration", "birthday", "wedding", "cake with candles",
+                            "balloons", "champagne", "graduation"],
+            "sports": ["sport", "soccer", "basketball", "tennis", "golf", "surfing", "cycling",
+                        "baseball", "football", "volleyball"],
+            "pets": ["dog ", "cat ", " pet ", "puppy", "kitten", "retriever", "labrador"],
+            "cityscape": ["cityscape", "skyline", "skyscraper", "downtown"],
+            "road_trip": ["highway", "driving", "windshield", "dashboard", "freeway", "road trip"],
+            "concert": ["concert", "stage", "performer", "live music"],
+            "home": ["living room", "bedroom", "backyard", "couch"],
+            "park": ["playground", "swing set"],
+            "beach": ["beach", "sandy beach", "shore", "surfboard", "coastline"],
+            "hiking": ["trail", "hiking", "summit", "ridge"],
+            "snow": ["snow", "skiing", "snowboard", "sled"],
+            "night": ["night sky", "fireworks", "stargazing", "neon lights"],
+            "underwater": ["underwater", "diving", "snorkeling", "coral"],
+            "zoo": ["zoo", "aquarium", "exhibit", "enclosure"],
+            "pool": ["swimming pool", "pool area", "poolside"],
         }
         for cat, keywords in category_keywords.items():
             if any(kw in combined_text for kw in keywords):
@@ -1220,22 +1530,31 @@ class PhotoDedupService:
         if not categories:
             categories.add("video")
 
-        # Build description
+        # Build rich narrative description
         parts = []
-        # Use first 3 unique scenes
-        unique_scenes = list(dict.fromkeys(all_scenes))[:3]
+        # Use up to 5 unique scenes for a temporal narrative
+        unique_scenes = list(dict.fromkeys(all_scenes))[:5]
         if unique_scenes:
-            parts.append("Video: " + "; ".join(unique_scenes))
+            if len(unique_scenes) == 1:
+                parts.append(f"Video: {unique_scenes[0]}")
+            else:
+                parts.append("Video narrative: " + " Then, ".join(unique_scenes))
         if all_people:
-            parts.append(f"People: {', '.join(list(all_people)[:3])}")
+            parts.append(f"People: {', '.join(list(all_people)[:5])}")
         if all_locations:
-            parts.append(f"Location: {', '.join(list(all_locations)[:2])}")
+            parts.append(f"Location: {', '.join(list(all_locations)[:3])}")
         if dominant_mood:
             parts.append(f"Mood: {dominant_mood}")
         if all_objects:
-            parts.append(f"Objects: {', '.join(list(all_objects)[:6])}")
+            parts.append(f"Objects: {', '.join(all_objects[:12])}")
         if all_activities:
-            parts.append(f"Activities: {', '.join(list(all_activities)[:3])}")
+            parts.append(f"Activities: {', '.join(all_activities[:5])}")
+        if all_text:
+            parts.append(f"Visible text: {', '.join(list(all_text)[:5])}")
+        if transcript:
+            # Include transcript snippet in description for search
+            transcript_preview = transcript[:300].strip()
+            parts.append(f"Audio transcript: {transcript_preview}")
         if duration:
             mins = int(duration // 60)
             secs = int(duration % 60)
@@ -1243,19 +1562,54 @@ class PhotoDedupService:
 
         return {
             "scene": "; ".join(unique_scenes),
-            "people": ", ".join(list(all_people)[:3]) if all_people else "None",
-            "location": ", ".join(list(all_locations)[:2]),
+            "people": ", ".join(list(all_people)[:5]) if all_people else "None",
+            "location": ", ".join(list(all_locations)[:3]),
             "mood": dominant_mood,
-            "objects": list(all_objects),
-            "activities": list(all_activities),
+            "objects": all_objects,
+            "activities": all_activities,
             "text_visible": list(all_text),
             "categories": list(categories),
             "duration_seconds": duration,
             "keyframe_count": keyframe_count,
             "frames_analyzed": len(frame_analyses),
+            "transcript": transcript if transcript else None,
             "description": ". ".join(parts) if parts else "Video",
             "raw": f"Aggregated from {len(frame_analyses)} frames",
         }
+
+    @staticmethod
+    def _deduplicate_terms(terms: List[str]) -> List[str]:
+        """Deduplicate a list of terms, merging near-duplicates.
+        E.g. ['car', 'car dashboard', 'car windshield', 'road', 'road markings']
+        becomes ['car dashboard', 'car windshield', 'road markings', 'car', 'road']
+        Keeps the most specific (longest) form when terms overlap.
+        """
+        if not terms:
+            return []
+        # Count frequency, keep most specific
+        from collections import Counter
+        freq = Counter(terms)
+        unique = list(freq.keys())
+
+        # Sort by length descending so specific terms come first
+        unique.sort(key=len, reverse=True)
+
+        result = []
+        seen_bases = set()
+        for term in unique:
+            # Check if this term is a substring of an already-added term
+            words = set(term.split())
+            is_subset = False
+            for existing in result:
+                existing_words = set(existing.split())
+                if words.issubset(existing_words):
+                    is_subset = True
+                    break
+            if not is_subset:
+                result.append(term)
+                seen_bases.update(words)
+
+        return result
 
     def _parse_vision_response(self, raw: str, path: Path) -> Dict:
         """Parse structured vision response into dict (enhanced with new fields)."""
@@ -1305,6 +1659,72 @@ class PhotoDedupService:
             parts.append(f"Activity: {result['activity']}")
         if result["time_of_day"]:
             parts.append(f"Time: {result['time_of_day']}")
+
+        year_match = re.search(r"/(\d{4})/", str(path))
+        if year_match:
+            parts.append(f"Year: {year_match.group(1)}")
+
+        result["description"] = ". ".join(parts) if parts else path.name
+
+        return result
+
+    def _parse_clinical_response(self, raw: str, path: Path) -> Dict:
+        """Parse clinical/uncensored vision response with explicit content fields.
+        Handles both plain (FIELD: value) and markdown (**FIELD:** value) formatting.
+        """
+        result = {
+            "scene": "", "people": "", "location": "",
+            "mood": "", "categories": [], "objects": "",
+            "activity": "", "nudity": "", "sexual_content": "",
+            "content_rating": "", "scan_mode": "clinical",
+            "raw": raw
+        }
+
+        # Strip markdown bold markers so "**SCENE:**" becomes "SCENE:"
+        field_pattern = re.compile(r'^\*{0,2}([A-Z_]+):\*{0,2}\s*(.*)', re.IGNORECASE)
+
+        for line in raw.split("\n"):
+            line_s = line.strip().lstrip("*-# ")
+            m = field_pattern.match(line_s)
+            if not m:
+                continue
+            key = m.group(1).upper()
+            val = m.group(2).strip()
+            if key == "SCENE":
+                result["scene"] = val
+            elif key == "PEOPLE":
+                result["people"] = val
+            elif key == "LOCATION":
+                result["location"] = val
+            elif key == "MOOD":
+                result["mood"] = val
+            elif key == "OBJECTS":
+                result["objects"] = val
+            elif key == "ACTIVITY":
+                result["activity"] = val
+            elif key == "NUDITY":
+                result["nudity"] = val
+            elif key in ("SEXUAL_CONTENT", "SEXUAL CONTENT"):
+                result["sexual_content"] = val
+            elif key in ("CONTENT_RATING", "CONTENT RATING"):
+                result["content_rating"] = val.upper()
+            elif key == "CATEGORIES":
+                result["categories"] = [c.strip().lower() for c in val.split(",") if c.strip()]
+
+        # Build searchable description with explicit content included
+        parts = []
+        if result["scene"]:
+            parts.append(result["scene"])
+        if result["people"]:
+            parts.append(f"People: {result['people']}")
+        if result["nudity"] and result["nudity"].lower() != "none":
+            parts.append(f"Nudity: {result['nudity']}")
+        if result["sexual_content"] and result["sexual_content"].lower() != "none":
+            parts.append(f"Sexual content: {result['sexual_content']}")
+        if result["content_rating"]:
+            parts.append(f"Rating: {result['content_rating']}")
+        if result["activity"] and result["activity"].lower() != "none":
+            parts.append(f"Activity: {result['activity']}")
 
         year_match = re.search(r"/(\d{4})/", str(path))
         if year_match:
@@ -1621,7 +2041,8 @@ class PhotoDedupService:
                        p.camera_model, p.llava_description, p.llava_analysis,
                        p.match_type, p.width, p.height, p.media_type,
                        p.duration_seconds, p.keyframe_count, p.source_root,
-                       p.takeout_metadata, p.location_text, p.face_count
+                       p.takeout_metadata, p.location_text, p.face_count,
+                       p.audio_transcript
                 FROM photos p
                 WHERE p.llava_description IS NOT NULL
                   AND p.qdrant_point_id IS NULL
@@ -1745,6 +2166,10 @@ class PhotoDedupService:
             if desc:
                 parts.append(f"Description: {desc}")
 
+        # Audio transcript (videos only)
+        if photo.get("audio_transcript"):
+            parts.append(f"Audio transcript: {photo['audio_transcript'][:500]}")
+
         # Face cluster names
         if people_names:
             parts.append(f"People: {', '.join(people_names)}")
@@ -1814,6 +2239,9 @@ class PhotoDedupService:
             if media_type == "video":
                 payload["duration_seconds"] = photo.get("duration_seconds")
                 payload["keyframe_count"] = photo.get("keyframe_count")
+                if photo.get("audio_transcript"):
+                    payload["audio_transcript"] = photo["audio_transcript"][:1000]
+                    payload["has_speech"] = True
 
             async with httpx.AsyncClient(timeout=30.0) as client:
                 resp = await client.put(
@@ -1829,6 +2257,77 @@ class PhotoDedupService:
         except Exception as e:
             logger.error(f"Embed/store error: {e}")
             return None
+
+    async def reindex_to_qdrant(self, file_paths: List[str]) -> Dict[str, Any]:
+        """Re-embed and replace Qdrant points for specific files.
+        Used after clinical re-scan to update descriptions in search index.
+        """
+        conn = await asyncpg.connect(DB_URL)
+        try:
+            photos = await conn.fetch("""
+                SELECT p.id, p.file_path, p.filename, p.year_folder, p.date_taken,
+                       p.camera_model, p.llava_description, p.llava_analysis,
+                       p.match_type, p.width, p.height, p.media_type,
+                       p.duration_seconds, p.keyframe_count, p.source_root,
+                       p.takeout_metadata, p.location_text, p.face_count,
+                       p.audio_transcript, p.qdrant_point_id
+                FROM photos p
+                WHERE p.file_path = ANY($1)
+                  AND p.llava_description IS NOT NULL
+            """, file_paths)
+
+            if not photos:
+                return {"reindexed": 0, "message": "No matching files found"}
+
+            reindexed = 0
+            errors = 0
+
+            for photo in photos:
+                try:
+                    old_point_id = photo.get("qdrant_point_id")
+
+                    # Delete old Qdrant point if exists
+                    if old_point_id:
+                        async with httpx.AsyncClient(timeout=30.0) as client:
+                            await client.post(
+                                f"{QDRANT_URL}/collections/{COLLECTION}/points/delete",
+                                json={"points": [old_point_id]}
+                            )
+
+                    # Re-embed with updated description
+                    people_names = []
+                    if photo.get("face_count") and photo["face_count"] > 0:
+                        face_data = await conn.fetch("""
+                            SELECT fc.cluster_name FROM photo_faces pf
+                            JOIN face_clusters fc ON pf.cluster_id = fc.id
+                            WHERE pf.photo_id = $1 AND fc.cluster_name IS NOT NULL
+                        """, photo["id"])
+                        people_names = [f["cluster_name"] for f in face_data]
+
+                    text = self._build_embedding_text(photo, people_names)
+                    new_point_id = await self._embed_and_store(text, photo, people_names)
+
+                    if new_point_id:
+                        await conn.execute("""
+                            UPDATE photos SET qdrant_point_id = $2, updated_at = NOW()
+                            WHERE id = $1
+                        """, photo["id"], new_point_id)
+                        reindexed += 1
+                        logger.info(f"[PhotoDedup] Reindexed {photo['filename']} "
+                                    f"(old={old_point_id}, new={new_point_id})")
+                    else:
+                        errors += 1
+
+                except Exception as e:
+                    logger.error(f"Reindex error for {photo['file_path']}: {e}")
+                    errors += 1
+
+            result = {"reindexed": reindexed, "errors": errors, "total": len(photos)}
+            logger.info(f"[PhotoDedup] Reindex complete: {result}")
+            return result
+
+        finally:
+            await conn.close()
 
     # ------------------------------------------------------------------
     # Search
@@ -2001,22 +2500,46 @@ class PhotoDedupService:
     # Google OAuth helpers
     # ------------------------------------------------------------------
     async def get_oauth_status(self) -> Dict[str, Any]:
-        """Check if Google OAuth token exists."""
+        """Check if Google OAuth token exists. Returns all linked accounts."""
         token = await self._get_google_token()
+        accounts = await self._list_google_accounts()
         if token:
-            return {"has_token": True, "status": "ready"}
+            return {"has_token": True, "status": "ready", "accounts": accounts}
         return {
             "has_token": False,
             "status": "needs_auth",
             "login_url": f"{AUTH_SERVICE_URL}/api/auth/oauth/google/login",
+            "accounts": accounts,
         }
 
-    async def _get_google_token(self) -> Optional[str]:
+    async def _list_google_accounts(self) -> list:
+        """List all authenticated Google accounts."""
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                resp = await client.get(f"{AUTH_SERVICE_URL}/api/auth/oauth/google/accounts")
+                if resp.status_code == 200:
+                    return resp.json().get("accounts", [])
+        except Exception as e:
+            logger.debug(f"Failed to list Google accounts: {e}")
+        return []
+
+    async def _get_google_token(self, account: Optional[str] = None) -> Optional[str]:
         """Get Google OAuth token via tower-auth bridge.
+        Pass account=email to get a specific account's token.
         Returns None if no refresh_token exists (access_token alone is likely expired).
         """
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
+                if account:
+                    resp = await client.get(
+                        f"{AUTH_SERVICE_URL}/tokens/google",
+                        params={"account": account}
+                    )
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        return data.get("access_token")
+                    return None
+
                 resp = await client.get(f"{AUTH_SERVICE_URL}/tokens/list")
                 if resp.status_code == 200:
                     tokens = resp.json()
@@ -2036,26 +2559,38 @@ class PhotoDedupService:
             logger.warning(f"Failed to get Google token: {e}")
         return None
 
-    async def _refresh_google_token(self) -> Optional[str]:
-        """Refresh Google token via tower-auth."""
+    async def _refresh_google_token(self, account: Optional[str] = None) -> Optional[str]:
+        """Refresh Google token via tower-auth. Pass account=email for specific account."""
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
-                # Get current refresh token
-                resp = await client.get(f"{AUTH_SERVICE_URL}/tokens/list")
-                if resp.status_code != 200:
-                    return None
-                tokens = resp.json()
-                refresh = tokens.get("google", {}).get("refresh_token")
-                if not refresh:
-                    return None
+                params = {}
+                if account:
+                    params["account"] = account
 
                 resp = await client.post(
                     f"{AUTH_SERVICE_URL}/api/auth/oauth/google/refresh",
-                    json={"refresh_token": refresh}
+                    params=params,
                 )
                 if resp.status_code == 200:
                     data = resp.json()
                     return data.get("access_token")
+
+                # Fallback: try legacy flow without account param
+                if account:
+                    logger.warning(f"Account-specific refresh failed for {account}, trying legacy")
+                    resp = await client.get(f"{AUTH_SERVICE_URL}/tokens/list")
+                    if resp.status_code != 200:
+                        return None
+                    tokens = resp.json()
+                    refresh = tokens.get("google", {}).get("refresh_token")
+                    if not refresh:
+                        return None
+                    resp = await client.post(
+                        f"{AUTH_SERVICE_URL}/api/auth/oauth/google/refresh",
+                        json={"refresh_token": refresh}
+                    )
+                    if resp.status_code == 200:
+                        return resp.json().get("access_token")
         except Exception as e:
             logger.error(f"Token refresh failed: {e}")
         return None
