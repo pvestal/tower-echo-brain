@@ -6,6 +6,7 @@ Coordinates notifications across multiple channels: ntfy, Telegram, Email
 
 import asyncio
 import logging
+import time
 from typing import Optional, List, Dict, Any, Union
 from datetime import datetime
 from enum import Enum
@@ -31,6 +32,18 @@ class NotificationChannel(Enum):
 class NotificationService:
     """Unified notification service for Echo Brain"""
 
+    # Backoff settings: (base_cooldown_seconds, max_cooldown_seconds)
+    # Messages within the cooldown window are suppressed.
+    # Each suppressed duplicate doubles the cooldown up to the max.
+    BACKOFF_DEFAULTS = {
+        NotificationType.INFO:     (60,   600),    # 1min → 10min
+        NotificationType.WARNING:  (120,  1800),   # 2min → 30min
+        NotificationType.ERROR:    (300,  3600),    # 5min → 1hr
+        NotificationType.SUCCESS:  (30,   300),     # 30s  → 5min
+        NotificationType.ALERT:    (600,  3600),    # 10min → 1hr
+        NotificationType.REMINDER: (0,    0),       # never suppress reminders
+    }
+
     def __init__(self):
         self.ntfy_client = None
         self.telegram_client = None
@@ -43,6 +56,10 @@ class NotificationService:
             NotificationChannel.TELEGRAM: False,
             NotificationChannel.EMAIL: False
         }
+
+        # Backoff state: keyed by (title or message prefix)
+        # Value: {"last_sent": float, "cooldown": float, "suppressed": int}
+        self._backoff_state: Dict[str, Dict[str, Any]] = {}
 
     async def initialize(self) -> bool:
         """Initialize all notification clients"""
@@ -95,6 +112,58 @@ class NotificationService:
             logger.error(f"❌ Failed to initialize notification service: {e}")
             return False
 
+    def _backoff_key(self, title: Optional[str], message: str) -> str:
+        """Derive a dedup key from the title (preferred) or first 80 chars of message."""
+        return (title or message[:80]).strip()
+
+    def _should_suppress(
+        self,
+        key: str,
+        notification_type: NotificationType,
+    ) -> bool:
+        """Return True if this notification should be suppressed due to backoff.
+
+        Side-effect: updates backoff state (last_sent / cooldown / suppressed counter).
+        """
+        base_cd, max_cd = self.BACKOFF_DEFAULTS.get(notification_type, (60, 600))
+        if base_cd == 0:
+            return False  # type is exempt from backoff
+
+        now = time.monotonic()
+        state = self._backoff_state.get(key)
+
+        if state is None:
+            # First time — allow and record
+            self._backoff_state[key] = {
+                "last_sent": now,
+                "cooldown": base_cd,
+                "suppressed": 0,
+            }
+            return False
+
+        elapsed = now - state["last_sent"]
+        if elapsed >= state["cooldown"]:
+            # Cooldown expired — allow, reset cooldown to base
+            suppressed = state["suppressed"]
+            state["last_sent"] = now
+            state["cooldown"] = base_cd
+            state["suppressed"] = 0
+            if suppressed > 0:
+                logger.info(
+                    f"Backoff: allowing '{key}' after suppressing {suppressed} duplicates"
+                )
+            return False
+
+        # Still inside cooldown — suppress and escalate
+        state["suppressed"] += 1
+        state["cooldown"] = min(state["cooldown"] * 2, max_cd)
+        logger.info(
+            f"Backoff: suppressing '{key}' "
+            f"(cooldown {state['cooldown']:.0f}s, "
+            f"{state['suppressed']} suppressed)"
+        )
+        return True
+
     async def send_notification(
         self,
         message: str,
@@ -123,6 +192,13 @@ class NotificationService:
         if not self.initialized:
             logger.error("📢 Notification service not initialized")
             return {}
+
+        # --- Backoff gate (skip for scheduled / forced notifications) ---
+        force = (metadata or {}).get("force", False)
+        if not schedule and not force:
+            key = self._backoff_key(title, message)
+            if self._should_suppress(key, notification_type):
+                return {}
 
         # Normalize channels to list
         if isinstance(channels, NotificationChannel):
@@ -238,11 +314,19 @@ class NotificationService:
             emoji = type_emojis.get(notification_type, "📢")
             final_message = f"{emoji} {full_message}"
 
-            return await self.telegram_client.send_message(
-                message=final_message,
-                parse_mode="Markdown",
-                disable_web_page_preview=metadata.get('disable_preview', True)
-            )
+            try:
+                return await self.telegram_client.send_message(
+                    message=final_message,
+                    parse_mode="Markdown",
+                    disable_web_page_preview=metadata.get('disable_preview', True)
+                )
+            except Exception:
+                # Markdown parse failed (unescaped chars) — retry without formatting
+                logger.warning("Telegram Markdown parse failed, retrying as plain text")
+                return await self.telegram_client.send_message(
+                    message=final_message,
+                    disable_web_page_preview=metadata.get('disable_preview', True)
+                )
 
         except Exception as e:
             logger.error(f"❌ Telegram notification error: {e}")

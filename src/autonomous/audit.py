@@ -507,35 +507,46 @@ class AuditLogger:
             logger.error(f"Failed to get audit statistics: {e}")
             raise
 
-    async def cleanup_old_logs(self, days_to_keep: int = 90):
+    async def cleanup_old_logs(self, days_to_keep: int = 14):
         """
-        Clean up old audit log entries.
+        Clean up old log entries across all high-growth tables.
 
         Args:
-            days_to_keep: Number of days of logs to keep (default: 90)
+            days_to_keep: Number of days of logs to keep (default: 14)
 
         Returns:
-            int: Number of records deleted
+            int: Total number of records deleted
         """
+        total_deleted = 0
+        retention_rules = [
+            ("autonomous_audit_log", "timestamp", days_to_keep),
+            ("governor_decisions", "created_at", days_to_keep),
+            ("contract_monitor_results", "tested_at", 7),
+            ("contract_monitor_snapshots", "timestamp", 7),
+            ("contract_monitor_issues", "last_seen", 14),
+            ("self_test_results", "run_at", 14),
+        ]
         try:
             async with self.get_connection() as conn:
-                result = await conn.execute(
-                    f"""
-                    DELETE FROM autonomous_audit_log
-                    WHERE timestamp < NOW() - INTERVAL '{days_to_keep} days'
-                    """
-                )
+                for table, time_col, days in retention_rules:
+                    try:
+                        result = await conn.execute(
+                            f"DELETE FROM {table} WHERE {time_col} < NOW() - INTERVAL '{days} days'"
+                        )
+                        deleted = int(result.split()[-1]) if result and result.split()[-1].isdigit() else 0
+                        if deleted > 0:
+                            logger.info(f"Retention cleanup: {table} — deleted {deleted} rows (>{days}d)")
+                            total_deleted += deleted
+                    except Exception as e:
+                        logger.warning(f"Retention cleanup skipped {table}: {e}")
 
-                # Extract count from result
-                deleted_count = int(result.split()[-1]) if result and result.split()[-1].isdigit() else 0
+                if total_deleted > 0:
+                    logger.info(f"Total retention cleanup: {total_deleted} rows deleted")
 
-                if deleted_count > 0:
-                    logger.info(f"Cleaned up {deleted_count} old audit log entries")
-
-                return deleted_count
+                return total_deleted
 
         except Exception as e:
-            logger.error(f"Failed to cleanup old audit logs: {e}")
+            logger.error(f"Failed to cleanup old logs: {e}")
             return 0
 
     async def get_audit_logs(self, hours: int = 24, limit: int = 100) -> List[Dict[str, Any]]:

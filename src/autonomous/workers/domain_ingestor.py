@@ -283,6 +283,111 @@ class DomainIngestor:
             except Exception as e:
                 print(f"[DomainIngestor] Scenes error: {e}")
 
+            # Approved generation results (keyframes with QC scores and generation metadata)
+            try:
+                approved_gens = await anime_conn.fetch("""
+                    SELECT gh.id, gh.character_slug, gh.project_name, gh.prompt,
+                           gh.checkpoint_model, gh.cfg_scale, gh.steps, gh.sampler,
+                           gh.width, gh.height, gh.quality_score, gh.character_match,
+                           gh.clarity, gh.training_value, gh.generation_type,
+                           gh.seed, gh.generated_at,
+                           a.auto_approved, a.quality_score as approval_score,
+                           a.checkpoint_model as approval_checkpoint
+                    FROM generation_history gh
+                    LEFT JOIN approvals a ON a.generation_history_id = gh.id
+                    WHERE gh.status = 'approved'
+                    ORDER BY gh.generated_at DESC
+                    LIMIT 2000
+                """)
+                for g in approved_gens:
+                    gen_id = g['id']
+                    char = g.get('character_slug') or 'unknown'
+                    project = g.get('project_name') or 'unknown'
+                    q_score = g.get('quality_score')
+                    prompt_preview = (g.get('prompt') or '')[:300]
+
+                    text = (f"Approved Generation Result #{gen_id}\n"
+                            f"Project: {project}\nCharacter: {char}\n"
+                            f"Type: {g.get('generation_type', 'image')}\n"
+                            f"Checkpoint: {g.get('checkpoint_model', 'N/A')}\n"
+                            f"Settings: {g.get('sampler', '?')} / {g.get('steps', '?')} steps / "
+                            f"CFG {g.get('cfg_scale', '?')} / {g.get('width', '?')}x{g.get('height', '?')}\n"
+                            f"Quality Score: {q_score if q_score is not None else 'N/A'}\n"
+                            f"Character Match: {g.get('character_match') if g.get('character_match') is not None else 'N/A'}\n"
+                            f"Clarity: {g.get('clarity') if g.get('clarity') is not None else 'N/A'}\n"
+                            f"Training Value: {g.get('training_value') if g.get('training_value') is not None else 'N/A'}\n"
+                            f"Auto-Approved: {g.get('auto_approved', False)}\n"
+                            f"Seed: {g.get('seed', 'N/A')}\n"
+                            f"Generated: {g.get('generated_at', 'N/A')}\n"
+                            f"Prompt: {prompt_preview}")
+
+                    metadata = {
+                        "generation_id": gen_id,
+                        "character": char,
+                        "project": project,
+                        "generation_type": g.get('generation_type', 'image'),
+                        "checkpoint": g.get('checkpoint_model'),
+                        "quality_score": q_score,
+                        "character_match": g.get('character_match'),
+                        "auto_approved": g.get('auto_approved', False),
+                    }
+                    # Remove None values from metadata
+                    metadata = {k: v for k, v in metadata.items() if v is not None}
+
+                    await self._store_db_record(conn, text, "anime:generation",
+                                                f"db:approved_gen:{gen_id}", metadata)
+                count = len(approved_gens)
+                print(f"[DomainIngestor] Processed {count} approved generation results")
+            except Exception as e:
+                print(f"[DomainIngestor] Approved generations error: {e}")
+
+            # Standalone approvals (images approved via approvals table, no generation_history link)
+            try:
+                standalone_approvals = await anime_conn.fetch("""
+                    SELECT a.id, a.character_slug, a.project_name, a.image_name,
+                           a.quality_score, a.auto_approved, a.vision_review,
+                           a.checkpoint_model, a.created_at
+                    FROM approvals a
+                    WHERE a.generation_history_id IS NULL
+                    ORDER BY a.created_at DESC
+                    LIMIT 2000
+                """)
+                for a in standalone_approvals:
+                    approval_id = a['id']
+                    char = a.get('character_slug') or 'unknown'
+                    project = a.get('project_name') or 'unknown'
+                    q_score = a.get('quality_score')
+                    vision = a.get('vision_review')
+                    vision_summary = ''
+                    if vision and isinstance(vision, dict):
+                        vision_summary = f"\nVision Review: {json.dumps(vision, default=str)[:300]}"
+
+                    text = (f"Approved Image #{approval_id}\n"
+                            f"Project: {project}\nCharacter: {char}\n"
+                            f"Image: {a.get('image_name', 'N/A')}\n"
+                            f"Checkpoint: {a.get('checkpoint_model', 'N/A')}\n"
+                            f"Quality Score: {q_score if q_score is not None else 'N/A'}\n"
+                            f"Auto-Approved: {a.get('auto_approved', False)}\n"
+                            f"Approved: {a.get('created_at', 'N/A')}"
+                            f"{vision_summary}")
+
+                    metadata = {
+                        "approval_id": approval_id,
+                        "character": char,
+                        "project": project,
+                        "checkpoint": a.get('checkpoint_model'),
+                        "quality_score": q_score,
+                        "auto_approved": a.get('auto_approved', False),
+                    }
+                    metadata = {k: v for k, v in metadata.items() if v is not None}
+
+                    await self._store_db_record(conn, text, "anime:generation",
+                                                f"db:approval:{approval_id}", metadata)
+                count = len(standalone_approvals)
+                print(f"[DomainIngestor] Processed {count} standalone approvals")
+            except Exception as e:
+                print(f"[DomainIngestor] Standalone approvals error: {e}")
+
         finally:
             await anime_conn.close()
 

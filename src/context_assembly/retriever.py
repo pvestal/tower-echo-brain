@@ -703,8 +703,7 @@ class ParallelRetriever:
                 if not exists:
                     return []
 
-                # PRIMARY: Full-text search with ranking
-                # First try the original query
+                # PRIMARY: Full-text search with ranking (AND semantics first)
                 rows = await conn.fetch("""
                     SELECT subject, predicate, object, confidence,
                            ts_rank(search_vector, query) AS rank
@@ -716,6 +715,28 @@ class ParallelRetriever:
                         rank DESC
                     LIMIT $2
                 """, query, 20)
+
+                # If AND semantics returned nothing, try OR semantics
+                if not rows:
+                    or_terms = [w for w in query.split() if len(w) > 2]
+                    if or_terms:
+                        or_query = " | ".join(
+                            w.replace("'", "''") for w in or_terms[:8]
+                        )
+                        try:
+                            rows = await conn.fetch("""
+                                SELECT subject, predicate, object, confidence,
+                                       ts_rank(search_vector, query) AS rank
+                                FROM facts,
+                                     to_tsquery('english', $1) query
+                                WHERE search_vector @@ query
+                                ORDER BY rank DESC, confidence DESC
+                                LIMIT $2
+                            """, or_query, 20)
+                            if rows:
+                                logger.info(f"Facts OR-query matched {len(rows)} results")
+                        except Exception as e:
+                            logger.debug(f"OR tsquery failed: {e}")
 
                 # Try preprocessing for known patterns or if no results
                 key_terms = self._extract_key_terms(query)

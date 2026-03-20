@@ -494,9 +494,9 @@ class AutonomousCore:
     async def perform_maintenance(self, cycle_results: Dict[str, Any]):
         """Perform periodic maintenance operations."""
         try:
-            # Cleanup old audit logs (keep last 30 days)
-            if self.cycles_completed % 100 == 0:  # Every 100 cycles
-                await self.audit_logger.cleanup_old_logs(30)
+            # Retention cleanup across all log tables (every 12 cycles ≈ daily)
+            if self.cycles_completed % 12 == 0:
+                await self.audit_logger.cleanup_old_logs(14)
 
             # Update system health metrics
             await self.update_health_metrics()

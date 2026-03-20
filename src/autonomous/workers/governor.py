@@ -161,19 +161,26 @@ class Governor:
                         second_score = ranked[1][0] if len(ranked) > 1 else 0
 
                     if best_score - second_score < AMBIGUITY_THRESHOLD:
-                        # Ambiguous — flag for human review
-                        await conn.execute("""
-                            INSERT INTO governor_decisions
-                                (decision_type, subject, predicate, conflicting_facts, reasoning, outcome)
-                            VALUES ($1, $2, $3, $4, $5, $6)
-                        """,
-                            "conflict_resolution",
-                            subject,
-                            predicate,
-                            json.dumps([d for _, d, _ in ranked]),
-                            f"Ambiguous: spread={best_score - second_score:.3f} < {AMBIGUITY_THRESHOLD}",
-                            "flagged_for_review",
-                        )
+                        # Skip if already flagged for this subject+predicate
+                        already_flagged = await conn.fetchval("""
+                            SELECT 1 FROM governor_decisions
+                            WHERE subject = $1 AND predicate = $2
+                              AND outcome = 'flagged_for_review'
+                            LIMIT 1
+                        """, subject, predicate)
+                        if not already_flagged:
+                            await conn.execute("""
+                                INSERT INTO governor_decisions
+                                    (decision_type, subject, predicate, conflicting_facts, reasoning, outcome)
+                                VALUES ($1, $2, $3, $4, $5, $6)
+                            """,
+                                "conflict_resolution",
+                                subject,
+                                predicate,
+                                json.dumps([d for _, d, _ in ranked]),
+                                f"Ambiguous: spread={best_score - second_score:.3f} < {AMBIGUITY_THRESHOLD}",
+                                "flagged_for_review",
+                            )
                         flagged += 1
                         continue
 

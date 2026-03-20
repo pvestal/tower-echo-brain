@@ -67,11 +67,9 @@ class WorkerScheduler:
         """Execute a single worker with error handling."""
         worker["running"] = True
         try:
-            logger.info(f"Starting worker: {name}")
             # Call the worker
             result = await worker["callable"]()
             worker["error_count"] = 0
-            logger.info(f"Worker {name} completed successfully")
         except Exception as e:
             worker["error_count"] += 1
             logger.error(f"Worker {name} failed (attempt {worker['error_count']}): {e}")

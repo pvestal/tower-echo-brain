@@ -53,8 +53,8 @@ class DailyBriefingWorker:
     async def run_cycle(self):
         now_local = datetime.now(LOCAL_TZ)
 
-        # Only fire at the target minute in local (Pacific) time
-        if now_local.hour != BRIEFING_HOUR or now_local.minute != BRIEFING_MINUTE:
+        # Fire within a 5-minute window (covers scheduler drift / missed ticks)
+        if now_local.hour != BRIEFING_HOUR or not (BRIEFING_MINUTE <= now_local.minute < BRIEFING_MINUTE + 5):
             return
         if self._last_briefing_date == now_local.date():
             return
@@ -66,36 +66,59 @@ class DailyBriefingWorker:
         self._last_briefing_date = now_local.date()
         now = now_local  # use local time for formatting
 
-        sections = []
+        try:
+            sections = []
 
-        # ── Weather ──────────────────────────────────────────────
-        weather = await self._get_weather()
-        if weather:
-            sections.append(weather)
+            # ── Weather ──────────────────────────────────────────────
+            try:
+                weather = await self._get_weather()
+                if weather:
+                    sections.append(weather)
+            except Exception as e:
+                logger.warning(f"[DailyBriefing] Weather section failed: {e}")
+                sections.append("Weather: unavailable")
 
-        # ── Calendar (today + next upcoming) ─────────────────────
-        events = await self._get_calendar_events()
-        next_event = await self._get_next_event()
-        sections.append(self._fmt_calendar(events, next_event))
+            # ── Calendar (today + next upcoming) ─────────────────────
+            try:
+                events = await self._get_calendar_events()
+                next_event = await self._get_next_event()
+                sections.append(self._fmt_calendar(events, next_event))
+            except Exception as e:
+                logger.warning(f"[DailyBriefing] Calendar section failed: {e}")
+                sections.append("Calendar: unavailable")
 
-        # ── Finance ───────────────────────────────────────────────
-        balances, transactions = await self._get_finance()
-        sections.append(self._fmt_finance(balances, transactions))
+            # ── Finance (reads from local DB only, no Plaid API calls) ──
+            try:
+                balances, transactions = await self._get_finance()
+                sections.append(self._fmt_finance(balances, transactions))
+            except Exception as e:
+                logger.warning(f"[DailyBriefing] Finance section failed: {e}")
+                sections.append("Finance: unavailable")
 
-        # ── Email ─────────────────────────────────────────────────
-        email_section = await self._get_email_summary()
-        sections.append(email_section)
+            # ── Email ─────────────────────────────────────────────────
+            try:
+                email_section = await self._get_email_summary()
+                sections.append(email_section)
+            except Exception as e:
+                logger.warning(f"[DailyBriefing] Email section failed: {e}")
+                sections.append("Email: unavailable")
 
-        # ── Reminders ─────────────────────────────────────────────
-        reminders = await self._get_pending_reminders()
-        sections.append(self._fmt_reminders(reminders))
+            # ── Reminders ─────────────────────────────────────────────
+            try:
+                reminders = await self._get_pending_reminders()
+                sections.append(self._fmt_reminders(reminders))
+            except Exception as e:
+                logger.warning(f"[DailyBriefing] Reminders section failed: {e}")
 
-        # ── Assemble & send ───────────────────────────────────────
-        briefing = f"Good morning — {now.strftime('%A, %B %d')}\n\n" + "\n\n".join(s for s in sections if s)
+            # ── Assemble & send ───────────────────────────────────────
+            briefing = f"Good morning — {now.strftime('%A, %B %d')}\n\n" + "\n\n".join(s for s in sections if s)
 
-        await self._send(briefing)
-        self._mark_sent(now_local.date())
-        logger.info("[DailyBriefing] Briefing sent")
+            await self._send(briefing)
+            self._mark_sent(now_local.date())
+            logger.info("[DailyBriefing] Briefing sent")
+
+        except Exception as e:
+            logger.error(f"[DailyBriefing] Failed to build/send briefing: {e}")
 
     # ── Data collectors ───────────────────────────────────────────
 
@@ -234,12 +257,17 @@ class DailyBriefingWorker:
             label = service.users().labels().get(userId="me", id="INBOX").execute()
             unread = label.get("messagesUnread", 0)
 
-            # Top recent unread messages with sender + subject
-            lines = [f"Email: {unread} unread"]
+            lines = [f"Email ({unread:,} unread)"]
+
+            # Top recent unread messages — skip Google security noise
+            skip_patterns = ["security alert", "google account was recovered"]
             msgs = service.users().messages().list(
-                userId="me", q="is:unread in:inbox", maxResults=5
+                userId="me", q="is:unread in:inbox", maxResults=15
             ).execute()
-            for m in msgs.get("messages", [])[:5]:
+            shown = 0
+            for m in msgs.get("messages", []):
+                if shown >= 5:
+                    break
                 try:
                     msg = service.users().messages().get(
                         userId="me", id=m["id"], format="metadata",
@@ -250,13 +278,20 @@ class DailyBriefingWorker:
                         for h in msg.get("payload", {}).get("headers", [])
                     }
                     sender = headers.get("From", "?")
-                    # Clean sender: "Name <email>" → "Name"
                     if "<" in sender:
                         sender = sender.split("<")[0].strip().strip('"')
                     subject = headers.get("Subject", "(no subject)")
-                    lines.append(f"  {sender}: {subject[:60]}")
+                    # Skip noisy automated emails
+                    subj_lower = subject.lower().strip()
+                    if any(p in subj_lower for p in skip_patterns):
+                        continue
+                    lines.append(f"  {sender}")
+                    lines.append(f"    {subject[:70]}")
+                    shown += 1
                 except Exception:
                     continue
+            if shown == 0:
+                lines.append("  (no notable unread)")
             return "\n".join(lines)
         except Exception as e:
             logger.warning(f"[DailyBriefing] Gmail unavailable: {e}")
@@ -325,23 +360,96 @@ class DailyBriefingWorker:
     def _fmt_finance(self, balances: list[dict], transactions: list[dict]) -> str:
         if not balances and not transactions:
             return "Finance: unavailable"
+
+        def _bal(v) -> float:
+            try:
+                return float(v)
+            except (ValueError, TypeError):
+                return 0.0
+
+        # Group accounts by institution
+        from collections import defaultdict
+        by_inst: dict[str, list[dict]] = defaultdict(list)
+        for acct in balances:
+            inst = acct.get("institution_name", "Other")
+            by_inst[inst].append(acct)
+
         lines = ["Finance"]
-        # Balances — skip accounts with no current balance (e.g. term life)
-        for acct in balances[:8]:
-            name = acct.get("name", acct.get("official_name", "Account"))
-            bal_obj = acct.get("balances", acct)
-            current = bal_obj.get("current", bal_obj.get("current_balance"))
-            if current is not None:
-                lines.append(f"  {name}: ${current:,.2f}")
+        total_cash = 0.0
+        total_credit_owed = 0.0
+        total_credit_avail = 0.0
+        total_loans = 0.0
+        total_insurance = 0.0
+
+        # Deduplicate account names within each institution
+        for inst, accounts in sorted(by_inst.items()):
+            lines.append(f"  {inst}")
+            # Count name occurrences for disambiguation
+            name_counts: dict[str, int] = defaultdict(int)
+            for a in accounts:
+                name_counts[a.get("name", "Account")] += 1
+            name_seen: dict[str, int] = defaultdict(int)
+
+            for acct in accounts:
+                name = acct.get("name", acct.get("official_name", "Account"))
+                current = _bal(acct.get("current_balance"))
+                avail = acct.get("available_balance")
+                limit = acct.get("credit_limit")
+                acct_type = acct.get("type", "")
+                subtype = acct.get("subtype", "")
+
+                # Disambiguate duplicate names
+                if name_counts[name] > 1:
+                    name_seen[name] += 1
+                    label = f"{name} #{name_seen[name]}"
+                else:
+                    label = name
+
+                if acct_type == "credit" or "credit card" in subtype:
+                    limit_val = _bal(limit) if limit else 0
+                    avail_val = _bal(avail) if avail else 0
+                    lines.append(
+                        f"    {label}: ${current:,.2f} owed"
+                        + (f" | ${avail_val:,.2f} avail" if avail else "")
+                        + (f" | ${limit_val:,.0f} limit" if limit else "")
+                    )
+                    total_credit_owed += current
+                    total_credit_avail += avail_val
+                elif acct_type == "loan":
+                    loan_type = subtype.replace("_", " ").title() if subtype else "Loan"
+                    lines.append(f"    {label} ({loan_type}): ${current:,.2f} owed")
+                    total_loans += current
+                elif "insurance" in subtype or acct_type == "investment":
+                    if current > 0:
+                        lines.append(f"    {label}: ${current:,.2f}")
+                        total_insurance += current
+                    # Skip zero-balance policies (e.g. term life)
+                elif current > 0:
+                    lines.append(f"    {label}: ${current:,.2f}")
+                    total_cash += current
+
+        # Totals
+        lines.append("  ──")
+        lines.append(f"  Cash/Savings: ${total_cash:,.2f}")
+        if total_credit_owed > 0:
+            lines.append(f"  Credit cards: ${total_credit_owed:,.2f} owed (${total_credit_avail:,.2f} avail)")
+        if total_loans > 0:
+            lines.append(f"  Loans: ${total_loans:,.2f} owed")
+        if total_insurance > 0:
+            lines.append(f"  Insurance CV: ${total_insurance:,.2f}")
+        net = total_cash + total_insurance - total_credit_owed - total_loans
+        lines.append(f"  Net: ${net:,.2f}")
+
         # Recent transactions
         if transactions:
-            lines.append(f"  Yesterday/today: {len(transactions)} transactions")
-            for txn in transactions[:3]:
-                amt = txn.get("amount", 0)
+            lines.append(f"  Recent: {len(transactions)} transactions")
+            for txn in transactions[:5]:
+                amt = _bal(txn.get("amount", 0))
                 merchant = txn.get("merchant_name") or txn.get("name", "?")
                 lines.append(f"    ${abs(amt):,.2f} — {merchant}")
-            if len(transactions) > 3:
-                lines.append(f"    ...and {len(transactions) - 3} more")
+            if len(transactions) > 5:
+                lines.append(f"    ...and {len(transactions) - 5} more")
+
         return "\n".join(lines)
 
     def _fmt_reminders(self, reminders: list[dict]) -> str:
