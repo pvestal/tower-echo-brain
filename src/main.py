@@ -192,15 +192,9 @@ except ImportError as e:
 except Exception as e:
     logger.error(f"❌ Intelligence router failed: {e}")
 
-# Mount Reasoning API - This adds LLM synthesis for natural responses
-try:
-    from src.api.endpoints.reasoning_router import router as reasoning_router
-    app.include_router(reasoning_router, prefix="/api/echo")
-    logger.info("✅ Reasoning router mounted at /api/echo/reasoning")
-except ImportError as e:
-    logger.warning(f"⚠️ Reasoning router not available: {e}")
-except Exception as e:
-    logger.error(f"❌ Reasoning router failed: {e}")
+# NOTE: reasoning_router removed — its /ask endpoint was dead code
+# (shadowed by echo_main_router's /ask, which is mounted first at line 108).
+# The ParallelRetriever it used is still available via echo_main_router.
 
 # Mount Search API - Direct PostgreSQL conversation search
 try:
@@ -268,6 +262,7 @@ _optional_routers = [
     ("src.api.home_assistant_api", "router", None, "Home Assistant (/api/home)"),
     ("src.api.git_operations", "router", None, "Git operations (/git)"),
     ("src.api.photo_dedup_api", "router", None, "Photo Dedup (/api/photos)"),
+    ("src.api.person_api", "router", None, "Person Identity (/api/persons)"),
 ]
 
 for module_path, attr_name, prefix, label in _optional_routers:
@@ -492,6 +487,51 @@ async def mcp_handler(request: dict):
                     }
                 },
                 {
+                    "name": "lora_convergence",
+                    "description": "Run LoRA convergence loop for a character: generates keyframes, vision-reviews, auto-approves, then fires I2V video for each approved keyframe. Returns progress and results.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "character_slug": {"type": "string", "description": "Character slug (e.g. soraya, mario)"},
+                            "project_id": {"type": "integer", "description": "Project ID (e.g. 66 for Soraya)"},
+                            "loras": {"type": "string", "description": "Comma-separated LoRA names to test. Omit to auto-select untested."},
+                            "tiers": {"type": "string", "description": "Comma-separated tiers: explicit,camera,action. Default: camera,action,explicit"},
+                            "max_passes": {"type": "integer", "description": "Max convergence passes (default: 3)"},
+                            "seeds_per_pass": {"type": "integer", "description": "Seeds per LoRA per pass (default: 2)"},
+                            "image_only": {"type": "boolean", "description": "Skip video stage, keyframes only (default: false)"},
+                            "dry_run": {"type": "boolean", "description": "List what would be tested without generating (default: false)"}
+                        },
+                        "required": ["character_slug", "project_id"]
+                    }
+                },
+                {
+                    "name": "production_status",
+                    "description": "Get anime production pipeline status — projects, orchestrator state, pending approvals, stalls.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "project_id": {"type": "integer", "description": "Optional: specific project ID. Omit for all projects."}
+                        }
+                    }
+                },
+                {
+                    "name": "manage_production",
+                    "description": "Manage anime production: enable/disable orchestrator, initialize projects, trigger replenishment.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "action": {
+                                "type": "string",
+                                "enum": ["enable_orchestrator", "disable_orchestrator", "initialize_project", "replenish"],
+                                "description": "Action to perform"
+                            },
+                            "project_id": {"type": "integer", "description": "Project ID (for initialize_project)"},
+                            "target": {"type": "integer", "description": "Training target (for initialize_project, default 100)"}
+                        },
+                        "required": ["action"]
+                    }
+                },
+                {
                     "name": "web_search",
                     "description": "Search the web using self-hosted SearXNG. Returns titles, URLs, and snippets.",
                     "inputSchema": {
@@ -568,6 +608,36 @@ async def mcp_handler(request: dict):
                     }
                 },
                 {
+                    "name": "enrich_shot_prompt",
+                    "description": "Enrich a shot's generation prompt using Echo Brain context, character appearance, project style, and AI reasoning. Pulls all relevant context then rewrites the prompt for better image generation.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "shot_id": {"type": "string", "description": "Shot UUID to enrich"},
+                            "project_id": {"type": "integer", "description": "Project ID (optional, auto-detected from shot)"},
+                            "scene_id": {"type": "string", "description": "Scene UUID (optional, auto-detected from shot)"}
+                        },
+                        "required": ["shot_id"]
+                    }
+                },
+                {
+                    "name": "evaluate_generation",
+                    "description": "Evaluate a generated image/frame using CLIP scoring. Returns semantic, variety, and text alignment scores plus composite MHP bucket.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "image_path": {"type": "string", "description": "Path to the generated image/frame"},
+                            "shot_id": {"type": "string", "description": "Shot UUID"},
+                            "scene_id": {"type": "string", "description": "Scene UUID"},
+                            "project_id": {"type": "integer", "description": "Project ID"},
+                            "character_slugs": {"type": "array", "items": {"type": "string"}, "description": "Character slugs present in the shot"},
+                            "video_engine": {"type": "string", "description": "Video engine used (e.g. wan22_14b)"},
+                            "prompt_text": {"type": "string", "description": "Generation prompt text"}
+                        },
+                        "required": ["image_path"]
+                    }
+                },
+                {
                     "name": "session_summary",
                     "description": "Store a session summary at end of a Claude Code session. Captures what was done, decisions made, and topics covered as a high-quality memory.",
                     "inputSchema": {
@@ -587,6 +657,26 @@ async def mcp_handler(request: dict):
                             }
                         },
                         "required": ["summary"]
+                    }
+                },
+                {
+                    "name": "project_generation_loop",
+                    "description": "Control the continuous generation loop for anime projects. Manages keyframe generation, video I2V, and scene assembly as a fire-and-forget pipeline.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "action": {
+                                "type": "string",
+                                "enum": ["enable", "start", "stop", "status", "configure"],
+                                "description": "Action to perform. Must 'enable' before 'start'."
+                            },
+                            "project_id": {"type": "integer", "description": "Project ID"},
+                            "config": {
+                                "type": "object",
+                                "description": "Configuration options: auto_approve_threshold, burst_enabled, burst_budget_cap, video_enabled, assembly_enabled, dry_run, tick_interval_seconds, keyframe_batch_size"
+                            }
+                        },
+                        "required": ["action", "project_id"]
                     }
                 }
             ]
@@ -696,6 +786,102 @@ async def mcp_handler(request: dict):
                     count=arguments.get("count", 1),
                     prompt_override=arguments.get("prompt_override"),
                 )
+
+            elif tool_name == "lora_convergence":
+                import subprocess
+                char_slug = arguments.get("character_slug", "")
+                proj_id = arguments.get("project_id", 0)
+                if not char_slug or not proj_id:
+                    return {"error": "character_slug and project_id are required"}
+
+                loras = arguments.get("loras", "")
+                tiers = arguments.get("tiers", "camera,action,explicit")
+                max_passes = arguments.get("max_passes", 3)
+                seeds = arguments.get("seeds_per_pass", 2)
+                image_only = arguments.get("image_only", False)
+                dry_run = arguments.get("dry_run", False)
+
+                cmd = [
+                    "python3", "/opt/anime-studio/scripts/lora_convergence_loop.py",
+                    "--character", char_slug,
+                    "--project-id", str(proj_id),
+                    "--tiers", tiers,
+                    "--max-passes", str(max_passes),
+                    "--seeds-per-pass", str(seeds),
+                ]
+                if loras:
+                    cmd.extend(["--loras", loras])
+                if image_only:
+                    cmd.append("--image-only")
+
+                if dry_run:
+                    return {
+                        "status": "dry_run",
+                        "command": " ".join(cmd),
+                        "character": char_slug,
+                        "project_id": proj_id,
+                        "tiers": tiers,
+                        "loras": loras or "(auto-select from tiers)",
+                        "max_passes": max_passes,
+                        "seeds_per_pass": seeds,
+                        "image_only": image_only,
+                    }
+
+                # Run in background, log to /tmp
+                log_path = f"/tmp/{char_slug}_convergence.log"
+                with open(log_path, "w") as log_file:
+                    proc = subprocess.Popen(
+                        cmd,
+                        stdout=log_file,
+                        stderr=subprocess.STDOUT,
+                        cwd="/opt/anime-studio",
+                    )
+                return {
+                    "status": "started",
+                    "pid": proc.pid,
+                    "log_path": log_path,
+                    "command": " ".join(cmd),
+                    "message": f"Convergence loop started for {char_slug} (PID {proc.pid}). Monitor: tail -f {log_path}",
+                }
+
+            elif tool_name == "production_status":
+                from src.integrations.anime_studio_client import anime_studio
+                pid = arguments.get("project_id")
+                result = {}
+                orch = await anime_studio.orchestrator_status()
+                result["orchestrator"] = orch or {"error": "unreachable"}
+                if pid:
+                    pipeline = await anime_studio.pipeline_status(pid)
+                    pending = await anime_studio.pending_images(pid)
+                    result["pipeline"] = pipeline
+                    result["pending_images"] = len(pending) if isinstance(pending, list) else 0
+                else:
+                    projects = await anime_studio.list_projects()
+                    result["projects"] = [
+                        {"id": p.get("id"), "name": p.get("name"), "status": p.get("status")}
+                        for p in (projects or [])
+                    ]
+                return result
+
+            elif tool_name == "manage_production":
+                from src.integrations.anime_studio_client import anime_studio
+                action = arguments.get("action", "")
+                if action == "enable_orchestrator":
+                    return await anime_studio.orchestrator_toggle(True) or {"error": "failed"}
+                elif action == "disable_orchestrator":
+                    return await anime_studio.orchestrator_toggle(False) or {"error": "failed"}
+                elif action == "initialize_project":
+                    pid = arguments.get("project_id")
+                    target = arguments.get("target", 100)
+                    if not pid:
+                        return {"error": "project_id required"}
+                    return await anime_studio.orchestrator_initialize(pid, target) or {"error": "failed"}
+                elif action == "replenish":
+                    return await anime_studio.replenish(
+                        target=arguments.get("target", 50)
+                    ) or {"error": "failed"}
+                else:
+                    return {"error": f"Unknown action: {action}"}
 
             elif tool_name == "web_search":
                 from src.services.search_service import get_search_service
@@ -819,6 +1005,28 @@ async def mcp_handler(request: dict):
                     return {"stored": True, "memory_id": result, "facts_stored": len(decisions)}
                 return {"stored": False, "error": "Failed to store session summary"}
 
+            elif tool_name == "enrich_shot_prompt":
+                return await mcp_service.enrich_shot_prompt(
+                    shot_id=arguments.get("shot_id", ""),
+                    project_id=arguments.get("project_id", 0),
+                    scene_id=arguments.get("scene_id", ""),
+                )
+
+            elif tool_name == "evaluate_generation":
+                from src.services.clip_scorer import evaluate_generation as _eval_gen
+                return await _eval_gen(
+                    image_path=arguments.get("image_path", ""),
+                    prompt_text=arguments.get("prompt_text", ""),
+                    shot_id=arguments.get("shot_id", ""),
+                    scene_id=arguments.get("scene_id", ""),
+                    project_id=arguments.get("project_id", 0),
+                    character_slugs=arguments.get("character_slugs"),
+                    video_engine=arguments.get("video_engine", ""),
+                )
+
+            elif tool_name == "project_generation_loop":
+                return await _handle_generation_loop(arguments)
+
             else:
                 return {"error": f"Unknown tool: {tool_name}"}
 
@@ -827,6 +1035,50 @@ async def mcp_handler(request: dict):
             return {"error": str(e)}
 
     return {"error": f"Unknown method: {method}"}
+
+async def _handle_generation_loop(arguments: dict) -> dict:
+    """Handle the project_generation_loop MCP tool.
+
+    Proxies to the Anime Studio API at :8401/api/system/generation-loop/*.
+    """
+    import httpx
+
+    action = arguments.get("action", "status")
+    project_id = arguments.get("project_id")
+    config = arguments.get("config", {})
+    base_url = "http://localhost:8401/api/system"
+
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            if action == "enable":
+                resp = await client.post(
+                    f"{base_url}/generation-loop/enable",
+                    json={"enabled": config.get("enabled", True) if config else True},
+                )
+            elif action == "start":
+                resp = await client.post(
+                    f"{base_url}/generation-loop/start",
+                    json={"project_id": project_id, "config": config},
+                )
+            elif action == "stop":
+                resp = await client.post(
+                    f"{base_url}/generation-loop/stop",
+                    json={"project_id": project_id},
+                )
+            elif action == "status":
+                params = {"project_id": project_id} if project_id else {}
+                resp = await client.get(f"{base_url}/generation-loop/status", params=params)
+            elif action == "configure":
+                payload = {"project_id": project_id, **config}
+                resp = await client.put(f"{base_url}/generation-loop/config", json=payload)
+            else:
+                return {"error": f"Unknown action: {action}"}
+
+            return resp.json()
+    except Exception as e:
+        logger.error(f"Generation loop MCP error: {e}")
+        return {"error": str(e), "hint": "Is anime-studio (:8401) running?"}
+
 
 async def _handle_ollama_mcp(arguments: dict) -> dict:
     """Handle the manage_ollama MCP tool."""
@@ -2198,6 +2450,15 @@ async def startup_event():
             logger.info("✅ Registered governor worker (12 hours)")
         except Exception as e:
             logger.error(f"❌ Failed to register governor: {e}")
+
+        try:
+            from src.autonomous.workers.production_worker import ProductionWorker
+            worker = ProductionWorker()
+            worker_scheduler.register_worker("production", worker.run_cycle, interval_minutes=10)
+            workers_registered += 1
+            logger.info("✅ Registered production worker (10 min) — anime-studio pipeline automation")
+        except Exception as e:
+            logger.error(f"❌ Failed to register production worker: {e}")
 
         # Initialize Graph Engine (lazy — loads on first query)
         try:

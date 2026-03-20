@@ -466,42 +466,211 @@ class MCPService:
     async def trigger_generation(self, character_slug: str, count: int = 1,
                                  prompt_override: str | None = None) -> dict:
         """Trigger image generation via Anime Studio API."""
-        import httpx
+        from src.integrations.anime_studio_client import anime_studio
+        return await anime_studio.generate_image(character_slug, count, prompt_override)
 
-        count = max(1, min(count, 5))
-        results = []
-        errors = []
+    async def enrich_shot_prompt(
+        self,
+        shot_id: str,
+        project_id: int = 0,
+        scene_id: str = "",
+    ) -> dict:
+        """Enrich a shot's generation prompt using Echo Brain context + reasoning.
 
-        async with httpx.AsyncClient(timeout=60) as client:
-            for i in range(count):
-                try:
-                    body: dict = {"generation_type": "image"}
-                    if prompt_override:
-                        body["prompt_override"] = prompt_override
-                    resp = await client.post(
-                        f"http://localhost:8401/api/visual/generate/{character_slug}",
-                        json=body,
-                    )
-                    resp.raise_for_status()
-                    data = resp.json()
-                    results.append({
-                        "prompt_id": data.get("prompt_id", data.get("id", "unknown")),
-                        "status": data.get("status", "queued"),
-                    })
-                except httpx.ConnectError:
-                    errors.append("Anime Studio not reachable at localhost:8401")
-                    break
-                except httpx.HTTPStatusError as e:
-                    errors.append(f"HTTP {e.response.status_code}: {e.response.text[:200]}")
-                except Exception as e:
-                    errors.append(str(e))
+        Pulls character appearance, project style, and relevant memories,
+        then uses Ollama to generate an improved prompt. Writes result back to DB.
+        """
+        import asyncpg
+        from src.services.llm_service import get_llm_service
 
-        return {
-            "generated": len(results),
-            "character_slug": character_slug,
-            "results": results,
-            "errors": errors,
-        }
+        llm = get_llm_service()
+
+        try:
+            conn = await asyncpg.connect(
+                host="localhost", user="patrick",
+                password="RP78eIrW7cI2jYvL5akt1yurE",
+                database="anime_production",
+                server_settings={"search_path": "public"},
+            )
+        except Exception as e:
+            return {"enriched": False, "error": f"DB connection failed: {e}"}
+
+        try:
+            # 1. Get shot + scene + project context
+            #    Use explicit public. schema to avoid ag_catalog conflicts
+            shot = await conn.fetchrow("""
+                SELECT s.id, s.shot_number, s.generation_prompt, s.generation_negative,
+                       s.shot_type, s.camera_angle, s.emotional_beat, s.viewer_should_feel,
+                       s.characters_present, s.image_lora, s.image_lora_strength,
+                       sc.title as scene_title, sc.description as scene_desc,
+                       sc.location, sc.time_of_day, sc.weather, sc.mood,
+                       p.id as project_id, p.name as project_name, p.description as project_desc,
+                       p.content_rating
+                FROM public.shots s
+                JOIN public.scenes sc ON s.scene_id = sc.id
+                JOIN public.projects p ON sc.project_id = p.id
+                WHERE s.id = $1::uuid
+            """, shot_id)
+
+            if not shot:
+                return {"enriched": False, "error": f"Shot {shot_id} not found"}
+
+            pid = shot["project_id"]
+
+            # 2. Get character appearance data
+            chars_present = shot["characters_present"] or []
+            char_context = ""
+            if chars_present:
+                for slug in chars_present[:3]:
+                    char_row = await conn.fetchrow("""
+                        SELECT name, description, appearance_data
+                        FROM public.characters WHERE project_id = $1
+                        AND LOWER(REPLACE(name, ' ', '_')) = $2
+                    """, pid, slug)
+                    if char_row:
+                        char_context += f"\nCharacter '{char_row['name']}': {char_row['description'] or ''}"
+                        if char_row["appearance_data"]:
+                            import json as _json
+                            try:
+                                app = _json.loads(char_row["appearance_data"]) if isinstance(
+                                    char_row["appearance_data"], str
+                                ) else char_row["appearance_data"]
+                                char_context += f"\n  Species: {app.get('species', 'unknown')}"
+                                char_context += f"\n  Body: {app.get('body_type', '')}"
+                                colors = app.get("key_colors", {})
+                                if colors:
+                                    char_context += f"\n  Colors: {colors}"
+                                features = app.get("key_features", [])
+                                if features:
+                                    char_context += f"\n  Features: {', '.join(features[:6])}"
+                                errors = app.get("common_errors", [])
+                                if errors:
+                                    char_context += f"\n  AVOID: {', '.join(errors[:4])}"
+                            except Exception:
+                                pass
+
+            # 3. Get project generation style
+            # Get project's default_style name, then look up generation_styles
+            proj_style = await conn.fetchval(
+                "SELECT default_style FROM public.projects WHERE id = $1", pid
+            )
+            style_row = None
+            if proj_style:
+                style_row = await conn.fetchrow("""
+                    SELECT checkpoint_model, positive_prompt_template, negative_prompt_template
+                    FROM public.generation_styles WHERE style_name = $1
+                """, proj_style)
+            style_context = ""
+            if style_row:
+                style_context = f"Checkpoint: {style_row['checkpoint_model']}"
+                if style_row["positive_prompt_template"]:
+                    style_context += f"\nRequired positive tags: {style_row['positive_prompt_template']}"
+                if style_row["negative_prompt_template"]:
+                    style_context += f"\nRequired negative tags: {style_row['negative_prompt_template']}"
+
+            # 4. Search Echo Brain for relevant context
+            memory_context = ""
+            try:
+                search_queries = [
+                    f"successful {shot['project_name']} keyframe generation",
+                    f"anime prompt tips {shot.get('shot_type', 'medium')} shot",
+                ]
+                for q in search_queries:
+                    results = await self.search_memory(q, limit=3)
+                    if isinstance(results, dict) and results.get("result"):
+                        memory_context += f"\n{results['result'][:500]}"
+            except Exception:
+                pass  # Memory search is optional enrichment
+
+            # 5. Build reasoning prompt
+            reasoning_prompt = f"""You are an expert anime art director and Stable Diffusion prompt engineer.
+
+PROJECT: {shot['project_name']} — {shot['project_desc'] or ''}
+Content Rating: {shot['content_rating']}
+{style_context}
+
+SCENE: {shot['scene_title']}
+Description: {shot['scene_desc'] or ''}
+Location: {shot['location'] or 'unspecified'}
+Time: {shot['time_of_day'] or 'unspecified'}
+Weather: {shot['weather'] or 'unspecified'}
+Mood: {shot['mood'] or 'unspecified'}
+
+{char_context}
+
+SHOT #{shot['shot_number']} (type: {shot['shot_type'] or 'medium'}):
+Camera: {shot['camera_angle'] or 'eye-level'}
+Emotion: {shot['emotional_beat'] or 'neutral'}
+Viewer should feel: {shot['viewer_should_feel'] or 'engaged'}
+LoRA: {shot['image_lora'] or 'none'} (strength: {shot['image_lora_strength'] or 0.8})
+
+CURRENT PROMPT:
+{shot['generation_prompt']}
+
+CURRENT NEGATIVE:
+{shot['generation_negative']}
+
+RELEVANT CONTEXT FROM MEMORY:
+{memory_context[:800] if memory_context else 'No prior context available.'}
+
+TASK: Rewrite the generation prompt to be more vivid, specific, and effective.
+Rules:
+- Keep all required positive/negative tags from the style template
+- Keep LoRA trigger words if a LoRA is set
+- Use booru-style tags (comma-separated, specific, descriptive)
+- Add specific pose, lighting, composition, and atmosphere details
+- Respect the character's appearance data — do NOT contradict it
+- Respect common errors list — avoid those mistakes
+- Keep the content rating ({shot['content_rating']})
+- Make the negative prompt complement the positive to avoid common failures
+
+Return ONLY a JSON object:
+{{"enhanced_prompt": "your improved prompt here", "enhanced_negative": "your improved negative here", "reasoning": "1-2 sentence explanation of what you changed and why"}}"""
+
+            # 6. Call Ollama
+            llm_resp = await llm.generate(
+                prompt=reasoning_prompt,
+                model="gemma3:12b",
+                temperature=0.6,
+                max_tokens=1024,
+            )
+
+            # 7. Parse response
+            raw = llm_resp.content
+            start = raw.find("{")
+            end = raw.rfind("}") + 1
+            if start < 0 or end <= start:
+                return {"enriched": False, "error": "LLM returned no valid JSON", "raw": raw[:300]}
+
+            import json as _json
+            enriched = _json.loads(raw[start:end])
+            new_prompt = enriched.get("enhanced_prompt", shot["generation_prompt"])
+            new_neg = enriched.get("enhanced_negative", shot["generation_negative"])
+            reasoning = enriched.get("reasoning", "")
+
+            # 8. Write back to DB
+            await conn.execute("""
+                UPDATE public.shots SET generation_prompt = $1, generation_negative = $2,
+                    source_image_path = NULL, status = 'pending'
+                WHERE id = $3::uuid
+            """, new_prompt, new_neg, shot_id)
+
+            return {
+                "enriched": True,
+                "shot_id": shot_id,
+                "shot_number": shot["shot_number"],
+                "enhanced_prompt": new_prompt,
+                "enhanced_negative": new_neg,
+                "reasoning": reasoning,
+                "llm_time_ms": llm_resp.total_duration_ms,
+            }
+
+        except Exception as e:
+            import traceback
+            logger.error(f"Enrichment failed for shot {shot_id}: {e}\n{traceback.format_exc()}")
+            return {"enriched": False, "error": str(e)}
+        finally:
+            await conn.close()
 
     async def telegram_bot_status(self) -> dict:
         """Get Telegram bot listener status."""

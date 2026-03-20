@@ -391,6 +391,86 @@ async def trigger_generation(
     return f"Triggered {generated} generation(s) for {character_slug}\nPrompt IDs: {', '.join(ids)}"
 
 
+@mcp.tool()
+async def enrich_shot_prompt(
+    shot_id: str, project_id: int = 0, scene_id: str = ""
+) -> str:
+    """Enrich a shot's generation prompt using Echo Brain context, character
+    appearance, project style, and AI reasoning. Pulls all relevant context
+    then rewrites the prompt for better image generation.
+
+    Args:
+        shot_id: Shot UUID to enrich
+        project_id: Project ID (optional, auto-detected from shot)
+        scene_id: Scene UUID (optional, auto-detected from shot)
+    """
+    data = await _mcp_service.enrich_shot_prompt(
+        shot_id=shot_id,
+        project_id=project_id,
+        scene_id=scene_id,
+    )
+    if not data.get("enriched"):
+        return f"Enrichment failed: {data.get('error', 'unknown')}"
+
+    lines = [
+        f"Shot #{data['shot_number']} enriched ({data.get('llm_time_ms', 0):.0f}ms)",
+        f"Reasoning: {data.get('reasoning', 'n/a')}",
+        f"\nPrompt: {data['enhanced_prompt'][:300]}...",
+        f"\nNegative: {data['enhanced_negative'][:200]}...",
+    ]
+    return "\n".join(lines)
+
+
+@mcp.tool()
+async def evaluate_generation(
+    image_path: str,
+    shot_id: str = "",
+    scene_id: str = "",
+    project_id: int = 0,
+    character_slugs: list[str] = [],
+    video_engine: str = "",
+    prompt_text: str = "",
+) -> str:
+    """Evaluate a generated image/frame using CLIP scoring.
+    Returns semantic, variety, and text alignment scores plus composite MHP bucket.
+    Stores the CLIP embedding in Qdrant for future variety checks.
+
+    Args:
+        image_path: Path to the generated image/frame
+        shot_id: Shot UUID
+        scene_id: Scene UUID
+        project_id: Project ID
+        character_slugs: Character slugs present in the shot
+        video_engine: Video engine used (e.g. wan22_14b)
+        prompt_text: Generation prompt text
+    """
+    from src.services.clip_scorer import evaluate_generation as _eval_gen
+    data = await _eval_gen(
+        image_path=image_path,
+        prompt_text=prompt_text,
+        shot_id=shot_id,
+        scene_id=scene_id,
+        project_id=project_id,
+        character_slugs=character_slugs,
+        video_engine=video_engine,
+    )
+    if "error" in data:
+        return f"Evaluation error: {data['error']}"
+
+    lines = [
+        f"CLIP Evaluation for {image_path}:",
+        f"  Semantic: {data.get('semantic_score', 0):.1f}",
+        f"  Variety: {data.get('variety_score', 0):.1f}",
+        f"  Text Alignment: {data.get('text_alignment', 0):.1f}",
+        f"  MHP Bucket: {data.get('mhp_bucket', 0):.1f}",
+    ]
+    if data.get("too_similar_to"):
+        lines.append(f"  WARNING: Too similar to shot {data['too_similar_to']}")
+    if data.get("suggestion"):
+        lines.append(f"  Suggestion: {data['suggestion']}")
+    return "\n".join(lines)
+
+
 # ── Web search & fetch ───────────────────────────────────────────────
 
 

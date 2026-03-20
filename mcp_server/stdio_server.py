@@ -109,6 +109,60 @@ async def store_memory(content: str, type: str = "memory") -> str:
 
 
 @mcp.tool()
+async def list_proposals(status: str = "", limit: int = 10) -> str:
+    """List Echo Brain's self-improvement proposals with optional status filter.
+
+    Shows proposals from the multi-model improvement loop (Planner/Coder/Critic)
+    with critic scores and verdicts.
+
+    Args:
+        status: Filter by status: pending, critic_approved, needs_review, approved, rejected, applied (empty = all)
+        limit: Max results (default 10)
+    """
+    params = {}
+    if status:
+        params["status"] = status
+
+    async with httpx.AsyncClient(timeout=15) as client:
+        resp = await client.get(
+            f"{ECHO_BRAIN_URL}/api/echo/proposals",
+            params=params,
+        )
+        if resp.status_code != 200:
+            return f"Failed to list proposals: {resp.status_code}"
+        data = resp.json()
+
+    proposals = data.get("proposals", [])[:limit]
+    counts = data.get("counts", {})
+
+    if not proposals:
+        return f"No proposals found{' with status ' + status if status else ''}."
+
+    lines = [f"Improvement Proposals ({len(proposals)} shown)\n"]
+
+    # Status counts
+    count_parts = [f"{k}: {v}" for k, v in counts.items() if v > 0]
+    if count_parts:
+        lines.append(f"Counts: {', '.join(count_parts)}\n")
+
+    for p in proposals:
+        critic = ""
+        if p.get("critic_score"):
+            critic = f" | critic: {p['critic_score']}/10 {p.get('critic_verdict', '')}"
+        iters = ""
+        if p.get("loop_iterations"):
+            iters = f" | {p['loop_iterations']} iter"
+
+        lines.append(f"[{p['status']}] {p['title']}")
+        lines.append(f"  Target: {p.get('target_file', '?')} | Risk: {p.get('risk_assessment', '?')}{critic}{iters}")
+        lines.append(f"  Issue: {p.get('issue_title', '?')}")
+        lines.append(f"  ID: {p['id']} | {p['created_at'][:19]}")
+        lines.append("")
+
+    return "\n".join(lines)
+
+
+@mcp.tool()
 async def explore_graph(entity: str, depth: int = 2) -> str:
     """Explore the knowledge graph: find related entities, paths, and neighborhood stats."""
     data = await _call_echo_brain("explore_graph", {"entity": entity, "depth": depth})
