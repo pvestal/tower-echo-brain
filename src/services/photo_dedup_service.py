@@ -43,8 +43,6 @@ COLLECTION = os.getenv("QDRANT_COLLECTION", "echo_memory")
 DB_URL = os.getenv("DATABASE_URL", "postgresql://echo:echo_secure_password_123@localhost/echo_brain")
 AUTH_SERVICE_URL = "http://localhost:8088"
 
-GOOGLE_PHOTOS_API = "https://photoslibrary.googleapis.com/v1"
-
 MAX_VIDEO_KEYFRAMES = 30  # Cap at 30 frames (5 min of video at 10s interval)
 
 # Vision prompt for personal photo analysis (Gemma 3) — enhanced
@@ -136,7 +134,7 @@ class PhotoDedupService:
     def __init__(self):
         self.stats = {
             "local_scanned": 0, "local_new": 0, "local_skipped": 0,
-            "cloud_fetched": 0, "matched": 0, "analyzed": 0,
+            "matched": 0, "analyzed": 0,
             "embedded": 0, "errors": 0
         }
         self._insightface_app = None
@@ -177,25 +175,6 @@ class PhotoDedupService:
             CREATE INDEX IF NOT EXISTS idx_photos_match ON photos(match_type);
             CREATE INDEX IF NOT EXISTS idx_photos_qdrant ON photos(qdrant_point_id);
             CREATE INDEX IF NOT EXISTS idx_photos_year ON photos(year_folder);
-
-            CREATE TABLE IF NOT EXISTS google_photos_cloud (
-                id              SERIAL PRIMARY KEY,
-                google_photo_id TEXT UNIQUE NOT NULL,
-                filename        TEXT,
-                mime_type       TEXT,
-                creation_time   TIMESTAMPTZ,
-                width           INT,
-                height          INT,
-                camera_make     TEXT,
-                camera_model    TEXT,
-                description     TEXT,
-                matched_local_id INT REFERENCES photos(id),
-                fetched_at      TIMESTAMPTZ DEFAULT NOW()
-            );
-
-            CREATE INDEX IF NOT EXISTS idx_gpc_filename ON google_photos_cloud(filename);
-            CREATE INDEX IF NOT EXISTS idx_gpc_creation ON google_photos_cloud(creation_time);
-            CREATE INDEX IF NOT EXISTS idx_gpc_matched ON google_photos_cloud(matched_local_id);
 
             CREATE TABLE IF NOT EXISTS photo_dedup_runs (
                 id              SERIAL PRIMARY KEY,
@@ -255,11 +234,19 @@ class PhotoDedupService:
             "CREATE INDEX IF NOT EXISTS idx_photos_media_type ON photos(media_type)",
             "CREATE INDEX IF NOT EXISTS idx_photos_source_root ON photos(source_root)",
             "CREATE INDEX IF NOT EXISTS idx_photos_face_count ON photos(face_count)",
+            "CREATE INDEX IF NOT EXISTS idx_photos_phash ON photos(perceptual_hash)",
         ]:
             try:
                 await conn.execute(idx)
             except Exception:
                 pass
+
+        # Person identity layer (delegates to PersonIDService for full schema)
+        try:
+            from src.services.person_id_service import PersonIDService
+            await PersonIDService().ensure_schema(conn)
+        except Exception as e:
+            logger.debug(f"[PhotoDedup] Person schema init deferred: {e}")
 
     # ------------------------------------------------------------------
     # Local scan
@@ -586,121 +573,6 @@ class PhotoDedupService:
         return result
 
     # ------------------------------------------------------------------
-    # Cloud metadata fetch
-    # ------------------------------------------------------------------
-    async def fetch_cloud_metadata(self, account: Optional[str] = None) -> Dict[str, Any]:
-        """Paginate Google Photos API, store metadata to google_photos_cloud.
-        Pass account=email to use a specific Google account's token.
-        """
-        conn = await asyncpg.connect(DB_URL)
-        try:
-            await self._ensure_schema(conn)
-
-            token = await self._get_google_token(account=account)
-            if not token:
-                hint = f"?login_hint={account}" if account else ""
-                return {"error": f"No Google OAuth token for {account or 'default'}. Authenticate at /api/auth/oauth/google/login{hint}"}
-
-            run_id = await conn.fetchval(
-                "INSERT INTO photo_dedup_runs (run_type) VALUES ('cloud_fetch') RETURNING id")
-
-            fetched = 0
-            new = 0
-            errors = 0
-            next_page_token = None
-
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                while True:
-                    params = {"pageSize": 100}
-                    if next_page_token:
-                        params["pageToken"] = next_page_token
-
-                    try:
-                        resp = await client.get(
-                            f"{GOOGLE_PHOTOS_API}/mediaItems",
-                            headers={"Authorization": f"Bearer {token}"},
-                            params=params
-                        )
-
-                        if resp.status_code == 401:
-                            # Token expired, try refresh
-                            token = await self._refresh_google_token(account=account)
-                            if not token:
-                                logger.error(f"Google Photos 401 and refresh failed for {account or 'default'} — need re-auth")
-                                errors += 1
-                                break
-                            continue
-
-                        if resp.status_code != 200:
-                            logger.error(f"Google Photos API error: {resp.status_code} {resp.text[:200]}")
-                            errors += 1
-                            break
-
-                        data = resp.json()
-                        items = data.get("mediaItems", [])
-
-                        for item in items:
-                            fetched += 1
-                            meta = item.get("mediaMetadata", {})
-                            creation_time = None
-                            if meta.get("creationTime"):
-                                try:
-                                    creation_time = datetime.fromisoformat(
-                                        meta["creationTime"].replace("Z", "+00:00"))
-                                except (ValueError, TypeError):
-                                    pass
-
-                            photo_meta = meta.get("photo", {})
-
-                            try:
-                                await conn.execute("""
-                                    INSERT INTO google_photos_cloud
-                                        (google_photo_id, filename, mime_type, creation_time,
-                                         width, height, camera_make, camera_model, description)
-                                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-                                    ON CONFLICT (google_photo_id) DO UPDATE SET
-                                        filename = EXCLUDED.filename,
-                                        creation_time = EXCLUDED.creation_time,
-                                        fetched_at = NOW()
-                                """,
-                                    item.get("id"),
-                                    item.get("filename"),
-                                    item.get("mimeType"),
-                                    creation_time,
-                                    int(meta.get("width", 0)) or None,
-                                    int(meta.get("height", 0)) or None,
-                                    photo_meta.get("cameraMake"),
-                                    photo_meta.get("cameraModel"),
-                                    item.get("description"),
-                                )
-                                new += 1
-                            except Exception as e:
-                                logger.error(f"Cloud insert error: {e}")
-                                errors += 1
-
-                        next_page_token = data.get("nextPageToken")
-                        if not next_page_token:
-                            break
-
-                    except httpx.TimeoutException:
-                        logger.error("Google Photos API timeout")
-                        errors += 1
-                        break
-
-            await conn.execute("""
-                UPDATE photo_dedup_runs
-                SET finished_at = NOW(), items_processed = $2, items_new = $3, items_error = $4
-                WHERE id = $1
-            """, run_id, fetched, new, errors)
-
-            result = {"fetched": fetched, "new": new, "errors": errors, "run_id": run_id}
-            logger.info(f"[PhotoDedup] Cloud fetch: {result}")
-            return result
-
-        finally:
-            await conn.close()
-
-    # ------------------------------------------------------------------
     # Dedup matching
     # ------------------------------------------------------------------
     async def run_dedup_matching(self) -> Dict[str, Any]:
@@ -715,10 +587,7 @@ class PhotoDedupService:
             results = {
                 "local_sha256_groups": 0,
                 "local_sha256_dupes": 0,
-                "cloud_filename_date_dims": 0,
-                "cloud_filename_only": 0,
                 "only_local": 0,
-                "only_cloud": 0,
             }
 
             # --- Tier 1: Local SHA256 exact dupes ---
@@ -741,59 +610,34 @@ class PhotoDedupService:
                         "UPDATE photos SET match_type = 'sha256_dupe' WHERE id = $1",
                         dupe["id"])
 
-            # --- Tier 2: Local vs Cloud — filename + date + dimensions ---
-            matched_2 = await conn.execute("""
-                UPDATE photos p
-                SET match_type = 'cloud_matched',
-                    google_photo_id = g.google_photo_id,
-                    updated_at = NOW()
-                FROM google_photos_cloud g
-                WHERE p.filename = g.filename
-                  AND p.date_taken IS NOT NULL
-                  AND g.creation_time IS NOT NULL
-                  AND ABS(EXTRACT(EPOCH FROM (p.date_taken - g.creation_time))) < 86400
-                  AND p.width = g.width
-                  AND p.height = g.height
-                  AND p.match_type = 'unmatched'
-                  AND g.matched_local_id IS NULL
+            # --- Tier 2: Identical perceptual hash (Hamming distance 0) ---
+            phash_groups = await conn.fetch("""
+                SELECT perceptual_hash, COUNT(*) as cnt
+                FROM photos
+                WHERE perceptual_hash IS NOT NULL
+                  AND match_type NOT IN ('sha256_dupe', 'phash_dupe')
+                GROUP BY perceptual_hash
+                HAVING COUNT(*) > 1
             """)
-            results["cloud_filename_date_dims"] = int(matched_2.split()[-1]) if matched_2 else 0
-
-            # Link cloud records back
-            await conn.execute("""
-                UPDATE google_photos_cloud g
-                SET matched_local_id = p.id
-                FROM photos p
-                WHERE p.google_photo_id = g.google_photo_id
-                  AND g.matched_local_id IS NULL
-            """)
-
-            # --- Tier 3: Filename-only fallback ---
-            matched_3 = await conn.execute("""
-                UPDATE photos p
-                SET match_type = 'cloud_filename_match',
-                    google_photo_id = g.google_photo_id,
-                    updated_at = NOW()
-                FROM google_photos_cloud g
-                WHERE p.filename = g.filename
-                  AND p.match_type = 'unmatched'
-                  AND g.matched_local_id IS NULL
-            """)
-            results["cloud_filename_only"] = int(matched_3.split()[-1]) if matched_3 else 0
-
-            await conn.execute("""
-                UPDATE google_photos_cloud g
-                SET matched_local_id = p.id
-                FROM photos p
-                WHERE p.google_photo_id = g.google_photo_id
-                  AND g.matched_local_id IS NULL
-            """)
+            results["phash_groups"] = 0
+            results["phash_dupes"] = 0
+            for group in phash_groups:
+                results["phash_groups"] += 1
+                results["phash_dupes"] += group["cnt"] - 1
+                dupes = await conn.fetch("""
+                    SELECT id FROM photos
+                    WHERE perceptual_hash = $1
+                      AND match_type NOT IN ('sha256_dupe', 'phash_dupe')
+                    ORDER BY id
+                """, group["perceptual_hash"])
+                for dupe in dupes[1:]:
+                    await conn.execute(
+                        "UPDATE photos SET match_type = 'phash_dupe' WHERE id = $1",
+                        dupe["id"])
 
             # --- Count unmatched ---
             results["only_local"] = await conn.fetchval(
                 "SELECT COUNT(*) FROM photos WHERE match_type = 'unmatched'")
-            results["only_cloud"] = await conn.fetchval(
-                "SELECT COUNT(*) FROM google_photos_cloud WHERE matched_local_id IS NULL")
 
             await conn.execute("""
                 UPDATE photo_dedup_runs
@@ -801,7 +645,7 @@ class PhotoDedupService:
                     details = $3::jsonb
                 WHERE id = $1
             """, run_id,
-                results["cloud_filename_date_dims"] + results["cloud_filename_only"],
+                results["local_sha256_dupes"],
                 json.dumps(results))
 
             logger.info(f"[PhotoDedup] Matching: {results}")
@@ -820,7 +664,6 @@ class PhotoDedupService:
             await self._ensure_schema(conn)
 
             total_local = await conn.fetchval("SELECT COUNT(*) FROM photos")
-            total_cloud = await conn.fetchval("SELECT COUNT(*) FROM google_photos_cloud")
 
             match_breakdown = await conn.fetch("""
                 SELECT match_type, COUNT(*) as cnt
@@ -1123,11 +966,18 @@ class PhotoDedupService:
             await conn.close()
 
     async def _prepare_gpu_for_vision(self):
-        """Evict mistral:7b from VRAM to make room for gemma3:12b vision model.
-        nomic-embed-text (0.3GB) stays pinned; freeing mistral (5.1GB) gives
-        gemma3 ~15.7GB of headroom on the 16GB AMD RX 9070 XT.
-        Then warm up gemma3:12b so it's ready before the batch starts.
+        """Check arbiter, evict other models, warm gemma3:12b for vision batch.
+        Vision requires GPU (image processing) — this is one of the few
+        legitimate GPU model uses.
         """
+        # Check arbiter before claiming GPU for vision
+        try:
+            from services.gpu_arbiter_client import arbiter
+            if not await arbiter.can_use_heavy_model():
+                logger.warning("[PhotoDedup] GPU busy — deferring vision analysis")
+                return
+        except Exception:
+            pass  # Fail open
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
                 resp = await client.post(
@@ -1801,7 +1651,7 @@ class PhotoDedupService:
                 WHERE llava_description IS NOT NULL
                   AND face_count IS NULL
                   AND (media_type = 'photo' OR media_type IS NULL)
-                  AND match_type != 'sha256_dupe'
+                  AND match_type NOT IN ('sha256_dupe', 'phash_dupe')
                 ORDER BY id
                 LIMIT $1
             """, batch_size)
@@ -1979,14 +1829,51 @@ class PhotoDedupService:
             await conn.close()
 
     async def name_face_cluster(self, cluster_id: int, name: str) -> Dict[str, Any]:
-        """Assign a name to a face cluster."""
+        """Assign a name to a face cluster. Delegates to PersonIDService for propagation."""
         conn = await asyncpg.connect(DB_URL)
         try:
+            # Update the cluster name directly
             result = await conn.execute(
                 "UPDATE face_clusters SET cluster_name = $2 WHERE id = $1",
                 cluster_id, name)
             if "UPDATE 0" in result:
                 return {"error": f"Cluster {cluster_id} not found"}
+
+            # Propagate to person layer if available
+            try:
+                from src.services.person_id_service import PersonIDService
+                person_svc = PersonIDService()
+                await person_svc.ensure_schema(conn)
+
+                # Find or create person for this cluster
+                mapping = await conn.fetchrow(
+                    "SELECT person_id FROM person_cluster_map WHERE cluster_id = $1",
+                    cluster_id)
+
+                if mapping:
+                    # Name the existing person
+                    await person_svc.name_person(conn, mapping["person_id"], name)
+                else:
+                    # Create person + mapping
+                    person_id = await conn.fetchval("""
+                        INSERT INTO persons (name, is_confirmed, created_at, updated_at)
+                        VALUES ($1, TRUE, NOW(), NOW())
+                        RETURNING id
+                    """, name)
+                    await conn.execute("""
+                        INSERT INTO person_cluster_map (person_id, cluster_id, confidence, source)
+                        VALUES ($1, $2, 1.0, 'manual_name')
+                        ON CONFLICT (cluster_id) DO UPDATE SET person_id = $1
+                    """, person_id, cluster_id)
+                    await conn.execute(
+                        "UPDATE photo_faces SET person_id = $1 WHERE cluster_id = $2",
+                        person_id, cluster_id)
+                    await conn.execute(
+                        "UPDATE face_clusters SET is_locked = TRUE WHERE id = $1",
+                        cluster_id)
+            except Exception as e:
+                logger.warning(f"[PhotoDedup] Person layer propagation failed: {e}")
+
             return {"cluster_id": cluster_id, "name": name, "status": "updated"}
         finally:
             await conn.close()
@@ -2432,6 +2319,302 @@ class PhotoDedupService:
             return []
 
     # ------------------------------------------------------------------
+    # Phase 1: Perceptual Hash Backfill
+    # ------------------------------------------------------------------
+    async def backfill_perceptual_hashes(self, batch_size: int = 500) -> Dict[str, Any]:
+        """Compute perceptual hashes for photos missing them."""
+        conn = await asyncpg.connect(DB_URL)
+        try:
+            await self._ensure_schema(conn)
+
+            run_id = await conn.fetchval(
+                "INSERT INTO photo_dedup_runs (run_type) VALUES ('phash_backfill') RETURNING id")
+
+            photos = await conn.fetch("""
+                SELECT id, file_path FROM photos
+                WHERE perceptual_hash IS NULL
+                  AND (media_type = 'photo' OR media_type IS NULL)
+                ORDER BY id
+                LIMIT $1
+            """, batch_size)
+
+            if not photos:
+                return {"processed": 0, "message": "No photos missing perceptual hash"}
+
+            updated = 0
+            errors = 0
+
+            for photo in photos:
+                try:
+                    path = Path(photo["file_path"])
+                    if not path.exists():
+                        continue
+                    phash = self._compute_perceptual_hash(path)
+                    if phash:
+                        await conn.execute(
+                            "UPDATE photos SET perceptual_hash = $2 WHERE id = $1",
+                            photo["id"], phash)
+                        updated += 1
+                except Exception as e:
+                    logger.debug(f"Phash error for {photo['file_path']}: {e}")
+                    errors += 1
+
+            await conn.execute("""
+                UPDATE photo_dedup_runs
+                SET finished_at = NOW(), items_processed = $2, items_new = $3, items_error = $4
+                WHERE id = $1
+            """, run_id, len(photos), updated, errors)
+
+            remaining = await conn.fetchval("""
+                SELECT COUNT(*) FROM photos
+                WHERE perceptual_hash IS NULL
+                  AND (media_type = 'photo' OR media_type IS NULL)
+            """) or 0
+
+            result = {"processed": len(photos), "updated": updated, "errors": errors,
+                      "remaining": remaining, "run_id": run_id}
+            logger.info(f"[PhotoDedup] Phash backfill: {result}")
+            return result
+        finally:
+            await conn.close()
+
+    # ------------------------------------------------------------------
+    # Phase 3: Duplicate Face Purge
+    # ------------------------------------------------------------------
+    async def purge_duplicate_faces(self) -> Dict[str, Any]:
+        """Remove face records from photos marked as duplicates."""
+        conn = await asyncpg.connect(DB_URL)
+        try:
+            await self._ensure_schema(conn)
+
+            # Find faces on duplicate photos
+            dupe_faces = await conn.fetch("""
+                SELECT pf.id, pf.cluster_id, pf.person_id
+                FROM photo_faces pf
+                JOIN photos p ON p.id = pf.photo_id
+                WHERE p.match_type IN ('sha256_dupe', 'phash_dupe')
+            """)
+
+            if not dupe_faces:
+                return {"faces_removed": 0, "message": "No faces on duplicate photos"}
+
+            face_ids = [f["id"] for f in dupe_faces]
+            affected_cluster_ids = list(set(
+                f["cluster_id"] for f in dupe_faces if f["cluster_id"] is not None
+            ))
+
+            # Clear person_id and cluster_id, then delete faces
+            await conn.execute("""
+                UPDATE photo_faces SET person_id = NULL, cluster_id = NULL
+                WHERE id = ANY($1::int[])
+            """, face_ids)
+            await conn.execute(
+                "DELETE FROM photo_faces WHERE id = ANY($1::int[])", face_ids)
+
+            # Update photo_count on affected clusters
+            clusters_cleaned = 0
+            clusters_deleted = 0
+            persons_deleted = 0
+
+            for cluster_id in affected_cluster_ids:
+                new_count = await conn.fetchval(
+                    "SELECT COUNT(DISTINCT photo_id) FROM photo_faces WHERE cluster_id = $1",
+                    cluster_id) or 0
+                await conn.execute(
+                    "UPDATE face_clusters SET photo_count = $2 WHERE id = $1",
+                    cluster_id, new_count)
+                clusters_cleaned += 1
+
+                if new_count == 0:
+                    # Delete cluster and its person mapping
+                    await conn.execute(
+                        "DELETE FROM person_cluster_map WHERE cluster_id = $1",
+                        cluster_id)
+                    await conn.execute(
+                        "DELETE FROM face_clusters WHERE id = $1", cluster_id)
+                    clusters_deleted += 1
+
+            # Delete unnamed persons with no remaining clusters
+            orphan_persons = await conn.fetch("""
+                SELECT p.id FROM persons p
+                WHERE p.name IS NULL
+                  AND NOT EXISTS (
+                    SELECT 1 FROM person_cluster_map pcm WHERE pcm.person_id = p.id
+                  )
+            """)
+            if orphan_persons:
+                orphan_ids = [r["id"] for r in orphan_persons]
+                await conn.execute(
+                    "DELETE FROM persons WHERE id = ANY($1::int[])", orphan_ids)
+                persons_deleted = len(orphan_ids)
+
+            result = {
+                "faces_removed": len(face_ids),
+                "clusters_cleaned": clusters_cleaned,
+                "clusters_deleted": clusters_deleted,
+                "persons_deleted": persons_deleted,
+            }
+            logger.info(f"[PhotoDedup] Duplicate face purge: {result}")
+            return result
+        finally:
+            await conn.close()
+
+    # ------------------------------------------------------------------
+    # Phase 4: Video Face Detection
+    # ------------------------------------------------------------------
+    def _deduplicate_video_faces(self, frame_faces: list) -> list:
+        """Merge faces seen across multiple keyframes. Keep best confidence per identity.
+        frame_faces: list of (embedding_np, bbox, confidence, frame_idx)
+        Returns deduplicated list of (embedding_np, bbox, confidence).
+        """
+        import numpy as np
+
+        if not frame_faces:
+            return []
+
+        # Group by identity using cosine similarity > 0.7
+        identities = []  # list of (best_embedding, best_bbox, best_confidence, all_embeddings)
+
+        for emb, bbox, conf, _ in frame_faces:
+            norm = np.linalg.norm(emb)
+            if norm > 0:
+                emb_normed = emb / norm
+            else:
+                emb_normed = emb
+
+            matched = False
+            for i, (best_emb, best_bbox, best_conf, all_embs) in enumerate(identities):
+                # Compare against the identity centroid
+                centroid = np.mean(all_embs, axis=0)
+                c_norm = np.linalg.norm(centroid)
+                if c_norm > 0:
+                    centroid /= c_norm
+                sim = float(np.dot(emb_normed, centroid))
+
+                if sim > 0.7:
+                    # Same person — keep highest confidence
+                    all_embs.append(emb_normed)
+                    if conf and (best_conf is None or conf > best_conf):
+                        identities[i] = (emb, bbox, conf, all_embs)
+                    matched = True
+                    break
+
+            if not matched:
+                identities.append((emb, bbox, conf, [emb_normed]))
+
+        return [(emb, bbox, conf) for emb, bbox, conf, _ in identities]
+
+    async def detect_faces_videos_batch(self, batch_size: int = 20) -> Dict[str, Any]:
+        """Detect faces in videos by extracting keyframes and running InsightFace.
+        Cross-frame dedup ensures each person is stored once per video."""
+        app = self._get_insightface_app()
+        if app is None:
+            return {"error": "InsightFace not available"}
+
+        conn = await asyncpg.connect(DB_URL)
+        try:
+            await self._ensure_schema(conn)
+
+            videos = await conn.fetch("""
+                SELECT id, file_path, filename
+                FROM photos
+                WHERE media_type = 'video'
+                  AND llava_description IS NOT NULL
+                  AND face_count IS NULL
+                  AND match_type NOT IN ('sha256_dupe', 'phash_dupe')
+                ORDER BY id
+                LIMIT $1
+            """, batch_size)
+
+            if not videos:
+                return {"processed": 0, "message": "No videos pending face detection"}
+
+            run_id = await conn.fetchval(
+                "INSERT INTO photo_dedup_runs (run_type) VALUES ('video_face_detection') RETURNING id")
+
+            import cv2
+            import numpy as np
+
+            processed = 0
+            total_faces = 0
+            errors = 0
+
+            for video in videos:
+                try:
+                    path = Path(video["file_path"])
+                    if not path.exists():
+                        await conn.execute(
+                            "UPDATE photos SET face_count = 0 WHERE id = $1", video["id"])
+                        processed += 1
+                        continue
+
+                    # Extract keyframes
+                    frames, duration = self._extract_keyframes(path, interval=10)
+                    if not frames:
+                        await conn.execute(
+                            "UPDATE photos SET face_count = 0 WHERE id = $1", video["id"])
+                        processed += 1
+                        continue
+
+                    # Detect faces in each keyframe
+                    all_frame_faces = []
+                    for frame_idx, frame_path in enumerate(frames):
+                        try:
+                            img = cv2.imread(str(frame_path))
+                            if img is None:
+                                continue
+                            detected = app.get(img)
+                            for face in detected:
+                                emb = face.embedding.astype(np.float32)
+                                bbox = face.bbox.tolist()
+                                conf = float(face.det_score) if hasattr(face, 'det_score') else None
+                                all_frame_faces.append((emb, bbox, conf, frame_idx))
+                        except Exception as e:
+                            logger.debug(f"Frame face detection error: {e}")
+
+                    # Cleanup temp frames
+                    if frames:
+                        shutil.rmtree(frames[0].parent, ignore_errors=True)
+
+                    # Cross-frame dedup
+                    unique_faces = self._deduplicate_video_faces(all_frame_faces)
+                    face_count = len(unique_faces)
+
+                    # Insert unique face records
+                    for i, (emb, bbox, conf) in enumerate(unique_faces):
+                        embedding_bytes = emb.astype(np.float32).tobytes()
+                        await conn.execute("""
+                            INSERT INTO photo_faces (photo_id, face_index, bbox, embedding, confidence)
+                            VALUES ($1, $2, $3::jsonb, $4, $5)
+                        """, video["id"], i,
+                            json.dumps({"x1": bbox[0], "y1": bbox[1], "x2": bbox[2], "y2": bbox[3]}),
+                            embedding_bytes, conf)
+
+                    await conn.execute(
+                        "UPDATE photos SET face_count = $2, updated_at = NOW() WHERE id = $1",
+                        video["id"], face_count)
+
+                    total_faces += face_count
+                    processed += 1
+
+                except Exception as e:
+                    logger.error(f"Video face detection error for {video['file_path']}: {e}")
+                    errors += 1
+
+            await conn.execute("""
+                UPDATE photo_dedup_runs
+                SET finished_at = NOW(), items_processed = $2, items_new = $3, items_error = $4
+                WHERE id = $1
+            """, run_id, processed, total_faces, errors)
+
+            result = {"processed": processed, "faces_detected": total_faces,
+                      "errors": errors, "run_id": run_id}
+            logger.info(f"[PhotoDedup] Video face detection: {result}")
+            return result
+        finally:
+            await conn.close()
+
+    # ------------------------------------------------------------------
     # Stats
     # ------------------------------------------------------------------
     async def get_stats(self) -> Dict[str, Any]:
@@ -2441,7 +2624,6 @@ class PhotoDedupService:
             await self._ensure_schema(conn)
 
             total_local = await conn.fetchval("SELECT COUNT(*) FROM photos") or 0
-            total_cloud = await conn.fetchval("SELECT COUNT(*) FROM google_photos_cloud") or 0
             matched = await conn.fetchval(
                 "SELECT COUNT(*) FROM photos WHERE match_type IN ('cloud_matched', 'cloud_filename_match')") or 0
             sha256_dupes = await conn.fetchval(
@@ -2452,8 +2634,6 @@ class PhotoDedupService:
                 "SELECT COUNT(*) FROM photos WHERE qdrant_point_id IS NOT NULL") or 0
             unmatched_local = await conn.fetchval(
                 "SELECT COUNT(*) FROM photos WHERE match_type = 'unmatched'") or 0
-            unmatched_cloud = await conn.fetchval(
-                "SELECT COUNT(*) FROM google_photos_cloud WHERE matched_local_id IS NULL") or 0
             total_size = await conn.fetchval("SELECT SUM(file_size) FROM photos") or 0
 
             # Media type counts
@@ -2474,24 +2654,33 @@ class PhotoDedupService:
             face_clusters = await conn.fetchval(
                 "SELECT COUNT(*) FROM face_clusters") or 0
 
+            # New dedup/pipeline stats
+            photos_missing_phash = await conn.fetchval(
+                "SELECT COUNT(*) FROM photos WHERE perceptual_hash IS NULL AND (media_type = 'photo' OR media_type IS NULL)") or 0
+            phash_dupes = await conn.fetchval(
+                "SELECT COUNT(*) FROM photos WHERE match_type = 'phash_dupe'") or 0
+            videos_pending_face_scan = await conn.fetchval(
+                "SELECT COUNT(*) FROM photos WHERE media_type = 'video' AND llava_description IS NOT NULL AND face_count IS NULL") or 0
+
             return {
                 "local_photos": total_local,
-                "cloud_photos": total_cloud,
                 "cloud_matched": matched,
                 "sha256_dupes": sha256_dupes,
+                "phash_dupes": phash_dupes,
                 "analyzed": analyzed,
                 "embedded_in_qdrant": embedded,
                 "unmatched_local": unmatched_local,
-                "unmatched_cloud": unmatched_cloud,
                 "total_size_gb": round(total_size / (1024**3), 2),
                 "scan_complete": total_local > 0,
-                "cloud_fetched": total_cloud > 0,
+                "cloud_fetched": False,  # Google Photos Library API deprecated 2025-03-31
                 "photos_count": photos_count,
                 "videos_count": videos_count,
                 "local_source": local_count,
                 "takeout_source": takeout_count,
                 "photos_with_faces": faces_detected,
                 "face_clusters": face_clusters,
+                "photos_missing_phash": photos_missing_phash,
+                "videos_pending_face_scan": videos_pending_face_scan,
             }
         finally:
             await conn.close()
@@ -2524,10 +2713,40 @@ class PhotoDedupService:
         return []
 
     async def _get_google_token(self, account: Optional[str] = None) -> Optional[str]:
-        """Get Google OAuth token via tower-auth bridge.
+        """Get Google OAuth token, preferring DB (most recently authed with correct scopes)
+        over Vault (which may have stale scopes from an older OAuth flow).
         Pass account=email to get a specific account's token.
-        Returns None if no refresh_token exists (access_token alone is likely expired).
         """
+        # Prefer DB token — auth_sessions has the most recently authed token
+        # with correct scopes (photoslibrary.readonly, contacts.readonly, etc.)
+        try:
+            tc_url = os.getenv(
+                "TOWER_CONSOLIDATED_URL",
+                f"postgresql://patrick:{os.getenv('DB_PASSWORD', 'RP78eIrW7cI2jYvL5akt1yurE')}@localhost/tower_consolidated",
+            )
+            conn = await asyncpg.connect(tc_url)
+            try:
+                if account:
+                    row = await conn.fetchrow("""
+                        SELECT access_token FROM auth_sessions
+                        WHERE provider = 'google' AND is_active = true AND email = $1
+                        ORDER BY last_accessed DESC LIMIT 1
+                    """, account)
+                else:
+                    row = await conn.fetchrow("""
+                        SELECT access_token FROM auth_sessions
+                        WHERE provider = 'google' AND is_active = true
+                        ORDER BY last_accessed DESC LIMIT 1
+                    """)
+                if row and row["access_token"]:
+                    logger.info("Got Google token from auth_sessions (DB — preferred)")
+                    return row["access_token"]
+            finally:
+                await conn.close()
+        except Exception as e:
+            logger.debug(f"DB Google token fetch failed, trying Vault: {e}")
+
+        # Fallback: tower-auth /tokens/list (Vault-backed — may have stale scopes)
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
                 if account:
@@ -2537,62 +2756,24 @@ class PhotoDedupService:
                     )
                     if resp.status_code == 200:
                         data = resp.json()
-                        return data.get("access_token")
-                    return None
+                        token = data.get("access_token")
+                        if token:
+                            logger.info("Got Google token from Vault (fallback)")
+                            return token
 
-                resp = await client.get(f"{AUTH_SERVICE_URL}/tokens/list")
-                if resp.status_code == 200:
-                    tokens = resp.json()
-                    google = tokens.get("google", {})
-                    access = google.get("access_token")
-                    refresh = google.get("refresh_token")
-                    if access and refresh:
-                        return access
-                    if access and not refresh:
-                        logger.warning(
-                            "Google access_token exists but no refresh_token — "
-                            "token is likely expired and cannot be refreshed. "
-                            "Re-authenticate at /api/auth/oauth/google/login"
-                        )
-                        return None
-        except Exception as e:
-            logger.warning(f"Failed to get Google token: {e}")
-        return None
-
-    async def _refresh_google_token(self, account: Optional[str] = None) -> Optional[str]:
-        """Refresh Google token via tower-auth. Pass account=email for specific account."""
-        try:
-            async with httpx.AsyncClient(timeout=10.0) as client:
-                params = {}
-                if account:
-                    params["account"] = account
-
-                resp = await client.post(
-                    f"{AUTH_SERVICE_URL}/api/auth/oauth/google/refresh",
-                    params=params,
-                )
-                if resp.status_code == 200:
-                    data = resp.json()
-                    return data.get("access_token")
-
-                # Fallback: try legacy flow without account param
-                if account:
-                    logger.warning(f"Account-specific refresh failed for {account}, trying legacy")
+                else:
                     resp = await client.get(f"{AUTH_SERVICE_URL}/tokens/list")
-                    if resp.status_code != 200:
-                        return None
-                    tokens = resp.json()
-                    refresh = tokens.get("google", {}).get("refresh_token")
-                    if not refresh:
-                        return None
-                    resp = await client.post(
-                        f"{AUTH_SERVICE_URL}/api/auth/oauth/google/refresh",
-                        json={"refresh_token": refresh}
-                    )
                     if resp.status_code == 200:
-                        return resp.json().get("access_token")
+                        tokens = resp.json()
+                        google = tokens.get("google", {})
+                        access = google.get("access_token")
+                        refresh = google.get("refresh_token")
+                        if access and refresh:
+                            logger.info("Got Google token from Vault (fallback)")
+                            return access
         except Exception as e:
-            logger.error(f"Token refresh failed: {e}")
+            logger.warning(f"Vault token fetch also failed: {e}")
+
         return None
 
     # ------------------------------------------------------------------

@@ -7,8 +7,9 @@ Autonomous worker that incrementally processes the unified media pipeline:
 3. Run dedup matching
 4a. Analyze photos with vision analysis
 4b. Analyze videos with vision analysis
-4c. Run face detection on analyzed photos
+4c. Run face detection on analyzed photos (+ incremental person assignment)
 5. Ingest analyzed media to Qdrant
+6. Every 12th cycle (6hr): cluster review for merge suggestions
 """
 import logging
 from datetime import datetime
@@ -21,6 +22,8 @@ logger = logging.getLogger(__name__)
 
 # Skip cloud fetch if the last N runs all returned 0 items
 CLOUD_FETCH_BACKOFF_THRESHOLD = 5
+# Run cluster review every N cycles (12 cycles * 30min = 6 hours)
+CLUSTER_REVIEW_INTERVAL = 12
 
 
 class PhotoDedupWorker:
@@ -29,6 +32,7 @@ class PhotoDedupWorker:
     def __init__(self):
         self.service = PhotoDedupService()
         self._takeout_scanned = False
+        self._cycle_count = 0
 
     async def _should_skip_cloud_fetch(self) -> bool:
         """Check if recent cloud_fetch runs all returned 0 — skip if so."""
@@ -103,28 +107,17 @@ class PhotoDedupWorker:
                 logger.error(f"[PhotoDedupWorker] Takeout scan error: {e}")
             return  # one major step per cycle
 
-        # Step 2: Cloud fetch if token available and not yet fetched
-        # Cloud fetch failure does NOT block steps 3-5
-        if not stats.get("cloud_fetched"):
-            if await self._should_skip_cloud_fetch():
-                logger.warning(
-                    f"[PhotoDedupWorker] Skipping cloud fetch — last {CLOUD_FETCH_BACKOFF_THRESHOLD} "
-                    "runs all returned 0 items. Google OAuth likely needs re-auth."
-                )
-            else:
-                oauth = await self.service.get_oauth_status()
-                if oauth.get("has_token"):
-                    logger.info("[PhotoDedupWorker] Fetching cloud metadata...")
-                    try:
-                        result = await self.service.fetch_cloud_metadata()
-                        logger.info(f"[PhotoDedupWorker] Cloud fetch: {result}")
-                    except Exception as e:
-                        logger.error(f"[PhotoDedupWorker] Cloud fetch error: {e}")
-                else:
-                    logger.info("[PhotoDedupWorker] No Google token — skipping cloud fetch")
+        # Step 1c: Backfill perceptual hashes if any are missing
+        if stats.get("photos_missing_phash", 0) > 0:
+            logger.info(f"[PhotoDedupWorker] Backfilling phashes ({stats['photos_missing_phash']} missing)...")
+            try:
+                result = await self.service.backfill_perceptual_hashes(batch_size=500)
+                logger.info(f"[PhotoDedupWorker] Phash backfill: {result}")
+            except Exception as e:
+                logger.error(f"[PhotoDedupWorker] Phash backfill error: {e}")
 
-        # Step 3: Run matching if cloud data available and unmatched photos exist
-        if stats.get("cloud_fetched") and stats.get("unmatched_local", 0) > 0:
+        # Step 2: Run local SHA256 dedup matching if unmatched photos exist
+        if stats.get("unmatched_local", 0) > 0:
             total = stats.get("local_photos", 0)
             unmatched = stats.get("unmatched_local", 0)
             if total > 0 and unmatched > total * 0.5:
@@ -135,7 +128,7 @@ class PhotoDedupWorker:
                 except Exception as e:
                     logger.error(f"[PhotoDedupWorker] Matching error: {e}")
 
-        # Step 4a: Analyze PHOTOS with vision analysis (500 per cycle)
+        # Step 3a: Analyze PHOTOS with vision analysis (500 per cycle)
         pending_analysis = stats.get("local_photos", 0) - stats.get("analyzed", 0) - stats.get("sha256_dupes", 0)
         if pending_analysis > 0:
             batch = min(500, pending_analysis)
@@ -147,13 +140,13 @@ class PhotoDedupWorker:
             except Exception as e:
                 logger.error(f"[PhotoDedupWorker] Photo vision analysis error: {e}")
 
-        # Step 4b: Analyze VIDEOS with vision analysis (20 per cycle — slower)
+        # Step 4b: Analyze VIDEOS with vision analysis (50 per cycle)
         videos_pending = stats.get("videos_count", 0)
         if videos_pending > 0:
-            logger.info(f"[PhotoDedupWorker] Analyzing up to 20 videos with vision analysis...")
+            logger.info(f"[PhotoDedupWorker] Analyzing up to 50 videos with vision analysis...")
             try:
                 result = await self.service.analyze_photos_batch(
-                    batch_size=20, media_type="video")
+                    batch_size=50, media_type="video")
                 logger.info(f"[PhotoDedupWorker] Video vision analysis: {result}")
             except Exception as e:
                 logger.error(f"[PhotoDedupWorker] Video vision analysis error: {e}")
@@ -164,12 +157,48 @@ class PhotoDedupWorker:
             if result.get("processed", 0) > 0:
                 logger.info(f"[PhotoDedupWorker] Face detection: {result}")
 
-                # Re-cluster if we detected new faces
+                # Incremental person assignment (replaces destructive recluster)
                 if result.get("faces_detected", 0) > 0:
-                    cluster_result = await self.service.cluster_faces()
-                    logger.info(f"[PhotoDedupWorker] Face clustering: {cluster_result}")
+                    try:
+                        from src.services.person_id_service import PersonIDService
+                        person_svc = PersonIDService()
+                        conn = await asyncpg.connect(DB_URL)
+                        try:
+                            await person_svc.ensure_schema(conn)
+                            assign_result = await person_svc.assign_new_faces(conn)
+                            if assign_result.get("assigned", 0) > 0 or assign_result.get("new_singletons", 0) > 0:
+                                logger.info(f"[PhotoDedupWorker] Person assignment: {assign_result}")
+                        finally:
+                            await conn.close()
+                    except Exception as e:
+                        logger.error(f"[PhotoDedupWorker] Person assignment error: {e}")
         except Exception as e:
             logger.error(f"[PhotoDedupWorker] Face detection error: {e}")
+
+        # Step 4d: Face detection on analyzed videos (20 per cycle)
+        if stats.get("videos_pending_face_scan", 0) > 0:
+            try:
+                result = await self.service.detect_faces_videos_batch(batch_size=20)
+                if result.get("processed", 0) > 0:
+                    logger.info(f"[PhotoDedupWorker] Video face detection: {result}")
+
+                    # Incremental person assignment for video faces
+                    if result.get("faces_detected", 0) > 0:
+                        try:
+                            from src.services.person_id_service import PersonIDService
+                            person_svc = PersonIDService()
+                            conn = await asyncpg.connect(DB_URL)
+                            try:
+                                await person_svc.ensure_schema(conn)
+                                assign_result = await person_svc.assign_new_faces(conn)
+                                if assign_result.get("assigned", 0) > 0 or assign_result.get("new_singletons", 0) > 0:
+                                    logger.info(f"[PhotoDedupWorker] Video person assignment: {assign_result}")
+                            finally:
+                                await conn.close()
+                        except Exception as e:
+                            logger.error(f"[PhotoDedupWorker] Video person assignment error: {e}")
+            except Exception as e:
+                logger.error(f"[PhotoDedupWorker] Video face detection error: {e}")
 
         # Step 5: Ingest to Qdrant
         # Re-fetch stats to pick up media just analyzed in steps 4a-4c
@@ -186,5 +215,21 @@ class PhotoDedupWorker:
                 logger.info(f"[PhotoDedupWorker] Qdrant: {result}")
             except Exception as e:
                 logger.error(f"[PhotoDedupWorker] Qdrant ingest error: {e}")
+
+        # Step 6: Periodic cluster review (every 12th cycle = ~6 hours)
+        self._cycle_count += 1
+        if self._cycle_count % CLUSTER_REVIEW_INTERVAL == 0:
+            try:
+                from src.services.person_id_service import PersonIDService
+                person_svc = PersonIDService()
+                conn = await asyncpg.connect(DB_URL)
+                try:
+                    await person_svc.ensure_schema(conn)
+                    review_result = await person_svc.review_clusters(conn)
+                    logger.info(f"[PhotoDedupWorker] Cluster review: {review_result}")
+                finally:
+                    await conn.close()
+            except Exception as e:
+                logger.error(f"[PhotoDedupWorker] Cluster review error: {e}")
 
         logger.info("[PhotoDedupWorker] Cycle complete")

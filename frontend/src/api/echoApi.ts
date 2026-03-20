@@ -135,6 +135,52 @@ export const googleIngestApi = {
   stats: () => googleIngestAxios.get('/stats'),
 };
 
+// Photos / Face Clusters
+const photosAxios = axios.create({ baseURL: '/api/photos', timeout: 30000 });
+
+export const photosApi = {
+  stats: () => photosAxios.get('/stats'),
+  people: () => photosAxios.get('/people'),
+  peopleReview: (page = 1, perPage = 20, unnamedOnly = true, minPhotos = 5) =>
+    photosAxios.get('/people/review', {
+      params: { page, per_page: perPage, unnamed_only: unnamedOnly, min_photos: minPhotos },
+    }),
+  namePerson: (clusterId: number, name: string) =>
+    photosAxios.post(`/people/${clusterId}/name`, { name }),
+  skipPerson: (clusterId: number) =>
+    photosAxios.post(`/people/${clusterId}/skip`),
+  mergePeople: (clusterIds: number[], name: string) =>
+    photosAxios.post('/people/merge', { cluster_ids: clusterIds, name }),
+  search: (query: string, limit = 20) =>
+    photosAxios.post('/search', { query, limit }),
+  // Contacts → face matching
+  contactsSyncAndMatch: () =>
+    photosAxios.post('/contacts/sync-and-match', null, { timeout: 300000 }),
+  contactsReview: () => photosAxios.get('/contacts/review'),
+  contactsConfirm: (contactId: number, clusterId: number, name: string) =>
+    photosAxios.post('/contacts/confirm', { contact_id: contactId, cluster_id: clusterId, name }),
+  contactsReject: (contactId: number) =>
+    photosAxios.post(`/contacts/reject/${contactId}`),
+  contactsStats: () => photosAxios.get('/contacts/stats'),
+  // Media browsing
+  browse: (params: {
+    page?: number; per_page?: number; media_type?: string;
+    source?: string; year?: string; sort?: string;
+    has_description?: boolean; in_qdrant?: boolean;
+  }) => photosAxios.get('/browse', { params }),
+  browseCloud: (params: {
+    page?: number; per_page?: number; matched?: boolean;
+  }) => photosAxios.get('/browse/cloud', { params }),
+  runs: (limit = 20) => photosAxios.get('/runs', { params: { limit } }),
+  report: () => photosAxios.get('/dedup/report'),
+  scanLocal: () => photosAxios.post('/scan/local'),
+  scanTakeout: () => photosAxios.post('/scan/takeout'),
+  scanCloud: () => photosAxios.post('/scan/cloud', null, { timeout: 300000 }),
+  dedupRun: () => photosAxios.post('/dedup/run'),
+  ingest: (batchSize = 100) =>
+    photosAxios.post('/ingest', null, { params: { batch_size: batchSize } }),
+};
+
 // Generic endpoint tester
 export const testEndpoint = (method: string, path: string, data?: any) => {
   const config = { method, url: path, data };

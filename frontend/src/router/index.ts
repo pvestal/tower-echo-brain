@@ -55,6 +55,16 @@ const routes = [
     path: '/calendar',
     name: 'Calendar',
     component: () => import('@/views/CalendarView.vue')
+  },
+  {
+    path: '/people',
+    name: 'People',
+    component: () => import('@/views/PeopleView.vue')
+  },
+  {
+    path: '/media',
+    name: 'Media',
+    component: () => import('@/views/MediaView.vue')
   }
 ];
 
