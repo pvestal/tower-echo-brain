@@ -234,30 +234,24 @@ class TowerAuthBridge:
         return False
 
     async def load_existing_tokens(self) -> Dict[str, Any]:
-        """Load existing OAuth tokens from credentials file"""
+        """Load existing OAuth tokens from Tower Auth database"""
         try:
-            import json
-            from pathlib import Path
-            # Read Google credentials directly from file
-            creds_file = Path("/opt/tower-auth/credentials/google_credentials.json")
-            if creds_file.exists():
-                with open(creds_file) as f:
-                    google_creds = json.load(f)
-                    
-                self.cached_tokens["google"] = {
-                    "access_token": google_creds.get("token"),
-                    "refresh_token": google_creds.get("refresh_token"),
-                    "scopes": google_creds.get("scopes", [])
-                }
-                
-                logger.info(f"✅ Loaded Google OAuth token from credentials file")
-                return self.cached_tokens
-                
-        except Exception as e:
-            logger.error(f"Failed to load credentials file: {e}")
-        
-        return {}
+            async with httpx.AsyncClient() as client:
+                response = await client.get(f"{self.auth_service_url}/tokens/list")
 
+                if response.status_code == 200:
+                    tokens = response.json()
+                    for provider, token_info in tokens.items():
+                        if token_info.get('access_token'):
+                            self.cached_tokens[provider] = token_info
+
+                    logger.info(f"✅ Loaded {len(self.cached_tokens)} OAuth tokens")
+                    return self.cached_tokens
+
+        except Exception as e:
+            logger.error(f"Failed to load existing tokens: {e}")
+
+        return {}
 
     # Google-specific methods
     async def get_google_calendar_service(self):

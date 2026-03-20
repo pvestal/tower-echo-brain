@@ -325,7 +325,8 @@ async def _generate_lyrics(genres: str, mood: str) -> str:
         async with httpx.AsyncClient(timeout=30) as client:
             resp = await client.post(
                 "http://localhost:11434/api/generate",
-                json={"model": "mistral:7b", "prompt": prompt, "stream": False},
+                json={"model": "mistral:7b", "prompt": prompt, "stream": False,
+                      "keep_alive": "5m", "options": {"num_gpu": 0}},
             )
             if resp.status_code == 200:
                 return resp.json().get("response", "").strip()
@@ -358,7 +359,8 @@ async def suggest_for_scene(
         async with httpx.AsyncClient(timeout=30) as client:
             resp = await client.post(
                 "http://localhost:11434/api/generate",
-                json={"model": "mistral:7b", "prompt": prompt, "stream": False},
+                json={"model": "mistral:7b", "prompt": prompt, "stream": False,
+                      "keep_alive": "5m", "options": {"num_gpu": 0}},
             )
             if resp.status_code == 200:
                 raw = resp.json().get("response", "")

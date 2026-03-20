@@ -177,9 +177,11 @@ class ReasoningLayer:
                     "system": system_prompt,
                     "prompt": user_prompt,
                     "stream": False,
+                    "keep_alive": "5m",
                     "options": {
                         "temperature": 0.7 if intent == QueryIntent.CREATIVE else 0.3,
                         "num_predict": 2048,
+                        "num_gpu": 0,  # Force CPU — preserve AMD VRAM for ComfyUI-ROCm
                     },
                 },
             )

@@ -134,7 +134,11 @@ Begin your analysis:
                         "model": self.model,
                         "prompt": prompt,
                         "stream": False,
-                        "temperature": 0.1,  # Low temp for consistent execution
+                        "keep_alive": "5m",
+                        "options": {
+                            "temperature": 0.1,  # Low temp for consistent execution
+                            "num_gpu": 0,
+                        },
                     },
                     timeout=60
                 )

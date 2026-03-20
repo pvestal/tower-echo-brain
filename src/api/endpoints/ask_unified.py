@@ -82,7 +82,9 @@ async def ask_unified(request: Dict[str, Any]):
                 json={
                     "model": "mistral:7b",
                     "prompt": enhanced_prompt,
-                    "stream": False
+                    "stream": False,
+                    "keep_alive": "5m",
+                    "options": {"num_gpu": 0}
                 }
             )
 

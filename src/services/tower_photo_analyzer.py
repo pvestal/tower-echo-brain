@@ -53,6 +53,16 @@ class TowerPhotoAnalyzer:
         return total
     
     async def analyze_with_vision(self, photo_path: str):
+        """Analyze photo with gemma3 vision. Checks GPU arbiter first."""
+        # Check arbiter before loading heavy vision model
+        try:
+            from services.gpu_arbiter_client import arbiter
+            if not await arbiter.can_use_heavy_model():
+                logger.warning("Photo analysis deferred: AMD GPU busy (ComfyUI-ROCm or vision batch)")
+                return "Analysis deferred — GPU busy with video generation"
+        except Exception:
+            pass  # Fail open if arbiter unavailable
+
         with open(photo_path, 'rb') as f:
             image_base64 = base64.b64encode(f.read()).decode()
 
@@ -63,7 +73,8 @@ class TowerPhotoAnalyzer:
                     'model': 'gemma3:12b',
                     'prompt': 'Describe this photo. What do you see? Rate quality 1-10.',
                     'images': [image_base64],
-                    'stream': False
+                    'stream': False,
+                    'keep_alive': '5m',
                 }
             ) as resp:
                 result = await resp.json()

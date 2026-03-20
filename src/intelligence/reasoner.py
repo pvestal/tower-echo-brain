@@ -860,9 +860,11 @@ class ReasoningEngine:
                             "model": model,
                             "prompt": f"{system_prompt}\n\n{user_prompt}",
                             "stream": False,
+                            "keep_alive": "5m",
                             "options": {
                                 "temperature": temperature,
-                                "top_p": top_p
+                                "top_p": top_p,
+                                "num_gpu": 0,  # Force CPU — preserve AMD VRAM for ComfyUI-ROCm
                             }
                         }
                     )

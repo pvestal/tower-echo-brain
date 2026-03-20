@@ -534,7 +534,8 @@ Provide a structured analysis:
     async with httpx.AsyncClient(timeout=30) as client:
         analysis_response = await client.post(
             "http://localhost:11434/api/generate",
-            json={"model": get_model("analysis"), "prompt": analysis_prompt, "stream": False}
+            json={"model": get_model("analysis"), "prompt": analysis_prompt, "stream": False,
+                  "keep_alive": "5m", "options": {"num_gpu": 0}}
         )
         analysis = analysis_response.json().get("response", "")
 
@@ -553,7 +554,8 @@ Now provide deep reasoning:
 
             final_response = await client.post(
                 "http://localhost:11434/api/generate",
-                json={"model": get_model("reasoning"), "prompt": reasoning_prompt, "stream": False}
+                json={"model": get_model("reasoning"), "prompt": reasoning_prompt, "stream": False,
+                      "keep_alive": "5m", "options": {"num_gpu": 0}}
             )
             final_answer = final_response.json().get("response", "")
         else:

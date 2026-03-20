@@ -172,7 +172,8 @@ Provide analysis:
             async with httpx.AsyncClient(timeout=30) as client:
                 response = await client.post(
                     "http://localhost:11434/api/generate",
-                    json={"model": "mistral:7b", "prompt": analysis_prompt, "stream": False}
+                    json={"model": "mistral:7b", "prompt": analysis_prompt, "stream": False,
+                          "keep_alive": "5m", "options": {"num_gpu": 0}}
                 )
                 initial_analysis = response.json().get("response", "")
 
@@ -216,7 +217,8 @@ Provide analysis:
                     extract_resp = await client.post(
                         "http://localhost:11434/api/generate",
                         json={"model": "mistral:7b", "prompt": extraction_prompt, "stream": False,
-                              "options": {"temperature": 0.1, "num_predict": 60}}
+                              "keep_alive": "5m",
+                              "options": {"temperature": 0.1, "num_predict": 60, "num_gpu": 0}}
                     )
                     extract_text = extract_resp.json().get("response", "")
 
@@ -306,7 +308,8 @@ Provide comprehensive reasoning:
                 async with httpx.AsyncClient(timeout=30) as client:
                     response = await client.post(
                         "http://localhost:11434/api/generate",
-                        json={"model": "mistral:7b", "prompt": synthesis_prompt, "stream": False}
+                        json={"model": "mistral:7b", "prompt": synthesis_prompt, "stream": False,
+                              "keep_alive": "5m", "options": {"num_gpu": 0}}
                     )
                     final_answer = response.json().get("response", "")
 
